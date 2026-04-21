@@ -205,15 +205,18 @@
             </div>
         </div>
     </div>
-    <main class="p-2 mx-auto">
+    <main class="p-2 max-w-[1200px] mx-auto">
       <slot />
     </main>
   </div>
 </template>
 
 <script setup>
+
 import { useAuthStore } from '~/stores/auth'
 const {startLoading, stopLoading} = useLoading();
+const employeeAuth = useEmployeeAuthStore();
+
 const showPassword = ref(false);
 const auth = useAuthStore() 
 const accTypeData = ref([])
@@ -221,7 +224,7 @@ const selectedType = ref(null)
 const registerModal = ref(false)
 const userRole = ref("")
 const loginModal = ref(false)
-
+const verifyCode = ref(false)
 
 const selectType = (id) => {
   selectedType.value = id
@@ -240,7 +243,8 @@ const form = ref({
   role:userRole.value,
   birth_date: '',
   password: '',
-  confirm_password: ''
+  confirm_password: '',
+  org_code:''
 })
 
 const callAccType = async () => {
@@ -256,33 +260,71 @@ const callAccType = async () => {
   }
 }
 
-
+const fetchOrgCode = async () => {
+  try {
+    const res = await employeeAuth.fetchOrgCode({
+      code: form.value.org_code
+    })
+    
+    if (res && res.org_id) {
+      verifyCode.value = true;
+      return true;
+    } else {
+      verifyCode.value = false;
+      return false;
+    }
+  } catch (e) {
+    console.error("Verification Error:", e);
+    verifyCode.value = false;
+    return false;
+  }
+}
 
 const handleRegister = async () => {
+
   if (form.value.password !== form.value.confirm_password) {
     alert("Passwords do not match!")
     return
   }
 
   try {
-  
-    const result = await auth.register({
-      ...form.value,
-      accType_id: selectedType.value,
-      role: userRole.value
-    })
+    startLoading(); 
 
-    if (result.autoLogin) {
-      registerModal.value = false
-      navigateTo('/client') 
+    if (selectedType.value === 1) {
+      const result = await auth.register({
+        ...form.value,
+        accType_id: selectedType.value,
+        role: userRole.value
+      })
+      processResult(result);
+
     } else {
-      alert('Registration successful! Please sign in.')
-      registerModal.value = false
+      await fetchOrgCode();
+
+      if (verifyCode.value) {
+        const result = await auth.register({
+          ...form.value,
+          accType_id: selectedType.value,
+          role: userRole.value
+        })
+        processResult(result);
+      } else {
+
+        form.value.password = '';
+        form.value.confirm_password = '';
+        form.value.org_code = '';
+        alert('Invalid registration Code');
+      }
     }
   } catch (e) {
-    alert(e.data?.statusMessage || 'Registration failed')
+    alert(e.data?.statusMessage || 'Registration failed');
+  } finally {
+    stopLoading();
   }
 }
+
+
+
 
 const handlelogin = async () => {
   console.log("Attempting login with:", login.value);
@@ -305,6 +347,17 @@ const handlelogin = async () => {
     stopLoading();
   }
 }
+const processResult = (result) => {
+  if (result && (result.autoLogin || result.success)) {
+    registerModal.value = false;
+    navigateTo('/client');
+  } else {
+    alert('Registration successful! Please sign in.');
+    registerModal.value = false;
+    loginModal.value = true;
+  }
+}
+
 onMounted(async() => {
   await callAccType()
 })

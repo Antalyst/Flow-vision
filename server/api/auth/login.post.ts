@@ -36,8 +36,15 @@ export default defineEventHandler(async (event) => {
     const { password: _, ...safeUser } = user
     const token = 'generated-session-token' 
 
+    setCookie(event, 'auth_user', JSON.stringify(safeUser), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'BoyLupotJv',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    })
+
     setCookie(event, 'auth_token', token, {
-      httpOnly: true,
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'BoyLupotJv',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,

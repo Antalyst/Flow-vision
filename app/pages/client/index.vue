@@ -12,6 +12,6 @@ definePageMeta({
     layout:"client"
 })
 
-const employeeAuth = employeeAuth();
 const auth = useAuthStore();
+
 </script>

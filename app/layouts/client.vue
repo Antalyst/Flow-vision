@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen w-full font-primary sticky top-0 relative">
-    <nav class="flex justify-between items-center p-4 px-28">
+  <div class="flex flex-col h-screen w-full font-primary overflow-hidden">
+    <nav class="flex justify-between items-center p-4 px-28 sticky top-0 bg-white z-50 border-b flex-none"> 
       <div class="flex items-center">
         <img class="w-[50px] h-auto" src="/logo/Logos.png" alt="FlowVision Logo">
         <h1 class="text-heading text-heading-dark font-bold">FlowVision</h1>
@@ -26,9 +26,30 @@
         </div>
       </div>
     </nav>
-    <main class="p-2 mx-auto">
-      <slot />
-    </main>
+
+    <div class="flex flex-1 overflow-hidden">
+      <aside class="w-[240px] border-r overflow-y-auto bg-white flex-none">
+        <ul class="p-4 flex flex-col gap-2">
+          <div class="flex flex-col gap-2"> 
+            <h1 class="font-bold text-gray-400 text-sm uppercase">Navigation</h1>
+            <div class="flex flex-col gap-2 pl-4 side-div">
+                <li><Icon name="ic:round-dashboard" width="24" height="24" /> Dashboard</li>
+                <li><nuxt-link to="/client/office" class="flex items-center gap-2"><Icon name="ic:round-business" width="24" height="24" /> Office</nuxt-link></li>
+                <li><Icon name="ic:round-directions" width="24" height="24" /> Routes</li>
+                <li><Icon name="ic:round-person" width="24" height="24" /> User</li>
+                <li><Icon name="ic:round-dashboard" width="24" height="24" /> Dashboard</li>
+                <li><Icon name="ic:round-dashboard" width="24" height="24" /> Dashboard</li>
+                <li><Icon name="ic:round-dashboard" width="24" height="24" /> Dashboard</li>
+                <li><Icon name="ic:round-dashboard" width="24" height="24" /> Dashboard</li>
+            </div>
+          </div>
+        </ul>
+      </aside>
+
+      <main class="flex-1 overflow-y-auto p-2 bg-gray-50">
+          <slot />
+      </main>
+    </div>
   </div>
 </template>
 
@@ -42,3 +63,15 @@ onMounted(() => {
     }
 });
 </script>
+
+<style scoped>
+.side-div > li {
+  display: flex;
+  align-items: center; 
+  gap: 5px;
+  cursor: pointer;
+}
+.side-div > li:hover {
+  color: #3b82f6; 
+}
+</style>
