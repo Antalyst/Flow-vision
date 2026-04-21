@@ -6,7 +6,7 @@
         <h1 class="text-heading text-heading-dark font-bold">FlowVision</h1>
       </div>
       <h1 class="text-center text-2xl pl-40" v-if="auth.currentOrg">
-        {{ auth.currentOrg.name }}
+        {{ auth.currentOrg.name }}-{{ auth.currentOrg.code }}
       </h1>
       <div class="flex items-center justify-center gap-4">
         <div class="relative hidden sm:flex items-center">
