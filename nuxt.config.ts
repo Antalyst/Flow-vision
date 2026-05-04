@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     mysqlUser: process.env.MYSQL_USER,
     mysqlPassword: process.env.MYSQL_PASSWORD,
     mysqlDatabase: process.env.MYSQL_DATABASE,
+    serviceKey: process.env.SUPABASE_SERVICE_KEY,
   },
   
 
