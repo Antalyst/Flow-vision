@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     const [rows] = await db.query('SELECT * FROM account_types');
     return rows;
   } catch (error) {
-   
+
     console.error('DATABASE ERROR:', error); 
     
     throw createError({

@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    const { code } = body; 
+    const { code } = body;
     const db = event.context.db;
 
     const [rows] = await db.query(`
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     } else {
       return {
         success: false,
-        message: "Invalid organization code" 
+        message: "Invalid organization code"
       }
     }
   } catch (error) {

@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     return {
       message: 'Login successful',
       user: safeUser,
-      token: token 
+      token: token
     }
 
   } catch (error: any) {

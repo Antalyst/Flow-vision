@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
       full_name,
       role,
       accType_id,
-      birth_date, 
+      birth_date,
       age,
       password: hashedPassword,
       created_at: new Date(),
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
     };
 
   } catch (error: any) {
-   
+  
     console.error("DATABASE ERROR:", error); 
     
     throw createError({

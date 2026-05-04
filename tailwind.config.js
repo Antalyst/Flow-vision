@@ -12,7 +12,7 @@ module.exports = {
       fontFamily: {
         primary: ['Afacad', 'sans-serif'],
       },
-     fontSize: {
+    fontSize: {
         'heading': ['1.5rem', {
           fontWeight: '500', 
         }],

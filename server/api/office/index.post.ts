@@ -2,7 +2,7 @@ export default defineEventHandler(async (event)=>{
     
     try{
         const body = await readBody(event);
-        const {name, user_id,  org_id} = body; 
+        const {name, user_id,  org_id} = body;
         const created_at = new Date().toISOString();
         const db  = event.context.db;
 
