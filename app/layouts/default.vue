@@ -61,18 +61,19 @@
 
                   <div class="flex bg-gray-100 p-1 rounded-md w-full mb-6">
                       <button 
-                          v-for="accType in accTypeData" 
-                          :key="accType.accType_id"
-                          @click="selectType(accType.accType_id)" 
-                          type="button"
-                          :class="[
-                              'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
-                              selectedType === accType.accType_id 
-                              ? 'bg-white text-[#F77934] shadow-sm' 
-                              : 'text-gray-500 hover:text-gray-700'
-                          ]"
+                        v-for="accType in accTypeData" 
+                        :key="accType.accType_id" 
+                        @click="selectType(accType)" 
+                        type="button"
+                        :class="[
+                          'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
+                        
+                          selectedType === accType.acctype_id
+                          ? 'bg-white text-[#F77934] shadow-sm' 
+                          : 'text-gray-500 hover:text-gray-700'
+                        ]"
                       >
-                          {{ accType.name }}
+                        {{ accType.name }}
                       </button>
                   </div>
 
@@ -87,9 +88,15 @@
                           <input v-model="form.email" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="email" required placeholder="example@gmail.com">
                       </div>
 
-                      <div v-if="selectedType == 2" class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-[#F77934] uppercase">Organization Code</label>
-                          <input v-model="form.org_code" class="w-full px-4 py-2 rounded-md border border-[#F77934] outline-none bg-orange-50/30" type="text" required placeholder="Enter provided code">
+                      <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1 md:col-span-2">
+                        <label class="text-xs font-bold text-[#F77934] uppercase">Organization Code</label>
+                        <input 
+                          v-model="form.org_code" 
+                          class="w-full px-4 py-2 rounded-md border border-[#F77934] outline-none bg-orange-50/30" 
+                          type="text" 
+                          required 
+                          placeholder="Enter provided code"
+                        >
                       </div>
 
                       <div class="flex flex-col gap-1 md:col-span-2">
@@ -143,7 +150,7 @@
                       <p class="text-gray-500 text-sm">Please enter your details to sign in.</p>
                   </div>
 
-                  <form @submit.prevent="handlelogin" class="flex flex-col gap-4">
+                  <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
                       <div class="flex flex-col gap-1.5">
                           <label class="text-sm font-semibold text-gray-700">Email Address</label>
                           <input 
@@ -225,11 +232,13 @@ const registerModal = ref(false)
 const userRole = ref("")
 const loginModal = ref(false)
 const verifyCode = ref(false)
+const selectedTypeObj = ref(null)
+const selectedTypeName = ref('')
 
-const selectType = (id) => {
-  selectedType.value = id
+const selectType = (accType) => {
+  selectedType.value = accType.acctype_id
+  selectedTypeName.value = accType.name.toLowerCase()
 }
-
 const login = ref({
   email: '',
   password: '',
@@ -239,7 +248,7 @@ const login = ref({
 const form = ref({
   full_name: '',
   email: '',
-  accType_id: selectType.value,
+  acctype_id: selectedType.value,
   role:userRole.value,
   birth_date: '',
   password: '',
@@ -247,13 +256,17 @@ const form = ref({
   org_code:''
 })
 
+const getPostLoginRoute = (role = '') => {
+  return role.toLowerCase() === 'client' ? '/client' : '/client/office'
+}
+
 const callAccType = async () => {
   try {
-  
     const data = await $fetch("/api/account_type")
     accTypeData.value = data
     if (data.length > 0) {
-      selectedType.value = data[0].accType_id 
+      selectedType.value = data[0].acctype_id
+      selectedTypeName.value = data[0].name.toLowerCase()
     }
   } catch (e) {
     console.error("Fetch error:", e)
@@ -290,10 +303,10 @@ const handleRegister = async () => {
   try {
     startLoading(); 
 
-    if (selectedType.value === 1) {
+    if (selectedTypeName.value === 'organization') {
       const result = await auth.register({
         ...form.value,
-        accType_id: selectedType.value,
+        acctype_id: selectedType.value,
         role: userRole.value
       })
       processResult(result);
@@ -304,7 +317,7 @@ const handleRegister = async () => {
       if (verifyCode.value) {
         const result = await auth.register({
           ...form.value,
-          accType_id: selectedType.value,
+          acctype_id: selectedType.value,
           role: userRole.value
         })
         processResult(result);
@@ -326,7 +339,7 @@ const handleRegister = async () => {
 
 
 
-const handlelogin = async () => {
+const handleLogin = async () => {
   console.log("Attempting login with:", login.value);
 
   if (!login.value.email || !login.value.password) {
@@ -337,26 +350,65 @@ const handlelogin = async () => {
   try {
     startLoading();
     const result = await auth.login(login.value); 
+    console.log("Login result:", result);
+
     if (result.success) {
+      console.log("Login successful, navigating to /client...");
       loginModal.value = false;
-      navigateTo("/client");
+      
+      const userSession = useCookie('user_session', {
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+        sameSite: 'lax'
+      });
+      const userRole = useCookie('user_role', {
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+        sameSite: 'lax'
+      });
+      const sessionUserId = result.user?.user_id || result.user?.id || '';
+      userSession.value = sessionUserId;
+      userRole.value = result.user.role || '';
+      
+      await navigateTo(getPostLoginRoute(result.user.role || ''));
+    } else {
+      console.warn("Login failed: result.success is false");
     }
   } catch (e) {
+    console.error("Login catch error:", e);
     alert(e.data?.statusMessage || 'Login failed');
-  }finally{
+  } finally {
     stopLoading();
   }
 }
-const processResult = (result) => {
+const processResult = async (result) => {
   if (result && (result.autoLogin || result.success)) {
     registerModal.value = false;
-    navigateTo('/client');
+
+    const currentUser = result.user || auth.user;
+    const userSession = useCookie('user_session', {
+      maxAge: 60 * 60 * 24 * 30,
+      path: '/',
+      sameSite: 'lax'
+    });
+    const userRole = useCookie('user_role', {
+      maxAge: 60 * 60 * 24 * 30,
+      path: '/',
+      sameSite: 'lax'
+    });
+
+    const sessionUserId = currentUser?.user_id || currentUser?.id || '';
+    userSession.value = sessionUserId;
+    userRole.value = currentUser?.role || '';
+
+    await navigateTo(getPostLoginRoute(currentUser?.role || ''));
   } else {
     alert('Registration successful! Please sign in.');
     registerModal.value = false;
     loginModal.value = true;
   }
 }
+
 
 onMounted(async() => {
   await callAccType()

@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia'
 
 interface User {
-  user_id: number
+  user_id: string | number
   full_name: string 
   email: string
-  accType_id: number
+  acctype_id: string | number
   birth_date: string 
   age: number
-  role: string,
-  org_id: number | null
+  role: string
+  org_id: string | number | null
 }
 
 interface org {
@@ -17,7 +17,7 @@ interface org {
 }
 
 interface OrgDetails {
-  org_id: number
+  org_id: string | number
   name: string
   code: string
   created_at: string
