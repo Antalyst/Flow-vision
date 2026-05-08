@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const { email, password, full_name, acctype_id, birth_date, org_code } = body
   const db = event.context.db
 
-  // Create a direct Service Role client to bypass RLS
+
   const client = createClient(
     config.public.supabaseUrl, 
     config.supabaseServiceKey
