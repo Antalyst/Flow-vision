@@ -49,9 +49,10 @@ export const useEmployeeAuthStore = defineStore("employeeAuth", {
 async fetchOrgCode(credentials: OrgCode) {
   this.loading = true;
   try {
+    const normalizedCode = (credentials.code || '').trim();
     const res: any = await $fetch("/api/org/getOrdCode", {
       method: "POST",
-      body: credentials
+      body: { code: normalizedCode }
     });
     if (res.success) {
       this.orgId = res.rows.org_id;

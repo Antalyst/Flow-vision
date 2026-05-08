@@ -46,17 +46,22 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue';
+    import { ref, onMounted } from 'vue';
     const auth = useAuthStore();
     
     const orgData = ref({
         name: '',
         user_id: auth.user?.user_id 
     });
+
+    onMounted(() => {
+        console.log("Org Setup Component Loaded");
+        console.log("User Data:", auth.user);
+        console.log("Needs Org Setup:", auth.needsOrgSetup);
+    });
+
     const handleCreateOrg = async () => {
-        if (!orgData.value.userId) {
-            orgData.value.userId = auth.user?.id;
-        }
+        orgData.value.user_id = auth.user?.user_id;
         
         try {
             await auth.createOrg(orgData.value);

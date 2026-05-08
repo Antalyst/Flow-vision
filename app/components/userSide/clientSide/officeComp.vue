@@ -1,7 +1,6 @@
 <template>
   <div class="  p-6 w-full relative h-full">
     <h2 class="text-xl font-bold text-gray-800 mb-6">Create New Office</h2>
-    {{ authStore.OrgDetails }}
     <form @submit.prevent="handleSubmit" class="space-y-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1">Office Name</label>
@@ -19,7 +18,7 @@
           <select 
             v-model="selectedUserId"
             class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 outline-none transition disabled:bg-gray-50"
-            :disabled="!employees"
+            :disabled="isLoadingEmployees || !employees.length"
           >
             <option :value="0" disabled>Select an employee</option>
             <option 
@@ -36,7 +35,8 @@
             </svg>
           </div>
         </div>
-        <p v-if="!employees" class="text-xs text-gray-500 mt-1 italic">Loading team members...</p>
+        <p v-if="isLoadingEmployees" class="text-xs text-gray-500 mt-1 italic">Loading team members...</p>
+        <p v-else-if="!employees.length" class="text-xs text-gray-500 mt-1 italic">No employee accounts found for this organization.</p>
       </div>
 
       <button 
@@ -55,15 +55,28 @@ const officeStore = useOfficeStore()
 
 const officeName = ref('')
 const selectedUserId = ref(0)
-const employees = ref(null)
+const employees = ref([])
+const isLoadingEmployees = ref(false)
 
-onMounted(async () => {
+const loadEmployees = async () => {
+  isLoadingEmployees.value = true
   try {
+    if (!authStore.currentOrg?.org_id) {
+      await authStore.fetchMyOrg()
+    }
+
     const response = await officeStore.fetchUserByOrg()
-    employees.value = response.data 
+    employees.value = response?.data || []
   } catch (err) {
     console.error("Failed to load users:", err)
+    employees.value = []
+  } finally {
+    isLoadingEmployees.value = false
   }
+}
+
+onMounted(async () => {
+  await loadEmployees()
 })
 
 const handleSubmit = async () => {
