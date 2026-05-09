@@ -1,15 +1,10 @@
+import { createClient } from '@supabase/supabase-js'
+
 export default defineEventHandler(async (event) => {
   try {
+    const config = useRuntimeConfig()
     const body = await readBody(event);
     const { orgId } = body;
-    const db = event.context.db;
-
-    if (!db) {
-      throw createError({
-        statusCode: 500,
-        message: "Database driver not initialized",
-      });
-    }
 
     if (!orgId) {
       throw createError({
@@ -18,11 +13,28 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const [rows] = await db.query("SELECT * FROM users WHERE org_id = ? and role= 'employee'", [orgId]);
+    const client = createClient(
+      config.public.supabaseUrl,
+      config.supabaseServiceKey
+    )
+
+    const { data, error } = await client
+      .from('users')
+      .select('user_id, full_name, email, role, org_id')
+      .eq('org_id', orgId)
+      .eq('role', 'employee')
+      .order('full_name', { ascending: true })
+
+    if (error) {
+      throw createError({
+        statusCode: 500,
+        message: error.message || 'Failed to fetch employees',
+      });
+    }
 
     return {
       success: true,
-      data: rows,
+      data: data || [],
     };
   } catch (err: any) {
     throw createError({

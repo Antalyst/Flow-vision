@@ -1,7 +1,14 @@
+import { createClient } from '@supabase/supabase-js'
+
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const body = await readBody(event);
-  const { name, user_id } = body; 
-  const db = event.context.db;
+  const { name, user_id } = body;
+
+  const client = createClient(
+    config.public.supabaseUrl, 
+    config.supabaseServiceKey
+  )
 
   if (!name || !user_id) {
     throw createError({
@@ -21,21 +28,30 @@ export default defineEventHandler(async (event) => {
     };
 
     const orgCode = generateOrgCode();
-    const createdAt = new Date();
-    const [result]: any = await db.query(
-      `INSERT INTO org(name, code,user_id, created_at) VALUES (?, ?, ?, ?)`,
-      [name, orgCode, user_id, createdAt]
-    );
 
-    const newOrgId = result.insertId;
-    await db.query(
-      `UPDATE users SET org_id = ? WHERE user_id = ?`,
-      [newOrgId, user_id]
-    );
+
+    const { data: org, error: orgError } = await client
+      .from('org')
+      .insert({
+        name,
+        code: orgCode,
+        user_id
+      })
+      .select()
+      .single();
+
+    if (orgError) throw orgError;
+
+    const { error: userError } = await client
+      .from('users')
+      .update({ org_id: org.org_id })
+      .eq('user_id', user_id);
+
+    if (userError) throw userError;
 
     return {
       success: true,
-      org_id: newOrgId,
+      org_id: org.org_id,
       org_code: orgCode
     };
 
