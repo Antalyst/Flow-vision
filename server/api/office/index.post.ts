@@ -6,6 +6,7 @@ import { logActivityForEvent } from '~~/server/utils/activityLog'
 const generateOfficeCode = (): string =>
   'OFF-' + randomBytes(3).toString('hex').toUpperCase()
 
+
 export default defineEventHandler(async (event) => {
 
   try {
