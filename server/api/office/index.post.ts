@@ -1,14 +1,6 @@
-<<<<<<< HEAD
-export default defineEventHandler(async (event)=>{
-    
-    try{
-        const body = await readBody(event);
-        const {name, user_id,  org_id} = body;
-        const created_at = new Date().toISOString();
-        const db  = event.context.db;
-=======
+
 export default defineEventHandler(async (event) => {
->>>>>>> 3c0c7fff94b7d8972c6af2b25fd3807c7797dfb7
+
 
   try {
     const body = await readBody(event);
