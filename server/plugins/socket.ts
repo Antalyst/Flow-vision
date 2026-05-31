@@ -14,15 +14,15 @@ interface IRegisterUserPayload {
 
 /** Session data persisted on each socket instance for the duration of the connection. */
 interface ISocketSessionData {
-  userId: number;
-  orgId: number;
+  userId: string;
+  orgId: string;
 }
 
 // ---------------------------------------------------------------------------
 // In-memory org registry: maps a userId → orgId for fast cross-org checks.
 // This is populated on `register_user` and consulted during `send_message`.
 // ---------------------------------------------------------------------------
-const userOrgRegistry: Map<number, number> = new Map();
+const userOrgRegistry: Map<string, string> = new Map();
 
 // ---------------------------------------------------------------------------
 // Plugin Entry
@@ -75,16 +75,8 @@ export default defineNitroPlugin((nitroApp) => {
         return;
       }
 
-      const userId = Number(payload.user_id);
-      const orgId = Number(payload.org_id);
-
-      if (isNaN(userId) || isNaN(orgId)) {
-        console.warn(
-          `[Socket.io] register_user: Non-numeric user_id (${payload.user_id}) or ` +
-          `org_id (${payload.org_id}) from socket ${socket.id}. Connection rejected.`,
-        );
-        return;
-      }
+      const userId = String(payload.user_id);
+      const orgId = String(payload.org_id);
 
       // Persist session data on the socket instance
       (socket.data as ISocketSessionData).userId = userId;
@@ -128,10 +120,10 @@ export default defineNitroPlugin((nitroApp) => {
       }
 
       // Resolve sender's org_id — prefer socket session, fallback to payload
-      const senderOrgId: number =
-        (socket.data as ISocketSessionData)?.orgId ?? Number(payload.org_id);
+      const senderOrgId: string =
+        String((socket.data as ISocketSessionData)?.orgId ?? payload.org_id);
 
-      if (isNaN(senderOrgId)) {
+      if (!senderOrgId) {
         console.warn(
           `[Socket.io] ⚠️  SECURITY: send_message from socket ${socket.id} — ` +
           `sender org_id could not be resolved. Message dropped.`,
@@ -140,7 +132,7 @@ export default defineNitroPlugin((nitroApp) => {
       }
 
       // Resolve receiver's org_id from the in-memory registry
-      const receiverOrgId: number | undefined = userOrgRegistry.get(Number(payload.receiver_id));
+      const receiverOrgId: string | undefined = userOrgRegistry.get(String(payload.receiver_id));
 
       // Cross-organization verification gate
       if (receiverOrgId != null && receiverOrgId !== senderOrgId) {
@@ -164,7 +156,7 @@ export default defineNitroPlugin((nitroApp) => {
         document_id: Number(payload.document_id),
         sender_id: String(payload.sender_id),
         receiver_id: String(payload.receiver_id),
-        org_id: String(senderOrgId),
+        org_id: senderOrgId,
         message_text: payload.message_text,
       };
 

@@ -17,9 +17,9 @@
  */
 export interface IChatPayload {
   document_id: number;
-  sender_id: number;
-  receiver_id: number;
-  org_id: number;
+  sender_id: string;
+  receiver_id: string;
+  org_id: string;
   message_text: string;
 }
 

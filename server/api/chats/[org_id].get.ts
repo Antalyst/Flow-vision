@@ -125,9 +125,9 @@ export default defineEventHandler(async (event) => {
     const history: IChatResponse[] = (rows || []).map((row: any) => ({
       message_id: Number(row.message_id),
       document_id: Number(row.document_id),
-      sender_id: Number(row.sender_id),
-      receiver_id: Number(row.receiver_id),
-      org_id: Number(row.org_id),
+      sender_id: String(row.sender_id),
+      receiver_id: String(row.receiver_id),
+      org_id: String(row.org_id),
       message_text: row.message_text,
       created_at: row.created_at,
     }));
