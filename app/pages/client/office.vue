@@ -9,5 +9,5 @@
 
 definePageMeta({
     layout: 'client'
-})  
+})
 </script>

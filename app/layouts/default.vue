@@ -9,7 +9,7 @@
       <div class="hidden md:block">
         <ul class="flex md:pl-52 gap-8 justify-center">
           <li class="cursor-pointer transition"><nuxt-link to="/">Home</nuxt-link></li>
-          <li class="cursor-pointer transition"><nuxt-link to="/tracking">Tracking</nuxt-link></li>
+          <li class="cursor-pointer transition"><nuxt-link to="/documents">Tracking</nuxt-link></li>
           <li class="cursor-pointer transition"><nuxt-link to="/about">About</nuxt-link></li>
           <li class="cursor-pointer transition"><button @click="openDocForm">Contact</button></li>
         </ul>
@@ -32,7 +32,7 @@
             <button @click="registerModal = true" class="px-5 py-2 text-sm font-medium bg-primary-btn text-white rounded-md transition shadow-sm">
               Get started
             </button>
-     
+
         </div>
       </div>
     </nav>
@@ -63,7 +63,7 @@
                       <button 
                         v-for="accType in accTypeData" 
                         :key="accType.accType_id" 
-                        @click="selectType(accType)" 
+                        @click="selectType(accType)"
                         type="button"
                         :class="[
                           'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
@@ -185,7 +185,7 @@
                       <div class="flex items-center justify-between mt-1">
                           <label class="flex items-center gap-2 cursor-pointer">
                               <input 
-                                  v-model="login.rememberMe" 
+                                  v-model="login.rememberMe"
                                   type="checkbox" 
                                   class="w-4 h-4 rounded-md accent-[#F77934]"
                               >

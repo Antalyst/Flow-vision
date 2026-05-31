@@ -4,16 +4,16 @@ import { hash } from 'bcrypt-ts'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { email, password, full_name, acctype_id, birth_date, org_code } = body
+  const { email, password, full_name, accType_id, birth_date, org_code } = body
   const db = event.context.db
 
 
   const client = createClient(
-    config.public.supabaseUrl, 
+    config.public.supabaseUrl,
     config.supabaseServiceKey
   )
 
-  if (!email || !password || !full_name || !acctype_id) {
+  if (!email || !password || !full_name || !accType_id) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Missing required fields',
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const { data: typeData, error: typeError } = await client
     .from('account_types')
     .select('name')
-    .eq('acctype_id', acctype_id)
+    .eq('acctype_id', accType_id)
     .single();
 
   if (typeError || !typeData) {
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
       resolvedOrgId = orgData.org_id;
     }
 
-<<<<<<< HEAD
+    const hashedPassword = await hash(password, 10)
     const userToInsert = {
       email,
       full_name,
@@ -88,9 +88,8 @@ export default defineEventHandler(async (event) => {
       created_at: new Date(),
       status: 1
     };
-=======
+
     // 3. Insert User into Supabase
-    const hashedPassword = await hash(password, 10)
     console.log("Inserting user into Supabase...");
     const { data: profileData, error: profileError } = await client
       .from('users')
@@ -98,7 +97,7 @@ export default defineEventHandler(async (event) => {
         email: email,
         full_name: full_name,
         role: role,
-        acctype_id: acctype_id, 
+        acctype_id: accType_id,
         birth_year: birthYear,
         birth_date: birth_date,
         age: age,
@@ -108,7 +107,6 @@ export default defineEventHandler(async (event) => {
       })
       .select() 
       .single()
->>>>>>> 3c0c7fff94b7d8972c6af2b25fd3807c7797dfb7
 
     if (profileError) {
       console.error("Supabase User Insert Error:", profileError);
@@ -123,13 +121,9 @@ export default defineEventHandler(async (event) => {
     };
 
   } catch (error: any) {
-<<<<<<< HEAD
-  
-    console.error("DATABASE ERROR:", error); 
+    console.error("DATABASE ERROR:", error);
     
-=======
     console.error("REGISTRATION ERROR:", error);
->>>>>>> 3c0c7fff94b7d8972c6af2b25fd3807c7797dfb7
     throw createError({
       statusCode: error.statusCode || 500,
       statusMessage: error.message || 'Error during registration',

@@ -33,7 +33,7 @@ const useDocProcessor = () => {
           const { width, height } = page.getSize()
           page.drawImage(qrImage, {
             x: width - 70,
-            y: height - 70, 
+            y: height - 70,
             width: 50,
             height: 50,
           })
@@ -41,7 +41,7 @@ const useDocProcessor = () => {
 
         const pdfBytes = await pdfDoc.save()
         processedUrl.value = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }))
-      } 
+      }
       else if (fileExtension.value === 'docx') {
         if (wordPreviewContainer.value) wordPreviewContainer.value.innerHTML = ''
         await renderAsync(arrayBuffer, wordPreviewContainer.value)
@@ -122,8 +122,8 @@ const onFileChange = (e) => {
         </div>
         
         <div class="flex-grow overflow-auto bg-gray-50 relative">
-          <div v-if="fileExtension === 'docx' && qrBase64" 
-               class="absolute top-8 right-8 z-50 p-1 bg-white shadow-lg border border-gray-200 pointer-events-none">
+          <div v-if="fileExtension === 'docx' && qrBase64"
+              class="absolute top-8 right-8 z-50 p-1 bg-white shadow-lg border border-gray-200 pointer-events-none">
             <img :src="qrBase64" class="w-[60px] h-[60px]" alt="Tracking QR" />
           </div>
 
@@ -134,9 +134,9 @@ const onFileChange = (e) => {
             class="w-full h-full"
           ></object>
 
-          <div 
-            v-show="fileExtension === 'docx'" 
-            ref="wordPreviewContainer" 
+          <div
+            v-show="fileExtension === 'docx'"
+            ref="wordPreviewContainer"
             class="p-4 bg-white min-h-full"
           ></div>
 

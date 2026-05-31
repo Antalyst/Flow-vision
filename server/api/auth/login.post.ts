@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const { email, password } = body
 
   const client = createClient(
-    config.public.supabaseUrl, 
+    config.public.supabaseUrl,
     config.supabaseServiceKey
   )
 
@@ -27,10 +27,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-<<<<<<< HEAD
+  const db = event.context.db;
+
   try {
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
     const [rows]: any = await db.query(
-      'SELECT * FROM users WHERE email = ? LIMIT 1', 
+      'SELECT * FROM users WHERE email = ? LIMIT 1',
       [email]
     )
     const user = rows[0]
@@ -50,7 +54,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const { password: _, ...safeUser } = user
-    const token = 'generated-session-token' 
+    const token = 'generated-session-token'
 
     setCookie(event, 'auth_user', JSON.stringify(safeUser), {
       httpOnly: false,
@@ -73,13 +77,11 @@ export default defineEventHandler(async (event) => {
     }
 
   } catch (error: any) {
-=======
   console.log("User found, verifying password...");
   // 2. Verify hashed password
   const isPasswordCorrect = await compare(password, user.password)
   console.log("Password verification result:", isPasswordCorrect);
   if (!isPasswordCorrect) {
->>>>>>> 3c0c7fff94b7d8972c6af2b25fd3807c7797dfb7
     throw createError({
       statusCode: 401,
       statusMessage: 'Invalid email or password',
@@ -106,6 +108,7 @@ export default defineEventHandler(async (event) => {
     success: true,
     message: 'Login successful',
     user: userWithoutPassword,
-    token: 'session_token_placeholder' 
+    token: 'session_token_placeholder'
   }
+}
 })

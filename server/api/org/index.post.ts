@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const { name, user_id } = body;
 
   const client = createClient(
-    config.public.supabaseUrl, 
+    config.public.supabaseUrl,
     config.supabaseServiceKey
   )
 
