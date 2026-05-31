@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async(event) => {
   try {
     const config = useRuntimeConfig()
     const body = await readBody(event);
