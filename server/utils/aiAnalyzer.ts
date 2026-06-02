@@ -5,7 +5,8 @@ export const analyzeDocument = async (text: string) => {
   
   const completion = await groq.chat.completions.create({
     model: "llama-3.3-70b-versatile",
-    temperature: 0,
+    temperature: 0.2,
+    max_tokens: 1000,
     messages: [
       { 
         role: "system", 
