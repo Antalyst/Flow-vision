@@ -33,6 +33,7 @@
     "tailwind.config.js": "^1.0.6",
     "vite-tsconfig-paths": "^6.1.1",
     "vue": "^3.5.30",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "xlsx": "^0.18.5"
   }
 }

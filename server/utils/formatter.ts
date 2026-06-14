@@ -26,7 +26,7 @@ export async function generateDocumentTemplate(userPrompt: string, dbRows: any[]
       "targetFileFormat": "EXCEL | WORD",
       "documentMetadata": {
         "title": "A highly professional, context-aware title for the document",
-        "brandingOffice": "The extracted office ID or 'General System' if null",
+        "brandingContext": "The organization or general context inferred from the request, or 'General System' if none is available",
         "generationDate": "2026-05-27"
       },
       "visualLayoutSpecification": {

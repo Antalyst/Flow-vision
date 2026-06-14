@@ -13,8 +13,7 @@ export async function translateTextToQuery(userPrompt: string) {
     Analyze the user prompt to extract:
     1. The type of document/report they want to generate (e.g., payroll, performance, tracking logs).
     2. The time frame (start date, end date, or specific years).
-    3. Spatial/organizational filters (specific office IDs, departments, or user IDs).
-    4. Any special sorting or aggregation requests.
+    3. Any special sorting or aggregation requests.
 
     CRITICAL RULE: 
     - You must respond ONLY with a raw JSON object. 
@@ -25,8 +24,6 @@ export async function translateTextToQuery(userPrompt: string) {
       "documentType": "The targeted report category (e.g., 'payroll')",
       "queryFilters": {
         "years": ["Array of years extracted, e.g., 2020, 2021"],
-        "officeId": "The extracted office string or null if none",
-        "userId": "The extracted user identifier or null if none",
         "additionalConditions": "Any extra criteria like 'Approved status only' or 'overtime data included'"
       },
       "simulatedQuerySpec": {

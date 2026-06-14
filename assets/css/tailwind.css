@@ -1,8 +1,84 @@
-/* 1. Import the font */
+/* 1. Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+  }
 
+  body {
+    @apply bg-white text-heading-dark;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  .dark body,
+  body.dark {
+    @apply bg-rich-black text-white;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-white dark:bg-card-dark rounded-card border border-gray-200 dark:border-card-border shadow-card dark:shadow-card-dark;
+  }
+
+  .dashboard-card-hover {
+    @apply hover:shadow-card-hover dark:hover:shadow-none hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200;
+    @apply text-gray-600 dark:text-gray-400 hover:text-rich-orange hover:bg-rich-orange/5 dark:hover:bg-rich-orange/10;
+  }
+
+  .nav-item-active {
+    @apply text-rich-orange bg-rich-orange/[0.08] dark:bg-rich-orange/[0.12] relative;
+  }
+
+  .nav-item-active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-rich-orange rounded-full;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-high {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-medium {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+  }
+
+  .badge-low {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block;
+  }
+}
