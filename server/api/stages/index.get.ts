@@ -1,62 +1,92 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
  * GET /api/stages
  *
- * Returns route templates visible to the caller, respecting the Global/Local
- * scope discriminator introduced by the mini-office architecture:
+ * Returns route templates with dual-perspective scope support.
  *
- *   Global stages  (office_id IS NULL):  created by client admins; visible to
- *                                        every member of the organisation.
+ * ┌────────────────────────────────────────────────────────────────────────────┐
+ * │ scope=GLOBAL  │ All stages in the org (global + all local templates)       │
+ * │               │ → macro view for client admins and the employee big-picture │
+ * ├────────────────────────────────────────────────────────────────────────────┤
+ * │ scope=LOCAL   │ Global templates (accessible to everyone) PLUS any local   │
+ * │               │ templates scoped to the employee's own office branches.    │
+ * │               │ → employee small-picture / route builder view              │
+ * └────────────────────────────────────────────────────────────────────────────┘
  *
- *   Local stages   (office_id IS NOT NULL): created by employees for their own
- *                  sub-office; only returned when officeId param is provided
- *                  and matches stages.office_id.
+ * Stage taxonomy (from mini_office_architecture migration):
+ *   office_id IS NULL  → Global template  (client admin created; org-wide)
+ *   office_id = UUID   → Local template   (employee created; branch-scoped)
+ *
+ * Security:
+ *   org_id resolved from session — query param `orgId` is accepted only as a
+ *   convenience cache-busting hint and validated against the session value.
  *
  * Query params:
- *   orgId     string  required — organisation scope
- *   officeId  string  optional — if provided, returns global + this office's local routes
- *   scope     string  optional — 'global' | 'local' | 'all' (default 'all')
+ *   scope     'GLOBAL' | 'LOCAL'   default 'GLOBAL'
+ *   officeId  UUID string           optional override — explicit office filter
+ *                                   (takes precedence over session-derived list)
  */
 export default defineEventHandler(async (event) => {
   try {
-    const client  = await serverSupabaseClient(event)
-    const query   = getQuery(event)
-    const org_id  = query.orgId   as string | undefined
-    const officeId = query.officeId as string | undefined
-    const scope   = (query.scope  as string | undefined) ?? 'all'
+    const client = await serverSupabaseClient(event)
+    const query  = getQuery(event)
 
-    if (!org_id) {
-      throw createError({ statusCode: 400, message: 'orgId query parameter is required' })
-    }
+    const scope          = parseScope(query.scope as string | undefined)
+    const explicitOffice = (query.officeId as string | undefined)?.trim() || null
 
-    // ── Build stages query based on scope ──────────────────────────────
+    // ── Resolve actor (org_id from session) ──────────────────────────────────
+    const actor = await resolveActorContextWithOffices(event, client)
+
+    // ── Determine the office filter set ──────────────────────────────────────
+    // An explicit officeId param takes precedence (used by the route builder
+    // when the employee selects a specific office from the UI).
+    const targetOfficeIds: string[] =
+      explicitOffice
+        ? [explicitOffice]
+        : actor.officeIds          // session-derived list for LOCAL scope
+
+    // ── Build stages query ────────────────────────────────────────────────────
     let stagesQuery = client
       .from('stages')
       .select('*')
-      .eq('org_id', org_id)
+      .eq('org_id', actor.orgId)
       .order('step_number', { ascending: true })
 
-    if (scope === 'global') {
-      // Only global route templates (office_id IS NULL)
-      stagesQuery = stagesQuery.is('office_id', null)
-    } else if (scope === 'local' && officeId) {
-      // Only local templates for a specific office
-      stagesQuery = stagesQuery.eq('office_id', String(officeId))
-    } else if (officeId) {
-      // Default 'all': global + local for the given office
-      // Supabase OR: office_id IS NULL OR office_id = officeId (UUID string)
-      stagesQuery = stagesQuery.or(`office_id.is.null,office_id.eq.${String(officeId)}`)
+    if (scope === 'GLOBAL') {
+      // Big Picture: return every stage in the organisation
+      // (global templates + all local templates from all branches)
+      // No additional filter beyond org_id
+    } else {
+      // LOCAL: global templates + local templates for the employee's offices
+      if (targetOfficeIds.length === 0) {
+        // No assigned offices — return global templates only
+        stagesQuery = stagesQuery.is('office_id', null)
+      } else if (targetOfficeIds.length === 1) {
+        // Single office — global OR that specific office
+        stagesQuery = stagesQuery.or(
+          `office_id.is.null,office_id.eq.${targetOfficeIds[0]}`,
+        )
+      } else {
+        // Multiple offices — global OR any of the employee's offices
+        const officeList = targetOfficeIds.join(',')
+        stagesQuery = stagesQuery.or(
+          `office_id.is.null,office_id.in.(${officeList})`,
+        )
+      }
     }
-    // If no officeId and scope='all': returns everything for the org (admin view)
 
     const { data: stages, error: stagesError } = await stagesQuery
 
     if (stagesError) {
-      throw createError({ statusCode: 500, message: stagesError.message || 'Error fetching stages' })
+      throw createError({
+        statusCode: 500,
+        message: stagesError.message || 'Error fetching stages',
+      })
     }
 
-    // ── Fetch all workflow steps for these stages ──────────────────────
+    // ── Fetch workflow steps for all returned stages ───────────────────────
     const stageIds = (stages ?? []).map((s: any) => s.stage_id)
     let stepRows: any[] = []
 
@@ -68,26 +98,54 @@ export default defineEventHandler(async (event) => {
         .order('step_number', { ascending: true })
 
       if (stepsError) {
-        throw createError({ statusCode: 500, message: stepsError.message || 'Error fetching stage workflow items' })
+        throw createError({
+          statusCode: 500,
+          message: stepsError.message || 'Error fetching stage steps',
+        })
       }
 
       stepRows = steps ?? []
     }
 
-    // ── Enrich each stage with its workflow steps and scope label ──────
+    // ── Resolve office names for stages (for scope label) ─────────────────
+    const localOfficeIds = [...new Set(
+      (stages ?? []).map((s: any) => s.office_id).filter(Boolean),
+    )]
+    let officeNameById: Record<string, string> = {}
+
+    if (localOfficeIds.length > 0) {
+      const { data: officeRows } = await client
+        .from('offices')
+        .select('id, name, code')
+        .in('id', localOfficeIds)
+
+      officeNameById = (officeRows ?? []).reduce((acc: Record<string, string>, o: any) => {
+        acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name
+        return acc
+      }, {})
+    }
+
+    // ── Enrich stages ─────────────────────────────────────────────────────
     const enrichedStages = (stages ?? []).map((stage: any) => ({
       ...stage,
-      scope: stage.office_id == null ? 'global' : 'local',
+      scope:         stage.office_id == null ? 'global' : 'local',
+      office_name:   stage.office_id ? (officeNameById[String(stage.office_id)] ?? null) : null,
       workflow_items: stepRows.filter(
-        (item) => String(item.stage_id) === String(stage.stage_id)
+        (item) => String(item.stage_id) === String(stage.stage_id),
       ),
     }))
 
-    return { success: true, data: enrichedStages }
+    return {
+      success:   true,
+      scope,
+      org_id:    actor.orgId,
+      total:     enrichedStages.length,
+      data:      enrichedStages,
+    }
   } catch (error: any) {
     throw createError({
       statusCode: error.statusCode || 500,
-      message: error.message || 'Internal Server Error',
+      message:    error.message    || 'Internal Server Error',
     })
   }
 })
