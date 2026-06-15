@@ -4,10 +4,10 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   nitro: {
-    // Keep pdf-parse out of the serverless bundle — Vercel resolves it from
-    // node_modules at runtime (required for native/dynamic CJS deps).
+    // Externalize pdf-parse (+ pdfjs-dist) so Vercel installs them in the
+    // serverless layer instead of bundling their CJS/worker assets inline.
     externals: {
-      external: ['pdf-parse'],
+      external: ['pdf-parse', 'pdfjs-dist'],
     },
   },
   runtimeConfig: {
