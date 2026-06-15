@@ -1,0 +1,252 @@
+<template>
+  <section
+    class="w-full max-w-[1800px] mx-auto space-y-6 pb-24 lg:pb-8 font-dashboard animate-fade-in"
+    :class="isDark ? 'text-white' : 'text-rich-black'"
+  >
+    <!-- A. Header & Core Action Row -->
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange"></div>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
+        <p class="mt-1 text-sm" :class="mutedTextClass">
+          Upload, track, and monitor AI-analyzed organizational documents
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FF620C] px-4 py-2 font-medium text-white shadow-sm shadow-rich-orange/20 transition duration-200 hover:bg-[#F77934] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rich-orange"
+        @click="isUploadModalOpen = true"
+      >
+        <Icon name="ph:plus-bold" class="h-4 w-4" />
+        Upload Document
+      </button>
+    </div>
+
+    <!-- B. Filter & Search Utility Bar -->
+    <div
+      class="flex flex-col gap-3 rounded-lg border p-4 shadow-card sm:flex-row sm:items-center"
+      :class="surfaceClass"
+    >
+      <div
+        class="flex flex-1 items-center gap-2 rounded-lg border px-3 py-2 transition-all"
+        :class="isDark ? 'border-card-border bg-rich-black/40 focus-within:border-rich-orange' : 'border-gray-200 bg-gray-50 focus-within:border-rich-orange'"
+      >
+        <Icon name="ph:magnifying-glass" class="h-4 w-4" :class="mutedTextClass" />
+        <input
+          v-model="searchQuery"
+          type="search"
+          placeholder="Search by title or description"
+          class="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
+        />
+      </div>
+
+      <select
+        v-model="officeFilter"
+        class="rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange sm:w-64"
+        :class="inputClass"
+      >
+        <option value="all">All Departments / Offices</option>
+        <option v-for="office in officeStore.offices" :key="office.id" :value="String(office.id)">
+          {{ office.name }}
+        </option>
+      </select>
+    </div>
+
+    <!-- C. Documents Datatable -->
+    <article class="overflow-hidden rounded-lg border shadow-card" :class="surfaceClass">
+      <div class="flex items-center justify-between border-b px-5 py-4" :class="borderClass">
+        <div>
+          <h2 class="text-base font-semibold">Document Directory</h2>
+          <p class="mt-1 text-xs" :class="mutedTextClass">
+            {{ filteredDocuments.length }} document{{ filteredDocuments.length === 1 ? '' : 's' }} tracked
+          </p>
+        </div>
+        <Icon name="ph:files" class="h-5 w-5 text-rich-orange" />
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+          <thead :class="isDark ? 'bg-rich-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
+            <tr>
+              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wide">Document</th>
+              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Target Office</th>
+              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Uploaded By</th>
+              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Created</th>
+              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="documentStore.loading">
+              <td colspan="5" class="px-5 py-12 text-center" :class="mutedTextClass">
+                <Icon name="ph:spinner-gap" class="mx-auto mb-2 h-6 w-6 animate-spin text-rich-orange" />
+                Loading documents…
+              </td>
+            </tr>
+
+            <template v-else-if="filteredDocuments.length">
+              <tr
+                v-for="doc in filteredDocuments"
+                :key="doc.id"
+                class="cursor-pointer border-t transition-colors duration-150"
+                :class="[borderClass, isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-gray-50']"
+                @click="openDetail(doc)"
+              >
+                <td class="min-w-72 px-5 py-4">
+                  <div class="font-semibold">{{ doc.title }}</div>
+                  <div class="mt-1 line-clamp-2 max-w-md text-xs" :class="mutedTextClass">
+                    {{ doc.description }}
+                  </div>
+                </td>
+                <td class="whitespace-nowrap px-5 py-4">
+                  {{ getOfficeName(doc.office_id) }}
+                </td>
+                <td class="whitespace-nowrap px-5 py-4">
+                  {{ doc.uploader_name || 'Unknown' }}
+                </td>
+                <td class="whitespace-nowrap px-5 py-4" :class="mutedTextClass">
+                  {{ formatDate(doc.created_at) }}
+                </td>
+                <td class="whitespace-nowrap px-5 py-4">
+                  <span
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    :class="statusClass(doc.status)"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''"></span>
+                    {{ doc.status || 'Pending' }}
+                  </span>
+                </td>
+              </tr>
+            </template>
+
+            <!-- D. Empty state -->
+            <tr v-else>
+              <td colspan="5" class="px-5 py-16 text-center">
+                <Icon name="ph:file-dashed" class="mx-auto mb-3 h-12 w-12 text-rich-orange" />
+                <p class="font-semibold">No documents found.</p>
+                <p class="mt-1 text-xs" :class="mutedTextClass">
+                  Click "Upload Document" to get started.
+                </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <!-- Upload modal -->
+    <DocumentUploadModal
+      :is-open="isUploadModalOpen"
+      @close="isUploadModalOpen = false"
+      @uploaded="handleUploadSuccess"
+    />
+
+    <!-- Detail drawer -->
+    <DocumentDetailModal
+      :is-open="isDetailModalOpen"
+      :document="selectedDocument"
+      @close="isDetailModalOpen = false"
+    />
+  </section>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+import { useOfficeStore } from '~/stores/office'
+import { useStageStore } from '~/stores/stage'
+import { useDocumentStore, type DocumentRecord } from '~/stores/document'
+import DocumentUploadModal from './documentUploadModal.vue'
+import DocumentDetailModal from './documentDetailModal.vue'
+
+const authStore = useAuthStore()
+const officeStore = useOfficeStore()
+const stageStore = useStageStore()
+const documentStore = useDocumentStore()
+const { isDark } = useTheme()
+
+const isUploadModalOpen = ref(false)
+const isDetailModalOpen = ref(false)
+const selectedDocument = ref<DocumentRecord | null>(null)
+const searchQuery = ref('')
+const officeFilter = ref<'all' | string>('all')
+
+const surfaceClass = computed(() =>
+  isDark.value ? 'border-card-border bg-[#1A1A1A] shadow-card-dark' : 'border-gray-200 bg-white'
+)
+const borderClass = computed(() => (isDark.value ? 'border-card-border' : 'border-gray-200'))
+const mutedTextClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
+const inputClass = computed(() =>
+  isDark.value
+    ? 'border-card-border bg-rich-black text-white placeholder:text-gray-500'
+    : 'border-gray-200 bg-white text-rich-black placeholder:text-gray-400'
+)
+
+const filteredDocuments = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  return documentStore.documents.filter((doc) => {
+    const matchesOffice =
+      officeFilter.value === 'all' || String(doc.office_id) === officeFilter.value
+    const matchesQuery =
+      !query ||
+      [doc.title, doc.description].some((value) =>
+        String(value || '').toLowerCase().includes(query)
+      )
+    return matchesOffice && matchesQuery
+  })
+})
+
+const getOfficeName = (officeId: string | number | null) => {
+  if (officeId == null) return 'Unassigned'
+  return (
+    officeStore.offices.find((office) => String(office.id) === String(officeId))?.name ||
+    'Unassigned'
+  )
+}
+
+const formatDate = (value?: string) => {
+  if (!value) return '-'
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value))
+}
+
+const statusClass = (status: string) => {
+  switch ((status || 'Pending').toLowerCase()) {
+    case 'approved':
+      return 'text-green-500 border-green-500/30 bg-green-500/10'
+    case 'rejected':
+      return 'text-red-500 border-red-500/30 bg-red-500/10'
+    case 'processing':
+    case 'in review':
+      return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+    case 'pending':
+    default:
+      return 'text-[#FF620C] border-[#FF620C]/30 bg-[#FF620C]/10'
+  }
+}
+
+const openDetail = (doc: DocumentRecord) => {
+  selectedDocument.value = doc
+  isDetailModalOpen.value = true
+}
+
+const handleUploadSuccess = () => {
+  isUploadModalOpen.value = false
+  documentStore.fetchDocuments()
+}
+
+onMounted(async () => {
+  if (!authStore.currentOrg && authStore.user?.user_id) {
+    await authStore.fetchMyOrg()
+  }
+
+  await Promise.all([
+    officeStore.fetchOffices(),
+    stageStore.fetchStages(),
+    documentStore.fetchDocuments(),
+  ])
+})
+</script>

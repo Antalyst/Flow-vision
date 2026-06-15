@@ -1,10 +1,16 @@
 <template>
-  <div class="flex itemsc-center justify-center h-screen w-full">
-    <div class="max-w-[1920px] w-full flex justify-center  font-primary text-[#1D1D1D] md:text-xl">
-      <GlobalLoading />
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
-    </div>
+  <div class="w-full max-w-[1800px] mx-auto h-screen max-h-screen overflow-hidden bg-[#121212] dark:bg-[#121212] light:bg-[#F9F9F9]">
+    <GlobalLoading />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </div>
 </template>
+
+<script setup>
+const { initTheme } = useTheme()
+
+onMounted(() => {
+  initTheme()
+})
+</script>

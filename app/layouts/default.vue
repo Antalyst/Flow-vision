@@ -1,11 +1,9 @@
 <template>
   <div class="min-h-screen w-full font-primary sticky top-0 relative">
-    <nav class="flex justify-between items-center p-4 px-28">
+    <nav class="flex justify-between items-center p-4 bg-rich-black text-white m-5 mx-60 rounded-full shadow-md">
       <div class="flex items-center">
-        <img class="w-[50px] h-auto" src="/logo/Logos.png" alt="FlowVision Logo">
-        <h1 class="text-heading text-heading-dark font-bold">FlowVision</h1>
+        <img class="w-[40px] h-auto pl-4" src="/logo/new-logo.png" alt="FlowVision Logo">
       </div>
-
       <div class="hidden md:block">
         <ul class="flex md:pl-52 gap-8 justify-center">
           <li class="cursor-pointer transition"><nuxt-link to="/">Home</nuxt-link></li>
@@ -16,20 +14,11 @@
       </div>
 
       <div class="flex items-center justify-center gap-4">
-        <div class="relative hidden sm:flex items-center">
-          <input 
-            type="text" 
-            placeholder="Search documents..."
-            class="pl-10 pr-4 py-1.5 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-          <Icon name="material-symbols-light:search" class="absolute left-3 text-xl text-gray-400"/>
-        </div>
+       
 
         <div class="flex gap-2">
-      
-    
-            <button @click="loginModal = true" class="px-4 py-2 text-sm font-medium hover:text-blue-600 transition">Sign in</button>
-            <button @click="registerModal = true" class="px-5 py-2 text-sm font-medium bg-primary-btn text-white rounded-md transition shadow-sm">
+            <button @click="loginModal = true" class="px-4 py-2 text-md font-medium hover:text-rich-orange transition">Sign in</button>
+            <button @click="registerModal = true" class="px-5 py-2 text-md font-medium bg-white text-rich-black rounded-full hover:bg-rich-orange hover:text-white transition shadow-sm">
               Get started
             </button>
      
@@ -212,7 +201,7 @@
             </div>
         </div>
     </div>
-    <main class="p-2 max-w-[1200px] mx-auto">
+    <main class="w-full p-2">
       <slot />
     </main>
   </div>
@@ -257,7 +246,12 @@ const form = ref({
 })
 
 const getPostLoginRoute = (role = '') => {
-  return role.toLowerCase() === 'client' ? '/client' : '/client/office'
+  const map = {
+    client: '/client/dashboard',
+    employee: '/employee/dashboard',
+    messenger: '/messenger/dashboard',
+  }
+  return map[role.toLowerCase().trim()] ?? '/'
 }
 
 const callAccType = async () => {

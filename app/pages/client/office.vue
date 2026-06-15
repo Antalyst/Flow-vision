@@ -1,13 +1,9 @@
 <template>
-    <div class="w-full h-full">
-        <UserSideClientSideOfficeComp />
-    </div>
+  <OfficeView />
 </template>
 
-<script setup>
+<script setup lang="ts">
+import OfficeView from '~/components/client/offices/officeComp.vue'
 
-
-definePageMeta({
-    layout: 'client'
-})  
+definePageMeta({ layout: 'client' })
 </script>
