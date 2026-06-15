@@ -18,9 +18,19 @@ import {
   persistMessage,
 } from '~~/server/utils/aiSession';
 
+type AiScope = 'GLOBAL' | 'LOCAL'
+
 interface RagQueryRequestBody {
   prompt: string;
   session_id?: string | null;
+  /** Perspective scope set by the employee toggle. Defaults to GLOBAL. */
+  scope?: AiScope;
+  /**
+   * UUIDs of the employee's assigned offices — required for LOCAL scope
+   * filtering.  Server always re-validates org membership; this list only
+   * narrows the document set, never expands it.
+   */
+  officeIds?: string[];
 }
 
 interface QueryFilters {
@@ -138,6 +148,14 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   // 1. Resolve multi-tenant context from trusted session cookies (fails closed).
   const { orgId, userId } = await resolveTenant(event);
 
+  // 1b. Read scope context from the request body.
+  //     org_id is always from the session (trusted); officeIds are client-supplied
+  //     but can only *narrow* the dataset — never expand it beyond the org.
+  const scope: AiScope = body.scope === 'LOCAL' ? 'LOCAL' : 'GLOBAL';
+  const rawOfficeIds: string[] = Array.isArray(body.officeIds)
+    ? body.officeIds.map(String).filter(Boolean)
+    : [];
+
   // 2. Validate or provision the active chat session.
   const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);
 
@@ -156,12 +174,39 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     console.error('Postgres Insertion Error Details:', error);
   }
 
-  // 5. Classify intent — conversation, document revision, or new data request.
-  const intent = await classifyIntent(prompt, memory, Boolean(activeDocument));
+  // 5. Build a scope-context block that is prepended to every LLM call.
+  //    This informs the model about the data boundaries without changing the
+  //    user's persisted prompt text.
+  //
+  //    GLOBAL → full org synthesis across all records.
+  //    LOCAL  → restricted to the employee's assigned office branch(es).
+  const scopeContextBlock: string =
+    scope === 'LOCAL'
+      ? rawOfficeIds.length > 0
+        ? `[SCOPE: OFFICE-LOCAL — This analysis is strictly restricted to documents ` +
+          `registered under or currently resting inside the following office branch(es): ` +
+          `${rawOfficeIds.join(', ')}. ` +
+          `ALL summaries, tables, audit trails, and insights MUST reflect ONLY these ` +
+          `micro-office transactions. Do not surface records from other branches or ` +
+          `organisation-wide statistics unless explicitly requested.]`
+        : `[SCOPE: EMPLOYEE-PERSONAL — This analysis is restricted to documents directly ` +
+          `registered by the authenticated employee only. Do not reference other users' ` +
+          `documents, other offices, or organisation-wide records.]`
+      : `[SCOPE: ORGANIZATION-GLOBAL — This analysis spans the ENTIRE organisation ` +
+        `(org_id: ${orgId}). Provide macro-level synthesis across all document records, ` +
+        `office branches, routing pipelines, and historical transactions. ` +
+        `Aggregate counts, cross-office comparisons, and org-wide trends are appropriate.]`;
+
+  // The AI-facing prompt includes the scope directive; the persisted user turn
+  // stores only the clean user text so the chat log stays readable.
+  const aiPrompt = `${scopeContextBlock}\n\nUser Request: ${prompt}`;
+
+  // 5b. Classify intent — conversation, document revision, or new data request.
+  const intent = await classifyIntent(aiPrompt, memory, Boolean(activeDocument));
 
   // ── Branch R: iterative document revision (no DB re-query) ────────────────
   if (intent === 'document_revision' && activeDocument) {
-    const documentPayload = await reviseDocumentPayload(activeDocument, prompt, memory);
+    const documentPayload = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
     const reply = wantsSpreadsheetFormat(prompt)
       ? `Converted “${documentPayload.title}” into a spreadsheet data matrix.`
       : `Updated “${documentPayload.title}” with your requested changes.`;
@@ -183,7 +228,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // ── Branch A: conversational NLP ──────────────────────────────────────────
   if (intent === 'conversation') {
-    const reply = await generateConversationalReply(prompt, memory);
+    const reply = await generateConversationalReply(aiPrompt, memory);
 
     try {
       await persistMessage(sessionId, 'assistant', reply);
@@ -209,10 +254,29 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   }
 
   const supabase = await serverSupabaseClient(event);
-  const ttqtOutput = (await translateTextToQuery(prompt)) as TextToQueryOutput;
+  const ttqtOutput = (await translateTextToQuery(aiPrompt)) as TextToQueryOutput;
 
   // The org filter is mandatory and unconditional — no cross-tenant reads.
   let query = supabase.from('documents').select('*').eq('org_id', orgId);
+
+  // ── Apply scope filter ──────────────────────────────────────────────────
+  // LOCAL: narrow the result set to documents that live in the employee's
+  //        office branches (origin, current, or legacy office_id column).
+  // GLOBAL: no additional filter — full org view.
+  if (scope === 'LOCAL') {
+    if (rawOfficeIds.length > 0) {
+      const officeList = rawOfficeIds.join(',');
+      query = query.or(
+        `user_id.eq.${userId},` +
+        `origin_office_id.in.(${officeList}),` +
+        `current_office_id.in.(${officeList}),` +
+        `office_id.in.(${officeList})`,
+      );
+    } else {
+      // No offices assigned — restrict to employee's own uploads only
+      query = query.eq('user_id', userId);
+    }
+  }
 
   const searchWords = buildSearchWords(ttqtOutput);
 
@@ -303,13 +367,12 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     })
   );
 
-  const visualTemplateBlueprint = await generateDocumentTemplate(prompt, hydratedRows);
+  // Pass the scope-enriched prompt so the LLM knows whether to frame the output
+  // as a micro-office audit or an org-wide executive synthesis.
+  const visualTemplateBlueprint = await generateDocumentTemplate(aiPrompt, hydratedRows);
 
-  // Document synthesis tier: fuse the hydrated rows + layout blueprint into a
-  // clean, structured textual document (executive summary, sections, table)
-  // rather than a flat grid.
   const documentPayload = await synthesizeDocumentPayload(
-    prompt,
+    aiPrompt,
     hydratedRows,
     visualTemplateBlueprint
   );
@@ -329,9 +392,11 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     success: true,
     mode: 'data_query',
     session_id: sessionId,
+    scope,
     reply,
     meta: {
       userPrompt: prompt,
+      scope,
       interpretedFilters: ttqtOutput.queryFilters,
     },
     databaseResponse: {
