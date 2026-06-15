@@ -4,11 +4,8 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   nitro: {
-    // Inline server-only packages so Vercel lambdas bundle them instead of
-    // resolving from node_modules at runtime (avoids ERR_MODULE_NOT_FOUND).
     externals: {
       inline: ['unpdf', '@supabase/supabase-js'],
-      traceInclude: ['unpdf', 'mammoth', '@supabase/supabase-js'],
     },
   },
   runtimeConfig: {
