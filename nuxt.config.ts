@@ -4,9 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   nitro: {
+    // Keep pdf-parse out of the serverless bundle — Vercel resolves it from
+    // node_modules at runtime (required for native/dynamic CJS deps).
     externals: {
-      inline: ['pdf-parse']
-    }
+      external: ['pdf-parse'],
+    },
   },
   runtimeConfig: {
     mysqlHost: process.env.MYSQL_HOST,
