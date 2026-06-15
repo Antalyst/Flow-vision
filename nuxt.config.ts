@@ -3,6 +3,15 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   ssr: true,
+  nitro: {
+    // PDF text extraction uses `unpdf` (see server/utils/documentParser.ts).
+    // Inline it so Vercel serverless functions do not depend on runtime
+    // node_modules resolution for a dynamic import().
+    externals: {
+      inline: ['unpdf'],
+      traceInclude: ['unpdf', 'mammoth'],
+    },
+  },
   runtimeConfig: {
     mysqlHost: process.env.MYSQL_HOST,
     mysqlUser: process.env.MYSQL_USER,
