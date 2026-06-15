@@ -34,9 +34,47 @@
         Backgrounds, borders, surfaces, and text colors respond to the shared theme state.
       </p>
     </div>
+
+    <div
+      class="mt-6 rounded-lg border p-4"
+      :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'"
+    >
+      <p class="text-sm font-semibold">Account</p>
+      <p class="mt-1 text-xs" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+        Signed in as <span class="font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">{{ auth.user?.email || 'your account' }}</span>
+      </p>
+      <button
+        type="button"
+        class="mt-4 inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:bg-red-500/10 active:scale-[0.98]"
+        :class="isDark
+          ? 'border-red-500/30 text-red-400 hover:border-red-500/50'
+          : 'border-red-200 text-red-600 hover:border-red-300'"
+        :disabled="isLoggingOut"
+        @click="handleLogout"
+      >
+        <Icon v-if="isLoggingOut" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+        <Icon v-else name="ph:sign-out" class="h-4 w-4" />
+        {{ isLoggingOut ? 'Signing out…' : 'Log out' }}
+      </button>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+
+const auth = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
+const isLoggingOut = ref(false)
+
+const handleLogout = async () => {
+  if (isLoggingOut.value) return
+  isLoggingOut.value = true
+  try {
+    await auth.logout()
+  } finally {
+    isLoggingOut.value = false
+  }
+}
 </script>

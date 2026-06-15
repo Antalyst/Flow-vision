@@ -14,9 +14,9 @@
       class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out dark:border-white/5 dark:bg-[#161616] md:static md:z-auto"
       :class="isSidebarOpen ? 'translate-x-0 md:w-64' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden md:border-r-0'"
     >
-      <div class="flex h-full w-64 flex-col">
+      <div class="fv-ai-enter-sidebar flex h-full w-64 flex-col" :class="enterClass">
         <!-- Brand + close (mobile) -->
-        <div class="flex items-center justify-between px-4 py-4">
+        <div class="fv-ai-enter-brand flex items-center justify-between px-4 py-4" :class="enterClass">
           <div class="flex items-center gap-2">
             <img :src="brandLogo" alt="FlowVision" class="h-7 w-7" />
             <span class="text-sm font-bold tracking-tight text-neutral-900 dark:text-white">FlowVision</span>
@@ -34,7 +34,9 @@
         <div class="px-3">
           <button
             type="button"
-            class="flex w-full items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-600 dark:border-white/10 dark:bg-white/[0.03] dark:text-neutral-200 dark:hover:text-orange-400"
+            class="fv-ai-enter-stagger fv-ai-interactive flex w-full items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-all duration-300 hover:scale-[1.02] hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-600 hover:shadow-[0_8px_24px_rgba(249,115,22,0.12)] active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.03] dark:text-neutral-200 dark:hover:text-orange-400"
+            :class="enterClass"
+            :style="staggerDelay(0, 320)"
             @click="newChat"
           >
             <Icon name="ph:plus" class="h-4 w-4" />
@@ -43,18 +45,26 @@
         </div>
 
         <!-- Recents -->
-        <p class="px-5 pb-2 pt-5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500">
+        <p
+          class="fv-ai-enter-stagger px-5 pb-2 pt-5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
+          :class="enterClass"
+          :style="staggerDelay(1, 320)"
+        >
           Recents
         </p>
         <div class="custom-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
           <button
-            v-for="session in sessions"
+            v-for="(session, index) in sessions"
             :key="session.id"
             type="button"
-            class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition"
-            :class="session.id === activeSessionId
-              ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-              : 'text-neutral-600 hover:bg-orange-500/10 hover:text-orange-600 dark:text-neutral-300 dark:hover:text-orange-400'"
+            class="fv-ai-enter-stagger fv-ai-interactive flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-300 hover:translate-x-0.5 hover:shadow-sm active:scale-[0.99]"
+            :class="[
+              enterClass,
+              session.id === activeSessionId
+                ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+                : 'text-neutral-600 hover:bg-orange-500/10 hover:text-orange-600 dark:text-neutral-300 dark:hover:text-orange-400',
+            ]"
+            :style="staggerDelay(index, 390, 55)"
             @click="selectSession(session.id)"
           >
             <Icon name="ph:chat-circle-dots" class="h-4 w-4 flex-shrink-0 opacity-70" />
@@ -72,14 +82,16 @@
     </aside>
 
     <!-- ── Main column ───────────────────────────────────────────────── -->
-    <div class="flex min-w-0 flex-1 flex-col">
+    <div class="fv-ai-enter-workspace flex min-w-0 flex-1 flex-col" :class="enterClass">
       <!-- Top control strip -->
       <header class="flex flex-shrink-0 items-center justify-between gap-2 px-3 py-3 lg:px-5">
         <div class="flex items-center gap-1.5">
           <!-- Gemini-style toggle -->
           <button
             type="button"
-            class="rounded-lg p-2 text-neutral-500 transition hover:bg-black/5 dark:text-neutral-400 dark:hover:bg-white/5"
+            class="fv-ai-enter-stagger fv-ai-interactive rounded-lg p-2 text-neutral-500 transition-all duration-300 hover:scale-105 hover:bg-black/5 active:scale-95 dark:text-neutral-400 dark:hover:bg-white/5"
+            :class="enterClass"
+            :style="staggerDelay(0, 280)"
             aria-label="Toggle sidebar"
             @click="toggleSidebar"
           >
@@ -88,7 +100,9 @@
 
           <button
             type="button"
-            class="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-neutral-500 transition hover:bg-black/5 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+            class="fv-ai-enter-stagger fv-ai-interactive group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-neutral-500 transition-all duration-300 hover:scale-[1.02] hover:bg-black/5 hover:text-neutral-900 active:scale-[0.98] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+            :class="enterClass"
+            :style="staggerDelay(1, 280)"
             @click="backToDashboard"
           >
             <Icon name="ph:arrow-left" class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
@@ -96,7 +110,10 @@
           </button>
         </div>
 
-        <span class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300">
+        <span
+          class="fv-ai-enter-brand fv-ai-interactive inline-flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 transition-all duration-300 hover:scale-105 hover:border-orange-500/40 hover:shadow-[0_0_22px_rgba(249,115,22,0.18)] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-orange-500/30"
+          :class="enterClass"
+        >
           <span class="relative flex h-1.5 w-1.5">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
             <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500"></span>
@@ -117,28 +134,42 @@
           v-if="showSplash && chatHistory.length === 0 && !isLoading && !isHydrating"
           class="flex flex-1 flex-col items-center justify-center px-4 text-center"
         >
-          <div class="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl">
+          <div
+            class="fv-ai-enter-hero fv-ai-logo-glow mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/5 shadow-[0_0_32px_rgba(249,115,22,0.12)]"
+            :class="enterClass"
+            :style="staggerDelay(0, 420)"
+          >
             <img :src="brandLogo" alt="FlowVision" class="h-9 w-9" />
           </div>
-          <h1 class="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
+          <h1
+            class="fv-ai-enter-hero text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl dark:text-white"
+            :class="enterClass"
+            :style="staggerDelay(1, 420)"
+          >
             Where should we start?
           </h1>
-          <p class="mt-3 max-w-md text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">
+          <p
+            class="fv-ai-enter-hero mt-3 max-w-md text-sm leading-relaxed text-neutral-500 dark:text-neutral-400"
+            :class="enterClass"
+            :style="staggerDelay(2, 420)"
+          >
             Ask in plain language and FlowVision will assemble it from your organization's records —
             securely scoped to your tenant.
           </p>
 
           <div class="mt-8 flex w-full max-w-md flex-col gap-2.5">
             <button
-              v-for="chip in suggestionChips"
+              v-for="(chip, index) in suggestionChips"
               :key="chip.label"
               type="button"
-              class="group flex items-center gap-3 rounded-xl border border-gray-200 bg-black/[0.02] px-4 py-3 text-left text-sm text-neutral-600 transition-all duration-200 hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-600 dark:border-white/5 dark:bg-white/[0.02] dark:text-neutral-300 dark:hover:text-white"
+              class="fv-ai-enter-hero fv-ai-interactive group flex items-center gap-3 rounded-xl border border-gray-200 bg-black/[0.02] px-4 py-3 text-left text-sm text-neutral-600 transition-all duration-300 hover:scale-[1.02] hover:border-orange-500/35 hover:bg-orange-500/10 hover:text-orange-600 hover:shadow-[0_10px_28px_rgba(249,115,22,0.1)] active:scale-[0.98] dark:border-white/5 dark:bg-white/[0.02] dark:text-neutral-300 dark:hover:text-white"
+              :class="enterClass"
+              :style="staggerDelay(index, 520, 80)"
               @click="useSuggestion(chip.label)"
             >
-              <Icon :name="chip.icon" class="h-4 w-4 flex-shrink-0 text-orange-400/80" />
+              <Icon :name="chip.icon" class="h-4 w-4 flex-shrink-0 text-orange-400/80 transition-transform duration-300 group-hover:scale-110" />
               <span class="flex-1 truncate">{{ chip.label }}</span>
-              <Icon name="ph:arrow-up-right" class="h-3.5 w-3.5 text-neutral-400 transition group-hover:text-orange-500 dark:text-neutral-600" />
+              <Icon name="ph:arrow-up-right" class="h-3.5 w-3.5 text-neutral-400 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-orange-500 dark:text-neutral-600" />
             </button>
           </div>
         </div>
@@ -187,10 +218,10 @@
                 <button
                   v-if="msg.documentPayload"
                   type="button"
-                  class="group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition"
+                  class="fv-ai-interactive group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
                   :class="activeDoc === msg.documentPayload && isCanvasOpen
-                    ? 'border-orange-500/60 bg-orange-500/10'
-                    : 'border-orange-500/30 bg-orange-500/[0.06] hover:border-orange-500/60 hover:bg-orange-500/10'"
+                    ? 'border-orange-500/60 bg-orange-500/10 shadow-[0_8px_24px_rgba(249,115,22,0.12)]'
+                    : 'border-orange-500/30 bg-orange-500/[0.06] hover:border-orange-500/60 hover:bg-orange-500/10 hover:shadow-[0_8px_24px_rgba(249,115,22,0.1)]'"
                   @click="openCanvas(msg.documentPayload)"
                 >
                   <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow">
@@ -234,10 +265,13 @@
         </div>
 
         <!-- Input console -->
-        <div class="flex-shrink-0 px-4 pb-5 pt-2">
+        <div
+          class="fv-ai-enter-input flex-shrink-0 px-4 pb-5 pt-2"
+          :class="enterClass"
+        >
           <div class="mx-auto w-full max-w-3xl">
             <form
-              class="flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg transition focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/20 dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-2xl dark:backdrop-blur-xl"
+              class="fv-ai-interactive flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg transition-all duration-300 focus-within:scale-[1.01] focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/20 focus-within:shadow-[0_12px_40px_rgba(249,115,22,0.12)] dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-2xl dark:backdrop-blur-xl"
               @submit.prevent="submitQuery"
             >
               <textarea
@@ -251,7 +285,7 @@
               <button
                 type="submit"
                 :disabled="isLoading || !inputPrompt.trim()"
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-600 text-white shadow transition-all hover:bg-orange-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
+                class="fv-ai-interactive flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-600 text-white shadow transition-all duration-300 hover:scale-105 hover:bg-orange-500 hover:shadow-[0_8px_20px_rgba(249,115,22,0.35)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
               >
                 <Icon v-if="isLoading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
                 <Icon v-else name="ph:arrow-up" class="h-4 w-4" />
@@ -271,56 +305,83 @@
           :class="isCanvasOpen ? 'translate-x-0' : 'pointer-events-none translate-x-full'"
           aria-label="Document canvas"
         >
-          <div class="flex h-full w-full flex-col border-l border-gray-200 bg-[#EEF0F3] shadow-2xl dark:border-white/10 dark:bg-[#0B0B0D]">
+          <div class="fv-canvas-glass-panel flex h-full w-full flex-col border-l border-white/20 bg-white/70 shadow-2xl backdrop-blur-lg dark:border-slate-800/40 dark:bg-slate-900/60">
             <!-- Canvas header -->
-            <div class="flex flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white/70 px-5 py-3 backdrop-blur dark:border-white/10 dark:bg-white/[0.03]">
-              <Icon
-                :name="isSpreadsheetCanvas ? 'ph:table' : 'ph:file-text'"
-                class="h-4 w-4 flex-shrink-0"
-                :class="isSpreadsheetCanvas ? 'text-emerald-500' : 'text-orange-500'"
-              />
-              <span class="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800 dark:text-neutral-100">
-                {{ documentPayload?.title || 'Document Canvas' }}
+            <div class="fv-canvas-header flex flex-shrink-0 items-center gap-3 border-b border-white/30 px-4 py-3 backdrop-blur-md sm:px-5 dark:border-white/[0.06]">
+              <span
+                class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 shadow-[0_0_12px_rgba(249,115,22,0.15)]"
+              >
+                <Icon
+                  :name="isSpreadsheetCanvas ? 'ph:grid-nine' : 'ph:file-text'"
+                  class="h-4 w-4 text-orange-500 dark:text-orange-400"
+                />
               </span>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-600/80 dark:text-orange-400/80">
+                  {{ isSpreadsheetCanvas ? 'Data Matrix' : 'Document Canvas' }}
+                </p>
+                <span class="block truncate text-sm font-semibold text-neutral-900 dark:text-neutral-50">
+                  {{ documentPayload?.title || 'Awaiting document' }}
+                </span>
+              </div>
 
               <!-- Export action group -->
-              <div v-if="documentPayload" class="flex flex-shrink-0 items-center gap-1.5">
+              <div
+                v-if="documentPayload"
+                class="fv-canvas-actions flex flex-shrink-0 items-center gap-2 rounded-xl border border-orange-500/20 bg-white/40 p-1 backdrop-blur-sm dark:border-orange-500/25 dark:bg-white/[0.04]"
+              >
                 <button
                   v-if="isSpreadsheetCanvas"
                   type="button"
                   :disabled="isExporting"
-                  class="group inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-500/50 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-500/15"
+                  class="fv-canvas-export-btn group inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-white/60 px-3 py-2 text-xs font-semibold text-neutral-800 shadow-[0_0_20px_rgba(249,115,22,0.12)] transition-all duration-300 hover:scale-105 hover:border-orange-500/50 hover:bg-orange-500/10 hover:shadow-[0_0_24px_rgba(249,115,22,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.06] dark:text-neutral-100 dark:hover:bg-orange-500/15"
                   @click="downloadAsExcel"
                 >
-                  <Icon
-                    :name="isExporting ? 'ph:spinner-gap' : 'ph:file-arrow-down'"
-                    class="h-4 w-4 transition group-hover:translate-y-0.5"
-                    :class="isExporting ? 'animate-spin' : ''"
-                  />
-                  <span class="hidden sm:inline">Download as Excel (.xlsx)</span>
-                  <span class="sm:hidden">Excel</span>
+                  <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/25">
+                    <svg
+                      v-if="!isExporting"
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" class="stroke-emerald-600 dark:stroke-emerald-400" stroke-width="1.5" />
+                      <path d="M3 9h18M3 15h18M9 3v18M15 3v18" class="stroke-emerald-600/70 dark:stroke-emerald-400/70" stroke-width="1.25" />
+                    </svg>
+                    <Icon v-else name="ph:spinner-gap" class="h-3.5 w-3.5 animate-spin text-orange-500" />
+                  </span>
+                  <span class="hidden sm:inline">Export Spreadsheet</span>
+                  <span class="sm:hidden">Export</span>
                 </button>
 
                 <button
                   v-else
                   type="button"
                   :disabled="isExporting"
-                  class="group inline-flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-1.5 text-xs font-semibold text-orange-700 transition hover:border-orange-500/50 hover:bg-orange-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-orange-400 dark:hover:bg-orange-500/15"
+                  class="fv-canvas-export-btn group inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-white/60 px-3 py-2 text-xs font-semibold text-neutral-800 shadow-[0_0_20px_rgba(249,115,22,0.12)] transition-all duration-300 hover:scale-105 hover:border-orange-500/50 hover:bg-orange-500/10 hover:shadow-[0_0_24px_rgba(249,115,22,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.06] dark:text-neutral-100 dark:hover:bg-orange-500/15"
                   @click="downloadAsDocx"
                 >
-                  <Icon
-                    :name="isExporting ? 'ph:spinner-gap' : 'ph:file-arrow-down'"
-                    class="h-4 w-4 transition group-hover:translate-y-0.5"
-                    :class="isExporting ? 'animate-spin' : ''"
-                  />
-                  <span class="hidden sm:inline">Download as Word (.docx)</span>
-                  <span class="sm:hidden">Word</span>
+                  <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-blue-500/15 ring-1 ring-blue-500/25">
+                    <svg
+                      v-if="!isExporting"
+                      class="h-3.5 w-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" class="stroke-blue-600 dark:stroke-blue-400" stroke-width="1.5" stroke-linejoin="round" />
+                      <path d="M14 3v5h5M8 13h8M8 17h5" class="stroke-blue-600/80 dark:stroke-blue-400/80" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <Icon v-else name="ph:spinner-gap" class="h-3.5 w-3.5 animate-spin text-orange-500" />
+                  </span>
+                  <span class="hidden sm:inline">Download Document</span>
+                  <span class="sm:hidden">Download</span>
                 </button>
               </div>
 
               <button
                 type="button"
-                class="rounded-lg p-1.5 text-neutral-500 transition hover:bg-black/5 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+                class="rounded-xl border border-white/40 bg-white/50 p-2 text-neutral-600 shadow-sm transition-all duration-300 hover:scale-105 hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-600 active:scale-95 dark:border-white/10 dark:bg-white/[0.05] dark:text-neutral-300 dark:hover:text-orange-400"
                 aria-label="Close canvas"
                 @click="closeCanvas"
               >
@@ -329,16 +390,16 @@
             </div>
 
             <!-- Paper scroll surface (vertical page movement) -->
-            <div class="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10">
+            <div class="fv-canvas-scroll custom-scrollbar relative min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
               <article
                 v-if="documentPayload"
-                class="fv-canvas-article mx-auto w-full min-w-0 rounded-sm bg-white text-neutral-800 shadow-xl ring-1 ring-black/5 transition-all duration-500 dark:bg-[#141416] dark:text-neutral-200 dark:ring-white/10"
+                class="fv-canvas-paper fv-canvas-article mx-auto w-full min-w-0 rounded-2xl bg-white text-neutral-800 shadow-2xl ring-1 ring-black/[0.04] transition-all duration-500 dark:bg-[#141416] dark:text-neutral-200 dark:ring-white/10"
                 :class="isSpreadsheetCanvas
                   ? 'max-w-none px-4 py-5 sm:px-6 sm:py-6'
                   : 'max-w-3xl px-7 py-9 sm:px-12 sm:py-14'"
               >
                 <header
-                  class="border-b border-neutral-200 pb-6 dark:border-neutral-700"
+                  class="border-b border-neutral-200/80 pb-6 dark:border-neutral-700/80"
                   :class="isSpreadsheetCanvas ? 'mb-4' : 'mb-8'"
                 >
                   <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-600 dark:text-orange-400">
@@ -371,10 +432,13 @@
 
               <div
                 v-else
-                class="flex h-full flex-col items-center justify-center text-center text-neutral-400 dark:text-neutral-600"
+                class="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/40 bg-white/30 px-6 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]"
               >
-                <Icon name="ph:file-dashed" class="mb-3 h-10 w-10" />
-                <p class="text-sm">No document is open yet.</p>
+                <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.12)]">
+                  <Icon name="ph:file-dashed" class="h-7 w-7 text-orange-500/70 dark:text-orange-400/70" />
+                </span>
+                <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">No document is open yet.</p>
+                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-500">Ask FlowVision to generate a report or matrix.</p>
               </div>
             </div>
           </div>
@@ -420,6 +484,7 @@ interface StoredMessage {
 }
 
 const { isDark } = useTheme()
+const { enterClass, staggerDelay } = useAiWorkspaceEntrance()
 const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png'))
 
 const inputPrompt = ref('')
@@ -1017,6 +1082,203 @@ onBeforeUnmount(() => {
 .think-leave-to {
   opacity: 0;
   transform: translateY(-6px);
+}
+
+/* ── AI workspace mount entrance (/client/ai) ─────────────────────────── */
+.fv-ai-enter-sidebar,
+.fv-ai-enter-workspace,
+.fv-ai-enter-brand {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  transition-property: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Step 1 — Left chat panel: slide from left + fade */
+.fv-ai-enter-sidebar {
+  opacity: 0;
+  transform: translate3d(-1rem, 0, 0);
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-ai-enter-sidebar.fv-ai-enter-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.fv-ai-enter-sidebar:not(.fv-ai-enter-visible) {
+  pointer-events: none;
+}
+
+/* Step 2 — Main workspace canvas: float up + fade */
+.fv-ai-enter-workspace {
+  opacity: 0;
+  transform: translate3d(0, 1rem, 0);
+  transition-duration: 500ms;
+  transition-delay: 150ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-ai-enter-workspace.fv-ai-enter-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.fv-ai-enter-workspace:not(.fv-ai-enter-visible) {
+  pointer-events: none;
+}
+
+/* Step 3 — Branding & status badges: micro-scale pop */
+.fv-ai-enter-brand {
+  opacity: 0;
+  transform: scale(0.95);
+  transition-duration: 300ms;
+  transition-delay: 300ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-ai-enter-brand.fv-ai-enter-visible {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.fv-ai-enter-brand:not(.fv-ai-enter-visible) {
+  pointer-events: none;
+}
+
+/* Staggered child items — slide + fade with inline delay */
+.fv-ai-enter-stagger {
+  opacity: 0;
+  transform: translate3d(-0.625rem, 0, 0);
+  transition-property: transform, opacity, box-shadow, border-color, background-color;
+  transition-duration: 450ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-ai-enter-stagger.fv-ai-enter-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Splash hero beats — float up + subtle scale */
+.fv-ai-enter-hero {
+  opacity: 0;
+  transform: translate3d(0, 0.875rem, 0) scale(0.97);
+  transition-property: transform, opacity, box-shadow;
+  transition-duration: 550ms;
+  transition-timing-function: cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.fv-ai-enter-hero.fv-ai-enter-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Step 4 — Chat input dock: rises last */
+.fv-ai-enter-input {
+  opacity: 0;
+  transform: translate3d(0, 1.25rem, 0);
+  transition-duration: 550ms;
+  transition-delay: 450ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fv-ai-enter-input.fv-ai-enter-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.fv-ai-enter-input:not(.fv-ai-enter-visible) {
+  pointer-events: none;
+}
+
+/* Ambient logo pulse on splash */
+.fv-ai-logo-glow.fv-ai-enter-visible {
+  animation: fvAiLogoPulse 3s ease-in-out 0.8s infinite;
+}
+
+@keyframes fvAiLogoPulse {
+  0%, 100% {
+    box-shadow: 0 0 32px rgba(249, 115, 22, 0.12);
+  }
+  50% {
+    box-shadow: 0 0 44px rgba(249, 115, 22, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fv-ai-enter-sidebar,
+  .fv-ai-enter-workspace,
+  .fv-ai-enter-brand,
+  .fv-ai-enter-stagger,
+  .fv-ai-enter-hero,
+  .fv-ai-enter-input {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    pointer-events: auto !important;
+    animation: none !important;
+  }
+}
+
+/* ── Glassmorphic canvas panel system ─────────────────────────────────── */
+.fv-canvas-glass-panel {
+  position: relative;
+  isolation: isolate;
+}
+
+.fv-canvas-glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(249, 115, 22, 0.08), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(249, 115, 22, 0.05), transparent 50%);
+  z-index: 0;
+}
+
+:global(html.dark) .fv-canvas-glass-panel::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(249, 115, 22, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(249, 115, 22, 0.06), transparent 50%);
+}
+
+.fv-canvas-header {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+:global(html.dark) .fv-canvas-header {
+  background: rgba(15, 23, 42, 0.45);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.fv-canvas-scroll {
+  position: relative;
+  z-index: 1;
+}
+
+.fv-canvas-paper {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.06),
+    0 20px 40px -12px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+}
+
+:global(html.dark) .fv-canvas-paper {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.35),
+    0 24px 48px -12px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 40px rgba(249, 115, 22, 0.04);
 }
 
 /* Formal document typography for synthesized HTML (rendered via v-html → :deep). */

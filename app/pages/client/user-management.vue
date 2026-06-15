@@ -1,9 +1,9 @@
 <template>
-  <WorkspacePlaceholder title="User Management" />
+  <UserManagementComp />
 </template>
 
 <script setup lang="ts">
-import WorkspacePlaceholder from '~/components/client/WorkspacePlaceholder.vue'
+import UserManagementComp from '~/components/client/users/UserManagementComp.vue'
 
 definePageMeta({ layout: 'client' })
 </script>

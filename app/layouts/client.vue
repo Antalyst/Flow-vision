@@ -3,7 +3,10 @@
     :class="isDark ? 'bg-rich-black text-white' : 'bg-surface text-heading-dark'">
 
     <!-- Mobile Top Bar -->
-    <div class="md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-card-border bg-white dark:bg-card-dark sticky top-0 z-50">
+    <div
+      class="fv-enter-header md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-card-border bg-white dark:bg-card-dark sticky top-0 z-50"
+      :class="entranceVisibleClass"
+    >
       <button @click="mobileMenuOpen = true" class="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-rich-black/50 transition">
         <Icon name="ph:list" class="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
@@ -49,9 +52,10 @@
 
     <div class="flex min-h-0 w-full flex-1 overflow-hidden">
       <!-- Desktop Sidebar -->
-      <aside class="hidden md:flex md:w-64 h-full flex-shrink-0 flex-col overflow-hidden border-r"
-        :class="isDark ? 'bg-sidebar-dark border-card-border' : 'bg-white border-gray-200'"
-        >
+      <aside
+        class="fv-enter-sidebar relative z-30 hidden md:flex md:w-64 h-full flex-shrink-0 flex-col overflow-hidden border-r"
+        :class="[isDark ? 'bg-sidebar-dark border-card-border' : 'bg-white border-gray-200', entranceVisibleClass]"
+      >
 
         <!-- Brand -->
         <div class="px-5 pt-5 pb-2 flex-none">
@@ -95,7 +99,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="h-full flex-grow min-w-0 w-full p-4 md:p-8 overflow-y-auto" :class="isDark ? 'bg-rich-black' : 'bg-surface'">
+      <main class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 md:p-8" :class="isDark ? 'bg-rich-black' : 'bg-surface'">
         <div class="w-full">
           <ClientOrgSetup v-if="auth.needsOrgSetup" />
           <slot v-else />
@@ -129,6 +133,7 @@ import ClientOrgSetup from '~/components/client/org.vue'
 const auth = useAuthStore()
 const { isDark } = useTheme()
 const route = useRoute()
+const { entranceVisibleClass } = provideDashboardEntrance()
 
 // Theme-aware branding: dark logo for light surfaces, white logo for dark.
 const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png'))

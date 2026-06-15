@@ -246,7 +246,12 @@ const form = ref({
 })
 
 const getPostLoginRoute = (role = '') => {
-  return role.toLowerCase() === 'client' ? '/client' : '/client/office'
+  const map = {
+    client: '/client/dashboard',
+    employee: '/employee/dashboard',
+    messenger: '/messenger/dashboard',
+  }
+  return map[role.toLowerCase().trim()] ?? '/'
 }
 
 const callAccType = async () => {

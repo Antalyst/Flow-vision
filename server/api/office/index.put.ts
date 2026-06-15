@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   try {
     const client = await serverSupabaseClient(event)
     const body = await readBody(event)
-    const { id, name, assigned_user, stage_id } = body
+    const { id, name, assigned_user, stage_id, code } = body
 
     if (!id) {
       throw createError({
@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
     if (name !== undefined) updateData.name = name
     if (assigned_user !== undefined) updateData.assigned_user = assigned_user
     if (stage_id !== undefined) updateData.stage_id = stage_id
+    if (code !== undefined && (code ?? '').trim()) updateData.code = code.trim()
 
     const { data, error } = await client
       .from('offices')
