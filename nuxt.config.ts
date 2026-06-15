@@ -4,12 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   nitro: {
-    // PDF text extraction uses `unpdf` (see server/utils/documentParser.ts).
-    // Inline it so Vercel serverless functions do not depend on runtime
-    // node_modules resolution for a dynamic import().
+    // Inline server-only packages so Vercel lambdas bundle them instead of
+    // resolving from node_modules at runtime (avoids ERR_MODULE_NOT_FOUND).
     externals: {
-      inline: ['unpdf'],
-      traceInclude: ['unpdf', 'mammoth'],
+      inline: ['unpdf', '@supabase/supabase-js'],
+      traceInclude: ['unpdf', 'mammoth', '@supabase/supabase-js'],
     },
   },
   runtimeConfig: {
