@@ -1,4 +1,3 @@
-import Groq from 'groq-sdk'
 import { extractTextFromFile } from '~~/server/utils/documentParser'
 
 export interface DocumentAnalysis {
@@ -47,6 +46,7 @@ export const analyzeDocument = async (text: string): Promise<DocumentAnalysis> =
   if (!trimmed) return { ...FALLBACK_ANALYSIS }
 
   try {
+    const { default: Groq } = await import('groq-sdk')
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
     const completion = await groq.chat.completions.create({

@@ -1,0 +1,71 @@
+import { d as defineEventHandler, f as readBody, c as createError, v as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, n as broadcastIssueRealtime, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
+import { s as serverSupabaseClient } from '../../../../_/serverSupabaseClient.mjs';
+import 'node:crypto';
+import '@supabase/supabase-js';
+import 'groq-sdk';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'mysql2/promise';
+import '@iconify/utils';
+import 'consola';
+import 'node:fs';
+import 'node:path';
+import '@supabase/ssr';
+
+const messages_post = defineEventHandler(async (event) => {
+  var _a, _b, _c;
+  const client = await serverSupabaseClient(event);
+  const body = await readBody(event);
+  const issueId = String((_a = body == null ? void 0 : body.issue_id) != null ? _a : "").trim();
+  const messageText = String((_b = body == null ? void 0 : body.message_text) != null ? _b : "").trim();
+  if (!issueId) throw createError({ statusCode: 400, message: "issue_id is required." });
+  if (!messageText) throw createError({ statusCode: 400, message: "message_text is required." });
+  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId);
+  if (!ISSUE_ALLOWED_ROLES.includes(actor.userRole)) {
+    throw createError({
+      statusCode: 403,
+      message: "Forbidden: only client or employee accounts may post issue messages."
+    });
+  }
+  if (issue.status === "RESOLVED") {
+    throw createError({
+      statusCode: 422,
+      message: "This issue thread is resolved. Reopen the issue before posting new messages."
+    });
+  }
+  const { data: message, error: msgErr } = await client.from("document_messages").insert({
+    issue_id: issueId,
+    sender_id: actor.userId,
+    message_text: messageText
+  }).select("id, issue_id, sender_id, message_text, created_at").single();
+  if (msgErr || !message) {
+    throw createError({
+      statusCode: 500,
+      message: (_c = msgErr == null ? void 0 : msgErr.message) != null ? _c : "Failed to post message."
+    });
+  }
+  const enriched = {
+    ...message,
+    sender_name: actor.fullName,
+    sender_role: actor.userRole
+  };
+  await broadcastIssueRealtime(actor.orgId, issueId, "new_message", {
+    type: "new_message",
+    issue_id: issueId,
+    message: enriched,
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  return {
+    success: true,
+    data: enriched,
+    realtime: {
+      channel: issueRealtimeChannel(actor.orgId, issueId),
+      event: "new_message"
+    }
+  };
+});
+
+export { messages_post as default };
+//# sourceMappingURL=messages.post.mjs.map

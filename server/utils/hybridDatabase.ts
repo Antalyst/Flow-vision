@@ -1,8 +1,6 @@
 // server/utils/hybridDatabase.ts
-import { SupabaseClient } from '@supabase/supabase-js';
-
-// Assuming extractTextFromFile is globally declared or imported from your custom workspace path
-// import { extractTextFromFile } from './extractor'; 
+import { SupabaseClient } from '@supabase/supabase-js'
+import { extractTextFromFile } from './documentParser'
 
 export interface QueryFilters {
   years?: number[];
@@ -62,8 +60,6 @@ export async function fetchAndHydrateDocuments(
           if (rows && rows.length > 0) {
             const mysqlRecord = rows[0];
             
-            // Execute physical byte stream parser utility tool
-            // @ts-ignore
             const rawExtractedText = await extractTextFromFile({
               filename: mysqlRecord.file_name,
               data: mysqlRecord.file_blob

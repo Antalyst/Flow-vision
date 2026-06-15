@@ -1,0 +1,34 @@
+import { d as defineEventHandler, c as createError, a as useRuntimeConfig } from '../../_/nitro.mjs';
+import { createClient } from '@supabase/supabase-js';
+import 'node:crypto';
+import 'groq-sdk';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'mysql2/promise';
+import '@iconify/utils';
+import 'consola';
+import 'node:fs';
+import 'node:path';
+
+const index_get = defineEventHandler(async (event) => {
+  const config = useRuntimeConfig();
+  const client = createClient(
+    config.public.supabaseUrl,
+    config.supabaseServiceKey
+  );
+  try {
+    const { data: accountTypes, error } = await client.from("account_types").select("*").order("name", { ascending: true });
+    if (error) throw error;
+    return accountTypes;
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: error.message || "Error fetching account types"
+    });
+  }
+});
+
+export { index_get as default };
+//# sourceMappingURL=index.get.mjs.map

@@ -3,13 +3,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   ssr: true,
-  nitro: {
-    // Externalize pdf-parse (+ pdfjs-dist) so Vercel installs them in the
-    // serverless layer instead of bundling their CJS/worker assets inline.
-    externals: {
-      external: ['pdf-parse', 'pdfjs-dist'],
-    },
-  },
   runtimeConfig: {
     mysqlHost: process.env.MYSQL_HOST,
     mysqlUser: process.env.MYSQL_USER,
