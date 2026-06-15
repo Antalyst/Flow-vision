@@ -5,7 +5,28 @@ export default defineNuxtConfig({
   ssr: true,
   nitro: {
     externals: {
-      inline: ['unpdf', '@supabase/supabase-js'],
+      inline: [
+        'unpdf',
+        '@supabase/supabase-js',
+        '@supabase/ssr',
+        '@supabase/auth-js',
+        '@supabase/postgrest-js',
+        '@supabase/realtime-js',
+        '@supabase/storage-js',
+        '@supabase/functions-js',
+        '@supabase/phoenix',
+      ],
+      traceInclude: [
+        '@supabase/supabase-js',
+        '@supabase/ssr',
+        '@supabase/auth-js',
+        '@supabase/postgrest-js',
+        '@supabase/realtime-js',
+        '@supabase/storage-js',
+        '@supabase/functions-js',
+        '@supabase/phoenix',
+        'mammoth',
+      ],
     },
   },
   runtimeConfig: {

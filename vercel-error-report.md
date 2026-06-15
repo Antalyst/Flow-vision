@@ -157,3 +157,83 @@ Hit a route that parses PDFs server-side, for example document upload or RAG que
 ## Summary
 
 The failure was a **serverless bundling + tracing** problem: externalized `pdf-parse` loaded through `createRequire` was not present in the Vercel function at runtime. The durable fix is **`unpdf` + Nitro inline/trace configuration**, not re-adding `pdf-parse` or externalizing it. After a clean `npm ci`, successful `npm run build`, and a **cache-cleared Vercel redeploy**, the error should not return.
+
+---
+
+## Supabase `ERR_MODULE_NOT_FOUND` on Vercel
+
+**Error:** `Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@supabase/supabase-js'`
+
+### Root cause
+
+Nitro’s Vercel build emitted **bare ESM imports** (`import { createClient } from '@supabase/supabase-js'`) in route chunks and the core `nitro.mjs` bundle, but the lambda **did not ship a resolvable `node_modules` tree**. The function `package.json` listed Supabase packages, yet `node_modules/@supabase/` was absent from `.vercel/output/functions/__fallback.func/`.
+
+15+ server routes import `@supabase/supabase-js` directly; many others use `#supabase/server` (which pulls in `@supabase/ssr`). Without inlining, any cold start that hits those chunks fails module resolution.
+
+### Fixes applied
+
+| Area | Change |
+|------|--------|
+| **`package.json`** | `@supabase/supabase-js` listed under production **`dependencies`** (`^2.105.1`) |
+| **`nuxt.config.ts`** | `nitro.externals.inline` + `traceInclude` for the full Supabase stack (see below) |
+
+Final Nitro block in `nuxt.config.ts`:
+
+```ts
+nitro: {
+  externals: {
+    inline: [
+      'unpdf',
+      '@supabase/supabase-js',
+      '@supabase/ssr',
+      '@supabase/auth-js',
+      '@supabase/postgrest-js',
+      '@supabase/realtime-js',
+      '@supabase/storage-js',
+      '@supabase/functions-js',
+      '@supabase/phoenix',
+    ],
+    traceInclude: [
+      '@supabase/supabase-js',
+      '@supabase/ssr',
+      '@supabase/auth-js',
+      '@supabase/postgrest-js',
+      '@supabase/realtime-js',
+      '@supabase/storage-js',
+      '@supabase/functions-js',
+      '@supabase/phoenix',
+      'mammoth',
+    ],
+  },
+},
+```
+
+After this configuration, a **Vercel-preset build** inlines the entire Supabase SDK into `nitro.mjs` (~28k+ lines). Route chunks import `createClient` from `nitro.mjs` instead of external package specifiers. **Zero** `@supabase/*` imports remain in route or build chunks.
+
+### Verification commands (must use Vercel preset)
+
+```powershell
+Remove-Item -Recurse -Force .nuxt, .output, .vercel\output -ErrorAction SilentlyContinue
+$env:NITRO_PRESET = 'vercel'
+npm run build
+
+# Pass: zero matches (no external Supabase imports in API routes)
+Select-String -Path .vercel\output\functions\__fallback.func\chunks\routes\**\*.mjs -Pattern '@supabase/'
+
+# Pass: zero top-level imports from @supabase in nitro core
+Select-String -Path .vercel\output\functions\__fallback.func\chunks\_\nitro.mjs -Pattern "^import .* from '@supabase/"
+
+# Pass: manifest lists SDK
+Select-String -Path .vercel\output\functions\__fallback.func\package.json -Pattern '@supabase/supabase-js'
+```
+
+### Deploy
+
+Push changes, then **Redeploy on Vercel with Clear build cache**. Stale lambda layers can still serve the old external-import bundle.
+
+```powershell
+git add nuxt.config.ts package.json package-lock.json vercel-error-report.md
+git commit -m "fix: inline Supabase SDK for Vercel serverless bundling"
+git push fv main
+```
+
