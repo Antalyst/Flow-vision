@@ -110,16 +110,33 @@
           </button>
         </div>
 
-        <span
-          class="fv-ai-enter-brand fv-ai-interactive inline-flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 transition-all duration-300 hover:scale-105 hover:border-orange-500/40 hover:shadow-[0_0_22px_rgba(249,115,22,0.18)] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-orange-500/30"
-          :class="enterClass"
-        >
-          <span class="relative flex h-1.5 w-1.5">
-            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
-            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+        <div class="flex items-center gap-2">
+          <!-- Scope context badge -->
+          <span
+            class="fv-ai-enter-brand inline-flex cursor-default items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all duration-300"
+            :class="[
+              enterClass,
+              props.scope === 'LOCAL'
+                ? 'border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 dark:border-orange-500/25 dark:bg-orange-500/[0.08]'
+                : 'border-gray-200 bg-white text-neutral-500 dark:border-white/10 dark:bg-white/5 dark:text-neutral-400',
+            ]"
+          >
+            <Icon :name="scopeIcon" class="h-3.5 w-3.5 flex-none" />
+            {{ scopeLabel }}
           </span>
-          FlowVision Intelligence
-        </span>
+
+          <!-- Live indicator -->
+          <span
+            class="fv-ai-enter-brand fv-ai-interactive inline-flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 transition-all duration-300 hover:scale-105 hover:border-orange-500/40 hover:shadow-[0_0_22px_rgba(249,115,22,0.18)] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-orange-500/30"
+            :class="enterClass"
+          >
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+              <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+            </span>
+            FlowVision Intelligence
+          </span>
+        </div>
       </header>
 
       <!-- Split workspace: chat timeline (left 40%) + sliding document canvas (right 60%) -->
@@ -153,8 +170,14 @@
             :class="enterClass"
             :style="staggerDelay(2, 420)"
           >
-            Ask in plain language and FlowVision will assemble it from your organization's records —
-            securely scoped to your tenant.
+            <template v-if="props.scope === 'LOCAL'">
+              Ask anything about your office branches. FlowVision Intelligence will
+              analyze only the records scoped to your assigned sub-offices — nothing else.
+            </template>
+            <template v-else>
+              Ask in plain language and FlowVision will assemble it from your entire
+              organization's records — securely scoped to your tenant.
+            </template>
           </p>
 
           <div class="mt-8 flex w-full max-w-md flex-col gap-2.5">
@@ -325,6 +348,17 @@
                 </span>
               </div>
 
+              <!-- Scope context micro-tag on the canvas -->
+              <span
+                class="hidden items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider sm:inline-flex"
+                :class="props.scope === 'LOCAL'
+                  ? 'border-orange-500/20 bg-orange-500/10 text-orange-600 dark:text-orange-400'
+                  : 'border-white/20 bg-white/10 text-neutral-500 dark:border-white/10 dark:text-neutral-500'"
+              >
+                <Icon :name="scopeIcon" class="h-2.5 w-2.5" />
+                {{ scopeLabel }}
+              </span>
+
               <!-- Export action group -->
               <div
                 v-if="documentPayload"
@@ -449,7 +483,29 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, computed } from 'vue'
+
+// ── Scope props ────────────────────────────────────────────────────────
+// AiCanvasWorkspace is role-agnostic; the caller (client/ai.vue or
+// employee/ai.vue) stamps the perspective context through these props.
+const props = withDefaults(
+  defineProps<{
+    /** Big Picture (entire org) or Small Picture (employee's offices) */
+    scope?: 'GLOBAL' | 'LOCAL'
+    /** UUIDs of assigned offices — required when scope === 'LOCAL' */
+    officeIds?: string[]
+    /** Route to navigate to when the back button is pressed */
+    backRoute?: string
+    /** Caller role — drives labelling and suggestion chip copy */
+    roleContext?: 'client' | 'employee'
+  }>(),
+  {
+    scope:       'GLOBAL',
+    officeIds:   () => [],
+    backRoute:   '/client/dashboard',
+    roleContext: 'client',
+  },
+)
 
 interface DatasetColumn {
   key: string
@@ -486,6 +542,14 @@ interface StoredMessage {
 const { isDark } = useTheme()
 const { enterClass, staggerDelay } = useAiWorkspaceEntrance()
 const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png'))
+
+// ── Scope-derived helpers ──────────────────────────────────────────────
+const scopeLabel = computed(() =>
+  props.scope === 'LOCAL' ? 'Office View' : 'Org View',
+)
+const scopeIcon = computed(() =>
+  props.scope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill',
+)
 
 const inputPrompt = ref('')
 const isLoading = ref(false)
@@ -530,28 +594,48 @@ const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
-const suggestionChips = [
-  { label: 'Summarize all approved documents this quarter', icon: 'ph:check-circle' },
-  { label: 'Find records missing verification stages', icon: 'ph:magnifying-glass' },
-  { label: 'Generate a subsidy ledger review', icon: 'ph:table' },
-]
+// ── Scope-aware suggestion chips ──────────────────────────────────────
+const suggestionChips = computed(() =>
+  props.scope === 'LOCAL'
+    ? [
+        { label: 'Summarize documents in my office branches', icon: 'ph:buildings' },
+        { label: 'List all pending documents in my offices', icon: 'ph:clock-countdown' },
+        { label: 'Generate an office branch transaction audit', icon: 'ph:table' },
+      ]
+    : [
+        { label: 'Summarize all approved documents this quarter', icon: 'ph:check-circle' },
+        { label: 'Find records missing verification stages', icon: 'ph:magnifying-glass' },
+        { label: 'Generate an organisation-wide ledger review', icon: 'ph:table' },
+      ],
+)
 
-const thinkingStages = [
-  'Reading secure organization token…',
-  'Parsing document schema matchers…',
-  'Executing tenant-isolated extraction logic…',
-  'Hydrating distributed document blocks…',
-  'Assembling data template structures…',
-]
+const thinkingStages = computed(() =>
+  props.scope === 'LOCAL'
+    ? [
+        'Reading secure organisation token…',
+        'Applying office-scope isolation filter…',
+        'Extracting records from your branch(es)…',
+        'Hydrating document content from storage…',
+        'Assembling office-scoped report structure…',
+      ]
+    : [
+        'Reading secure organisation token…',
+        'Parsing document schema matchers…',
+        'Executing tenant-isolated extraction logic…',
+        'Hydrating distributed document blocks…',
+        'Assembling organisation-wide data template…',
+      ],
+)
 
 let thinkingTimer: ReturnType<typeof setInterval> | null = null
 
 const startThinking = () => {
   let idx = 0
-  thinkingStageText.value = thinkingStages[0]
+  const stages = thinkingStages.value
+  thinkingStageText.value = stages[0]
   thinkingTimer = setInterval(() => {
-    idx = (idx + 1) % thinkingStages.length
-    thinkingStageText.value = thinkingStages[idx]
+    idx = (idx + 1) % stages.length
+    thinkingStageText.value = stages[idx]
   }, 1400)
 }
 const stopThinking = () => {
@@ -572,7 +656,7 @@ const cellText = (value: unknown): string =>
   value === null || value === undefined || value === '' ? '—' : String(value)
 
 const backToDashboard = () => {
-  navigateTo('/client/dashboard')
+  navigateTo(props.backRoute)
 }
 
 // ── Document canvas synthesis & control ────────────────────────────────
@@ -667,8 +751,10 @@ const buildExportFilename = (title: string, extension: 'docx' | 'xlsx'): string 
       .trim()
       .replace(/\s+/g, '_')
       .replace(/_+/g, '_')
-      .slice(0, 100) || 'FlowVision_Export'
-  return `${base}.${extension}`
+      .slice(0, 80) || 'FlowVision_Export'
+  // Stamp the active scope so saved files are self-describing
+  const scopeSuffix = props.scope === 'LOCAL' ? '_Office_View' : '_Org_View'
+  return `${base}${scopeSuffix}.${extension}`
 }
 
 const triggerNativeDownload = (blob: Blob, filename: string) => {
@@ -979,7 +1065,12 @@ const submitQuery = async () => {
   try {
     const data = await $fetch<any>('/api/rag/query', {
       method: 'POST',
-      body: { prompt, session_id: activeSessionId.value },
+      body: {
+        prompt,
+        session_id: activeSessionId.value,
+        scope:     props.scope,
+        officeIds: props.officeIds,
+      },
     })
 
     // The server owns the session id (create-on-first-message) and the reply text.

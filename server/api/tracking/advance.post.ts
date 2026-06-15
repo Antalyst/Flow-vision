@@ -1,7 +1,7 @@
 import { serverSupabaseClient } from '#supabase/server'
 
 // ── Valid status pipeline ──────────────────────────────────────────────
-const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'COMPLETED'] as const
+const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'DISCREPANCY_REPORTED', 'COMPLETED'] as const
 type TrackingStatus = typeof VALID_STATUSES[number]
 
 /**
@@ -10,11 +10,12 @@ type TrackingStatus = typeof VALID_STATUSES[number]
  * Value = array of statuses the system accepts as the NEXT state
  */
 const TRANSITIONS: Record<TrackingStatus, TrackingStatus[]> = {
-  CREATED:           ['PICKED_UP'],
-  PICKED_UP:         ['IN_TRANSIT'],
-  IN_TRANSIT:        ['ARRIVED_AT_OFFICE'],
-  ARRIVED_AT_OFFICE: ['PICKED_UP', 'COMPLETED'],
-  COMPLETED:         [],
+  CREATED:               ['PICKED_UP'],
+  PICKED_UP:             ['IN_TRANSIT'],
+  IN_TRANSIT:            ['ARRIVED_AT_OFFICE'],
+  ARRIVED_AT_OFFICE:     ['PICKED_UP', 'COMPLETED', 'DISCREPANCY_REPORTED'],
+  DISCREPANCY_REPORTED:  ['ARRIVED_AT_OFFICE', 'PICKED_UP'],
+  COMPLETED:             [],
 }
 
 /**

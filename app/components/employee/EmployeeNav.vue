@@ -39,6 +39,7 @@ const workspaceItems = [
   { to: '/employee/working',   label: 'Current Working', icon: 'ph:briefcase-fill' },
   { to: '/employee/stages',    label: 'Stages',          icon: 'ph:steps-fill' },
   { to: '/employee/documents', label: 'Documents',       icon: 'ph:files-fill' },
+  { to: '/employee/ai',        label: 'AI Intelligence', icon: 'ph:sparkle-fill' },
 ]
 
 const accountItems = [

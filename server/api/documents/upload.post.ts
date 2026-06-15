@@ -15,11 +15,18 @@
  *   2.  Resolve actor profile from DB  (org_id is ALWAYS server-derived)
  *   3.  Parse & validate multipart payload
  *   4.  Role-specific office validation
- *   5.  Stage scope validation          (if stage_id supplied)
+ *   5a. Stage scope validation          (if stage_id supplied)
+ *   5b. Route checkpoint anti-leakage check — every office_id in the
+ *       stage_steps sequence is verified to belong to the caller's org_id.
+ *       Any cross-tenant pointer throws an immediate access exception.
  *   6.  AI document analysis
  *   7.  Supabase document insert
  *   8.  MySQL blob insert + back-link
- *   9.  Tracking ledger initialization  (non-fatal on error)
+ *   9.  Tracking ledger initialization
+ *         • Writes CREATED event with full route-schema snapshot in notes
+ *         • Status: CREATED @ origin_office_id
+ *         • Route sequence serialized as: Step 1 → Step 2 → … → Final
+ *         (non-fatal on error — document is already committed)
  */
 
 import { randomUUID } from 'node:crypto'
@@ -28,6 +35,15 @@ import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 
 const ALLOWED_ROLES = ['client', 'employee'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
+
+// Resolved step shape used internally across steps 5b and 9
+interface ResolvedRouteStep {
+  step_number: number
+  office_id:   string
+  office_name: string
+  office_code: string | null
+  org_id:      string
+}
 
 export default defineEventHandler(async (event) => {
   const db     = event.context.db
@@ -172,7 +188,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ─────────────────────────────────────────────────────────────────────
-  // Step 5 — Stage Scope Validation (when stage_id is supplied)
+  // Step 5a — Stage Scope Validation (when stage_id is supplied)
   //
   // A client admin may bind any org-wide (global) or local stage.
   // An employee may only bind:
@@ -224,6 +240,114 @@ export default defineEventHandler(async (event) => {
   }
 
   // ─────────────────────────────────────────────────────────────────────
+  // Step 5b — Route Checkpoint Anti-Leakage Structural Check
+  //
+  // Fetch every stage_step (office_id pointer) that forms the selected
+  // routing pathway. For each checkpoint:
+  //   1. Confirm the office exists in the database.
+  //   2. Confirm its org_id matches the caller's server-resolved org_id.
+  //
+  // If a SINGLE checkpoint's org_id does not match → immediate 403 with
+  // the specific violating office IDs listed. This prevents an actor from
+  // embedding a foreign office into a multi-hop routing sequence to leak
+  // document metadata across organisation boundaries.
+  //
+  // Route steps are cached in resolvedRouteSteps for Step 9 (ledger init)
+  // to avoid a second round-trip to the database.
+  // ─────────────────────────────────────────────────────────────────────
+
+  let resolvedRouteSteps: ResolvedRouteStep[] = []
+
+  if (resolvedStageId) {
+    // 5b-i: Fetch the ordered checkpoint sequence for this stage
+    const { data: rawSteps, error: stepsErr } = await client
+      .from('stage_steps')
+      .select('step_number, office_id')
+      .eq('stage_id', resolvedStageId)
+      .order('step_number', { ascending: true })
+
+    if (stepsErr) {
+      throw createError({
+        statusCode: 500,
+        message: `Route checkpoint fetch failed: ${stepsErr.message}`,
+      })
+    }
+
+    const steps = rawSteps ?? []
+
+    if (steps.length > 0) {
+      // 5b-ii: Collect distinct office IDs from the full route sequence
+      const uniqueCheckpointIds = [
+        ...new Set(steps.map((s: any) => String(s.office_id)).filter(Boolean)),
+      ]
+
+      // 5b-iii: Bulk fetch all referenced offices in a single round-trip
+      const { data: checkpointOffices, error: cpOfficeErr } = await client
+        .from('offices')
+        .select('id, name, code, org_id')
+        .in('id', uniqueCheckpointIds)
+
+      if (cpOfficeErr) {
+        throw createError({
+          statusCode: 500,
+          message: `Route checkpoint office verification failed: ${cpOfficeErr.message}`,
+        })
+      }
+
+      const fetchedOffices = checkpointOffices ?? []
+
+      // 5b-iv: Cross-org violation check — every checkpoint MUST be in our org
+      const crossOrgViolators = fetchedOffices.filter(
+        (o: any) => String(o.org_id) !== orgId,
+      )
+
+      if (crossOrgViolators.length > 0) {
+        const violatingIds   = crossOrgViolators.map((o: any) => String(o.id)).join(', ')
+        const violatingNames = crossOrgViolators.map((o: any) => o.name || o.id).join(', ')
+        throw createError({
+          statusCode: 403,
+          message:
+            `CROSS_ORG_ROUTE_VIOLATION: Route checkpoints [${violatingNames}] (id: ${violatingIds}) ` +
+            `belong to a different organisation. All destination offices in a routing pathway ` +
+            `must be registered under organisation ${orgId}. ` +
+            'Cross-tenant routing is strictly prohibited and has been logged.',
+        })
+      }
+
+      // 5b-v: Ghost office check — referenced IDs not found in the database at all
+      const fetchedIds = new Set(fetchedOffices.map((o: any) => String(o.id)))
+      const ghostIds   = uniqueCheckpointIds.filter((id) => !fetchedIds.has(id))
+
+      if (ghostIds.length > 0) {
+        throw createError({
+          statusCode: 404,
+          message:
+            `INVALID_ROUTE_CHECKPOINTS: The following office IDs in the routing pathway do not ` +
+            `exist in the database: [${ghostIds.join(', ')}]. ` +
+            'Ensure all destination offices are registered before routing documents through them.',
+        })
+      }
+
+      // 5b-vi: Build enriched, ordered route steps for ledger use in Step 9
+      const officeMap = fetchedOffices.reduce(
+        (acc: Record<string, any>, o: any) => { acc[String(o.id)] = o; return acc },
+        {} as Record<string, any>,
+      )
+
+      resolvedRouteSteps = steps.map((s: any) => {
+        const office = officeMap[String(s.office_id)]
+        return {
+          step_number: s.step_number,
+          office_id:   String(s.office_id),
+          office_name: office?.name ?? `Office ${String(s.office_id).slice(0, 8)}`,
+          office_code: office?.code ?? null,
+          org_id:      String(office?.org_id ?? orgId),
+        } satisfies ResolvedRouteStep
+      })
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
   // Step 6 — AI Document Analysis
   // ─────────────────────────────────────────────────────────────────────
 
@@ -262,7 +386,7 @@ export default defineEventHandler(async (event) => {
         // Mini-office architecture
         creator_role:      resolvedRole,
         origin_office_id:  resolvedOriginOfficeId,
-        // current_office_id = origin for employees (doc is physically there at start)
+        // current_office_id = origin for employees (doc physically there at start)
         // NULL for client admins (not yet at a specific office)
         current_office_id: resolvedOriginOfficeId,
       })
@@ -292,33 +416,68 @@ export default defineEventHandler(async (event) => {
     // ───────────────────────────────────────────────────────────────────
     // Step 9 — Tracking Ledger Initialization
     //
-    // Writes the initial CREATED event to document_tracking_events.
-    // This seeds the immutable audit trail and makes the document
-    // immediately visible to the tracking operations dashboard.
+    // Writes the initial CREATED event, seeding the immutable audit trail.
     //
-    // The notes string is role-aware:
-    //  - Employee: records physical origin office + "armed for QR pickup"
-    //  - Client:   records org-wide creation + "ready for routing"
+    // The notes payload encodes three layers of context:
+    //
+    //   Layer A — Actor context:
+    //     Who registered this document, under which role, from which office.
+    //
+    //   Layer B — Armed-for-pickup handshake:
+    //     Explicitly states the document is physically at its origin
+    //     checkpoint and waiting for a messenger QR-scan pickup.
+    //
+    //   Layer C — Route schema snapshot (NEW):
+    //     A human-readable serialization of the full checkpoint sequence
+    //     locked at registration time. This preserves the intended path
+    //     in the audit log even if the stage template is later modified.
+    //     Format: [Origin] → Stop 1: OfficeName → … → Final: OfficeName
     //
     // Failure here is non-fatal — the document IS committed, so we only
     // log a warning rather than rolling back.
     // ───────────────────────────────────────────────────────────────────
 
     try {
+      // ── Layer C: Route schema snapshot ───────────────────────────────
+      let routeSnapshotLine = ''
+      if (resolvedRouteSteps.length > 0) {
+        const originLabel = resolvedOfficeName ? `[Origin: ${resolvedOfficeName}]` : '[Origin: Org-wide]'
+
+        const stopLabels = resolvedRouteSteps.map((step, idx) => {
+          const isLast  = idx === resolvedRouteSteps.length - 1
+          const label   = step.office_code
+            ? `${step.office_name} (${step.office_code})`
+            : step.office_name
+          return isLast ? `Final Stop: ${label}` : `Stop ${step.step_number}: ${label}`
+        })
+
+        routeSnapshotLine =
+          `\nRoute schema locked (${resolvedRouteSteps.length} checkpoint${resolvedRouteSteps.length !== 1 ? 's' : ''}): ` +
+          [originLabel, ...stopLabels].join(' → ')
+      } else if (resolvedStageId) {
+        routeSnapshotLine = `\nRoute template attached (stage_id: ${resolvedStageId}) — no checkpoint steps defined yet.`
+      }
+
+      // ── Layer A + B: Actor context + armed-for-pickup handshake ──────
       const initNotes = resolvedRole === 'employee'
-        ? `Document physically registered at ${resolvedOfficeName} (${resolvedOriginOfficeId}). ` +
-          'Hard-copy asset is at its origin checkpoint and armed for messenger QR pickup scan.'
-        : `Document registered org-wide under ${orgId} by ${actorName ?? 'an administrator'}. ` +
-          'Not yet assigned to a specific office. Ready for route assignment and pickup.'
+        ? `Document physically registered at "${resolvedOfficeName}" (office: ${resolvedOriginOfficeId}) ` +
+          `by ${actorName ?? 'an employee'} (role: employee). ` +
+          `Hard-copy asset is stationed at its origin checkpoint and armed for messenger QR-scan pickup.` +
+          routeSnapshotLine
+        : `Document registered org-wide under organisation ${orgId} ` +
+          `by ${actorName ?? 'an administrator'} (role: client). ` +
+          `Not yet assigned to a specific office checkpoint. Ready for route assignment and messenger pickup.` +
+          routeSnapshotLine
 
       await client.from('document_tracking_events').insert({
         document_id: supabaseDoc.id,
         org_id:      orgId,
         status:      'CREATED',
         step_index:  0,
-        // office_id column in tracking_events is legacy INTEGER — store null, use office_name
+        // office_id in tracking_events is stored as null (UUID not integer);
+        // office_name is denormalized so reads don't require a join.
         office_id:   null,
-        office_name: resolvedOfficeName,         // denormalized — avoids join on read
+        office_name: resolvedOfficeName,
         actor_id:    userId,
         actor_role:  resolvedRole,
         actor_name:  actorName,
@@ -335,15 +494,22 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       message: resolvedRole === 'employee'
-        ? `Document registered at ${resolvedOfficeName} and armed for messenger pickup.`
+        ? `Document registered at "${resolvedOfficeName}" and armed for messenger pickup.`
         : 'Document analyzed and registered org-wide. Ready for route assignment.',
       scope: {
-        role:             resolvedRole,
-        org_id:           orgId,
-        origin_office_id: resolvedOriginOfficeId,
-        origin_office:    resolvedOfficeName,
-        stage_id:         resolvedStageId,
-        tracking_status:  'CREATED',
+        role:              resolvedRole,
+        org_id:            orgId,
+        origin_office_id:  resolvedOriginOfficeId,
+        origin_office:     resolvedOfficeName,
+        stage_id:          resolvedStageId,
+        tracking_status:   'CREATED',
+        // Expose the validated checkpoint array to the client
+        route_checkpoints: resolvedRouteSteps.map((s) => ({
+          step:        s.step_number,
+          office_id:   s.office_id,
+          office_name: s.office_name,
+          office_code: s.office_code,
+        })),
       },
       metadata: {
         ...supabaseDoc,
