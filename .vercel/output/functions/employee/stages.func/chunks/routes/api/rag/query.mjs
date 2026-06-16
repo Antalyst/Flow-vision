@@ -1,8 +1,9 @@
-import { d as defineEventHandler, C as assertMethod, f as readBody, c as createError, r as resolveTenant, D as ensureSession, E as fetchRecentMessages, F as fetchLatestDocumentPayload, G as persistMessage, H as classifyIntent, J as reviseDocumentPayload, K as wantsSpreadsheetFormat, L as generateConversationalReply, M as translateTextToQuery, A as extractTextFromFile, N as generateDocumentTemplate, O as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, D as assertMethod, h as readBody, a as createError, r as resolveTenant, E as ensureSession, F as fetchRecentMessages, G as fetchLatestDocumentPayload, H as persistMessage, J as classifyIntent, K as reviseDocumentPayload, L as wantsSpreadsheetFormat, M as generateConversationalReply, N as translateTextToQuery, B as extractTextFromFile, O as generateDocumentTemplate, P as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../_/index2.mjs';
+import 'cookie';
 
 const HYDRATION_FALLBACK_TEXT = "Physical document contents are unreadable or missing.";
 const buildSearchWords = (ttqtOutput) => {

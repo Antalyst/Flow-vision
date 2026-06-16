@@ -4,14 +4,16 @@ import { computed, ref, watch, mergeProps, unref, withCtx, createVNode, toDispla
 import { ssrRenderAttrs, ssrRenderClass, ssrRenderComponent, ssrRenderAttr, ssrRenderTeleport, ssrRenderSlot, ssrRenderList, ssrInterpolate, ssrIncludeBooleanAttr } from 'vue/server-renderer';
 import { _ as _export_sfc, a as useAuthStore, b as useTheme, u as useRoute } from './server.mjs';
 import { p as provideDashboardEntrance } from './useDashboardEntrance-W2ntCYX9.mjs';
+import '../_/index2.mjs';
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../routes/renderer.mjs';
 import 'vue-bundle-renderer/runtime';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -26,7 +28,7 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
+import 'cookie';
 
 const _sfc_main$3 = {
   __name: "SidebarNav",

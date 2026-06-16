@@ -1,7 +1,8 @@
-import { d as defineEventHandler, y as readMultipartFormData, c as createError, A as extractTextFromFile, B as analyzeDocument } from '../../_/nitro.mjs';
+import { d as defineEventHandler, z as readMultipartFormData, a as createError, B as extractTextFromFile, C as analyzeDocument } from '../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';

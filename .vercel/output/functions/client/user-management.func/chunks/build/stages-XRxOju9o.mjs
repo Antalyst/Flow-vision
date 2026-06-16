@@ -3,14 +3,16 @@ import { ssrRenderComponent, ssrRenderAttrs, ssrRenderClass, ssrRenderList, ssrI
 import __nuxt_component_0 from './index-BRIQYxw1.mjs';
 import { _ as _export_sfc, a as useAuthStore, b as useTheme } from './server.mjs';
 import { u as useOfficeStore } from './office-DcDivY2T.mjs';
+import '../_/index2.mjs';
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../routes/renderer.mjs';
 import 'vue-bundle-renderer/runtime';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -25,7 +27,7 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
+import 'cookie';
 
 const _sfc_main$1 = /* @__PURE__ */ defineComponent({
   __name: "EmployeeStagesView",

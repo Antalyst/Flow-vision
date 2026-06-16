@@ -1,8 +1,9 @@
-import { d as defineEventHandler, c as createError, x as getCookie, y as readMultipartFormData, z as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, a as createError, y as getCookie, z as readMultipartFormData, A as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
 import { randomUUID } from 'node:crypto';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../_/index2.mjs';
+import 'cookie';
 
 const ALLOWED_ROLES = ["client", "employee"];
 const upload_post = defineEventHandler(async (event) => {

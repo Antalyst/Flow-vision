@@ -1,7 +1,8 @@
 import { d as defineEventHandler, r as resolveTenant, l as listSessions } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';

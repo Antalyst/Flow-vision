@@ -1,11 +1,13 @@
 import { defineComponent, mergeProps, useSSRContext } from 'vue';
 import { ssrRenderComponent } from 'vue/server-renderer';
 import { W as WorkspacePlaceholder } from './WorkspacePlaceholder-RjwwjbiQ.mjs';
+import '../_/index2.mjs';
 import './server.mjs';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -17,8 +19,8 @@ import 'node:fs';
 import 'node:path';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
 import '@iconify/vue';
+import 'cookie';
 
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "feedback",

@@ -1,12 +1,14 @@
 import { _ as __nuxt_component_3 } from './nuxt-link-UB6UxD5C.mjs';
 import { ref, watch, mergeProps, withCtx, createTextVNode, unref, useSSRContext } from 'vue';
 import { ssrRenderAttrs, ssrRenderAttr, ssrRenderComponent, ssrRenderList, ssrRenderClass, ssrInterpolate, ssrRenderDynamicModel, ssrIncludeBooleanAttr, ssrLooseContain, ssrRenderSlot } from 'vue/server-renderer';
-import { X as publicAssetsURL } from '../_/nitro.mjs';
+import { _ as publicAssetsURL } from '../_/nitro.mjs';
 import { a as useAuthStore, l as _imports_1, k as useState } from './server.mjs';
 import { defineStore } from 'pinia';
+import '../_/index2.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -17,8 +19,8 @@ import 'consola';
 import 'node:fs';
 import 'node:path';
 import 'vue-router';
-import '@supabase/ssr';
 import '@iconify/vue';
+import 'cookie';
 
 const _imports_0 = publicAssetsURL("/logo/new-logo.png");
 const useLoading = () => {

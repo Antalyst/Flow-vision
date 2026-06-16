@@ -1,8 +1,9 @@
-import { d as defineEventHandler, f as readBody, x as getCookie, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as readBody, y as getCookie, a as createError } from '../../_/nitro.mjs';
 import { randomBytes } from 'node:crypto';
 import { s as serverSupabaseClient } from '../../_/serverSupabaseClient.mjs';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../_/index2.mjs';
+import 'cookie';
 
 const generateOfficeCode = () => "OFF-" + randomBytes(3).toString("hex").toUpperCase();
 const index_post = defineEventHandler(async (event) => {

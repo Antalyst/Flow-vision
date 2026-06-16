@@ -1,13 +1,14 @@
 import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { watch, toRef, isRef, hasInjectionContext, inject, ref, getCurrentInstance, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, defineAsyncComponent, useSSRContext, computed, unref, shallowReactive, Suspense, Fragment, createApp, mergeProps, onErrorCaptured, onServerPrefetch, createVNode, resolveDynamicComponent, reactive, effectScope, withCtx, getCurrentScope, nextTick, isReadonly, toRaw, isShallow, isReactive } from 'vue';
-import { c as createError$1, $ as klona, a0 as parseURL, a1 as encodePath, a2 as decodePath, X as publicAssetsURL, a3 as hasProtocol, a4 as isScriptProtocol, _ as joinURL, w as withQuery, a5 as defuFn, a6 as sanitizeStatusCode, a7 as parse, a8 as getRequestHeader, Y as destr, a9 as isEqual, aa as getContext, s as setCookie, x as getCookie, h as deleteCookie, ab as $fetch$1, ac as baseURL, ad as createHooks, ae as defu, af as executeAsync, R as getHeader, Q as setHeader } from '../_/nitro.mjs';
+import { a as createError$1, a2 as klona, a3 as parseURL, a4 as encodePath, a5 as decodePath, _ as publicAssetsURL, a6 as hasProtocol, a7 as isScriptProtocol, a1 as joinURL, w as withQuery, a8 as defuFn, a9 as sanitizeStatusCode, aa as parse, ab as getRequestHeader, $ as destr, ac as isEqual, ad as getContext, s as setCookie, y as getCookie, i as deleteCookie, ae as $fetch$1, af as baseURL, ag as createHooks, ah as defu, ai as executeAsync, S as getHeader, R as setHeader } from '../_/nitro.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
 import { useRoute as useRoute$1, RouterView, createMemoryHistory, createRouter, START_LOCATION } from 'vue-router';
-import { createServerClient, parseCookieHeader } from '@supabase/ssr';
+import { m as main } from '../_/index2.mjs';
 import { _api, addAPIProvider, setCustomIconsLoader } from '@iconify/vue';
 import { ssrRenderAttrs, ssrRenderAttr, ssrInterpolate, ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode } from 'vue/server-renderer';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -17,6 +18,7 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
+import 'cookie';
 
 if (!globalThis.$fetch) {
   globalThis.$fetch = $fetch$1.create({
@@ -1196,10 +1198,10 @@ const serverSupabaseClient = async (event) => {
       cookieOptions,
       clientOptions: { auth = {}, global = {} }
     } = (/* @__PURE__ */ useRuntimeConfig()).public.supabase;
-    event.context._supabaseClient = createServerClient(url, key, {
+    event.context._supabaseClient = main.createServerClient(url, key, {
       auth,
       cookies: {
-        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
+        getAll: () => main.parseCookieHeader(getHeader(event, "Cookie") ?? ""),
         setAll: (cookies, headers) => setCookies(event, cookies, headers)
       },
       cookieOptions: {
@@ -1273,10 +1275,10 @@ const supabase_server_NZuw_NDm2ZtOgvg4QqXN_Xqdg_KPvGuBBWKrLH15GWY = /* @__PURE__
       clientOptions
     } = (/* @__PURE__ */ useRuntimeConfig()).public.supabase;
     const event = useRequestEvent();
-    const client = createServerClient(url, key, {
+    const client = main.createServerClient(url, key, {
       ...clientOptions,
       cookies: {
-        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
+        getAll: () => main.parseCookieHeader(getHeader(event, "Cookie") ?? ""),
         setAll: (cookies, headers) => setCookies(event, cookies, headers)
       },
       cookieOptions: {

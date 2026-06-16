@@ -1,8 +1,9 @@
-import { d as defineEventHandler, f as readBody, c as createError, x as getCookie } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, h as readBody, a as createError, y as getCookie } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../_/index2.mjs';
+import 'cookie';
 
 const dropoff_post = defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event);

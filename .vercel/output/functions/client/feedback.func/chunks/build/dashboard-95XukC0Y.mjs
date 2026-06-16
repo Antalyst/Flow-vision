@@ -3,14 +3,16 @@ import { _ as __nuxt_component_3 } from './nuxt-link-UB6UxD5C.mjs';
 import { defineComponent, ref, computed, watch, mergeProps, unref, withCtx, createVNode, createTextVNode, nextTick, useSSRContext } from 'vue';
 import { ssrRenderAttrs, ssrRenderClass, ssrRenderComponent, ssrInterpolate, ssrRenderStyle, ssrRenderList } from 'vue/server-renderer';
 import { _ as _export_sfc, a as useAuthStore, b as useTheme } from './server.mjs';
+import '../_/index2.mjs';
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../routes/renderer.mjs';
 import 'vue-bundle-renderer/runtime';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -25,7 +27,7 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
+import 'cookie';
 
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "dashboard",

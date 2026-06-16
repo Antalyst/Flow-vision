@@ -1,7 +1,8 @@
-import { d as defineEventHandler, a as useRuntimeConfig, f as readBody, c as createError } from '../../../_/nitro.mjs';
-import { createClient } from '@supabase/supabase-js';
+import { d as defineEventHandler, b as useRuntimeConfig, h as readBody, c as createClient, a as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';

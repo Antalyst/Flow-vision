@@ -1,8 +1,9 @@
-import { d as defineEventHandler, b as getQuery, c as createError, x as getCookie } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as getQuery, a as createError, y as getCookie } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../_/index2.mjs';
+import 'cookie';
 
 const timeline_get = defineEventHandler(async (event) => {
   var _a;

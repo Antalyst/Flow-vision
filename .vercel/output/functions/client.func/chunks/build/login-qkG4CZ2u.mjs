@@ -1,10 +1,12 @@
 import { ssrRenderAttrs } from 'vue/server-renderer';
 import { useSSRContext } from 'vue';
 import { _ as _export_sfc } from './server.mjs';
+import '../_/index2.mjs';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -16,8 +18,8 @@ import 'node:fs';
 import 'node:path';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
 import '@iconify/vue';
+import 'cookie';
 
 const _sfc_main = {};
 function _sfc_ssrRender(_ctx, _push, _parent, _attrs) {

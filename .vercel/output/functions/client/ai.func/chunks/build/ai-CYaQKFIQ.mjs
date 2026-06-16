@@ -2,6 +2,7 @@ import { defineComponent, computed, ref, mergeProps, useSSRContext } from 'vue';
 import { ssrRenderComponent } from 'vue/server-renderer';
 import { A as AiCanvasWorkspace } from './AiCanvasWorkspace-77hGcL1f.mjs';
 import { u as useRoute, a as useAuthStore } from './server.mjs';
+import '../_/index2.mjs';
 import './index-BRIQYxw1.mjs';
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
@@ -9,8 +10,9 @@ import '../routes/renderer.mjs';
 import 'vue-bundle-renderer/runtime';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -25,7 +27,7 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
+import 'cookie';
 
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "ai",

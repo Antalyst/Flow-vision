@@ -1,8 +1,9 @@
-import { d as defineEventHandler, f as readBody, c as createError, k as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, m as assertReportingOfficeAccess, n as broadcastIssueRealtime, o as orgLogisticsChannel, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
+import { d as defineEventHandler, h as readBody, a as createError, m as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, n as assertReportingOfficeAccess, o as broadcastIssueRealtime, q as orgLogisticsChannel, v as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../../_/index2.mjs';
+import 'cookie';
 
 const create_post = defineEventHandler(async (event) => {
   var _a, _b, _c, _d, _e;

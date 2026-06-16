@@ -1,8 +1,9 @@
-import { d as defineEventHandler, b as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as getQuery, j as parseScope, k as resolveActorContextWithOffices, a as createError } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import '@supabase/supabase-js';
 import 'groq-sdk';
+import 'tslib';
+import 'iceberg-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -12,7 +13,8 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
+import '../../../_/index2.mjs';
+import 'cookie';
 
 const queue_get = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
