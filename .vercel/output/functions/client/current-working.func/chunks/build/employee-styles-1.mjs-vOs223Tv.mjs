@@ -1,4 +1,0 @@
-const EmployeeNav_vue_vue_type_style_index_0_scoped_aa4f1e6d_lang = '.nav-item-employee-active[data-v-aa4f1e6d]{position:relative;background-color:#ff620c14;--tw-text-opacity:1;color:rgb(255 98 12/var(--tw-text-opacity,1))}.nav-item-employee-active[data-v-aa4f1e6d]:is(.dark *){background-color:#ff620c1a;--tw-text-opacity:1;color:rgb(255 128 64/var(--tw-text-opacity,1))}.nav-item-employee-active[data-v-aa4f1e6d]:before{content:"";position:absolute;left:0;top:50%;height:1.25rem;width:3px;--tw-translate-y:-50%;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skew(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));border-radius:9999px;--tw-bg-opacity:1;background-color:rgb(255 98 12/var(--tw-bg-opacity,1))}';
-
-export { EmployeeNav_vue_vue_type_style_index_0_scoped_aa4f1e6d_lang as E };
-//# sourceMappingURL=employee-styles-1.mjs-vOs223Tv.mjs.map

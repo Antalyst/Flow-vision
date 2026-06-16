@@ -1,4 +1,0 @@
-const MessengerNav_vue_vue_type_style_index_0_scoped_fa48cea5_lang = '.nav-item-messenger-active[data-v-fa48cea5]{position:relative;background-color:#f59e0b14;--tw-text-opacity:1;color:rgb(217 119 6/var(--tw-text-opacity,1))}.nav-item-messenger-active[data-v-fa48cea5]:is(.dark *){background-color:#f59e0b1f;--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.nav-item-messenger-active[data-v-fa48cea5]:before{content:"";position:absolute;left:0;top:50%;height:1.25rem;width:3px;--tw-translate-y:-50%;transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skew(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));border-radius:9999px;--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}';
-
-export { MessengerNav_vue_vue_type_style_index_0_scoped_fa48cea5_lang as M };
-//# sourceMappingURL=messenger-styles-1.mjs-CZ3vBG82.mjs.map
