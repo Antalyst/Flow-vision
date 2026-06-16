@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, v as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, n as broadcastIssueRealtime, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, q as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, m as broadcastIssueRealtime, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,17 +17,17 @@ import 'node:path';
 
 const messages_post = defineEventHandler(async (event) => {
   var _a, _b, _c;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const body = await readBody(event);
   const issueId = String((_a = body == null ? void 0 : body.issue_id) != null ? _a : "").trim();
   const messageText = String((_b = body == null ? void 0 : body.message_text) != null ? _b : "").trim();
   if (!issueId) throw createError({ statusCode: 400, message: "issue_id is required." });
   if (!messageText) throw createError({ statusCode: 400, message: "message_text is required." });
-  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId);
+  const { actor, issue } = await assertIssueOrgAccess(event, supabase, issueId);
   if (!ISSUE_ALLOWED_ROLES.includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: "Forbidden: only client or employee accounts may post issue messages."
+      message: "Forbidden: only supabase or employee accounts may post issue messages."
     });
   }
   if (issue.status === "RESOLVED") {
@@ -37,7 +36,7 @@ const messages_post = defineEventHandler(async (event) => {
       message: "This issue thread is resolved. Reopen the issue before posting new messages."
     });
   }
-  const { data: message, error: msgErr } = await client.from("document_messages").insert({
+  const { data: message, error: msgErr } = await supabase.from("document_messages").insert({
     issue_id: issueId,
     sender_id: actor.userId,
     message_text: messageText

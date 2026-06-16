@@ -1,5 +1,4 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -26,8 +25,8 @@ const getOrdCode_post = defineEventHandler(async (event) => {
         message: "Organization code is required"
       };
     }
-    const client = await serverSupabaseServiceRole(event);
-    const { data, error } = await client.from("org").select("org_id, code, name").eq("code", inputCode).single();
+    const supabase = useServerSupabase();
+    const { data, error } = await supabase.from("org").select("org_id, code, name").eq("code", inputCode).single();
     if (error || !data) {
       return {
         success: false,

@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, x as getCookie } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, v as getCookie } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -27,7 +26,7 @@ const TRANSITIONS = {
 };
 const advance_post = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const body = await readBody(event);
   const { document_id, status: nextStatus, notes } = body;
   if (!document_id) throw createError({ statusCode: 400, message: "document_id is required" });
@@ -43,11 +42,11 @@ const advance_post = defineEventHandler(async (event) => {
   if (!actorId || !actorRole) {
     throw createError({ statusCode: 401, message: "Authentication required" });
   }
-  const { data: doc, error: docErr } = await client.from("documents").select("id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id").eq("id", document_id).single();
+  const { data: doc, error: docErr } = await supabase.from("documents").select("id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id").eq("id", document_id).single();
   if (docErr || !doc) {
     throw createError({ statusCode: 404, message: "Document not found" });
   }
-  const { data: actorRow } = await client.from("users").select("org_id, full_name").eq("user_id", actorId).single();
+  const { data: actorRow } = await supabase.from("users").select("org_id, full_name").eq("user_id", actorId).single();
   if (!actorRow || String(actorRow.org_id) !== String(doc.org_id)) {
     throw createError({ statusCode: 403, message: "Forbidden: document belongs to a different organization" });
   }
@@ -65,10 +64,10 @@ const advance_post = defineEventHandler(async (event) => {
   if (nextStatus === "ARRIVED_AT_OFFICE" || nextStatus === "PICKED_UP") {
     const stepToLook = nextStatus === "IN_TRANSIT" ? doc.current_step + 1 : doc.current_step;
     if (doc.stage_id) {
-      const { data: stepRow } = await client.from("stage_steps").select("office_id").eq("stage_id", doc.stage_id).eq("step_number", stepToLook).maybeSingle();
+      const { data: stepRow } = await supabase.from("stage_steps").select("office_id").eq("stage_id", doc.stage_id).eq("step_number", stepToLook).maybeSingle();
       if (stepRow) {
         officeId = stepRow.office_id;
-        const { data: officeRow } = await client.from("offices").select("name").eq("id", officeId).maybeSingle();
+        const { data: officeRow } = await supabase.from("offices").select("name").eq("id", officeId).maybeSingle();
         officeName = (_b = officeRow == null ? void 0 : officeRow.name) != null ? _b : null;
       }
     }
@@ -76,7 +75,7 @@ const advance_post = defineEventHandler(async (event) => {
   if (nextStatus === "IN_TRANSIT") {
     nextStep = doc.current_step + 1;
     if (doc.stage_id) {
-      const { data: stepRow } = await client.from("stage_steps").select("office_id, offices(name)").eq("stage_id", doc.stage_id).eq("step_number", nextStep).maybeSingle();
+      const { data: stepRow } = await supabase.from("stage_steps").select("office_id, offices(name)").eq("stage_id", doc.stage_id).eq("step_number", nextStep).maybeSingle();
       if (stepRow) {
         officeId = stepRow.office_id;
         officeName = (_d = (_c = stepRow.offices) == null ? void 0 : _c.name) != null ? _d : null;
@@ -84,7 +83,7 @@ const advance_post = defineEventHandler(async (event) => {
     }
   }
   const messengerUpdate = nextStatus === "PICKED_UP" ? { assigned_messenger_id: actorId } : nextStatus === "COMPLETED" ? { assigned_messenger_id: null } : {};
-  const { data: trackingEvent, error: eventErr } = await client.from("document_tracking_events").insert({
+  const { data: trackingEvent, error: eventErr } = await supabase.from("document_tracking_events").insert({
     document_id,
     org_id: String(doc.org_id),
     status: nextStatus,
@@ -99,7 +98,7 @@ const advance_post = defineEventHandler(async (event) => {
   if (eventErr) {
     throw createError({ statusCode: 500, message: `Failed to write tracking event: ${eventErr.message}` });
   }
-  const { data: updatedDoc, error: updateErr } = await client.from("documents").update({
+  const { data: updatedDoc, error: updateErr } = await supabase.from("documents").update({
     tracking_status: nextStatus,
     current_step: nextStep,
     ...messengerUpdate

@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -8,7 +7,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *
  * ┌────────────────────────────────────────────────────────────────────────────┐
  * │ scope=GLOBAL  │ All stages in the org (global + all local templates)       │
- * │               │ → macro view for client admins and the employee big-picture │
+ * │               │ → macro view for supabase admins and the employee big-picture │
  * ├────────────────────────────────────────────────────────────────────────────┤
  * │ scope=LOCAL   │ Global templates (accessible to everyone) PLUS any local   │
  * │               │ templates scoped to the employee's own office branches.    │
@@ -16,7 +15,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  * └────────────────────────────────────────────────────────────────────────────┘
  *
  * Stage taxonomy (from mini_office_architecture migration):
- *   office_id IS NULL  → Global template  (client admin created; org-wide)
+ *   office_id IS NULL  → Global template  (supabase admin created; org-wide)
  *   office_id = UUID   → Local template   (employee created; branch-scoped)
  *
  * Security:
@@ -30,14 +29,14 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  */
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const supabase = useServerSupabase()
     const query  = getQuery(event)
 
     const scope          = parseScope(query.scope as string | undefined)
     const explicitOffice = (query.officeId as string | undefined)?.trim() || null
 
     // ── Resolve actor (org_id from session) ──────────────────────────────────
-    const actor = await resolveActorContextWithOffices(event, client)
+    const actor = await resolveActorContextWithOffices(event, supabase)
 
     // ── Determine the office filter set ──────────────────────────────────────
     // An explicit officeId param takes precedence (used by the route builder
@@ -48,7 +47,7 @@ export default defineEventHandler(async (event) => {
         : actor.officeIds          // session-derived list for LOCAL scope
 
     // ── Build stages query ────────────────────────────────────────────────────
-    let stagesQuery = client
+    let stagesQuery = supabase
       .from('stages')
       .select('*')
       .eq('org_id', actor.orgId)
@@ -91,7 +90,7 @@ export default defineEventHandler(async (event) => {
     let stepRows: any[] = []
 
     if (stageIds.length > 0) {
-      const { data: steps, error: stepsError } = await client
+      const { data: steps, error: stepsError } = await supabase
         .from('stage_steps')
         .select('stage_id, office_id, step_number')
         .in('stage_id', stageIds)
@@ -114,7 +113,7 @@ export default defineEventHandler(async (event) => {
     let officeNameById: Record<string, string> = {}
 
     if (localOfficeIds.length > 0) {
-      const { data: officeRows } = await client
+      const { data: officeRows } = await supabase
         .from('offices')
         .select('id, name, code')
         .in('id', localOfficeIds)

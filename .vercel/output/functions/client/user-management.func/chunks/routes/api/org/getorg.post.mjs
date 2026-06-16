@@ -1,5 +1,4 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -19,7 +18,7 @@ import 'node:path';
 const getorg_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { user_id } = body;
-  const client = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   if (!user_id) {
     throw createError({
       statusCode: 400,
@@ -27,7 +26,7 @@ const getorg_post = defineEventHandler(async (event) => {
     });
   }
   try {
-    const { data: org, error } = await client.from("org").select("*").eq("user_id", user_id).single();
+    const { data: org, error } = await supabase.from("org").select("*").eq("user_id", user_id).single();
     if (error && error.code !== "PGRST116") {
       throw error;
     }

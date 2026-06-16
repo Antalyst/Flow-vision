@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -10,7 +9,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  * ┌────────────────────────────────────────────────────────────────────────────┐
  * │ Role      │ scope=GLOBAL                    │ scope=LOCAL                  │
  * ├────────────────────────────────────────────────────────────────────────────┤
- * │ client    │ All org docs (scope ignored)    │ —                            │
+ * │ supabase    │ All org docs (scope ignored)    │ —                            │
  * │ employee  │ All org in-flight docs          │ Only docs in their offices   │
  * │ messenger │ Own assigned + unassigned CREATED (scope ignored)             │
  * └────────────────────────────────────────────────────────────────────────────┘
@@ -30,7 +29,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *   limit   number               default 100, max 500
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const query  = getQuery(event)
 
   const scope        = parseScope(query.scope as string | undefined)
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const statusFilter = (query.status as string | undefined)?.split(',').map((s) => s.trim()).filter(Boolean) ?? []
 
   // ── Resolve actor from session ────────────────────────────────────────────
-  const actor = await resolveActorContextWithOffices(event, client)
+  const actor = await resolveActorContextWithOffices(event, supabase)
 
   // Optional: validate the legacy orgId param against session org (warn but don't block)
   const qOrgId = query.orgId as string | undefined
@@ -50,7 +49,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Build base document query ─────────────────────────────────────────────
-  let dbQuery = client
+  let dbQuery = supabase
     .from('documents')
     .select(
       'id, title, description, tracking_status, current_step, stage_id, ' +
@@ -94,7 +93,7 @@ export default defineEventHandler(async (event) => {
       )
     }
   }
-  // client + GLOBAL employee: no additional filter — full org queue
+  // supabase + GLOBAL employee: no additional filter — full org queue
 
   const { data: docs, error } = await dbQuery
 
@@ -110,8 +109,8 @@ export default defineEventHandler(async (event) => {
 
   if (stageIds.length) {
     const [{ data: stageRows }, { data: stepCounts }] = await Promise.all([
-      client.from('stages').select('stage_id, name').in('stage_id', stageIds),
-      client.from('stage_steps').select('stage_id').in('stage_id', stageIds),
+      supabase.from('stages').select('stage_id, name').in('stage_id', stageIds),
+      supabase.from('stage_steps').select('stage_id').in('stage_id', stageIds),
     ])
 
     const countByStage: Record<string, number> = {}
@@ -133,7 +132,7 @@ export default defineEventHandler(async (event) => {
   let messengerNameById: Record<string, string> = {}
 
   if (messengerIds.length) {
-    const { data: userRows } = await client
+    const { data: userRows } = await supabase
       .from('users')
       .select('user_id, full_name')
       .in('user_id', messengerIds)
@@ -151,7 +150,7 @@ export default defineEventHandler(async (event) => {
   let officeLabelById: Record<string, string> = {}
 
   if (allOfficeIds.length) {
-    const { data: officeRows } = await client
+    const { data: officeRows } = await supabase
       .from('offices')
       .select('id, name, code')
       .in('id', allOfficeIds)

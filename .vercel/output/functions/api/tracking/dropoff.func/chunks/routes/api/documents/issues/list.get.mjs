@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError, k as assertDocumentOrgAccess } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError, j as assertDocumentOrgAccess } from '../../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,14 +17,14 @@ import 'node:path';
 
 const list_get = defineEventHandler(async (event) => {
   var _a, _b;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const query = getQuery(event);
   const documentId = String((_a = query.document_id) != null ? _a : "").trim();
   if (!documentId) {
     throw createError({ statusCode: 400, message: "document_id is required." });
   }
-  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId);
-  const { data: issues, error } = await client.from("document_issues").select("id, document_id, org_id, reported_by_office_id, title, status, created_at").eq("document_id", documentId).eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(10);
+  const { actor, document } = await assertDocumentOrgAccess(event, supabase, documentId);
+  const { data: issues, error } = await supabase.from("document_issues").select("id, document_id, org_id, reported_by_office_id, title, status, created_at").eq("document_id", documentId).eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(10);
   if (error) {
     throw createError({ statusCode: 500, message: error.message });
   }

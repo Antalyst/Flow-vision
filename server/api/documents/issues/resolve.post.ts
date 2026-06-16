@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertIssueOrgAccess,
@@ -17,7 +16,7 @@ import {
  *   issue_id  UUID  required
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const body   = await readBody(event)
 
   const issueId = String(body?.issue_id ?? '').trim()
@@ -25,12 +24,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'issue_id is required.' })
   }
 
-  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId)
+  const { actor, issue } = await assertIssueOrgAccess(event, supabase, issueId)
 
   if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may resolve issues.',
+      message: 'Forbidden: only supabase or employee accounts may resolve issues.',
     })
   }
 
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 422, message: 'Issue is already resolved.' })
   }
 
-  const { data: document, error: docErr } = await client
+  const { data: document, error: docErr } = await supabase
     .from('documents')
     .select('id, org_id, title, tracking_status, current_office_id')
     .eq('id', issue.document_id)
@@ -49,7 +48,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Parent document not found.' })
   }
 
-  const { data: resolvedIssue, error: issueErr } = await client
+  const { data: resolvedIssue, error: issueErr } = await supabase
     .from('document_issues')
     .update({ status: 'RESOLVED' })
     .eq('id', issueId)
@@ -64,7 +63,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { data: updatedDoc, error: trackUpdateErr } = await client
+  const { data: updatedDoc, error: trackUpdateErr } = await supabase
     .from('documents')
     .update({ tracking_status: 'ARRIVED_AT_OFFICE' })
     .eq('id', issue.document_id)
@@ -83,7 +82,7 @@ export default defineEventHandler(async (event) => {
     `Issue "${issue.title}" marked RESOLVED by ${actor.fullName ?? 'an operator'}. ` +
     `Document returned to ARRIVED_AT_OFFICE — clean delivery workflow resumed.`
 
-  const { data: trackingEvent } = await client
+  const { data: trackingEvent } = await supabase
     .from('document_tracking_events')
     .insert({
       document_id: issue.document_id,

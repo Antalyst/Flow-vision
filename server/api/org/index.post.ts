@@ -1,10 +1,9 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { name, user_id } = body;
 
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   if (!name || !user_id) {
     throw createError({
@@ -26,7 +25,7 @@ export default defineEventHandler(async (event) => {
     const orgCode = generateOrgCode();
 
 
-    const { data: org, error: orgError } = await client
+    const { data: org, error: orgError } = await supabase
       .from('org')
       .insert({
         name,
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
     if (orgError) throw orgError;
 
-    const { error: userError } = await client
+    const { error: userError } = await supabase
       .from('users')
       .update({ org_id: org.org_id })
       .eq('user_id', user_id);

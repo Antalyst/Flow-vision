@@ -1,4 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async(event) => {
   try {
@@ -12,9 +11,9 @@ export default defineEventHandler(async(event) => {
       });
     }
 
-    const client = await serverSupabaseServiceRole(event)
+    const supabase = useServerSupabase()
 
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from('users')
       .select('user_id, full_name, email, role, org_id')
       .eq('org_id', org_id)

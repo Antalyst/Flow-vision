@@ -1,5 +1,4 @@
-import { d as defineEventHandler, a as getQuery, c as createError, x as getCookie, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, b as getQuery, c as createError, v as getCookie, a as useServerSupabase } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -26,11 +25,11 @@ const orgMembers_get = defineEventHandler(async (event) => {
   }
   const sessionUserId = getCookie(event, "user_session");
   const sessionRole = getCookie(event, "user_role");
-  if (!sessionUserId || sessionRole !== "client") {
+  if (!sessionUserId || sessionRole !== "supabase") {
     throw createError({ statusCode: 403, message: "Forbidden: administrator access required" });
   }
-  const client = await serverSupabaseServiceRole(event);
-  const { data: adminRow, error: adminErr } = await client.from("users").select("org_id").eq("user_id", sessionUserId).single();
+  const supabase = useServerSupabase();
+  const { data: adminRow, error: adminErr } = await supabase.from("users").select("org_id").eq("user_id", sessionUserId).single();
   if (adminErr || !adminRow) {
     throw createError({ statusCode: 403, message: "Could not verify administrator identity" });
   }
@@ -38,9 +37,9 @@ const orgMembers_get = defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: "Forbidden: org_id mismatch" });
   }
   const allowedRoles = ["employee", "messenger"];
-  let dbQuery = client.from("users").select("user_id, full_name, email, role, org_id, status, created_at").eq("org_id", orgId).in("role", allowedRoles).order("full_name", { ascending: true });
+  let dbQuery = supabase.from("users").select("user_id, full_name, email, role, org_id, status, created_at").eq("org_id", orgId).in("role", allowedRoles).order("full_name", { ascending: true });
   if (role !== "all" && allowedRoles.includes(role)) {
-    dbQuery = client.from("users").select("user_id, full_name, email, role, org_id, status, created_at").eq("org_id", orgId).eq("role", role).order("full_name", { ascending: true });
+    dbQuery = supabase.from("users").select("user_id, full_name, email, role, org_id, status, created_at").eq("org_id", orgId).eq("role", role).order("full_name", { ascending: true });
   }
   const { data, error } = await dbQuery;
   if (error) {

@@ -5,7 +5,6 @@
  */
 
 import type { H3Event } from 'h3'
-import { serverSupabaseServiceRole } from '#supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
 
@@ -30,7 +29,7 @@ export interface DocumentRow {
   current_office_id: string | null
 }
 
-/** Realtime channel name shared by server broadcast + client subscriptions. */
+/** Realtime channel name shared by server broadcast + supabase subscriptions. */
 export function issueRealtimeChannel(orgId: string, issueId: string): string {
   return `org:${orgId}:issue:${issueId}`
 }
@@ -45,12 +44,12 @@ export function orgLogisticsChannel(orgId: string): string {
  */
 export async function assertDocumentOrgAccess(
   event: H3Event,
-  client: SupabaseClient,
+  supabase: SupabaseClient,
   documentId: string,
 ): Promise<{ actor: ActorContext; document: DocumentRow }> {
-  const actor = await resolveActorContext(event, client)
+  const actor = await resolveActorContext(event, supabase)
 
-  const { data: document, error } = await client
+  const { data: document, error } = await supabase
     .from('documents')
     .select('id, org_id, title, tracking_status, origin_office_id, current_office_id')
     .eq('id', documentId)
@@ -80,12 +79,12 @@ export async function assertDocumentOrgAccess(
  */
 export async function assertIssueOrgAccess(
   event: H3Event,
-  client: SupabaseClient,
+  supabase: SupabaseClient,
   issueId: string,
 ): Promise<{ actor: ActorContext; issue: DocumentIssueRow }> {
-  const actor = await resolveActorContext(event, client)
+  const actor = await resolveActorContext(event, supabase)
 
-  const { data: issue, error } = await client
+  const { data: issue, error } = await supabase
     .from('document_issues')
     .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
     .eq('id', issueId)
@@ -115,11 +114,11 @@ export async function assertIssueOrgAccess(
  * Employees may only report from offices assigned to them.
  */
 export async function assertReportingOfficeAccess(
-  client: SupabaseClient,
+  supabase: SupabaseClient,
   actor: ActorContext,
   officeId: string,
 ): Promise<{ id: string; name: string; code: string | null }> {
-  const { data: office, error } = await client
+  const { data: office, error } = await supabase
     .from('offices')
     .select('id, name, code, org_id, assigned_user')
     .eq('id', officeId)
@@ -167,7 +166,7 @@ export async function broadcastIssueRealtime(
   broadcastEvent: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const admin = await serverSupabaseServiceRole(event)
+  const admin = useServerSupabase()
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),

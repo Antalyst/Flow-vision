@@ -1,5 +1,4 @@
-import { P as eventHandler, s as serverSupabaseServiceRole, c as createError } from '../../_/nitro.mjs';
-import '@supabase/ssr';
+import { O as eventHandler, a as useServerSupabase, c as createError } from '../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,8 +16,8 @@ import 'node:fs';
 import 'node:path';
 
 const index_get = eventHandler(async (event) => {
-  const client = await serverSupabaseServiceRole(event);
-  const { data, error } = await client.from("account_types").select("*");
+  const supabase = useServerSupabase();
+  const { data, error } = await supabase.from("account_types").select("*");
   if (error) {
     throw createError({ statusCode: 500, statusMessage: error.message });
   }

@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 /**
  * POST /api/tracking/dropoff
@@ -23,7 +22,7 @@ import { serverSupabaseClient } from '#supabase/server'
  *   - ROUTE_MISMATCH: thrown if office is not the expected next stop.
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const body   = await readBody(event)
 
   const { office_id } = body
@@ -42,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Resolve messenger org ─────────────────────────────────────────────
-  const { data: actorRow, error: actorErr } = await client
+  const { data: actorRow, error: actorErr } = await supabase
     .from('users')
     .select('org_id, full_name')
     .eq('user_id', actorId)
@@ -56,7 +55,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Verify office exists and belongs to messenger's org ───────────────
   // offices.id is UUID — pass as raw string, never Number()
-  const { data: office, error: officeErr } = await client
+  const { data: office, error: officeErr } = await supabase
     .from('offices')
     .select('id, name, code, org_id')
     .eq('id', String(office_id))
@@ -81,7 +80,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Find this messenger's active IN_TRANSIT document ──────────────────
-  const { data: activeDocs, error: docErr } = await client
+  const { data: activeDocs, error: docErr } = await supabase
     .from('documents')
     .select('id, org_id, title, tracking_status, current_step, stage_id')
     .eq('assigned_messenger_id', actorId)
@@ -104,7 +103,7 @@ export default defineEventHandler(async (event) => {
   for (const doc of activeDocs) {
     if (!doc.stage_id) continue
 
-    const { data: stepRow } = await client
+    const { data: stepRow } = await supabase
       .from('stage_steps')
       .select('office_id, step_number')
       .eq('stage_id', doc.stage_id)
@@ -114,7 +113,7 @@ export default defineEventHandler(async (event) => {
 
     if (stepRow) {
       // Count total steps for completion check
-      const { count } = await client
+      const { count } = await supabase
         .from('stage_steps')
         .select('*', { count: 'exact', head: true })
         .eq('stage_id', doc.stage_id)
@@ -139,7 +138,7 @@ export default defineEventHandler(async (event) => {
   const finalStatus = isFinalStop ? 'COMPLETED' : 'ARRIVED_AT_OFFICE'
 
   // ── Write ARRIVED_AT_OFFICE event ─────────────────────────────────────
-  await client.from('document_tracking_events').insert({
+  await supabase.from('document_tracking_events').insert({
     document_id:  targetDoc.id,
     org_id:       messengerOrgId,
     status:       'ARRIVED_AT_OFFICE',
@@ -157,7 +156,7 @@ export default defineEventHandler(async (event) => {
 
   // ── If final stop, also write COMPLETED event ─────────────────────────
   if (isFinalStop) {
-    await client.from('document_tracking_events').insert({
+    await supabase.from('document_tracking_events').insert({
       document_id:  targetDoc.id,
       org_id:       messengerOrgId,
       status:       'COMPLETED',
@@ -183,7 +182,7 @@ export default defineEventHandler(async (event) => {
     docUpdate.assigned_messenger_id = null  // release messenger
   }
 
-  const { data: updatedDoc, error: updateErr } = await client
+  const { data: updatedDoc, error: updateErr } = await supabase
     .from('documents')
     .update(docUpdate)
     .eq('id', targetDoc.id)

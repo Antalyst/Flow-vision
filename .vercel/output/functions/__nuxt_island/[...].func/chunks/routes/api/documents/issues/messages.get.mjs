@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError, v as assertIssueOrgAccess, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError, q as assertIssueOrgAccess, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,7 +17,7 @@ import 'node:path';
 
 const messages_get = defineEventHandler(async (event) => {
   var _a, _b;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const query = getQuery(event);
   const issueId = String((_a = query.issue_id) != null ? _a : "").trim();
   const limit = Math.min(Math.max(Number((_b = query.limit) != null ? _b : 100), 1), 500);
@@ -26,8 +25,8 @@ const messages_get = defineEventHandler(async (event) => {
   if (!issueId) {
     throw createError({ statusCode: 400, message: "issue_id query parameter is required." });
   }
-  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId);
-  let msgQuery = client.from("document_messages").select("id, issue_id, sender_id, message_text, created_at").eq("issue_id", issueId).order("created_at", { ascending: true }).limit(limit);
+  const { actor, issue } = await assertIssueOrgAccess(event, supabase, issueId);
+  let msgQuery = supabase.from("document_messages").select("id, issue_id, sender_id, message_text, created_at").eq("issue_id", issueId).order("created_at", { ascending: true }).limit(limit);
   if (before) {
     msgQuery = msgQuery.lt("created_at", before);
   }
@@ -38,7 +37,7 @@ const messages_get = defineEventHandler(async (event) => {
   const senderIds = [...new Set((messages != null ? messages : []).map((m) => m.sender_id).filter(Boolean))];
   let senderMap = {};
   if (senderIds.length) {
-    const { data: senders } = await client.from("users").select("user_id, full_name, role").in("user_id", senderIds).eq("org_id", actor.orgId);
+    const { data: senders } = await supabase.from("users").select("user_id, full_name, role").in("user_id", senderIds).eq("org_id", actor.orgId);
     senderMap = (senders != null ? senders : []).reduce(
       (acc, u) => {
         var _a2, _b2;

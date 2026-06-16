@@ -6,7 +6,7 @@
  * ┌──────────────────────────────────────────────────────────────────────┐
  * │  Role         │ origin_office_id │ current_office_id │ Scope         │
  * ├──────────────────────────────────────────────────────────────────────┤
- * │  client       │ NULL             │ NULL              │ Org-wide      │
+ * │  supabase       │ NULL             │ NULL              │ Org-wide      │
  * │  employee     │ REQUIRED (UUID)  │ = origin          │ Sub-office    │
  * └──────────────────────────────────────────────────────────────────────┘
  *
@@ -30,10 +30,9 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 
-const ALLOWED_ROLES = ['client', 'employee'] as const
+const ALLOWED_ROLES = ['supabase', 'employee'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
 
 // Resolved step shape used internally across steps 5b and 9
@@ -47,7 +46,7 @@ interface ResolvedRouteStep {
 
 export default defineEventHandler(async (event) => {
   const db     = event.context.db
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
 
   if (!db) {
     throw createError({
@@ -66,17 +65,17 @@ export default defineEventHandler(async (event) => {
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may upload documents.',
+      message: 'Forbidden: only supabase or employee accounts may upload documents.',
     })
   }
 
   // ─────────────────────────────────────────────────────────────────────
   // Step 2 — Resolve Actor Profile
   // org_id is ALWAYS read from the database — never trusted from the form.
-  // This guarantees cross-tenant isolation regardless of client payload.
+  // This guarantees cross-tenant isolation regardless of supabase payload.
   // ─────────────────────────────────────────────────────────────────────
 
-  const { data: actorRow, error: actorErr } = await client
+  const { data: actorRow, error: actorErr } = await supabase
     .from('users')
     .select('org_id, full_name, role')
     .eq('user_id', userId)
@@ -144,7 +143,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Verify: office exists, belongs to the same org, and is assigned to this employee
-    const { data: officeRow, error: officeErr } = await client
+    const { data: officeRow, error: officeErr } = await supabase
       .from('offices')
       .select('id, name, org_id, assigned_user')
       .eq('id', originOfficeId)
@@ -190,7 +189,7 @@ export default defineEventHandler(async (event) => {
   // ─────────────────────────────────────────────────────────────────────
   // Step 5a — Stage Scope Validation (when stage_id is supplied)
   //
-  // A client admin may bind any org-wide (global) or local stage.
+  // A supabase admin may bind any org-wide (global) or local stage.
   // An employee may only bind:
   //   a) A global stage (office_id IS NULL)  — shared org route template
   //   b) A local stage scoped to their own origin office
@@ -199,7 +198,7 @@ export default defineEventHandler(async (event) => {
   let resolvedStageId: string | null = stageIdRaw
 
   if (stageIdRaw) {
-    const { data: stageRow, error: stageErr } = await client
+    const { data: stageRow, error: stageErr } = await supabase
       .from('stages')
       .select('stage_id, name, org_id, office_id')
       .eq('stage_id', stageIdRaw)
@@ -260,7 +259,7 @@ export default defineEventHandler(async (event) => {
 
   if (resolvedStageId) {
     // 5b-i: Fetch the ordered checkpoint sequence for this stage
-    const { data: rawSteps, error: stepsErr } = await client
+    const { data: rawSteps, error: stepsErr } = await supabase
       .from('stage_steps')
       .select('step_number, office_id')
       .eq('stage_id', resolvedStageId)
@@ -282,7 +281,7 @@ export default defineEventHandler(async (event) => {
       ]
 
       // 5b-iii: Bulk fetch all referenced offices in a single round-trip
-      const { data: checkpointOffices, error: cpOfficeErr } = await client
+      const { data: checkpointOffices, error: cpOfficeErr } = await supabase
         .from('offices')
         .select('id, name, code, org_id')
         .in('id', uniqueCheckpointIds)
@@ -362,14 +361,14 @@ export default defineEventHandler(async (event) => {
 
   // Derive effective office_id for legacy compatibility:
   //  - employee: use their origin office
-  //  - client:   use whatever was passed (may be null)
+  //  - supabase:   use whatever was passed (may be null)
   const effectiveOfficeId = resolvedOriginOfficeId ?? officeIdLegacy ?? null
 
   let supabaseDocId: string | null = null
   let mysqlInsertedId: number | null = null
 
   try {
-    const { data: supabaseDoc, error: supabaseError } = await client
+    const { data: supabaseDoc, error: supabaseError } = await supabase
       .from('documents')
       .insert({
         id:                documentId,
@@ -387,7 +386,7 @@ export default defineEventHandler(async (event) => {
         creator_role:      resolvedRole,
         origin_office_id:  resolvedOriginOfficeId,
         // current_office_id = origin for employees (doc physically there at start)
-        // NULL for client admins (not yet at a specific office)
+        // NULL for supabase admins (not yet at a specific office)
         current_office_id: resolvedOriginOfficeId,
       })
       .select()
@@ -406,7 +405,7 @@ export default defineEventHandler(async (event) => {
     )
     mysqlInsertedId = (mysqlResult as any).insertId
 
-    const { error: linkError } = await client
+    const { error: linkError } = await supabase
       .from('documents')
       .update({ mysql_storage_id: mysqlInsertedId })
       .eq('id', supabaseDoc.id)
@@ -465,11 +464,11 @@ export default defineEventHandler(async (event) => {
           `Hard-copy asset is stationed at its origin checkpoint and armed for messenger QR-scan pickup.` +
           routeSnapshotLine
         : `Document registered org-wide under organisation ${orgId} ` +
-          `by ${actorName ?? 'an administrator'} (role: client). ` +
+          `by ${actorName ?? 'an administrator'} (role: supabase). ` +
           `Not yet assigned to a specific office checkpoint. Ready for route assignment and messenger pickup.` +
           routeSnapshotLine
 
-      await client.from('document_tracking_events').insert({
+      await supabase.from('document_tracking_events').insert({
         document_id: supabaseDoc.id,
         org_id:      orgId,
         status:      'CREATED',
@@ -503,7 +502,7 @@ export default defineEventHandler(async (event) => {
         origin_office:     resolvedOfficeName,
         stage_id:          resolvedStageId,
         tracking_status:   'CREATED',
-        // Expose the validated checkpoint array to the client
+        // Expose the validated checkpoint array to the supabase
         route_checkpoints: resolvedRouteSteps.map((s) => ({
           step:        s.step_number,
           office_id:   s.office_id,
@@ -523,7 +522,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     // Compensating write: delete the Supabase row if blob linking failed mid-flight
     if (supabaseDocId) {
-      await client.from('documents').delete().eq('id', supabaseDocId).catch(() => {})
+      await supabase.from('documents').delete().eq('id', supabaseDocId).catch(() => {})
     }
 
     console.error('[Document Upload] Pipeline failed:', error)

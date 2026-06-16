@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 interface WorkflowItemInput {
   office_id: string | number
@@ -7,7 +6,7 @@ interface WorkflowItemInput {
 
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const supabase = useServerSupabase()
     const body = await readBody(event)
     // office_id: null → Global route (org-wide, admin-created)
     //            number → Local route (scoped to this sub-office branch)
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
     // The DB trigger will also reject a mismatch, but catching it here returns
     // a clean 400 before the stage row is inserted.
     if (office_id != null) {
-      const { data: officeRow, error: officeCheckErr } = await client
+      const { data: officeRow, error: officeCheckErr } = await supabase
         .from('offices')
         .select('id, org_id')
         .eq('id', String(office_id))
@@ -56,7 +55,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const { data: existingStages, error: existingError } = await client
+    const { data: existingStages, error: existingError } = await supabase
       .from('stages')
       .select('step_number')
       .eq('org_id', org_id)
@@ -75,7 +74,7 @@ export default defineEventHandler(async (event) => {
       ? Number(existingStages[0].step_number || 0) + 1
       : 1
 
-    const { data: stage, error: stageError } = await client
+    const { data: stage, error: stageError } = await supabase
       .from('stages')
       .insert({
         name:       stage_name.trim(),
@@ -105,14 +104,14 @@ export default defineEventHandler(async (event) => {
         org_id,
       }))
 
-      const { data: steps, error: stepsError } = await client
+      const { data: steps, error: stepsError } = await supabase
         .from('stage_steps')
         .insert(stepRows)
         .select('office_id, step_number, stage_id, org_id')
 
       if (stepsError) {
         console.error('[Backend Stage Error]:', stepsError)
-        await client.from('stages').delete().eq('stage_id', stage.stage_id)
+        await supabase.from('stages').delete().eq('stage_id', stage.stage_id)
         throw createError({
           statusCode: 500,
           message: stepsError.message || 'Failed to create workflow items',

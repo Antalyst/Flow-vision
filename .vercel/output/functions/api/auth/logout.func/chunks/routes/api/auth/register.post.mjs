@@ -1,6 +1,5 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../../_/nitro.mjs';
 import { hash } from 'bcrypt-ts';
-import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -21,14 +20,14 @@ const register_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { email, password, full_name, acctype_id, birth_date, org_code } = body;
   event.context.db;
-  const client = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   if (!email || !password || !full_name || !acctype_id) {
     throw createError({
       statusCode: 400,
       statusMessage: "Missing required fields"
     });
   }
-  const { data: typeData, error: typeError } = await client.from("account_types").select("name").eq("acctype_id", acctype_id).single();
+  const { data: typeData, error: typeError } = await supabase.from("account_types").select("name").eq("acctype_id", acctype_id).single();
   if (typeError || !typeData) {
     throw createError({
       statusCode: 400,
@@ -38,7 +37,7 @@ const register_post = defineEventHandler(async (event) => {
   const typeName = typeData.name;
   let role = "";
   if (typeName.toLowerCase() === "organization") {
-    role = "client";
+    role = "supabase";
   } else if (typeName.toLowerCase() === "employee") {
     role = "employee";
   } else {
@@ -60,7 +59,7 @@ const register_post = defineEventHandler(async (event) => {
       if (!org_code) {
         throw createError({ statusCode: 400, statusMessage: "Organization code is required for employees" });
       }
-      const { data: orgData, error: orgError } = await client.from("org").select("org_id").eq("code", org_code).single();
+      const { data: orgData, error: orgError } = await supabase.from("org").select("org_id").eq("code", org_code).single();
       if (orgError || !orgData) {
         throw createError({ statusCode: 404, statusMessage: "Invalid organization code" });
       }
@@ -68,7 +67,7 @@ const register_post = defineEventHandler(async (event) => {
     }
     const hashedPassword = await hash(password, 10);
     console.log("Inserting user into Supabase...");
-    const { data: profileData, error: profileError } = await client.from("users").insert({
+    const { data: profileData, error: profileError } = await supabase.from("users").insert({
       email,
       full_name,
       role,

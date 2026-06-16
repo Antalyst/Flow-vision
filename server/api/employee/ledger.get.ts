@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -8,7 +7,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *
  * ┌───────────────────────────────────────────────────────────────────────────┐
  * │ scope=GLOBAL  │  Big Picture  — every document in the entire organisation │
- * │               │  (same macro view as a client admin).                     │
+ * │               │  (same macro view as a supabase admin).                     │
  * │               │  Enriched with: tracking_status, uploader name,           │
  * │               │  origin/current office labels, is_own_upload flag.        │
  * ├───────────────────────────────────────────────────────────────────────────┤
@@ -28,7 +27,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *   limit   number               default 50, max 200
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const query  = getQuery(event)
 
   // LOCAL is the default for the ledger (personal/office view)
@@ -36,13 +35,13 @@ export default defineEventHandler(async (event) => {
   const limit = Math.min(Number(query.limit ?? 50), 200)
 
   // ── Resolve actor context (org_id from DB, never from query) ────────────
-  const actor = await resolveActorContextWithOffices(event, client)
+  const actor = await resolveActorContextWithOffices(event, supabase)
 
   // ── GLOBAL scope — Big Picture ───────────────────────────────────────────
   // Return every document in the organisation, enriched with full metadata.
-  // This mirrors the client admin's view so the employee can see macro flow.
+  // This mirrors the supabase admin's view so the employee can see macro flow.
   if (scope === 'GLOBAL') {
-    const { data: allDocs, error: allDocsErr } = await client
+    const { data: allDocs, error: allDocsErr } = await supabase
       .from('documents')
       .select(
         'id, title, description, status, tracking_status, current_step, ' +
@@ -63,7 +62,7 @@ export default defineEventHandler(async (event) => {
     const uploaderIds = [...new Set(rows.map((d: any) => d.user_id).filter(Boolean))]
     let nameById: Record<string, string> = {}
     if (uploaderIds.length > 0) {
-      const { data: users } = await client
+      const { data: users } = await supabase
         .from('users')
         .select('user_id, full_name')
         .in('user_id', uploaderIds)
@@ -79,7 +78,7 @@ export default defineEventHandler(async (event) => {
     )]
     let officeLabelById: Record<string, string> = {}
     if (allOfficeIds.length > 0) {
-      const { data: offices } = await client
+      const { data: offices } = await supabase
         .from('offices')
         .select('id, name, code')
         .in('id', allOfficeIds)
@@ -112,7 +111,7 @@ export default defineEventHandler(async (event) => {
   // This is the isolated ledger view — no other employee's data crosses in.
 
   // Build document filter
-  let docQuery = client
+  let docQuery = supabase
     .from('documents')
     .select(
       'id, title, description, status, tracking_status, current_step, ' +
@@ -148,7 +147,7 @@ export default defineEventHandler(async (event) => {
   )]
   let officeNameById: Record<string, string> = {}
   if (uniqueOfficeIds.length > 0) {
-    const { data: officeRows } = await client
+    const { data: officeRows } = await supabase
       .from('offices')
       .select('id, name, code')
       .in('id', uniqueOfficeIds)

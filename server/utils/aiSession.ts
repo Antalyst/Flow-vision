@@ -4,15 +4,14 @@
 //
 // Identity is ALWAYS derived from the server-set session cookies (never the
 // request body), and every chat row is hard-scoped to the resolved org_id +
-// user_id. A privileged service-role client is used for the chat tables so the
+// user_id. A privileged service-role supabase is used for the chat tables so the
 // pipeline is not blocked by RLS — multi-tenant isolation is instead enforced
 // explicitly in every query below.
 import { randomUUID } from 'node:crypto'
 import type { H3Event } from 'h3'
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const ALLOWED_ROLES = ['client', 'employee']
+const ALLOWED_ROLES = ['supabase', 'employee']
 const MEMORY_WINDOW = 5
 
 export interface TenantContext {
@@ -40,11 +39,11 @@ export async function resolveTenant(event: H3Event): Promise<TenantContext> {
   if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
     throw createError({
       statusCode: 401,
-      statusMessage: 'Unauthenticated: a valid client or employee session is required.',
+      statusMessage: 'Unauthenticated: a valid supabase or employee session is required.',
     })
   }
 
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
   const { data: sessionUser, error } = await supabase
     .from('users')
     .select('org_id')
@@ -74,7 +73,7 @@ export async function ensureSession(
   title: string | undefined,
   event: H3Event,
 ): Promise<string> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await supabase
@@ -119,7 +118,7 @@ export async function fetchRecentMessages(
   event: H3Event,
   limit: number = MEMORY_WINDOW,
 ): Promise<StoredChatMessage[]> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const { data, error } = await supabase
     .from('chat_messages')
@@ -137,7 +136,7 @@ export async function fetchRecentMessages(
 
 /**
  * Write-through persistence of a single chat turn, using the service-role
- * client to bypass RLS.
+ * supabase to bypass RLS.
  */
 export async function persistMessage(
   sessionId: string,
@@ -146,7 +145,7 @@ export async function persistMessage(
   event: H3Event,
   metadata: unknown = null,
 ): Promise<string> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const messageId = randomUUID()
   const normalizedRole: 'user' | 'assistant' =
@@ -178,7 +177,7 @@ export async function persistMessage(
  * List a user's chat sessions, newest first (Recents rail).
  */
 export async function listSessions(userId: string, event: H3Event) {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const { data, error } = await supabase
     .from('chat_sessions')
@@ -205,7 +204,7 @@ export async function assertSessionOwnership(
   userId: string,
   event: H3Event,
 ): Promise<boolean> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const { data } = await supabase
     .from('chat_sessions')
@@ -224,7 +223,7 @@ export async function fetchLatestDocumentPayload(
   sessionId: string,
   event: H3Event,
 ): Promise<{ title: string; htmlContent: string } | null> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const { data, error } = await supabase
     .from('chat_messages')
@@ -258,7 +257,7 @@ export async function fetchSessionTimeline(
   sessionId: string,
   event: H3Event,
 ): Promise<StoredChatMessage[]> {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   const { data, error } = await supabase
     .from('chat_messages')

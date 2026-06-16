@@ -1,4 +1,3 @@
-import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { createHash, randomUUID } from 'node:crypto';
 import { FunctionsClient } from '@supabase/functions-js';
 import { PostgrestClient } from '@supabase/postgrest-js';
@@ -1121,7 +1120,6 @@ function getRequestHeader(event, name) {
   const value = headers[name.toLowerCase()];
   return value;
 }
-const getHeader = getRequestHeader;
 function getRequestHost(event, opts = {}) {
   if (opts.xForwardedHost) {
     const _header = event.node.req.headers["x-forwarded-host"];
@@ -1543,7 +1541,6 @@ const setHeaders = setResponseHeaders;
 function setResponseHeader(event, name, value) {
   event.node.res.setHeader(name, value);
 }
-const setHeader = setResponseHeader;
 function appendResponseHeader(event, name, value) {
   let current = event.node.res.getHeader(name);
   if (!current) {
@@ -4677,7 +4674,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "4fba60bb-10e7-4f08-af15-aab7699df2ed",
+    "buildId": "eb599d14-1728-4d83-ab91-5a303572c9f6",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -4707,29 +4704,7 @@ const _inlineRuntimeConfig = {
   },
   "public": {
     "supabaseUrl": "https://ryohgztqeuzpsjwwjmdd.supabase.co",
-    "supabase": {
-      "url": "https://ryohgztqeuzpsjwwjmdd.supabase.co",
-      "key": "sb_publishable_jENK8LR7AGYeeWOk6VhhfQ_ne0fLw-A",
-      "redirect": false,
-      "redirectOptions": {
-        "login": "/",
-        "callback": "/",
-        "exclude": [
-          "/*"
-        ],
-        "cookieRedirect": false,
-        "saveRedirectToCookie": false
-      },
-      "cookieName": "sb",
-      "cookiePrefix": "sb-ryohgztqeuzpsjwwjmdd-auth-token",
-      "useSsrCookies": true,
-      "cookieOptions": {
-        "maxAge": 28800,
-        "sameSite": "lax",
-        "secure": true
-      },
-      "clientOptions": {}
-    }
+    "supabaseAnonKey": "sb_publishable_jENK8LR7AGYeeWOk6VhhfQ_ne0fLw-A"
   },
   "mysqlHost": "srv1322.hstgr.io",
   "mysqlUser": "u520834156_usrFV2026",
@@ -4738,10 +4713,6 @@ const _inlineRuntimeConfig = {
   "supabaseServiceKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5b2hnenRxZXV6cHNqd3dqbWRkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzc0MzU5NCwiZXhwIjoyMDkzMzE5NTk0fQ.whkwgjRtpXu7WVz6uiiuAIO5kNIY2wkcvyiF-se3s78",
   "icon": {
     "serverKnownCssClasses": []
-  },
-  "supabase": {
-    "serviceKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5b2hnenRxZXV6cHNqd3dqbWRkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzc0MzU5NCwiZXhwIjoyMDkzMzE5NTk0fQ.whkwgjRtpXu7WVz6uiiuAIO5kNIY2wkcvyiF-se3s78",
-    "secretKey": ""
   }
 };
 const envOptions = {
@@ -5259,14 +5230,14 @@ function parseScope(raw) {
   const upper = (raw != null ? raw : "GLOBAL").toUpperCase();
   return upper === "LOCAL" ? "LOCAL" : "GLOBAL";
 }
-async function resolveActorContext(event, client) {
+async function resolveActorContext(event, supabase) {
   var _a;
   const userId = getCookie(event, "user_session");
   const userRole = getCookie(event, "user_role");
   if (!userId || !userRole) {
     throw createError$1({ statusCode: 401, message: "Authentication required." });
   }
-  const { data: actorRow, error } = await client.from("users").select("org_id, full_name, role").eq("user_id", userId).single();
+  const { data: actorRow, error } = await supabase.from("users").select("org_id, full_name, role").eq("user_id", userId).single();
   if (error || !(actorRow == null ? void 0 : actorRow.org_id)) {
     throw createError$1({
       statusCode: 403,
@@ -5286,12 +5257,12 @@ async function resolveActorContext(event, client) {
     fullName: (_a = actorRow.full_name) != null ? _a : null
   };
 }
-async function resolveActorContextWithOffices(event, client) {
-  const base = await resolveActorContext(event, client);
+async function resolveActorContextWithOffices(event, supabase) {
+  const base = await resolveActorContext(event, supabase);
   if (base.userRole !== "employee") {
     return { ...base, officeIds: [] };
   }
-  const { data: officeRows, error: officeErr } = await client.from("offices").select("id").eq("org_id", base.orgId).eq("assigned_user", base.userId);
+  const { data: officeRows, error: officeErr } = await supabase.from("offices").select("id").eq("org_id", base.orgId).eq("assigned_user", base.userId);
   if (officeErr) {
     console.warn("[actorContext] Could not resolve office list:", officeErr.message);
     return { ...base, officeIds: [] };
@@ -5396,75 +5367,6 @@ async function analyzeDocumentBuffer(fileBuffer, mimeType) {
     return { ...FALLBACK_ANALYSIS };
   }
 }
-
-async function fetchWithRetry(req, init) {
-  const retries = 3;
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await fetch(req, init);
-    } catch (error) {
-      if (init?.signal?.aborted) {
-        throw error;
-      }
-      if (attempt === retries) {
-        const { headers: _headers, ...safeInit } = init ?? {};
-        console.error(`Error fetching request ${req}`, error, safeInit);
-        throw error;
-      }
-      console.warn(`Retrying fetch attempt ${attempt + 1} for request: ${req}`);
-      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
-    }
-  }
-  throw new Error("Unreachable code");
-}
-
-function setCookies(event, cookies, headers = {}) {
-  const response = event.node.res;
-  const headersWritable = () => !response.headersSent && !response.writableEnded;
-  if (!headersWritable()) {
-    return;
-  }
-  for (const { name, value, options } of cookies) {
-    if (!headersWritable()) {
-      break;
-    }
-    setCookie(event, name, value, options);
-  }
-  for (const [key, value] of Object.entries(headers)) {
-    if (!headersWritable()) {
-      break;
-    }
-    setHeader(event, key, value);
-  }
-}
-
-const serverSupabaseClient = async (event) => {
-  if (!event.context._supabaseClient) {
-    const {
-      url,
-      key,
-      cookiePrefix,
-      cookieOptions,
-      clientOptions: { auth = {}, global = {} }
-    } = useRuntimeConfig(event).public.supabase;
-    event.context._supabaseClient = createServerClient(url, key, {
-      auth,
-      cookies: {
-        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
-        setAll: (cookies, headers) => setCookies(event, cookies, headers)
-      },
-      cookieOptions: {
-        ...cookieOptions,
-        name: cookiePrefix
-      },
-      global: {
-        fetch: fetchWithRetry,
-        ...global
-      }
-    });
-  }
-  return event.context._supabaseClient;
-};
 
 //#region src/lib/version.ts
 const version = "2.108.2";
@@ -6340,32 +6242,13 @@ function shouldShowDeprecationWarning() {
 }
 if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
 
-const serverSupabaseServiceRole = (event) => {
-  const config = useRuntimeConfig(event);
-  const secretKey = config.supabase.secretKey;
-  const serviceKey = config.supabase.serviceKey;
-  const url = config.public.supabase.url;
-  const serverKey = secretKey || serviceKey;
-  if (!serverKey) {
-    throw new Error("Missing server key. Set `NUXT_SUPABASE_SECRET_KEY` in your environment variables.");
-  }
-  if (!event.context._supabaseServiceRole) {
-    event.context._supabaseServiceRole = createClient(url, serverKey, {
-      auth: {
-        detectSessionInUrl: false,
-        persistSession: false,
-        autoRefreshToken: false
-      },
-      global: {
-        fetch: fetchWithRetry
-      }
-    });
-  }
-  return event.context._supabaseServiceRole;
+const useServerSupabase = () => {
+  const config = useRuntimeConfig();
+  return createClient(config.public.supabaseUrl, config.supabaseServiceKey);
 };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED_ROLES = ["client", "employee"];
+const ALLOWED_ROLES = ["supabase", "employee"];
 const MEMORY_WINDOW = 5;
 async function resolveTenant(event) {
   const userId = getCookie(event, "user_session");
@@ -6373,10 +6256,10 @@ async function resolveTenant(event) {
   if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
     throw createError$1({
       statusCode: 401,
-      statusMessage: "Unauthenticated: a valid client or employee session is required."
+      statusMessage: "Unauthenticated: a valid supabase or employee session is required."
     });
   }
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   const { data: sessionUser, error } = await supabase.from("users").select("org_id").eq("user_id", userId).single();
   const orgId = (sessionUser == null ? void 0 : sessionUser.org_id) ? String(sessionUser.org_id) : null;
   if (error || !orgId || !UUID_REGEX.test(orgId)) {
@@ -6388,7 +6271,7 @@ async function resolveTenant(event) {
   return { userId, orgId, role: userRole };
 }
 async function ensureSession(sessionId, orgId, userId, title, event) {
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await supabase.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
     if (owned == null ? void 0 : owned.id) {
@@ -6414,7 +6297,7 @@ async function ensureSession(sessionId, orgId, userId, title, event) {
   return newId;
 }
 async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   const { data, error } = await supabase.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(limit);
   if (error || !data) {
     return [];
@@ -6422,7 +6305,7 @@ async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
   return data.slice().reverse();
 }
 async function persistMessage(sessionId, role, content, event, metadata = null) {
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   const messageId = randomUUID();
   const normalizedRole = String(role).toLowerCase() === "assistant" ? "assistant" : "user";
   const payload = {
@@ -6444,7 +6327,7 @@ async function persistMessage(sessionId, role, content, event, metadata = null) 
   return messageId;
 }
 async function listSessions(userId, event) {
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   const { data, error } = await supabase.from("chat_sessions").select("id, title, created_at").eq("user_id", String(userId)).order("created_at", { ascending: false }).limit(50);
   if (error) {
     throw createError$1({
@@ -6456,7 +6339,7 @@ async function listSessions(userId, event) {
 }
 async function fetchLatestDocumentPayload(sessionId, event) {
   var _a;
-  const supabase = await serverSupabaseServiceRole(event);
+  const supabase = useServerSupabase();
   const { data, error } = await supabase.from("chat_messages").select("metadata, created_at").eq("session_id", sessionId).eq("role", "assistant").order("created_at", { ascending: false }).limit(15);
   if (error || !data) {
     return null;
@@ -8641,9 +8524,9 @@ function issueRealtimeChannel(orgId, issueId) {
 function orgLogisticsChannel(orgId) {
   return `org:${orgId}:logistics`;
 }
-async function assertDocumentOrgAccess(event, client, documentId) {
-  const actor = await resolveActorContext(event, client);
-  const { data: document, error } = await client.from("documents").select("id, org_id, title, tracking_status, origin_office_id, current_office_id").eq("id", documentId).maybeSingle();
+async function assertDocumentOrgAccess(event, supabase, documentId) {
+  const actor = await resolveActorContext(event, supabase);
+  const { data: document, error } = await supabase.from("documents").select("id, org_id, title, tracking_status, origin_office_id, current_office_id").eq("id", documentId).maybeSingle();
   if (error) {
     throw createError$1({ statusCode: 500, message: error.message });
   }
@@ -8658,9 +8541,9 @@ async function assertDocumentOrgAccess(event, client, documentId) {
   }
   return { actor, document };
 }
-async function assertIssueOrgAccess(event, client, issueId) {
-  const actor = await resolveActorContext(event, client);
-  const { data: issue, error } = await client.from("document_issues").select("id, document_id, org_id, reported_by_office_id, title, status, created_at").eq("id", issueId).maybeSingle();
+async function assertIssueOrgAccess(event, supabase, issueId) {
+  const actor = await resolveActorContext(event, supabase);
+  const { data: issue, error } = await supabase.from("document_issues").select("id, document_id, org_id, reported_by_office_id, title, status, created_at").eq("id", issueId).maybeSingle();
   if (error) {
     throw createError$1({ statusCode: 500, message: error.message });
   }
@@ -8675,9 +8558,9 @@ async function assertIssueOrgAccess(event, client, issueId) {
   }
   return { actor, issue };
 }
-async function assertReportingOfficeAccess(client, actor, officeId) {
+async function assertReportingOfficeAccess(supabase, actor, officeId) {
   var _a;
-  const { data: office, error } = await client.from("offices").select("id, name, code, org_id, assigned_user").eq("id", officeId).maybeSingle();
+  const { data: office, error } = await supabase.from("offices").select("id, name, code, org_id, assigned_user").eq("id", officeId).maybeSingle();
   if (error) {
     throw createError$1({ statusCode: 500, message: error.message });
   }
@@ -8699,7 +8582,7 @@ async function assertReportingOfficeAccess(client, actor, officeId) {
   return { id: String(office.id), name: office.name, code: (_a = office.code) != null ? _a : null };
 }
 async function broadcastIssueRealtime(event, orgId, issueId, broadcastEvent, payload) {
-  const admin = await serverSupabaseServiceRole(event);
+  const admin = useServerSupabase();
   const channels = [
     issueRealtimeChannel(orgId, issueId),
     orgLogisticsChannel(orgId)
@@ -9501,5 +9384,5 @@ function useNitroApp() {
 }
 runNitroPlugins(nitroApp);
 
-export { parseURL as $, extractTextFromFile as A, analyzeDocument as B, assertMethod as C, ensureSession as D, fetchRecentMessages as E, fetchLatestDocumentPayload as F, persistMessage as G, classifyIntent as H, ISSUE_ALLOWED_ROLES as I, reviseDocumentPayload as J, wantsSpreadsheetFormat as K, generateConversationalReply as L, translateTextToQuery as M, generateDocumentTemplate as N, synthesizeDocumentPayload as O, eventHandler as P, buildAssetsURL as Q, publicAssetsURL as R, useRuntimeConfig as S, encodePath as T, UUID_REGEX as U, defineRenderHandler as V, destr as W, getRouteRules as X, getResponseStatusText as Y, getResponseStatus as Z, klona as _, getQuery as a, decodePath as a0, hasProtocol as a1, isScriptProtocol as a2, joinURL as a3, defuFn as a4, sanitizeStatusCode as a5, getRequestHeader as a6, isEqual as a7, getContext as a8, $fetch$1 as a9, baseURL as aa, hash$1 as ab, defu as ac, executeAsync as ad, getHeader as ae, setHeader as af, withTrailingSlash as ag, withoutTrailingSlash as ah, readBody as b, createError$1 as c, defineEventHandler as d, setCookie as e, deleteCookie as f, getRouteRulesForPath as g, serverSupabaseClient as h, parseScope as i, resolveActorContextWithOffices as j, assertDocumentOrgAccess as k, listSessions as l, assertReportingOfficeAccess as m, broadcastIssueRealtime as n, orgLogisticsChannel as o, parseQuery as p, issueRealtimeChannel as q, resolveTenant as r, serverSupabaseServiceRole as s, toNodeListener as t, useNitroApp as u, assertIssueOrgAccess as v, withQuery as w, getCookie as x, readMultipartFormData as y, analyzeDocumentBuffer as z };
+export { decodePath as $, analyzeDocument as A, assertMethod as B, ensureSession as C, fetchRecentMessages as D, fetchLatestDocumentPayload as E, persistMessage as F, classifyIntent as G, reviseDocumentPayload as H, ISSUE_ALLOWED_ROLES as I, wantsSpreadsheetFormat as J, generateConversationalReply as K, translateTextToQuery as L, generateDocumentTemplate as M, synthesizeDocumentPayload as N, eventHandler as O, buildAssetsURL as P, publicAssetsURL as Q, useRuntimeConfig as R, encodePath as S, defineRenderHandler as T, UUID_REGEX as U, destr as V, getRouteRules as W, getResponseStatusText as X, getResponseStatus as Y, klona as Z, parseURL as _, useServerSupabase as a, hasProtocol as a0, isScriptProtocol as a1, joinURL as a2, defuFn as a3, sanitizeStatusCode as a4, getRequestHeader as a5, isEqual as a6, getContext as a7, $fetch$1 as a8, baseURL as a9, hash$1 as aa, defu as ab, executeAsync as ac, withTrailingSlash as ad, withoutTrailingSlash as ae, getQuery as b, createError$1 as c, defineEventHandler as d, readBody as e, deleteCookie as f, getRouteRulesForPath as g, parseScope as h, resolveActorContextWithOffices as i, assertDocumentOrgAccess as j, assertReportingOfficeAccess as k, listSessions as l, broadcastIssueRealtime as m, issueRealtimeChannel as n, orgLogisticsChannel as o, parseQuery as p, assertIssueOrgAccess as q, resolveTenant as r, setCookie as s, toNodeListener as t, useNitroApp as u, getCookie as v, withQuery as w, readMultipartFormData as x, analyzeDocumentBuffer as y, extractTextFromFile as z };
 //# sourceMappingURL=nitro.mjs.map

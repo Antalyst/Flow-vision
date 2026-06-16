@@ -1,6 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, c as createError, x as getCookie, y as readMultipartFormData, z as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, a as useServerSupabase, c as createError, v as getCookie, x as readMultipartFormData, y as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
 import { randomUUID } from 'node:crypto';
-import '@supabase/ssr';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
 import '@supabase/realtime-js';
@@ -16,11 +15,11 @@ import 'consola';
 import 'node:fs';
 import 'node:path';
 
-const ALLOWED_ROLES = ["client", "employee"];
+const ALLOWED_ROLES = ["supabase", "employee"];
 const upload_post = defineEventHandler(async (event) => {
   var _a, _b;
   const db = event.context.db;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   if (!db) {
     throw createError({
       statusCode: 500,
@@ -32,10 +31,10 @@ const upload_post = defineEventHandler(async (event) => {
   if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
     throw createError({
       statusCode: 403,
-      message: "Forbidden: only client or employee accounts may upload documents."
+      message: "Forbidden: only supabase or employee accounts may upload documents."
     });
   }
-  const { data: actorRow, error: actorErr } = await client.from("users").select("org_id, full_name, role").eq("user_id", userId).single();
+  const { data: actorRow, error: actorErr } = await supabase.from("users").select("org_id, full_name, role").eq("user_id", userId).single();
   if (actorErr || !(actorRow == null ? void 0 : actorRow.org_id)) {
     throw createError({
       statusCode: 401,
@@ -78,7 +77,7 @@ const upload_post = defineEventHandler(async (event) => {
         message: "EMPLOYEE_ORIGIN_REQUIRED: Employees must supply origin_office_id \u2014 the sub-office/branch where this hard-copy is being physically registered."
       });
     }
-    const { data: officeRow, error: officeErr } = await client.from("offices").select("id, name, org_id, assigned_user").eq("id", originOfficeId).maybeSingle();
+    const { data: officeRow, error: officeErr } = await supabase.from("offices").select("id, name, org_id, assigned_user").eq("id", originOfficeId).maybeSingle();
     if (officeErr) {
       throw createError({ statusCode: 500, message: `Office lookup failed: ${officeErr.message}` });
     }
@@ -108,7 +107,7 @@ const upload_post = defineEventHandler(async (event) => {
   }
   let resolvedStageId = stageIdRaw;
   if (stageIdRaw) {
-    const { data: stageRow, error: stageErr } = await client.from("stages").select("stage_id, name, org_id, office_id").eq("stage_id", stageIdRaw).maybeSingle();
+    const { data: stageRow, error: stageErr } = await supabase.from("stages").select("stage_id, name, org_id, office_id").eq("stage_id", stageIdRaw).maybeSingle();
     if (stageErr) {
       throw createError({ statusCode: 500, message: `Stage lookup failed: ${stageErr.message}` });
     }
@@ -136,7 +135,7 @@ const upload_post = defineEventHandler(async (event) => {
   }
   let resolvedRouteSteps = [];
   if (resolvedStageId) {
-    const { data: rawSteps, error: stepsErr } = await client.from("stage_steps").select("step_number, office_id").eq("stage_id", resolvedStageId).order("step_number", { ascending: true });
+    const { data: rawSteps, error: stepsErr } = await supabase.from("stage_steps").select("step_number, office_id").eq("stage_id", resolvedStageId).order("step_number", { ascending: true });
     if (stepsErr) {
       throw createError({
         statusCode: 500,
@@ -148,7 +147,7 @@ const upload_post = defineEventHandler(async (event) => {
       const uniqueCheckpointIds = [
         ...new Set(steps.map((s) => String(s.office_id)).filter(Boolean))
       ];
-      const { data: checkpointOffices, error: cpOfficeErr } = await client.from("offices").select("id, name, code, org_id").in("id", uniqueCheckpointIds);
+      const { data: checkpointOffices, error: cpOfficeErr } = await supabase.from("offices").select("id, name, code, org_id").in("id", uniqueCheckpointIds);
       if (cpOfficeErr) {
         throw createError({
           statusCode: 500,
@@ -202,7 +201,7 @@ const upload_post = defineEventHandler(async (event) => {
   let supabaseDocId = null;
   let mysqlInsertedId = null;
   try {
-    const { data: supabaseDoc, error: supabaseError } = await client.from("documents").insert({
+    const { data: supabaseDoc, error: supabaseError } = await supabase.from("documents").insert({
       id: documentId,
       org_id: orgId,
       // server-resolved, never from form
@@ -219,7 +218,7 @@ const upload_post = defineEventHandler(async (event) => {
       creator_role: resolvedRole,
       origin_office_id: resolvedOriginOfficeId,
       // current_office_id = origin for employees (doc physically there at start)
-      // NULL for client admins (not yet at a specific office)
+      // NULL for supabase admins (not yet at a specific office)
       current_office_id: resolvedOriginOfficeId
     }).select().single();
     if (supabaseError) throw supabaseError;
@@ -229,7 +228,7 @@ const upload_post = defineEventHandler(async (event) => {
       [supabaseDoc.id, fileItem.data, fileName, mimeType]
     );
     mysqlInsertedId = mysqlResult.insertId;
-    const { error: linkError } = await client.from("documents").update({ mysql_storage_id: mysqlInsertedId }).eq("id", supabaseDoc.id);
+    const { error: linkError } = await supabase.from("documents").update({ mysql_storage_id: mysqlInsertedId }).eq("id", supabaseDoc.id);
     if (linkError) throw linkError;
     try {
       let routeSnapshotLine = "";
@@ -246,8 +245,8 @@ Route schema locked (${resolvedRouteSteps.length} checkpoint${resolvedRouteSteps
         routeSnapshotLine = `
 Route template attached (stage_id: ${resolvedStageId}) \u2014 no checkpoint steps defined yet.`;
       }
-      const initNotes = resolvedRole === "employee" ? `Document physically registered at "${resolvedOfficeName}" (office: ${resolvedOriginOfficeId}) by ${actorName != null ? actorName : "an employee"} (role: employee). Hard-copy asset is stationed at its origin checkpoint and armed for messenger QR-scan pickup.` + routeSnapshotLine : `Document registered org-wide under organisation ${orgId} by ${actorName != null ? actorName : "an administrator"} (role: client). Not yet assigned to a specific office checkpoint. Ready for route assignment and messenger pickup.` + routeSnapshotLine;
-      await client.from("document_tracking_events").insert({
+      const initNotes = resolvedRole === "employee" ? `Document physically registered at "${resolvedOfficeName}" (office: ${resolvedOriginOfficeId}) by ${actorName != null ? actorName : "an employee"} (role: employee). Hard-copy asset is stationed at its origin checkpoint and armed for messenger QR-scan pickup.` + routeSnapshotLine : `Document registered org-wide under organisation ${orgId} by ${actorName != null ? actorName : "an administrator"} (role: supabase). Not yet assigned to a specific office checkpoint. Ready for route assignment and messenger pickup.` + routeSnapshotLine;
+      await supabase.from("document_tracking_events").insert({
         document_id: supabaseDoc.id,
         org_id: orgId,
         status: "CREATED",
@@ -274,7 +273,7 @@ Route template attached (stage_id: ${resolvedStageId}) \u2014 no checkpoint step
         origin_office: resolvedOfficeName,
         stage_id: resolvedStageId,
         tracking_status: "CREATED",
-        // Expose the validated checkpoint array to the client
+        // Expose the validated checkpoint array to the supabase
         route_checkpoints: resolvedRouteSteps.map((s) => ({
           step: s.step_number,
           office_id: s.office_id,
@@ -293,7 +292,7 @@ Route template attached (stage_id: ${resolvedStageId}) \u2014 no checkpoint step
     };
   } catch (error) {
     if (supabaseDocId) {
-      await client.from("documents").delete().eq("id", supabaseDocId).catch(() => {
+      await supabase.from("documents").delete().eq("id", supabaseDocId).catch(() => {
       });
     }
     console.error("[Document Upload] Pipeline failed:", error);

@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 // ── Valid status pipeline ──────────────────────────────────────────────
 const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'DISCREPANCY_REPORTED', 'COMPLETED'] as const
@@ -31,7 +30,7 @@ const TRANSITIONS: Record<TrackingStatus, TrackingStatus[]> = {
  *   notes?        string   optional actor notes
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const body   = await readBody(event)
 
   const { document_id, status: nextStatus, notes } = body
@@ -55,7 +54,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Fetch the document (with org isolation check) ────────────────────
-  const { data: doc, error: docErr } = await client
+  const { data: doc, error: docErr } = await supabase
     .from('documents')
     .select('id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
     .eq('id', document_id)
@@ -66,7 +65,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Validate actor belongs to the document's org ─────────────────────
-  const { data: actorRow } = await client
+  const { data: actorRow } = await supabase
     .from('users')
     .select('org_id, full_name')
     .eq('user_id', actorId)
@@ -96,7 +95,7 @@ export default defineEventHandler(async (event) => {
     // Determine which office this transition targets
     const stepToLook = nextStatus === 'IN_TRANSIT' ? doc.current_step + 1 : doc.current_step
     if (doc.stage_id) {
-      const { data: stepRow } = await client
+      const { data: stepRow } = await supabase
         .from('stage_steps')
         .select('office_id')
         .eq('stage_id', doc.stage_id)
@@ -105,7 +104,7 @@ export default defineEventHandler(async (event) => {
 
       if (stepRow) {
         officeId = stepRow.office_id
-        const { data: officeRow } = await client
+        const { data: officeRow } = await supabase
           .from('offices')
           .select('name')
           .eq('id', officeId)
@@ -120,7 +119,7 @@ export default defineEventHandler(async (event) => {
     nextStep = doc.current_step + 1
 
     if (doc.stage_id) {
-      const { data: stepRow } = await client
+      const { data: stepRow } = await supabase
         .from('stage_steps')
         .select('office_id, offices(name)')
         .eq('stage_id', doc.stage_id)
@@ -142,7 +141,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Atomic writes ─────────────────────────────────────────────────────
   // 1. Insert immutable tracking event
-  const { data: trackingEvent, error: eventErr } = await client
+  const { data: trackingEvent, error: eventErr } = await supabase
     .from('document_tracking_events')
     .insert({
       document_id,
@@ -164,7 +163,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 2. Update document's denormalized state
-  const { data: updatedDoc, error: updateErr } = await client
+  const { data: updatedDoc, error: updateErr } = await supabase
     .from('documents')
     .update({
       tracking_status: nextStatus,

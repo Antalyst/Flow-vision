@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
     public: {
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
     }
   },
 
@@ -19,7 +20,6 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/icon',
     '@pinia/nuxt',
-    '@nuxtjs/supabase'
   ],
 
   postcss: {
@@ -29,18 +29,9 @@ export default defineNuxtConfig({
     }
   },
 
-  supabase: {
-    redirect: false,
-    redirectOptions: {
-      login: '/',
-      callback: '/',
-      exclude: ['/*']
-    }
-  },
-
   nitro: {
     externals: {
-      inline: ['unpdf', 'groq-sdk', '@supabase/supabase-js','@supabase/ssr']
-    }
-  }
+      inline: ['unpdf', 'groq-sdk', '@supabase/supabase-js'],
+    },
+  },
 })

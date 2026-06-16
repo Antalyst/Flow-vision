@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertDocumentOrgAccess,
@@ -13,7 +12,7 @@ import {
  *   document_id  UUID  required
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const supabase = useServerSupabase()
   const query  = getQuery(event)
 
   const documentId = String(query.document_id ?? '').trim()
@@ -21,9 +20,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'document_id is required.' })
   }
 
-  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId)
+  const { actor, document } = await assertDocumentOrgAccess(event, supabase, documentId)
 
-  const { data: issues, error } = await client
+  const { data: issues, error } = await supabase
     .from('document_issues')
     .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
     .eq('document_id', documentId)

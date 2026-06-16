@@ -1,10 +1,9 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   try {
-    const { data: accountTypes, error } = await client
+    const { data: accountTypes, error } = await supabase
       .from('account_types')
       .select('*')
       .order('name', { ascending: true });

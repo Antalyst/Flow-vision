@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -19,18 +18,18 @@ import 'node:path';
 const index_get = defineEventHandler(async (event) => {
   var _a;
   try {
-    const client = await serverSupabaseClient(event);
+    const supabase = useServerSupabase();
     const query = getQuery(event);
     const scope = parseScope(query.scope);
     const limit = Math.min(Number((_a = query.limit) != null ? _a : 200), 500);
-    const actor = await resolveActorContextWithOffices(event, client);
+    const actor = await resolveActorContextWithOffices(event, supabase);
     if (actor.userRole === "messenger") {
       throw createError({
         statusCode: 403,
         message: "Messengers must use /api/tracking/queue for document access."
       });
     }
-    let dbQuery = client.from("documents").select("*").eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(limit);
+    let dbQuery = supabase.from("documents").select("*").eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(limit);
     if (scope === "LOCAL" && actor.userRole === "employee") {
       if (actor.officeIds.length === 0) {
         dbQuery = dbQuery.eq("user_id", actor.userId);
@@ -49,7 +48,7 @@ const index_get = defineEventHandler(async (event) => {
     const uploaderIds = [...new Set(rows.map((d) => d.user_id).filter(Boolean))];
     let nameById = {};
     if (uploaderIds.length > 0) {
-      const { data: users } = await client.from("users").select("user_id, full_name").in("user_id", uploaderIds);
+      const { data: users } = await supabase.from("users").select("user_id, full_name").in("user_id", uploaderIds);
       nameById = (users != null ? users : []).reduce((acc, u) => {
         acc[String(u.user_id)] = u.full_name;
         return acc;
@@ -60,7 +59,7 @@ const index_get = defineEventHandler(async (event) => {
     )];
     let officeLabelById = {};
     if (officeIds.length > 0) {
-      const { data: offices } = await client.from("offices").select("id, name, code").in("id", officeIds);
+      const { data: offices } = await supabase.from("offices").select("id, name, code").in("id", officeIds);
       officeLabelById = (offices != null ? offices : []).reduce((acc, o) => {
         acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name;
         return acc;

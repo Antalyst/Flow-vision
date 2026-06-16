@@ -1,8 +1,7 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const supabase = useServerSupabase()
     const body = await readBody(event)
     const { id, name, assigned_user, stage_id, code } = body
 
@@ -19,7 +18,7 @@ export default defineEventHandler(async (event) => {
     if (stage_id !== undefined) updateData.stage_id = stage_id
     if (code !== undefined && (code ?? '').trim()) updateData.code = code.trim()
 
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from('offices')
       .update(updateData)
       .eq('id', id)

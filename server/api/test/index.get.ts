@@ -1,10 +1,9 @@
 // server/api/test/index.get.ts
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default eventHandler(async (event) => {
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
-  const { data, error } = await client
+  const { data, error } = await supabase
     .from('account_types')
     .select('*')
 

@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,19 +17,19 @@ import 'node:path';
 
 const queue_get = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const query = getQuery(event);
   const scope = parseScope(query.scope);
   const limit = Math.min(Number((_a = query.limit) != null ? _a : 100), 500);
   const statusFilter = (_c = (_b = query.status) == null ? void 0 : _b.split(",").map((s) => s.trim()).filter(Boolean)) != null ? _c : [];
-  const actor = await resolveActorContextWithOffices(event, client);
+  const actor = await resolveActorContextWithOffices(event, supabase);
   const qOrgId = query.orgId;
   if (qOrgId && String(qOrgId) !== actor.orgId) {
     console.warn(
       `[tracking/queue] orgId param (${qOrgId}) differs from session org (${actor.orgId}). Session org_id takes precedence.`
     );
   }
-  let dbQuery = client.from("documents").select(
+  let dbQuery = supabase.from("documents").select(
     "id, title, description, tracking_status, current_step, stage_id, office_id, origin_office_id, current_office_id, qr_code_data, assigned_messenger_id, created_at, user_id, creator_role"
   ).eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(limit);
   if (statusFilter.length > 0) {
@@ -59,8 +58,8 @@ const queue_get = defineEventHandler(async (event) => {
   let stageById = {};
   if (stageIds.length) {
     const [{ data: stageRows }, { data: stepCounts }] = await Promise.all([
-      client.from("stages").select("stage_id, name").in("stage_id", stageIds),
-      client.from("stage_steps").select("stage_id").in("stage_id", stageIds)
+      supabase.from("stages").select("stage_id, name").in("stage_id", stageIds),
+      supabase.from("stage_steps").select("stage_id").in("stage_id", stageIds)
     ]);
     const countByStage = {};
     for (const s of stepCounts != null ? stepCounts : []) {
@@ -78,7 +77,7 @@ const queue_get = defineEventHandler(async (event) => {
   const messengerIds = [...new Set(rows.map((d) => d.assigned_messenger_id).filter(Boolean))];
   let messengerNameById = {};
   if (messengerIds.length) {
-    const { data: userRows } = await client.from("users").select("user_id, full_name").in("user_id", messengerIds);
+    const { data: userRows } = await supabase.from("users").select("user_id, full_name").in("user_id", messengerIds);
     messengerNameById = (userRows != null ? userRows : []).reduce((acc, u) => {
       acc[String(u.user_id)] = u.full_name;
       return acc;
@@ -89,7 +88,7 @@ const queue_get = defineEventHandler(async (event) => {
   )];
   let officeLabelById = {};
   if (allOfficeIds.length) {
-    const { data: officeRows } = await client.from("offices").select("id, name, code").in("id", allOfficeIds);
+    const { data: officeRows } = await supabase.from("offices").select("id, name, code").in("id", allOfficeIds);
     officeLabelById = (officeRows != null ? officeRows : []).reduce((acc, o) => {
       acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name;
       return acc;

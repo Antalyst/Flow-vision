@@ -1,8 +1,7 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const supabase = useServerSupabase()
     const query = getQuery(event)
     const id = query.id
 
@@ -13,7 +12,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from('offices')
       .delete()
       .eq('id', id)

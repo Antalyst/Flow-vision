@@ -1,5 +1,4 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, x as getCookie } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, v as getCookie } from '../../../_/nitro.mjs';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +16,7 @@ import 'node:fs';
 import 'node:path';
 
 const dropoff_post = defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event);
+  const supabase = useServerSupabase();
   const body = await readBody(event);
   const { office_id } = body;
   if (!office_id) {
@@ -29,12 +28,12 @@ const dropoff_post = defineEventHandler(async (event) => {
   if (actorRole !== "messenger") {
     throw createError({ statusCode: 403, message: "Forbidden: only messenger accounts can perform office drop-offs" });
   }
-  const { data: actorRow, error: actorErr } = await client.from("users").select("org_id, full_name").eq("user_id", actorId).single();
+  const { data: actorRow, error: actorErr } = await supabase.from("users").select("org_id, full_name").eq("user_id", actorId).single();
   if (actorErr || !(actorRow == null ? void 0 : actorRow.org_id)) {
     throw createError({ statusCode: 403, message: "Messenger account has no organisation assigned" });
   }
   const messengerOrgId = String(actorRow.org_id);
-  const { data: office, error: officeErr } = await client.from("offices").select("id, name, code, org_id").eq("id", String(office_id)).maybeSingle();
+  const { data: office, error: officeErr } = await supabase.from("offices").select("id, name, code, org_id").eq("id", String(office_id)).maybeSingle();
   if (officeErr) throw createError({ statusCode: 500, message: officeErr.message });
   if (!office) {
     throw createError({
@@ -49,7 +48,7 @@ const dropoff_post = defineEventHandler(async (event) => {
       data: { code: "SECURITY_ORG_MISMATCH", office_org: office.org_id, messenger_org: messengerOrgId }
     });
   }
-  const { data: activeDocs, error: docErr } = await client.from("documents").select("id, org_id, title, tracking_status, current_step, stage_id").eq("assigned_messenger_id", actorId).eq("org_id", messengerOrgId).eq("tracking_status", "IN_TRANSIT");
+  const { data: activeDocs, error: docErr } = await supabase.from("documents").select("id, org_id, title, tracking_status, current_step, stage_id").eq("assigned_messenger_id", actorId).eq("org_id", messengerOrgId).eq("tracking_status", "IN_TRANSIT");
   if (docErr) throw createError({ statusCode: 500, message: docErr.message });
   if (!activeDocs || activeDocs.length === 0) {
     throw createError({
@@ -61,9 +60,9 @@ const dropoff_post = defineEventHandler(async (event) => {
   let totalSteps = 0;
   for (const doc of activeDocs) {
     if (!doc.stage_id) continue;
-    const { data: stepRow } = await client.from("stage_steps").select("office_id, step_number").eq("stage_id", doc.stage_id).eq("step_number", doc.current_step).eq("office_id", String(office_id)).maybeSingle();
+    const { data: stepRow } = await supabase.from("stage_steps").select("office_id, step_number").eq("stage_id", doc.stage_id).eq("step_number", doc.current_step).eq("office_id", String(office_id)).maybeSingle();
     if (stepRow) {
-      const { count } = await client.from("stage_steps").select("*", { count: "exact", head: true }).eq("stage_id", doc.stage_id);
+      const { count } = await supabase.from("stage_steps").select("*", { count: "exact", head: true }).eq("stage_id", doc.stage_id);
       totalSteps = count != null ? count : 0;
       targetDoc = doc;
       break;
@@ -78,7 +77,7 @@ const dropoff_post = defineEventHandler(async (event) => {
   }
   const isFinalStop = totalSteps > 0 && targetDoc.current_step >= totalSteps;
   const finalStatus = isFinalStop ? "COMPLETED" : "ARRIVED_AT_OFFICE";
-  await client.from("document_tracking_events").insert({
+  await supabase.from("document_tracking_events").insert({
     document_id: targetDoc.id,
     org_id: messengerOrgId,
     status: "ARRIVED_AT_OFFICE",
@@ -94,7 +93,7 @@ const dropoff_post = defineEventHandler(async (event) => {
     notes: `Arrived and checked in at ${office.name}${office.code ? ` (${office.code})` : ""}.`
   });
   if (isFinalStop) {
-    await client.from("document_tracking_events").insert({
+    await supabase.from("document_tracking_events").insert({
       document_id: targetDoc.id,
       org_id: messengerOrgId,
       status: "COMPLETED",
@@ -117,7 +116,7 @@ const dropoff_post = defineEventHandler(async (event) => {
   if (isFinalStop) {
     docUpdate.assigned_messenger_id = null;
   }
-  const { data: updatedDoc, error: updateErr } = await client.from("documents").update(docUpdate).eq("id", targetDoc.id).select("id, title, tracking_status, current_step").single();
+  const { data: updatedDoc, error: updateErr } = await supabase.from("documents").update(docUpdate).eq("id", targetDoc.id).select("id, title, tracking_status, current_step").single();
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message });
   return {
     success: true,

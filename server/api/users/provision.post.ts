@@ -1,4 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 import { hash } from 'bcrypt-ts'
 
 /**
@@ -24,7 +23,7 @@ export default defineEventHandler(async (event) => {
   const sessionUserId = getCookie(event, 'user_session')
   const sessionRole   = getCookie(event, 'user_role')
 
-  if (!sessionUserId || sessionRole !== 'client') {
+  if (!sessionUserId || sessionRole !== 'supabase') {
     throw createError({ statusCode: 403, message: 'Forbidden: only org administrators can provision accounts' })
   }
 
@@ -38,10 +37,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Only messenger accounts can be provisioned via this endpoint' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   // --- Resolve admin's org_id (server-side, not from body) ---------------
-  const { data: adminRow, error: adminErr } = await client
+  const { data: adminRow, error: adminErr } = await supabase
     .from('users')
     .select('org_id, full_name')
     .eq('user_id', sessionUserId)
@@ -54,7 +53,7 @@ export default defineEventHandler(async (event) => {
   const org_id = adminRow.org_id
 
   // --- Duplicate email check (scoped log, not a hard fail yet) -----------
-  const { data: existing } = await client
+  const { data: existing } = await supabase
     .from('users')
     .select('user_id')
     .eq('email', email.trim().toLowerCase())
@@ -67,7 +66,7 @@ export default defineEventHandler(async (event) => {
   // --- Create messenger account ------------------------------------------
   const hashedPassword = await hash(password, 10)
 
-  const { data: newUser, error: insertErr } = await client
+  const { data: newUser, error: insertErr } = await supabase
     .from('users')
     .insert({
       full_name: full_name.trim(),

@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 
 /**
  * GET /api/tracking/timeline
@@ -11,7 +10,7 @@ import { serverSupabaseClient } from '#supabase/server'
  *   documentId  string  required
  */
 export default defineEventHandler(async (event) => {
-  const client      = await serverSupabaseClient(event)
+  const supabase      = useServerSupabase()
   const query       = getQuery(event)
   const documentId  = query.documentId as string | undefined
 
@@ -24,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })
 
   // ── Fetch the document with stage info ────────────────────────────────
-  const { data: doc, error: docErr } = await client
+  const { data: doc, error: docErr } = await supabase
     .from('documents')
     .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at')
     .eq('id', documentId)
@@ -35,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Org isolation check
-  const { data: actorRow } = await client
+  const { data: actorRow } = await supabase
     .from('users')
     .select('org_id, full_name')
     .eq('user_id', actorId)
@@ -46,7 +45,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Fetch tracking events (audit log) ─────────────────────────────────
-  const { data: events, error: eventsErr } = await client
+  const { data: events, error: eventsErr } = await supabase
     .from('document_tracking_events')
     .select('id, status, step_index, office_id, office_name, actor_id, actor_role, actor_name, notes, created_at')
     .eq('document_id', documentId)
@@ -59,7 +58,7 @@ export default defineEventHandler(async (event) => {
   // ── Fetch stage route (the planned path) ──────────────────────────────
   let routeSteps: any[] = []
   if (doc.stage_id) {
-    const { data: steps } = await client
+    const { data: steps } = await supabase
       .from('stage_steps')
       .select('step_number, office_id, offices(id, name, code)')
       .eq('stage_id', doc.stage_id)
@@ -76,7 +75,7 @@ export default defineEventHandler(async (event) => {
   // ── Resolve assigned messenger display name ────────────────────────────
   let messengerName: string | null = null
   if (doc.assigned_messenger_id) {
-    const { data: mRow } = await client
+    const { data: mRow } = await supabase
       .from('users')
       .select('full_name')
       .eq('user_id', doc.assigned_messenger_id)

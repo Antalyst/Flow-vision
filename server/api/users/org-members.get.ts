@@ -1,8 +1,7 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 /**
  * GET /api/users/org-members
- * Returns all non-client members of an organization (employees + messengers).
+ * Returns all non-supabase members of an organization (employees + messengers).
  * Requires the requesting admin's user_session cookie for org validation.
  *
  * Query params:
@@ -19,18 +18,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'orgId is required' })
   }
 
-  // Validate the requesting session belongs to a client admin of this org
+  // Validate the requesting session belongs to a supabase admin of this org
   const sessionUserId = getCookie(event, 'user_session')
   const sessionRole   = getCookie(event, 'user_role')
 
-  if (!sessionUserId || sessionRole !== 'client') {
+  if (!sessionUserId || sessionRole !== 'supabase') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   // Confirm the calling admin's org_id matches the requested orgId
-  const { data: adminRow, error: adminErr } = await client
+  const { data: adminRow, error: adminErr } = await supabase
     .from('users')
     .select('org_id')
     .eq('user_id', sessionUserId)
@@ -44,9 +43,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: org_id mismatch' })
   }
 
-  // Build member query — exclude client/admin accounts
+  // Build member query — exclude supabase/admin accounts
   const allowedRoles = ['employee', 'messenger']
-  let dbQuery = client
+  let dbQuery = supabase
     .from('users')
     .select('user_id, full_name, email, role, org_id, status, created_at')
     .eq('org_id', orgId)
@@ -54,7 +53,7 @@ export default defineEventHandler(async (event) => {
     .order('full_name', { ascending: true })
 
   if (role !== 'all' && allowedRoles.includes(role)) {
-    dbQuery = client
+    dbQuery = supabase
       .from('users')
       .select('user_id, full_name, email, role, org_id, status, created_at')
       .eq('org_id', orgId)

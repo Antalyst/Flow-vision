@@ -1,4 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 
 /**
  * DELETE /api/users/remove
@@ -19,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const sessionUserId = getCookie(event, 'user_session')
   const sessionRole   = getCookie(event, 'user_role')
 
-  if (!sessionUserId || sessionRole !== 'client') {
+  if (!sessionUserId || sessionRole !== 'supabase') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
@@ -27,10 +26,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Administrators cannot remove their own account via this endpoint' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const supabase = useServerSupabase()
 
   // Resolve admin org
-  const { data: adminRow } = await client
+  const { data: adminRow } = await supabase
     .from('users')
     .select('org_id')
     .eq('user_id', sessionUserId)
@@ -41,7 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify target belongs to same org and is not an admin
-  const { data: targetRow } = await client
+  const { data: targetRow } = await supabase
     .from('users')
     .select('org_id, role, full_name')
     .eq('user_id', userId)
@@ -51,11 +50,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: cannot remove users outside your organization' })
   }
 
-  if (targetRow.role === 'client') {
+  if (targetRow.role === 'supabase') {
     throw createError({ statusCode: 403, message: 'Cannot remove an administrator account' })
   }
 
-  const { error } = await client
+  const { error } = await supabase
     .from('users')
     .delete()
     .eq('user_id', userId)
