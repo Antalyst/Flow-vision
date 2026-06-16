@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertIssueOrgAccess,
@@ -15,7 +16,7 @@ import {
  *   message_text  string required
  */
 export default defineEventHandler(async (event) => {
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const issueId     = String(body?.issue_id ?? '').trim()
@@ -24,12 +25,12 @@ export default defineEventHandler(async (event) => {
   if (!issueId)     throw createError({ statusCode: 400, message: 'issue_id is required.' })
   if (!messageText) throw createError({ statusCode: 400, message: 'message_text is required.' })
 
-  const { actor, issue } = await assertIssueOrgAccess(event, supabase, issueId)
+  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId)
 
   if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only supabase or employee accounts may post issue messages.',
+      message: 'Forbidden: only client or employee accounts may post issue messages.',
     })
   }
 
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { data: message, error: msgErr } = await supabase
+  const { data: message, error: msgErr } = await client
     .from('document_messages')
     .insert({
       issue_id:     issueId,

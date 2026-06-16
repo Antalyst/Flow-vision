@@ -1,3 +1,4 @@
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { resolveTenant, UUID_REGEX } from '~~/server/utils/aiSession'
 
 // GET /api/ai/messages?session_id=...
@@ -21,12 +22,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseServiceRole(event)
 
   // 1. Ownership: the parent session must match BOTH id AND user_id.
   //    user_id is character varying(255) in the DDL, so cast to a string to
   //    guarantee an exact type match against the column.
-  const { data: ownedSession, error: ownershipError } = await supabase
+  const { data: ownedSession, error: ownershipError } = await client
     .from('chat_sessions')
     .select('id')
     .eq('id', sessionId)
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 2. Messages: filter strictly by session_id, sorted chronologically.
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('chat_messages')
     .select('role, content, metadata, created_at')
     .eq('session_id', sessionId)

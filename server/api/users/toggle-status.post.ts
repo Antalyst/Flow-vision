@@ -1,3 +1,4 @@
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 /**
  * POST /api/users/toggle-status
@@ -19,14 +20,14 @@ export default defineEventHandler(async (event) => {
   const sessionUserId = getCookie(event, 'user_session')
   const sessionRole   = getCookie(event, 'user_role')
 
-  if (!sessionUserId || sessionRole !== 'supabase') {
+  if (!sessionUserId || sessionRole !== 'client') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseServiceRole(event)
 
   // Resolve admin's org_id
-  const { data: adminRow } = await supabase
+  const { data: adminRow } = await client
     .from('users')
     .select('org_id')
     .eq('user_id', sessionUserId)
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify target user belongs to same org
-  const { data: targetRow } = await supabase
+  const { data: targetRow } = await client
     .from('users')
     .select('org_id, role')
     .eq('user_id', userId)
@@ -47,11 +48,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: cannot modify users outside your organization' })
   }
 
-  if (targetRow.role === 'supabase') {
+  if (targetRow.role === 'client') {
     throw createError({ statusCode: 403, message: 'Cannot modify the status of an administrator account via this endpoint' })
   }
 
-  const { data: updated, error } = await supabase
+  const { data: updated, error } = await client
     .from('users')
     .update({ status: Number(status) })
     .eq('user_id', userId)

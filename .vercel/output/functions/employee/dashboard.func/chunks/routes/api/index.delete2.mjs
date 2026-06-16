@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const index_delete = defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const query = getQuery(event);
     const stage_id = query.stage_id || query.id;
     if (!stage_id) {
@@ -26,7 +27,7 @@ const index_delete = defineEventHandler(async (event) => {
         message: "stage_id or id is required to delete a stage"
       });
     }
-    const { error: stepsError } = await supabase.from("stage_steps").delete().eq("stage_id", stage_id);
+    const { error: stepsError } = await client.from("stage_steps").delete().eq("stage_id", stage_id);
     if (stepsError) {
       console.error("[Backend Stage Error]:", stepsError);
       throw createError({
@@ -34,7 +35,7 @@ const index_delete = defineEventHandler(async (event) => {
         message: stepsError.message || "Error deleting stage workflow items"
       });
     }
-    const { data, error } = await supabase.from("stages").delete().eq("stage_id", stage_id).select("*");
+    const { data, error } = await client.from("stages").delete().eq("stage_id", stage_id).select("*");
     if (error) {
       throw createError({
         statusCode: 500,

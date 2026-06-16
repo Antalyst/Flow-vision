@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const index_put = defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const body = await readBody(event);
     const { id, name, assigned_user, stage_id, code } = body;
     if (!id) {
@@ -31,7 +32,7 @@ const index_put = defineEventHandler(async (event) => {
     if (assigned_user !== void 0) updateData.assigned_user = assigned_user;
     if (stage_id !== void 0) updateData.stage_id = stage_id;
     if (code !== void 0 && (code != null ? code : "").trim()) updateData.code = code.trim();
-    const { data, error } = await supabase.from("offices").update(updateData).eq("id", id).select("*").single();
+    const { data, error } = await client.from("offices").update(updateData).eq("id", id).select("*").single();
     if (error) {
       throw createError({
         statusCode: 500,

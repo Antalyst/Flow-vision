@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,13 +19,13 @@ import 'node:path';
 const index_get = defineEventHandler(async (event) => {
   var _a;
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const query = getQuery(event);
     const scope = parseScope(query.scope);
     const explicitOffice = ((_a = query.officeId) == null ? void 0 : _a.trim()) || null;
-    const actor = await resolveActorContextWithOffices(event, supabase);
+    const actor = await resolveActorContextWithOffices(event, client);
     const targetOfficeIds = explicitOffice ? [explicitOffice] : actor.officeIds;
-    let stagesQuery = supabase.from("stages").select("*").eq("org_id", actor.orgId).order("step_number", { ascending: true });
+    let stagesQuery = client.from("stages").select("*").eq("org_id", actor.orgId).order("step_number", { ascending: true });
     if (scope === "GLOBAL") {
     } else {
       if (targetOfficeIds.length === 0) {
@@ -50,7 +51,7 @@ const index_get = defineEventHandler(async (event) => {
     const stageIds = (stages != null ? stages : []).map((s) => s.stage_id);
     let stepRows = [];
     if (stageIds.length > 0) {
-      const { data: steps, error: stepsError } = await supabase.from("stage_steps").select("stage_id, office_id, step_number").in("stage_id", stageIds).order("step_number", { ascending: true });
+      const { data: steps, error: stepsError } = await client.from("stage_steps").select("stage_id, office_id, step_number").in("stage_id", stageIds).order("step_number", { ascending: true });
       if (stepsError) {
         throw createError({
           statusCode: 500,
@@ -64,7 +65,7 @@ const index_get = defineEventHandler(async (event) => {
     )];
     let officeNameById = {};
     if (localOfficeIds.length > 0) {
-      const { data: officeRows } = await supabase.from("offices").select("id, name, code").in("id", localOfficeIds);
+      const { data: officeRows } = await client.from("offices").select("id, name, code").in("id", localOfficeIds);
       officeNameById = (officeRows != null ? officeRows : []).reduce((acc, o) => {
         acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name;
         return acc;

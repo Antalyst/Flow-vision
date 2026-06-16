@@ -1,4 +1,5 @@
-import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,7 +19,7 @@ import 'node:path';
 const index_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { name, user_id } = body;
-  const supabase = useServerSupabase();
+  const client = await serverSupabaseServiceRole(event);
   if (!name || !user_id) {
     throw createError({
       statusCode: 400,
@@ -35,13 +36,13 @@ const index_post = defineEventHandler(async (event) => {
       return result;
     };
     const orgCode = generateOrgCode();
-    const { data: org, error: orgError } = await supabase.from("org").insert({
+    const { data: org, error: orgError } = await client.from("org").insert({
       name,
       code: orgCode,
       user_id
     }).select().single();
     if (orgError) throw orgError;
-    const { error: userError } = await supabase.from("users").update({ org_id: org.org_id }).eq("user_id", user_id);
+    const { error: userError } = await client.from("users").update({ org_id: org.org_id }).eq("user_id", user_id);
     if (userError) throw userError;
     return {
       success: true,

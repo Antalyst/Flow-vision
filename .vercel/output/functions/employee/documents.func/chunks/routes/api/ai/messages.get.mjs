@@ -1,4 +1,5 @@
-import { d as defineEventHandler, r as resolveTenant, b as getQuery, U as UUID_REGEX, c as createError, a as useServerSupabase } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, r as resolveTenant, a as getQuery, U as UUID_REGEX, c as createError, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -25,8 +26,8 @@ const messages_get = defineEventHandler(async (event) => {
       statusMessage: 'A valid "session_id" query parameter is required.'
     });
   }
-  const supabase = useServerSupabase();
-  const { data: ownedSession, error: ownershipError } = await supabase.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
+  const client = await serverSupabaseServiceRole(event);
+  const { data: ownedSession, error: ownershipError } = await client.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
   if (ownershipError) {
     console.error("Database read failed (chat_sessions):", ownershipError);
     throw createError({
@@ -40,7 +41,7 @@ const messages_get = defineEventHandler(async (event) => {
       statusMessage: "Forbidden: this chat session does not belong to the current user."
     });
   }
-  const { data, error } = await supabase.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: true });
+  const { data, error } = await client.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: true });
   if (error) {
     console.error("Database read failed (chat_messages):", error);
     throw createError({

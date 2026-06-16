@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const index_post = defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const body = await readBody(event);
     const { stage_name, org_id, workflow_items, office_id = null } = body;
     if (!(stage_name == null ? void 0 : stage_name.trim())) {
@@ -39,7 +40,7 @@ const index_post = defineEventHandler(async (event) => {
       });
     }
     if (office_id != null) {
-      const { data: officeRow, error: officeCheckErr } = await supabase.from("offices").select("id, org_id").eq("id", String(office_id)).maybeSingle();
+      const { data: officeRow, error: officeCheckErr } = await client.from("offices").select("id, org_id").eq("id", String(office_id)).maybeSingle();
       if (officeCheckErr || !officeRow) {
         throw createError({ statusCode: 404, message: `Office ${office_id} not found.` });
       }
@@ -50,7 +51,7 @@ const index_post = defineEventHandler(async (event) => {
         });
       }
     }
-    const { data: existingStages, error: existingError } = await supabase.from("stages").select("step_number").eq("org_id", org_id).order("step_number", { ascending: false }).limit(1);
+    const { data: existingStages, error: existingError } = await client.from("stages").select("step_number").eq("org_id", org_id).order("step_number", { ascending: false }).limit(1);
     if (existingError) {
       console.error("[Backend Stage Error]:", existingError);
       throw createError({
@@ -59,7 +60,7 @@ const index_post = defineEventHandler(async (event) => {
       });
     }
     const nextStageStep = (existingStages == null ? void 0 : existingStages.length) ? Number(existingStages[0].step_number || 0) + 1 : 1;
-    const { data: stage, error: stageError } = await supabase.from("stages").insert({
+    const { data: stage, error: stageError } = await client.from("stages").insert({
       name: stage_name.trim(),
       org_id,
       step_number: nextStageStep,
@@ -81,10 +82,10 @@ const index_post = defineEventHandler(async (event) => {
         step_number: item.step_number,
         org_id
       }));
-      const { data: steps, error: stepsError } = await supabase.from("stage_steps").insert(stepRows).select("office_id, step_number, stage_id, org_id");
+      const { data: steps, error: stepsError } = await client.from("stage_steps").insert(stepRows).select("office_id, step_number, stage_id, org_id");
       if (stepsError) {
         console.error("[Backend Stage Error]:", stepsError);
-        await supabase.from("stages").delete().eq("stage_id", stage.stage_id);
+        await client.from("stages").delete().eq("stage_id", stage.stage_id);
         throw createError({
           statusCode: 500,
           message: stepsError.message || "Failed to create workflow items"

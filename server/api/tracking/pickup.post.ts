@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 
 /**
  * POST /api/tracking/pickup
@@ -19,7 +20,7 @@
  *   - Only messengers may call this endpoint.
  */
 export default defineEventHandler(async (event) => {
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const { qr_code_data } = body
@@ -38,7 +39,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Resolve messenger's org_id (server-side) ──────────────────────────
-  const { data: actorRow, error: actorErr } = await supabase
+  const { data: actorRow, error: actorErr } = await client
     .from('users')
     .select('org_id, full_name')
     .eq('user_id', actorId)
@@ -51,7 +52,7 @@ export default defineEventHandler(async (event) => {
   const messengerOrgId = String(actorRow.org_id)
 
   // ── Find document by QR code ──────────────────────────────────────────
-  const { data: doc, error: docErr } = await supabase
+  const { data: doc, error: docErr } = await client
     .from('documents')
     .select('id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
     .eq('qr_code_data', qr_code_data.trim())
@@ -90,7 +91,7 @@ export default defineEventHandler(async (event) => {
   let officeName: string | null = null
 
   if (doc.stage_id) {
-    const { data: stepRow } = await supabase
+    const { data: stepRow } = await client
       .from('stage_steps')
       .select('office_id, offices(name)')
       .eq('stage_id', doc.stage_id)
@@ -106,7 +107,7 @@ export default defineEventHandler(async (event) => {
   const now = new Date().toISOString()
 
   // ── Write PICKED_UP event ─────────────────────────────────────────────
-  await supabase.from('document_tracking_events').insert({
+  await client.from('document_tracking_events').insert({
     document_id:  doc.id,
     org_id:       messengerOrgId,
     status:       'PICKED_UP',
@@ -119,7 +120,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // ── Write IN_TRANSIT event ────────────────────────────────────────────
-  await supabase.from('document_tracking_events').insert({
+  await client.from('document_tracking_events').insert({
     document_id:  doc.id,
     org_id:       messengerOrgId,
     status:       'IN_TRANSIT',
@@ -137,7 +138,7 @@ export default defineEventHandler(async (event) => {
   // ── Update document state ─────────────────────────────────────────────
   // current_office_id is cleared while the document is physically in transit
   // between offices — it will be set again on ARRIVED_AT_OFFICE.
-  const { data: updatedDoc, error: updateErr } = await supabase
+  const { data: updatedDoc, error: updateErr } = await client
     .from('documents')
     .update({
       tracking_status:       'IN_TRANSIT',

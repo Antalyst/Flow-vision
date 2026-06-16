@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const index_delete = defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const query = getQuery(event);
     const id = query.id;
     if (!id) {
@@ -26,7 +27,7 @@ const index_delete = defineEventHandler(async (event) => {
         message: "id is required to delete an office"
       });
     }
-    const { data, error } = await supabase.from("offices").delete().eq("id", id).select("*");
+    const { data, error } = await client.from("offices").delete().eq("id", id).select("*");
     if (error) {
       throw createError({
         statusCode: 500,

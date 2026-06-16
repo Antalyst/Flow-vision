@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import { randomBytes } from 'node:crypto'
 
 /** Generates a human-readable short code: OFF-XXXXXX */
@@ -6,7 +7,7 @@ const generateOfficeCode = (): string =>
 
 export default defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase()
+    const client = await serverSupabaseClient(event)
     const body = await readBody(event)
     const { name, user_id, org_id, stage_id, code } = body
 
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
     // created_by: the user_id of whoever provisioned this office (employee or admin)
     const createdBy = getCookie(event, 'user_session') || user_id
 
-    const { data: rows, error } = await supabase
+    const { data: rows, error } = await client
       .from('offices')
       .insert({
         name,

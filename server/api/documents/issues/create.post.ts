@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertDocumentOrgAccess,
@@ -25,7 +26,7 @@ import {
  *   4. Broadcasts to org Realtime channels
  */
 export default defineEventHandler(async (event) => {
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const documentId        = String(body?.document_id ?? '').trim()
@@ -37,19 +38,19 @@ export default defineEventHandler(async (event) => {
   if (!reportedOfficeId) throw createError({ statusCode: 400, message: 'reported_by_office_id is required.' })
   if (!title)            throw createError({ statusCode: 400, message: 'title is required.' })
 
-  const { actor, document } = await assertDocumentOrgAccess(event, supabase, documentId)
+  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId)
 
   if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only supabase or employee accounts may flag document issues.',
+      message: 'Forbidden: only client or employee accounts may flag document issues.',
     })
   }
 
-  const reportingOffice = await assertReportingOfficeAccess(supabase, actor, reportedOfficeId)
+  const reportingOffice = await assertReportingOfficeAccess(client, actor, reportedOfficeId)
 
   // ── 1. Create issue row ───────────────────────────────────────────────
-  const { data: issue, error: issueErr } = await supabase
+  const { data: issue, error: issueErr } = await client
     .from('document_issues')
     .insert({
       document_id:           documentId,
@@ -69,7 +70,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── 2. Flip document tracking status ──────────────────────────────────
-  const { data: updatedDoc, error: docUpdateErr } = await supabase
+  const { data: updatedDoc, error: docUpdateErr } = await client
     .from('documents')
     .update({ tracking_status: 'DISCREPANCY_REPORTED' })
     .eq('id', documentId)
@@ -91,7 +92,7 @@ export default defineEventHandler(async (event) => {
     `Document "${document.title}" requires attention before routing continues. ` +
     `Issue ID: ${issue.id}.`
 
-  const { data: trackingEvent, error: trackErr } = await supabase
+  const { data: trackingEvent, error: trackErr } = await client
     .from('document_tracking_events')
     .insert({
       document_id: documentId,
@@ -116,7 +117,7 @@ export default defineEventHandler(async (event) => {
   let openingMessage = null
 
   if (initialMessage) {
-    const { data: msg, error: msgErr } = await supabase
+    const { data: msg, error: msgErr } = await client
       .from('document_messages')
       .insert({
         issue_id:     issue.id,

@@ -1,6 +1,8 @@
 // server/utils/hybridDatabase.ts
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { serverSupabaseClient } from '#supabase/server'
 import { extractTextFromFile } from './documentParser'
+
+type SupabaseClient = Awaited<ReturnType<typeof serverSupabaseClient>>
 
 export interface QueryFilters {
   years?: number[];

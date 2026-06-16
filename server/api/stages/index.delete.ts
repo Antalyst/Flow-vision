@@ -1,7 +1,8 @@
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase()
+    const client = await serverSupabaseClient(event)
     const query = getQuery(event)
     const stage_id = query.stage_id || query.id
 
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { error: stepsError } = await supabase
+    const { error: stepsError } = await client
       .from('stage_steps')
       .delete()
       .eq('stage_id', stage_id)
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('stages')
       .delete()
       .eq('stage_id', stage_id)

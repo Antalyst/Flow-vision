@@ -1,4 +1,5 @@
-import { d as defineEventHandler, B as assertMethod, e as readBody, c as createError, r as resolveTenant, C as ensureSession, D as fetchRecentMessages, E as fetchLatestDocumentPayload, F as persistMessage, G as classifyIntent, H as reviseDocumentPayload, J as wantsSpreadsheetFormat, K as generateConversationalReply, a as useServerSupabase, L as translateTextToQuery, z as extractTextFromFile, M as generateDocumentTemplate, N as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, C as assertMethod, b as readBody, c as createError, r as resolveTenant, D as ensureSession, E as fetchRecentMessages, F as fetchLatestDocumentPayload, G as persistMessage, H as classifyIntent, J as reviseDocumentPayload, K as wantsSpreadsheetFormat, L as generateConversationalReply, h as serverSupabaseClient, M as translateTextToQuery, A as extractTextFromFile, N as generateDocumentTemplate, O as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -48,10 +49,10 @@ const query = defineEventHandler(async (event) => {
   const { orgId, userId } = await resolveTenant(event);
   const scope = body.scope === "LOCAL" ? "LOCAL" : "GLOBAL";
   const rawOfficeIds = Array.isArray(body.officeIds) ? body.officeIds.map(String).filter(Boolean) : [];
-  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);
-  const history = await fetchRecentMessages(sessionId);
+  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt, event);
+  const history = await fetchRecentMessages(sessionId, event);
   const memory = history.map((m) => ({ role: m.role, content: m.content }));
-  const activeDocument = await fetchLatestDocumentPayload(sessionId);
+  const activeDocument = await fetchLatestDocumentPayload(sessionId, event);
   try {
     await persistMessage(sessionId, "user", prompt, event);
   } catch (error2) {
@@ -99,9 +100,9 @@ User Request: ${prompt}`;
       statusMessage: "MySQL database connector is not available on the request context."
     });
   }
-  const supabase = useServerSupabase();
+  const client = await serverSupabaseClient(event);
   const ttqtOutput = await translateTextToQuery(aiPrompt);
-  let query = supabase.from("documents").select("*").eq("org_id", orgId);
+  let query = client.from("documents").select("*").eq("org_id", orgId);
   if (scope === "LOCAL") {
     if (rawOfficeIds.length > 0) {
       const officeList = rawOfficeIds.join(",");

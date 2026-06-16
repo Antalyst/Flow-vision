@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, j as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, k as assertReportingOfficeAccess, m as broadcastIssueRealtime, o as orgLogisticsChannel, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, k as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, m as assertReportingOfficeAccess, n as broadcastIssueRealtime, o as orgLogisticsChannel, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const create_post = defineEventHandler(async (event) => {
   var _a, _b, _c, _d, _e;
-  const supabase = useServerSupabase();
+  const client = await serverSupabaseClient(event);
   const body = await readBody(event);
   const documentId = String((_a = body == null ? void 0 : body.document_id) != null ? _a : "").trim();
   const reportedOfficeId = String((_b = body == null ? void 0 : body.reported_by_office_id) != null ? _b : "").trim();
@@ -26,15 +27,15 @@ const create_post = defineEventHandler(async (event) => {
   if (!documentId) throw createError({ statusCode: 400, message: "document_id is required." });
   if (!reportedOfficeId) throw createError({ statusCode: 400, message: "reported_by_office_id is required." });
   if (!title) throw createError({ statusCode: 400, message: "title is required." });
-  const { actor, document } = await assertDocumentOrgAccess(event, supabase, documentId);
+  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId);
   if (!ISSUE_ALLOWED_ROLES.includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: "Forbidden: only supabase or employee accounts may flag document issues."
+      message: "Forbidden: only client or employee accounts may flag document issues."
     });
   }
-  const reportingOffice = await assertReportingOfficeAccess(supabase, actor, reportedOfficeId);
-  const { data: issue, error: issueErr } = await supabase.from("document_issues").insert({
+  const reportingOffice = await assertReportingOfficeAccess(client, actor, reportedOfficeId);
+  const { data: issue, error: issueErr } = await client.from("document_issues").insert({
     document_id: documentId,
     org_id: actor.orgId,
     reported_by_office_id: reportedOfficeId,
@@ -47,7 +48,7 @@ const create_post = defineEventHandler(async (event) => {
       message: (_e = issueErr == null ? void 0 : issueErr.message) != null ? _e : "Failed to create document issue."
     });
   }
-  const { data: updatedDoc, error: docUpdateErr } = await supabase.from("documents").update({ tracking_status: "DISCREPANCY_REPORTED" }).eq("id", documentId).eq("org_id", actor.orgId).select("id, title, tracking_status").single();
+  const { data: updatedDoc, error: docUpdateErr } = await client.from("documents").update({ tracking_status: "DISCREPANCY_REPORTED" }).eq("id", documentId).eq("org_id", actor.orgId).select("id, title, tracking_status").single();
   if (docUpdateErr) {
     throw createError({
       statusCode: 500,
@@ -55,7 +56,7 @@ const create_post = defineEventHandler(async (event) => {
     });
   }
   const alertNotes = `\u26A0\uFE0F DISCREPANCY REPORTED \u2014 "${title}" flagged by ${reportingOffice.name}${reportingOffice.code ? ` (${reportingOffice.code})` : ""}. Document "${document.title}" requires attention before routing continues. Issue ID: ${issue.id}.`;
-  const { data: trackingEvent, error: trackErr } = await supabase.from("document_tracking_events").insert({
+  const { data: trackingEvent, error: trackErr } = await client.from("document_tracking_events").insert({
     document_id: documentId,
     org_id: actor.orgId,
     status: "DISCREPANCY_REPORTED",
@@ -72,7 +73,7 @@ const create_post = defineEventHandler(async (event) => {
   }
   let openingMessage = null;
   if (initialMessage) {
-    const { data: msg, error: msgErr } = await supabase.from("document_messages").insert({
+    const { data: msg, error: msgErr } = await client.from("document_messages").insert({
       issue_id: issue.id,
       sender_id: actor.userId,
       message_text: initialMessage

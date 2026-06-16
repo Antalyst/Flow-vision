@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/icon',
     '@pinia/nuxt',
+    '@nuxtjs/supabase',
   ],
 
   postcss: {
@@ -29,9 +30,18 @@ export default defineNuxtConfig({
     }
   },
 
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/',
+      callback: '/',
+      exclude: ['/*']
+    }
+  },
+
   nitro: {
     externals: {
-      inline: ['unpdf', 'groq-sdk', '@supabase/supabase-js'],
-    },
+      inline: ['@supabase/supabase-js', 'groq-sdk', 'unpdf']
+    }
   },
 })

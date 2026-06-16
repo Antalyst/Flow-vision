@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,13 +18,13 @@ import 'node:path';
 
 const ledger_get = defineEventHandler(async (event) => {
   var _a, _b;
-  const supabase = useServerSupabase();
+  const client = await serverSupabaseClient(event);
   const query = getQuery(event);
   const scope = parseScope((_a = query.scope) != null ? _a : "LOCAL");
   const limit = Math.min(Number((_b = query.limit) != null ? _b : 50), 200);
-  const actor = await resolveActorContextWithOffices(event, supabase);
+  const actor = await resolveActorContextWithOffices(event, client);
   if (scope === "GLOBAL") {
-    const { data: allDocs, error: allDocsErr } = await supabase.from("documents").select(
+    const { data: allDocs, error: allDocsErr } = await client.from("documents").select(
       "id, title, description, status, tracking_status, current_step, qr_code_data, office_id, origin_office_id, current_office_id, stage_id, created_at, user_id, creator_role"
     ).eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(limit);
     if (allDocsErr) {
@@ -33,7 +34,7 @@ const ledger_get = defineEventHandler(async (event) => {
     const uploaderIds = [...new Set(rows.map((d) => d.user_id).filter(Boolean))];
     let nameById = {};
     if (uploaderIds.length > 0) {
-      const { data: users } = await supabase.from("users").select("user_id, full_name").in("user_id", uploaderIds);
+      const { data: users } = await client.from("users").select("user_id, full_name").in("user_id", uploaderIds);
       nameById = (users != null ? users : []).reduce((acc, u) => {
         acc[String(u.user_id)] = u.full_name;
         return acc;
@@ -44,7 +45,7 @@ const ledger_get = defineEventHandler(async (event) => {
     )];
     let officeLabelById = {};
     if (allOfficeIds.length > 0) {
-      const { data: offices } = await supabase.from("offices").select("id, name, code").in("id", allOfficeIds);
+      const { data: offices } = await client.from("offices").select("id, name, code").in("id", allOfficeIds);
       officeLabelById = (offices != null ? offices : []).reduce((acc, o) => {
         acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name;
         return acc;
@@ -69,7 +70,7 @@ const ledger_get = defineEventHandler(async (event) => {
       data: enriched2
     };
   }
-  let docQuery = supabase.from("documents").select(
+  let docQuery = client.from("documents").select(
     "id, title, description, status, tracking_status, current_step, qr_code_data, office_id, origin_office_id, current_office_id, stage_id, created_at, user_id, creator_role"
   ).eq("org_id", actor.orgId).order("created_at", { ascending: false }).limit(limit);
   if (actor.officeIds.length > 0) {
@@ -89,7 +90,7 @@ const ledger_get = defineEventHandler(async (event) => {
   )];
   let officeNameById = {};
   if (uniqueOfficeIds.length > 0) {
-    const { data: officeRows } = await supabase.from("offices").select("id, name, code").in("id", uniqueOfficeIds);
+    const { data: officeRows } = await client.from("offices").select("id, name, code").in("id", uniqueOfficeIds);
     officeNameById = (officeRows != null ? officeRows : []).reduce((acc, o) => {
       acc[String(o.id)] = o.code ? `${o.name} (${o.code})` : o.name;
       return acc;

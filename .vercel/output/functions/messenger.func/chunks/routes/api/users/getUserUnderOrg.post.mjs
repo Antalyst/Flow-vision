@@ -1,4 +1,5 @@
-import { d as defineEventHandler, e as readBody, c as createError, a as useServerSupabase } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, b as readBody, c as createError, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -26,8 +27,8 @@ const getUserUnderOrg_post = defineEventHandler(async (event) => {
         message: "org_id is required"
       });
     }
-    const supabase = useServerSupabase();
-    const { data, error } = await supabase.from("users").select("user_id, full_name, email, role, org_id").eq("org_id", org_id).eq("role", "employee").order("full_name", { ascending: true });
+    const client = await serverSupabaseServiceRole(event);
+    const { data, error } = await client.from("users").select("user_id, full_name, email, role, org_id").eq("org_id", org_id).eq("role", "employee").order("full_name", { ascending: true });
     if (error) {
       throw createError({
         statusCode: 500,

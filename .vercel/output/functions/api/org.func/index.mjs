@@ -1,4 +1,5 @@
 import process from 'node:process';globalThis._importMeta_={url:import.meta.url,env:process.env};import { p as parseQuery, g as getRouteRulesForPath, w as withQuery, t as toNodeListener, u as useNitroApp } from './chunks/_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';

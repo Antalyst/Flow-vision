@@ -1,7 +1,8 @@
-import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, inject, watch, getCurrentInstance, ref, customRef, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, isRef, computed, toValue, onServerPrefetch, reactive, defineAsyncComponent, useSSRContext, unref, shallowReactive, Suspense, Fragment, createApp, mergeProps, onErrorCaptured, createVNode, resolveDynamicComponent, effectScope, nextTick, toRef, withCtx, getCurrentScope, isReadonly, toRaw, isShallow, isReactive } from 'vue';
-import { Z as klona, _ as parseURL, S as encodePath, $ as decodePath, Q as publicAssetsURL, a0 as hasProtocol, a1 as isScriptProtocol, a2 as joinURL, w as withQuery, a3 as defuFn, a4 as sanitizeStatusCode, a5 as getRequestHeader, a6 as isEqual, a7 as getContext, s as setCookie, v as getCookie, f as deleteCookie, a8 as $fetch$1, a9 as baseURL, aa as hash, ab as defu, c as createError$1, ac as executeAsync } from '../_/nitro.mjs';
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { hasInjectionContext, inject, toRef, isRef, watch, getCurrentInstance, ref, customRef, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, computed, toValue, onServerPrefetch, reactive, defineAsyncComponent, useSSRContext, unref, shallowReactive, Suspense, Fragment, createApp, mergeProps, onErrorCaptured, createVNode, resolveDynamicComponent, effectScope, nextTick, withCtx, getCurrentScope, isReadonly, toRaw, isShallow, isReactive } from 'vue';
+import { _ as klona, $ as parseURL, T as encodePath, a0 as decodePath, R as publicAssetsURL, a1 as hasProtocol, a2 as isScriptProtocol, a3 as joinURL, w as withQuery, a4 as defuFn, a5 as sanitizeStatusCode, a6 as getRequestHeader, a7 as isEqual, a8 as getContext, e as setCookie, x as getCookie, f as deleteCookie, a9 as $fetch$1, aa as baseURL, ab as hash, ac as defu, c as createError$1, ad as executeAsync, ae as getHeader, af as setHeader } from '../_/nitro.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
 import { useRoute as useRoute$1, RouterView, createMemoryHistory, createRouter, START_LOCATION } from 'vue-router';
+import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { isPlainObject } from '@vue/shared';
 import { _api, addAPIProvider, setCustomIconsLoader } from '@iconify/vue';
 import { ssrRenderAttrs, ssrRenderAttr, ssrInterpolate, ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode } from 'vue/server-renderer';
@@ -1054,150 +1055,150 @@ const _routes = [
     name: "client-ai",
     path: "/client/ai",
     meta: __nuxt_page_meta$n || {},
-    component: () => import('./ai-Dqw_lb8q.mjs')
+    component: () => import('./ai-CTvZ57SY.mjs')
   },
   {
     name: "client-current-working",
     path: "/client/current-working",
     meta: __nuxt_page_meta$m || {},
-    component: () => import('./current-working-CJ8cRfRg.mjs')
+    component: () => import('./current-working-DOjF-Jdd.mjs')
   },
   {
     name: "client-dashboard",
     path: "/client/dashboard",
     meta: __nuxt_page_meta$l || {},
-    component: () => import('./dashboard-C0Exhx1R.mjs')
+    component: () => import('./dashboard-cddtLtpH.mjs')
   },
   {
     name: "client-documents",
     path: "/client/documents",
     meta: __nuxt_page_meta$k || {},
-    component: () => import('./documents-Ba8bFGzw.mjs')
+    component: () => import('./documents-CTShKuDX.mjs')
   },
   {
     name: "client-feedback",
     path: "/client/feedback",
     meta: __nuxt_page_meta$j || {},
-    component: () => import('./feedback-cqNWYrps.mjs')
+    component: () => import('./feedback-QdgNhyrc.mjs')
   },
   {
     name: "client-help",
     path: "/client/help",
     meta: __nuxt_page_meta$i || {},
-    component: () => import('./help-vhunWuPU.mjs')
+    component: () => import('./help-qb8pr7X7.mjs')
   },
   {
     name: "client-office",
     path: "/client/office",
     meta: __nuxt_page_meta$h || {},
-    component: () => import('./office-0N1y6qVe.mjs')
+    component: () => import('./office-BQQvS2IL.mjs')
   },
   {
     name: "client-reports",
     path: "/client/reports",
     meta: __nuxt_page_meta$g || {},
-    component: () => import('./reports-CYB1JBv8.mjs')
+    component: () => import('./reports-BeXTSlEJ.mjs')
   },
   {
     name: "client-settings",
     path: "/client/settings",
     meta: __nuxt_page_meta$f || {},
-    component: () => import('./settings-7DW1Ms8Q.mjs')
+    component: () => import('./settings-UG5LihlX.mjs')
   },
   {
     name: "client-sla-compliance",
     path: "/client/sla-compliance",
     meta: __nuxt_page_meta$e || {},
-    component: () => import('./sla-compliance-vK3WW_dd.mjs')
+    component: () => import('./sla-compliance-Df76y0Am.mjs')
   },
   {
     name: "client-stages",
     path: "/client/stages",
     meta: __nuxt_page_meta$d || {},
-    component: () => import('./stages-CvmBbmsX.mjs')
+    component: () => import('./stages-CvxAMrJE.mjs')
   },
   {
     name: "client-user-management",
     path: "/client/user-management",
     meta: __nuxt_page_meta$c || {},
-    component: () => import('./user-management-Dcd-8SBH.mjs')
+    component: () => import('./user-management-aK4jSMB5.mjs')
   },
   {
     name: "client-workload-analytics",
     path: "/client/workload-analytics",
     meta: __nuxt_page_meta$b || {},
-    component: () => import('./workload-analytics-DHJwOmIj.mjs')
+    component: () => import('./workload-analytics-C3DMv5X5.mjs')
   },
   {
     name: "employee-ai",
     path: "/employee/ai",
     meta: __nuxt_page_meta$a || {},
-    component: () => import('./ai-Btv3Tyx_.mjs')
+    component: () => import('./ai-QOXccTKE.mjs')
   },
   {
     name: "employee-dashboard",
     path: "/employee/dashboard",
     meta: __nuxt_page_meta$9 || {},
-    component: () => import('./dashboard-B0EIqdGy.mjs')
+    component: () => import('./dashboard-CIzOGPtv.mjs')
   },
   {
     name: "employee-documents",
     path: "/employee/documents",
     meta: __nuxt_page_meta$8 || {},
-    component: () => import('./index-mlPy31BO.mjs')
+    component: () => import('./index-CZksupeG.mjs')
   },
   {
     name: "employee-offices",
     path: "/employee/offices",
     meta: __nuxt_page_meta$7 || {},
-    component: () => import('./index-BlzLeFVd.mjs')
+    component: () => import('./index-CJt4Dn3C.mjs')
   },
   {
     name: "employee-stages",
     path: "/employee/stages",
     meta: __nuxt_page_meta$6 || {},
-    component: () => import('./stages-NHXT4Svc.mjs')
+    component: () => import('./stages-DexCouVQ.mjs')
   },
   {
     name: "messenger-dashboard",
     path: "/messenger/dashboard",
     meta: __nuxt_page_meta$5 || {},
-    component: () => import('./dashboard-3MXCugfM.mjs')
+    component: () => import('./dashboard-DDj971nM.mjs')
   },
   {
     name: "messenger-scan",
     path: "/messenger/scan",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./scan-D8-BF3M1.mjs')
+    component: () => import('./scan-CCbSfGAm.mjs')
   },
   {
     name: "callback",
     path: "/callback",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./callback-CDAgZG8k.mjs')
+    component: () => import('./callback-QRkom0jy.mjs')
   },
   {
     name: "client",
     path: "/client",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-x07cTFnY.mjs')
+    component: () => import('./index-Mt9KEMoG.mjs')
   },
   {
     name: "employee",
     path: "/employee",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./index-DiLTFH1R.mjs')
+    component: () => import('./index-mPPJcDpJ.mjs')
   },
   {
     name: "login",
     path: "/login",
-    component: () => import('./login-DexiKTxk.mjs')
+    component: () => import('./login-DFC0g1mC.mjs')
   },
   {
     name: "messenger",
     path: "/messenger",
     meta: __nuxt_page_meta || {},
-    component: () => import('./index-DZ5LHj37.mjs')
+    component: () => import('./index-CEtY0u6F.mjs')
   },
   {
     name: "index",
@@ -1604,6 +1605,160 @@ const plugin$1 = /* @__PURE__ */ defineNuxtPlugin({
       }
     });
     return { provide: { router } };
+  }
+});
+async function fetchWithRetry(req, init) {
+  const retries = 3;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fetch(req, init);
+    } catch (error) {
+      if (init?.signal?.aborted) {
+        throw error;
+      }
+      if (attempt === retries) {
+        const { headers: _headers, ...safeInit } = init ?? {};
+        console.error(`Error fetching request ${req}`, error, safeInit);
+        throw error;
+      }
+      console.warn(`Retrying fetch attempt ${attempt + 1} for request: ${req}`);
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
+  throw new Error("Unreachable code");
+}
+function setCookies(event, cookies, headers = {}) {
+  const response = event.node.res;
+  const headersWritable = () => !response.headersSent && !response.writableEnded;
+  if (!headersWritable()) {
+    return;
+  }
+  for (const { name, value, options } of cookies) {
+    if (!headersWritable()) {
+      break;
+    }
+    setCookie(event, name, value, options);
+  }
+  for (const [key, value] of Object.entries(headers)) {
+    if (!headersWritable()) {
+      break;
+    }
+    setHeader(event, key, value);
+  }
+}
+const serverSupabaseClient = async (event) => {
+  if (!event.context._supabaseClient) {
+    const {
+      url,
+      key,
+      cookiePrefix,
+      cookieOptions,
+      clientOptions: { auth = {}, global = {} }
+    } = (/* @__PURE__ */ useRuntimeConfig()).public.supabase;
+    event.context._supabaseClient = createServerClient(url, key, {
+      auth,
+      cookies: {
+        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
+        setAll: (cookies, headers) => setCookies(event, cookies, headers)
+      },
+      cookieOptions: {
+        ...cookieOptions,
+        name: cookiePrefix
+      },
+      global: {
+        fetch: fetchWithRetry,
+        ...global
+      }
+    });
+  }
+  return event.context._supabaseClient;
+};
+const serverSupabaseUser = async (event) => {
+  const client = await serverSupabaseClient(event);
+  const { data, error } = await client.auth.getClaims();
+  if (error) {
+    throw createError$1({ statusMessage: error?.message });
+  }
+  return data?.claims ?? null;
+};
+const serverSupabaseSession = async (event) => {
+  const client = await serverSupabaseClient(event);
+  const { data: { session }, error } = await client.auth.getSession();
+  if (error) {
+    throw createError$1({ statusMessage: error?.message });
+  }
+  delete session?.user;
+  return session;
+};
+const useStateKeyPrefix = "$s";
+function useState(...args) {
+  const autoKey = typeof args[args.length - 1] === "string" ? args.pop() : void 0;
+  if (typeof args[0] !== "string") {
+    args.unshift(autoKey);
+  }
+  const [_key, init] = args;
+  if (!_key || typeof _key !== "string") {
+    throw new TypeError("[nuxt] [useState] key must be a string: " + _key);
+  }
+  if (init !== void 0 && typeof init !== "function") {
+    throw new Error("[nuxt] [useState] init must be a function: " + init);
+  }
+  const key = useStateKeyPrefix + _key;
+  const nuxtApp = useNuxtApp();
+  const state = toRef(nuxtApp.payload.state, key);
+  if (init) {
+    nuxtApp._state[key] ??= { _default: init };
+  }
+  if (state.value === void 0 && init) {
+    const initialValue = init();
+    if (isRef(initialValue)) {
+      nuxtApp.payload.state[key] = initialValue;
+      return initialValue;
+    }
+    state.value = initialValue;
+  }
+  return state;
+}
+const useSupabaseSession = () => useState("supabase_session", () => null);
+const useSupabaseUser = () => useState("supabase_user", () => null);
+const supabase_server_NZuw_NDm2ZtOgvg4QqXN_Xqdg_KPvGuBBWKrLH15GWY = /* @__PURE__ */ defineNuxtPlugin({
+  name: "supabase",
+  enforce: "pre",
+  async setup({ provide: provide2 }) {
+    let __temp, __restore;
+    const {
+      url,
+      key,
+      cookiePrefix,
+      useSsrCookies,
+      cookieOptions,
+      clientOptions
+    } = (/* @__PURE__ */ useRuntimeConfig()).public.supabase;
+    const event = useRequestEvent();
+    const client = createServerClient(url, key, {
+      ...clientOptions,
+      cookies: {
+        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
+        setAll: (cookies, headers) => setCookies(event, cookies, headers)
+      },
+      cookieOptions: {
+        ...cookieOptions,
+        name: cookiePrefix
+      },
+      global: {
+        fetch: fetchWithRetry,
+        ...clientOptions.global
+      }
+    });
+    provide2("supabase", { client });
+    if (useSsrCookies) {
+      const [session, user] = ([__temp, __restore] = executeAsync(() => Promise.all([
+        serverSupabaseSession(event).catch(() => null),
+        serverSupabaseUser(event).catch(() => null)
+      ])), __temp = await __temp, __restore(), __temp);
+      useSupabaseSession().value = session;
+      useSupabaseUser().value = user;
+    }
   }
 });
 const reducers = [
@@ -2379,7 +2534,7 @@ const plugin = /* @__PURE__ */ defineNuxtPlugin({
     }
   }
 });
-const LazyIcon = defineAsyncComponent(() => import('./index-CSZJBLRw.mjs').then((r) => r["default"] || r.default || r));
+const LazyIcon = defineAsyncComponent(() => import('./index-BYCkTpU3.mjs').then((r) => r["default"] || r.default || r));
 const lazyGlobalComponents = [
   ["Icon", LazyIcon]
 ];
@@ -2438,6 +2593,7 @@ const plugins = [
   payloadPlugin,
   unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU,
   plugin$1,
+  supabase_server_NZuw_NDm2ZtOgvg4QqXN_Xqdg_KPvGuBBWKrLH15GWY,
   revive_payload_server_MVtmlZaQpj6ApFmshWfUWl5PehCebzaBf2NuRMiIbms,
   plugin,
   components_plugin_4kY4pyzJIYX99vmMAAIorFf3CnAaptHitJgf7JxiED8,
@@ -2473,10 +2629,10 @@ _sfc_main$3.setup = (props, ctx) => {
 };
 const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$3, [["__scopeId", "data-v-395a4aa1"]]), { __name: "GlobalLoading" });
 const layouts = {
-  client: defineAsyncComponent(() => import('./client-Bzl06tMc.mjs').then((m) => m.default || m)),
-  default: defineAsyncComponent(() => import('./default-qJ2L4_QW.mjs').then((m) => m.default || m)),
-  employee: defineAsyncComponent(() => import('./employee-BTzztXms.mjs').then((m) => m.default || m)),
-  messenger: defineAsyncComponent(() => import('./messenger-DO_P5tvQ.mjs').then((m) => m.default || m))
+  client: defineAsyncComponent(() => import('./client-CSe7us-b.mjs').then((m) => m.default || m)),
+  default: defineAsyncComponent(() => import('./default-KUW0O8XE.mjs').then((m) => m.default || m)),
+  employee: defineAsyncComponent(() => import('./employee-Dd1B44cO.mjs').then((m) => m.default || m)),
+  messenger: defineAsyncComponent(() => import('./messenger-BbnKEdye.mjs').then((m) => m.default || m))
 };
 const routeRulesMatcher = _routeRulesMatcher;
 const LayoutLoader = defineComponent({
@@ -2860,5 +3016,5 @@ let entry;
 }
 const entry_default = ((ssrContext) => entry(ssrContext));
 
-export { _export_sfc as _, useAuthStore as a, useNuxtApp as b, useAppConfig as c, useRuntimeConfig as d, entry_default as default, useAsyncData as e, useRoute as f, useRouter as g, encodeRoutePath as h, nuxtLinkDefaults as i, _imports_1 as j, navigateTo as n, resolveRouteObject as r, useTheme as u };
+export { _export_sfc as _, useAuthStore as a, useNuxtApp as b, useAppConfig as c, useRuntimeConfig as d, entry_default as default, useAsyncData as e, useRoute as f, useRouter as g, encodeRoutePath as h, nuxtLinkDefaults as i, useState as j, _imports_1 as k, navigateTo as n, resolveRouteObject as r, useTheme as u };
 //# sourceMappingURL=server.mjs.map

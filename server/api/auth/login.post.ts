@@ -1,14 +1,15 @@
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { compare } from 'bcrypt-ts'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { email, password } = body
 
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseServiceRole(event)
 
   // 1. Find user by email in public.users
   console.log("Login attempt for email:", email);
-  const { data: user, error: userError } = await supabase
+  const { data: user, error: userError } = await client
     .from('users') 
     .select('*')
     .eq('email', email)

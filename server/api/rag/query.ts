@@ -1,4 +1,4 @@
-;
+import { serverSupabaseClient } from '#supabase/server'
 import { translateTextToQuery } from '~~/server/utils/ttqt';
 import { generateDocumentTemplate } from '~~/server/utils/formatter';
 import { extractTextFromFile } from '~~/server/utils/documentParser';
@@ -253,11 +253,11 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     });
   }
 
-  const supabase = useServerSupabase();
+  const client = await serverSupabaseClient(event);
   const ttqtOutput = (await translateTextToQuery(aiPrompt)) as TextToQueryOutput;
 
   // The org filter is mandatory and unconditional — no cross-tenant reads.
-  let query = supabase.from('documents').select('*').eq('org_id', orgId);
+  let query = client.from('documents').select('*').eq('org_id', orgId);
 
   // ── Apply scope filter ──────────────────────────────────────────────────
   // LOCAL: narrow the result set to documents that live in the employee's

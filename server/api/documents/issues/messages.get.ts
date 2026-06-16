@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   assertIssueOrgAccess,
   issueRealtimeChannel,
@@ -15,7 +16,7 @@ import {
  *   before    ISO    optional — return messages created before this timestamp (pagination)
  */
 export default defineEventHandler(async (event) => {
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const query  = getQuery(event)
 
   const issueId = String(query.issue_id ?? '').trim()
@@ -27,9 +28,9 @@ export default defineEventHandler(async (event) => {
   }
 
   // Security: org_id cross-check happens here — 403 before any messages are fetched
-  const { actor, issue } = await assertIssueOrgAccess(event, supabase, issueId)
+  const { actor, issue } = await assertIssueOrgAccess(event, client, issueId)
 
-  let msgQuery = supabase
+  let msgQuery = client
     .from('document_messages')
     .select('id, issue_id, sender_id, message_text, created_at')
     .eq('issue_id', issueId)
@@ -52,7 +53,7 @@ export default defineEventHandler(async (event) => {
   let senderMap: Record<string, { full_name: string | null; role: string | null }> = {}
 
   if (senderIds.length) {
-    const { data: senders } = await supabase
+    const { data: senders } = await client
       .from('users')
       .select('user_id, full_name, role')
       .in('user_id', senderIds)

@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 
 /**
  * GET /api/employee/my-offices
@@ -21,9 +22,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseClient(event)
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('offices')
     .select('*')
     .eq('org_id', orgId)

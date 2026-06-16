@@ -5,8 +5,10 @@
  */
 
 import type { H3Event } from 'h3'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
+
+type SupabaseClient = Awaited<ReturnType<typeof serverSupabaseServiceRole>>
 
 export const ISSUE_ALLOWED_ROLES = ['client', 'employee'] as const
 
@@ -166,7 +168,7 @@ export async function broadcastIssueRealtime(
   broadcastEvent: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const admin = useServerSupabase()
+  const admin = await serverSupabaseServiceRole(event)
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),

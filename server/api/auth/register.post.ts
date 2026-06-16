@@ -1,3 +1,4 @@
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { hash } from 'bcrypt-ts'
 
 export default defineEventHandler(async (event) => {
@@ -5,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const { email, password, full_name, acctype_id, birth_date, org_code } = body
   const db = event.context.db
 
-  const supabase = useServerSupabase()
+  const client = await serverSupabaseServiceRole(event)
 
   if (!email || !password || !full_name || !acctype_id) {
     throw createError({
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1. Get the account type name from Supabase using the provided UUID
-  const { data: typeData, error: typeError } = await supabase
+  const { data: typeData, error: typeError } = await client
     .from('account_types')
     .select('name')
     .eq('acctype_id', acctype_id)
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event) => {
   
   let role = '';
   if (typeName.toLowerCase() === 'organization') {
-    role = 'supabase';
+    role = 'client';
   } else if (typeName.toLowerCase() === 'employee') {
     role = 'employee';
   } else {
@@ -58,7 +59,7 @@ export default defineEventHandler(async (event) => {
       if (!org_code) {
         throw createError({ statusCode: 400, statusMessage: 'Organization code is required for employees' });
       }
-      const { data: orgData, error: orgError } = await supabase
+      const { data: orgData, error: orgError } = await client
         .from('org')
         .select('org_id')
         .eq('code', org_code)
@@ -73,7 +74,7 @@ export default defineEventHandler(async (event) => {
     // 3. Insert User into Supabase
     const hashedPassword = await hash(password, 10)
     console.log("Inserting user into Supabase...");
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await client
       .from('users')
       .insert({
         email: email,

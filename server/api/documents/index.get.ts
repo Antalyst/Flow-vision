@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -8,7 +9,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  * ┌─────────────────────────────────────────────────────────────────────────┐
  * │ Role      │ scope=GLOBAL                │ scope=LOCAL                   │
  * ├─────────────────────────────────────────────────────────────────────────┤
- * │ supabase    │ All org documents           │ (ignored — always GLOBAL)     │
+ * │ client    │ All org documents           │ (ignored — always GLOBAL)     │
  * │ employee  │ All org documents           │ Docs from employee's offices  │
  * │ messenger │ 401 — use tracking/queue    │ 401                           │
  * └─────────────────────────────────────────────────────────────────────────┘
@@ -29,14 +30,14 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  */
 export default defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase()
+    const client = await serverSupabaseClient(event)
     const query  = getQuery(event)
 
     const scope = parseScope(query.scope as string | undefined)
     const limit = Math.min(Number(query.limit ?? 200), 500)
 
     // ── Resolve actor from session (org_id is server-derived) ─────────────
-    const actor = await resolveActorContextWithOffices(event, supabase)
+    const actor = await resolveActorContextWithOffices(event, client)
 
     // Messengers use /api/tracking/queue
     if (actor.userRole === 'messenger') {
@@ -47,7 +48,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // ── Build base query ───────────────────────────────────────────────────
-    let dbQuery = supabase
+    let dbQuery = client
       .from('documents')
       .select('*')
       .eq('org_id', actor.orgId)
@@ -79,7 +80,7 @@ export default defineEventHandler(async (event) => {
         )
       }
     }
-    // GLOBAL (or supabase role): no additional filter — full org view
+    // GLOBAL (or client role): no additional filter — full org view
 
     const { data: documents, error } = await dbQuery
 
@@ -94,7 +95,7 @@ export default defineEventHandler(async (event) => {
     let nameById: Record<string, string> = {}
 
     if (uploaderIds.length > 0) {
-      const { data: users } = await supabase
+      const { data: users } = await client
         .from('users')
         .select('user_id, full_name')
         .in('user_id', uploaderIds)
@@ -112,7 +113,7 @@ export default defineEventHandler(async (event) => {
     let officeLabelById: Record<string, string> = {}
 
     if (officeIds.length > 0) {
-      const { data: offices } = await supabase
+      const { data: offices } = await client
         .from('offices')
         .select('id, name, code')
         .in('id', officeIds)

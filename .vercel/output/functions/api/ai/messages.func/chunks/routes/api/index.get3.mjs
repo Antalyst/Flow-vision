@@ -1,4 +1,5 @@
-import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,7 @@ import 'node:path';
 
 const index_get = defineEventHandler(async (event) => {
   try {
-    const supabase = useServerSupabase();
+    const client = await serverSupabaseClient(event);
     const query = getQuery(event);
     const org_id = query.orgId;
     if (!org_id) {
@@ -26,7 +27,7 @@ const index_get = defineEventHandler(async (event) => {
         message: "orgId query parameter is required"
       });
     }
-    const { data, error } = await supabase.from("offices").select("*").eq("org_id", org_id).order("created_at", { ascending: false });
+    const { data, error } = await client.from("offices").select("*").eq("org_id", org_id).order("created_at", { ascending: false });
     if (error) {
       throw createError({
         statusCode: 500,
