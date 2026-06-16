@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     externals: {
       inline: [
         'unpdf',
+        'groq-sdk',
         '@supabase/supabase-js',
         '@supabase/ssr',
         '@supabase/auth-js',
@@ -17,6 +18,7 @@ export default defineNuxtConfig({
         '@supabase/phoenix',
       ],
       traceInclude: [
+        'groq-sdk',
         '@supabase/supabase-js',
         '@supabase/ssr',
         '@supabase/auth-js',
