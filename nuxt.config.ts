@@ -40,7 +40,7 @@ export default defineNuxtConfig({
 
   nitro: {
     externals: {
-      inline: ['unpdf', 'groq-sdk', '@supabase/supabase-js']
+      inline: ['unpdf', 'groq-sdk', '@supabase/supabase-js','@supabase/ssr']
     }
   }
 })
