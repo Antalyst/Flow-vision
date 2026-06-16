@@ -12,7 +12,6 @@ export default defineNuxtConfig({
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
     public: {
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
     }
   },
 
@@ -20,36 +19,20 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/icon',
     '@pinia/nuxt',
+    '@nuxtjs/supabase'
   ],
-
   postcss: {
     plugins: {
       tailwindcss: {},
       autoprefixer: {}
     }
   },
-
-  nitro: {
-    preset: 'vercel',
-    externals: {
-      inline: ['groq-sdk', 'unpdf'],
-      traceInclude: [
-        'mysql2',
-        'mysql2/promise',
-        'mysql2/**',
-        'sql-escaper',
-        'sql-escaper/**',
-        'iconv-lite',
-        'iconv-lite/**',
-        'safer-buffer',
-        'aws-ssl-profiles',
-        'named-placeholders',
-        'generate-function',
-        'denque',
-        'lru.min',
-        'long',
-        'is-property',
-      ],
-    },
-  },
+  supabase: {
+    redirect: false,
+    redirectOptions: {
+      login: '/',
+      callback: '/',
+      exclude: ['/*']
+    }
+  }
 })

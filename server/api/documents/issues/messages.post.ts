@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertIssueOrgAccess,
@@ -15,7 +16,7 @@ import {
  *   message_text  string required
  */
 export default defineEventHandler(async (event) => {
-  const client = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const issueId     = String(body?.issue_id ?? '').trim()
@@ -63,7 +64,7 @@ export default defineEventHandler(async (event) => {
     sender_role: actor.userRole,
   }
 
-  await broadcastIssueRealtime(event, actor.orgId, issueId, 'new_message', {
+  await broadcastIssueRealtime(actor.orgId, issueId, 'new_message', {
     type:      'new_message',
     issue_id:  issueId,
     message:   enriched,

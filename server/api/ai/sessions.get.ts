@@ -6,7 +6,7 @@ import { resolveTenant, listSessions } from '~~/server/utils/aiSession'
 // mismatched org scope.
 export default defineEventHandler(async (event) => {
   const { userId } = await resolveTenant(event)
-  const sessions = await listSessions(userId, event)
+  const sessions = await listSessions(userId)
 
   return {
     success: true,

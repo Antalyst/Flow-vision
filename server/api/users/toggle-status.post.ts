@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js'
+
 /**
  * POST /api/users/toggle-status
  * Activates or deactivates a user account.
@@ -8,6 +10,7 @@
  *   status  0 | 1            required – 0 = inactive, 1 = active
  */
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const body   = await readBody(event)
   const { userId, status } = body
 
@@ -22,7 +25,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = useServerSupabase()
+  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
 
   // Resolve admin's org_id
   const { data: adminRow } = await client

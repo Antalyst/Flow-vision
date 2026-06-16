@@ -1,10 +1,17 @@
+import { createClient } from '@supabase/supabase-js'
 import { hash } from 'bcrypt-ts'
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const body = await readBody(event)
   const { email, password, full_name, acctype_id, birth_date, org_code } = body
+  const db = event.context.db
 
-  const client = useServerSupabase()
+
+  const client = createClient(
+    config.public.supabaseUrl, 
+    config.supabaseServiceKey
+  )
 
   if (!email || !password || !full_name || !acctype_id) {
     throw createError({

@@ -1,8 +1,14 @@
+import { createClient } from '@supabase/supabase-js'
+
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const body = await readBody(event);
   const { user_id } = body;
 
-  const client = useServerSupabase()
+  const client = createClient(
+    config.public.supabaseUrl, 
+    config.supabaseServiceKey
+  )
 
   if (!user_id) {
     throw createError({

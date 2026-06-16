@@ -1,4 +1,10 @@
 // server/utils/formatter.ts
+import Groq from 'groq-sdk';
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 export async function generateDocumentTemplate(userPrompt: string, dbRows: any[]) {
   const systemInstruction = `
     You are the Gen AI JSON Template Formatter for FlowVision.
@@ -47,7 +53,7 @@ export async function generateDocumentTemplate(userPrompt: string, dbRows: any[]
   const databaseContextString = JSON.stringify(dbRows, null, 2);
 
   try {
-    const chatCompletion = await useGroq().chat.completions.create({
+    const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemInstruction },
         { 

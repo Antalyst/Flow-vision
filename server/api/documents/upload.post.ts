@@ -30,6 +30,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
+import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 
 const ALLOWED_ROLES = ['client', 'employee'] as const
@@ -45,8 +46,8 @@ interface ResolvedRouteStep {
 }
 
 export default defineEventHandler(async (event) => {
-  const db = await useMySQL()
-  const client = useServerSupabase()
+  const db     = event.context.db
+  const client = await serverSupabaseClient(event)
 
   if (!db) {
     throw createError({

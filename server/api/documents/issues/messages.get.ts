@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   assertIssueOrgAccess,
   issueRealtimeChannel,
@@ -15,7 +16,7 @@ import {
  *   before    ISO    optional — return messages created before this timestamp (pagination)
  */
 export default defineEventHandler(async (event) => {
-  const client = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const query  = getQuery(event)
 
   const issueId = String(query.issue_id ?? '').trim()

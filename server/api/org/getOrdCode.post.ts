@@ -1,6 +1,11 @@
+
+
+import { createClient } from '@supabase/supabase-js'
+
 export default defineEventHandler(async (event) => {
 
   try {
+    const config = useRuntimeConfig()
     const body = await readBody(event);
     const inputCode = (body?.code || '').trim();
 
@@ -11,7 +16,10 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    const client = useServerSupabase()
+    const client = createClient(
+      config.public.supabaseUrl,
+      config.supabaseServiceKey
+    )
 
     const { data, error } = await client
       .from('org')

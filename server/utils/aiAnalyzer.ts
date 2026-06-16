@@ -1,3 +1,4 @@
+import Groq from 'groq-sdk'
 import { extractTextFromFile } from '~~/server/utils/documentParser'
 
 export interface DocumentAnalysis {
@@ -46,7 +47,7 @@ export const analyzeDocument = async (text: string): Promise<DocumentAnalysis> =
   if (!trimmed) return { ...FALLBACK_ANALYSIS }
 
   try {
-    const groq = useGroq()
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',

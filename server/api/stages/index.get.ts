@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -29,7 +30,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  */
 export default defineEventHandler(async (event) => {
   try {
-    const client = useServerSupabase()
+    const client = await serverSupabaseClient(event)
     const query  = getQuery(event)
 
     const scope          = parseScope(query.scope as string | undefined)

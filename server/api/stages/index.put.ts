@@ -1,6 +1,8 @@
+import { serverSupabaseClient } from '#supabase/server'
+
 export default defineEventHandler(async (event) => {
   try {
-    const client = useServerSupabase()
+    const client = await serverSupabaseClient(event)
     const body = await readBody(event)
     const { stage_id, id, name, step_number } = body
 

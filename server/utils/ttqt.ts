@@ -1,4 +1,10 @@
 // server/utils/ttqt.ts
+import Groq from 'groq-sdk';
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 export async function translateTextToQuery(userPrompt: string) {
   const systemInstruction = `
     You are the TTQT (Text-to-Query Translation) engine for FlowVision. 
@@ -29,7 +35,7 @@ export async function translateTextToQuery(userPrompt: string) {
   `;
 
   try {
-    const chatCompletion = await useGroq().chat.completions.create({
+    const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemInstruction },
         { role: 'user', content: userPrompt }

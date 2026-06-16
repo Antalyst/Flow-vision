@@ -1,3 +1,4 @@
+import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertIssueOrgAccess,
@@ -16,7 +17,7 @@ import {
  *   issue_id  UUID  required
  */
 export default defineEventHandler(async (event) => {
-  const client = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const issueId = String(body?.issue_id ?? '').trim()
@@ -107,8 +108,8 @@ export default defineEventHandler(async (event) => {
     timestamp:     new Date().toISOString(),
   }
 
-  await broadcastIssueRealtime(event, actor.orgId, issueId, 'issue_resolved', payload)
-  await broadcastIssueRealtime(event, actor.orgId, issueId, 'logistics_alert', {
+  await broadcastIssueRealtime(actor.orgId, issueId, 'issue_resolved', payload)
+  await broadcastIssueRealtime(actor.orgId, issueId, 'logistics_alert', {
     type:          'logistics_alert',
     document_id:   issue.document_id,
     document_title: document.title,

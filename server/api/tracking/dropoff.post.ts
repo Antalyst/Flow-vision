@@ -1,3 +1,5 @@
+import { serverSupabaseClient } from '#supabase/server'
+
 /**
  * POST /api/tracking/dropoff
  *
@@ -21,7 +23,7 @@
  *   - ROUTE_MISMATCH: thrown if office is not the expected next stop.
  */
 export default defineEventHandler(async (event) => {
-  const client = useServerSupabase()
+  const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
   const { office_id } = body

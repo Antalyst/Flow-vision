@@ -5,10 +5,8 @@
  */
 
 import type { H3Event } from 'h3'
-import type { ServerSupabaseClient } from '~~/server/utils/supabase'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
-
-type SupabaseClient = ServerSupabaseClient
 
 export const ISSUE_ALLOWED_ROLES = ['client', 'employee'] as const
 
@@ -46,12 +44,12 @@ export function orgLogisticsChannel(orgId: string): string {
  */
 export async function assertDocumentOrgAccess(
   event: H3Event,
-  supabase: SupabaseClient,
+  client: SupabaseClient,
   documentId: string,
 ): Promise<{ actor: ActorContext; document: DocumentRow }> {
-  const actor = await resolveActorContext(event, supabase)
+  const actor = await resolveActorContext(event, client)
 
-  const { data: document, error } = await supabase
+  const { data: document, error } = await client
     .from('documents')
     .select('id, org_id, title, tracking_status, origin_office_id, current_office_id')
     .eq('id', documentId)
@@ -81,12 +79,12 @@ export async function assertDocumentOrgAccess(
  */
 export async function assertIssueOrgAccess(
   event: H3Event,
-  supabase: SupabaseClient,
+  client: SupabaseClient,
   issueId: string,
 ): Promise<{ actor: ActorContext; issue: DocumentIssueRow }> {
-  const actor = await resolveActorContext(event, supabase)
+  const actor = await resolveActorContext(event, client)
 
-  const { data: issue, error } = await supabase
+  const { data: issue, error } = await client
     .from('document_issues')
     .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
     .eq('id', issueId)
@@ -116,11 +114,11 @@ export async function assertIssueOrgAccess(
  * Employees may only report from offices assigned to them.
  */
 export async function assertReportingOfficeAccess(
-  supabase: SupabaseClient,
+  client: SupabaseClient,
   actor: ActorContext,
   officeId: string,
 ): Promise<{ id: string; name: string; code: string | null }> {
-  const { data: office, error } = await supabase
+  const { data: office, error } = await client
     .from('offices')
     .select('id, name, code, org_id, assigned_user')
     .eq('id', officeId)
@@ -154,16 +152,31 @@ export async function assertReportingOfficeAccess(
 }
 
 /**
- * Broadcast a payload to Supabase Realtime channels via the REST broadcast API.
+ * Broadcast a payload to Supabase Realtime channels so connected clients
+ * in the same org receive updates instantly.
+ *
+ * Clients subscribe with:
+ *   supabase.channel('org:{orgId}:issue:{issueId}')
+ *   supabase.channel('org:{orgId}:logistics')
  */
 export async function broadcastIssueRealtime(
-  _event: H3Event,
   orgId: string,
   issueId: string,
-  broadcastEvent: string,
+  event: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const client = useServerSupabase()
+  const config = useRuntimeConfig()
+  const url    = config.public.supabaseUrl as string
+  const key    = config.supabaseServiceKey as string
+
+  if (!url || !key) {
+    console.warn('[documentIssues] Realtime broadcast skipped — missing Supabase config.')
+    return
+  }
+
+  const admin = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),
@@ -173,10 +186,39 @@ export async function broadcastIssueRealtime(
   try {
     await Promise.all(
       channels.map((channelName) =>
-        client.broadcast(channelName, broadcastEvent, payload),
+        sendBroadcast(admin, channelName, event, payload),
       ),
     )
   } catch (err) {
+    // Non-fatal — DB writes already succeeded
     console.warn('[documentIssues] Realtime broadcast failed:', err)
   }
+}
+
+async function sendBroadcast(
+  admin: SupabaseClient,
+  channelName: string,
+  event: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  const channel = admin.channel(channelName, {
+    config: { broadcast: { ack: false, self: true } },
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Realtime subscribe timeout')), 5000)
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        clearTimeout(timeout)
+        resolve()
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        clearTimeout(timeout)
+        reject(new Error(`Channel ${channelName} status: ${status}`))
+      }
+    })
+  })
+
+  await channel.send({ type: 'broadcast', event, payload })
+  await admin.removeChannel(channel)
 }

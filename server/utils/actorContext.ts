@@ -15,9 +15,6 @@
  */
 
 import type { H3Event } from 'h3'
-import type { ServerSupabaseClient } from '~~/server/utils/supabase'
-
-type SupabaseClient = ServerSupabaseClient
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,7 +60,7 @@ export function parseScope(raw: string | undefined): ScopeParam {
  */
 export async function resolveActorContext(
   event: H3Event,
-  supabase: SupabaseClient,
+  client: ReturnType<typeof import('#supabase/server').serverSupabaseClient extends (...args: any) => infer R ? () => R : never>,
 ): Promise<ActorContext> {
   const userId   = getCookie(event, 'user_session')
   const userRole = getCookie(event, 'user_role')
@@ -72,7 +69,7 @@ export async function resolveActorContext(
     throw createError({ statusCode: 401, message: 'Authentication required.' })
   }
 
-  const { data: actorRow, error } = await supabase
+  const { data: actorRow, error } = await (client as any)
     .from('users')
     .select('org_id, full_name, role')
     .eq('user_id', userId)
@@ -111,16 +108,16 @@ export async function resolveActorContext(
  */
 export async function resolveActorContextWithOffices(
   event: H3Event,
-  supabase: SupabaseClient,
+  client: any,
 ): Promise<ActorContextWithOffices> {
-  const base = await resolveActorContext(event, supabase)
+  const base = await resolveActorContext(event, client)
 
   // Client admins have no assigned offices — LOCAL scope is not applicable
   if (base.userRole !== 'employee') {
     return { ...base, officeIds: [] }
   }
 
-  const { data: officeRows, error: officeErr } = await supabase
+  const { data: officeRows, error: officeErr } = await client
     .from('offices')
     .select('id')
     .eq('org_id', base.orgId)

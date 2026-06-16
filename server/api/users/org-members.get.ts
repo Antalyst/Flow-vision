@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js'
+
 /**
  * GET /api/users/org-members
  * Returns all non-client members of an organization (employees + messengers).
@@ -8,6 +10,7 @@
  *   role  – optional filter: 'employee' | 'messenger' | 'all'
  */
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
   const query  = getQuery(event)
 
   const orgId = query.orgId as string | undefined
@@ -25,7 +28,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = useServerSupabase()
+  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
 
   // Confirm the calling admin's org_id matches the requested orgId
   const { data: adminRow, error: adminErr } = await client
