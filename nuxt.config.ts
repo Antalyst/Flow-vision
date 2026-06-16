@@ -31,7 +31,7 @@ export default defineNuxtConfig({
 
   nitro: {
     externals: {
-      inline: ['groq-sdk', 'unpdf','mysql2',]
+      inline: ['mysql2', 'groq-sdk', 'unpdf']
     }
   },
 })
