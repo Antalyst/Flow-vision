@@ -1,11 +1,5 @@
-import { d as defineEventHandler, y as readMultipartFormData, c as createError, A as extractTextFromFile, B as analyzeDocument } from '../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, x as readMultipartFormData, c as createError, z as extractTextFromFile, A as analyzeDocument } from '../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';

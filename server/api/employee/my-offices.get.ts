@@ -1,5 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 /**
  * GET /api/employee/my-offices
  * Returns offices strictly scoped to the authenticated employee:
@@ -22,7 +20,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
 
   const { data, error } = await client
     .from('offices')

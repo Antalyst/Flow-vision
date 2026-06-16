@@ -1,4 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 import { hash } from 'bcrypt-ts'
 
 /**
@@ -38,7 +37,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Only messenger accounts can be provisioned via this endpoint' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   // --- Resolve admin's org_id (server-side, not from body) ---------------
   const { data: adminRow, error: adminErr } = await client

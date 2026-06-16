@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertIssueOrgAccess,
@@ -16,7 +15,7 @@ import {
  *   message_text  string required
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const body   = await readBody(event)
 
   const issueId     = String(body?.issue_id ?? '').trim()

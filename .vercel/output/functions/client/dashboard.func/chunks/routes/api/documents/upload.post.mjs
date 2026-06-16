@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, c as createError, x as getCookie, y as readMultipartFormData, z as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, a as useServerSupabase, c as createError, v as getCookie, x as readMultipartFormData, y as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
 import { randomUUID } from 'node:crypto';
-import '@supabase/ssr';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -20,7 +14,7 @@ const ALLOWED_ROLES = ["client", "employee"];
 const upload_post = defineEventHandler(async (event) => {
   var _a, _b;
   const db = event.context.db;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   if (!db) {
     throw createError({
       statusCode: 500,

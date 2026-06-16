@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, x as getCookie } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, v as getCookie } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -17,7 +11,7 @@ import 'node:fs';
 import 'node:path';
 
 const dropoff_post = defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const body = await readBody(event);
   const { office_id } = body;
   if (!office_id) {

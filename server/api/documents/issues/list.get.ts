@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertDocumentOrgAccess,
@@ -13,7 +12,7 @@ import {
  *   document_id  UUID  required
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const query  = getQuery(event)
 
   const documentId = String(query.document_id ?? '').trim()

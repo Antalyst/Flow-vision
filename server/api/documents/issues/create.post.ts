@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertDocumentOrgAccess,
@@ -26,7 +25,7 @@ import {
  *   4. Broadcasts to org Realtime channels
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const body   = await readBody(event)
 
   const documentId        = String(body?.document_id ?? '').trim()

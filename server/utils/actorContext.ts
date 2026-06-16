@@ -15,9 +15,9 @@
  */
 
 import type { H3Event } from 'h3'
-import { serverSupabaseClient } from '#supabase/server'
+import type { ServerSupabaseClient } from '~~/server/utils/supabase'
 
-type SupabaseClient = Awaited<ReturnType<typeof serverSupabaseClient>>
+type SupabaseClient = ServerSupabaseClient
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

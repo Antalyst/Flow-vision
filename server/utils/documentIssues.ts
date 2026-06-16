@@ -5,10 +5,10 @@
  */
 
 import type { H3Event } from 'h3'
-import { serverSupabaseServiceRole } from '#supabase/server'
+import type { ServerSupabaseClient } from '~~/server/utils/supabase'
 import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
 
-type SupabaseClient = Awaited<ReturnType<typeof serverSupabaseServiceRole>>
+type SupabaseClient = ServerSupabaseClient
 
 export const ISSUE_ALLOWED_ROLES = ['client', 'employee'] as const
 
@@ -31,7 +31,7 @@ export interface DocumentRow {
   current_office_id: string | null
 }
 
-/** Realtime channel name shared by server broadcast + supabase subscriptions. */
+/** Realtime channel name shared by server broadcast + client subscriptions. */
 export function issueRealtimeChannel(orgId: string, issueId: string): string {
   return `org:${orgId}:issue:${issueId}`
 }
@@ -154,21 +154,16 @@ export async function assertReportingOfficeAccess(
 }
 
 /**
- * Broadcast a payload to Supabase Realtime channels so connected clients
- * in the same org receive updates instantly.
- *
- * Clients subscribe with:
- *   supabase.channel('org:{orgId}:issue:{issueId}')
- *   supabase.channel('org:{orgId}:logistics')
+ * Broadcast a payload to Supabase Realtime channels via the REST broadcast API.
  */
 export async function broadcastIssueRealtime(
-  event: H3Event,
+  _event: H3Event,
   orgId: string,
   issueId: string,
   broadcastEvent: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const admin = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),
@@ -178,39 +173,10 @@ export async function broadcastIssueRealtime(
   try {
     await Promise.all(
       channels.map((channelName) =>
-        sendBroadcast(admin, channelName, broadcastEvent, payload),
+        client.broadcast(channelName, broadcastEvent, payload),
       ),
     )
   } catch (err) {
-    // Non-fatal — DB writes already succeeded
     console.warn('[documentIssues] Realtime broadcast failed:', err)
   }
-}
-
-async function sendBroadcast(
-  admin: SupabaseClient,
-  channelName: string,
-  event: string,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  const channel = admin.channel(channelName, {
-    config: { broadcast: { ack: false, self: true } },
-  })
-
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Realtime subscribe timeout')), 5000)
-
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        clearTimeout(timeout)
-        resolve()
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        clearTimeout(timeout)
-        reject(new Error(`Channel ${channelName} status: ${status}`))
-      }
-    })
-  })
-
-  await channel.send({ type: 'broadcast', event, payload })
-  await admin.removeChannel(channel)
 }

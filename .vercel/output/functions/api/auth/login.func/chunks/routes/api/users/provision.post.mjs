@@ -1,12 +1,6 @@
-import { d as defineEventHandler, b as readBody, x as getCookie, c as createError, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as readBody, v as getCookie, c as createError, a as useServerSupabase } from '../../../_/nitro.mjs';
 import { hash } from 'bcrypt-ts';
-import '@supabase/ssr';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -31,7 +25,7 @@ const provision_post = defineEventHandler(async (event) => {
   if (requestedRole && requestedRole !== "messenger") {
     throw createError({ statusCode: 400, message: "Only messenger accounts can be provisioned via this endpoint" });
   }
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data: adminRow, error: adminErr } = await client.from("users").select("org_id, full_name").eq("user_id", sessionUserId).single();
   if (adminErr || !(adminRow == null ? void 0 : adminRow.org_id)) {
     throw createError({ statusCode: 403, message: "Administrator has no organization assigned" });

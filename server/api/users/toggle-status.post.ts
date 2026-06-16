@@ -1,5 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 /**
  * POST /api/users/toggle-status
  * Activates or deactivates a user account.
@@ -24,7 +22,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   // Resolve admin's org_id
   const { data: adminRow } = await client

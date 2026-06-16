@@ -1,5 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 /**
  * GET /api/tracking/timeline
  *
@@ -11,7 +9,7 @@ import { serverSupabaseClient } from '#supabase/server'
  *   documentId  string  required
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const query       = getQuery(event)
   const documentId  = query.documentId as string | undefined
 

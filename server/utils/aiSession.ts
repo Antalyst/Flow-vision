@@ -9,8 +9,6 @@
 // explicitly in every query below.
 import { randomUUID } from 'node:crypto'
 import type { H3Event } from 'h3'
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const ALLOWED_ROLES = ['client', 'employee']
 const MEMORY_WINDOW = 5
@@ -44,7 +42,7 @@ export async function resolveTenant(event: H3Event): Promise<TenantContext> {
     })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
   const { data: sessionUser, error } = await client
     .from('users')
     .select('org_id')
@@ -74,7 +72,7 @@ export async function ensureSession(
   title: string | undefined,
   event: H3Event,
 ): Promise<string> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await client
@@ -119,7 +117,7 @@ export async function fetchRecentMessages(
   event: H3Event,
   limit: number = MEMORY_WINDOW,
 ): Promise<StoredChatMessage[]> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const { data, error } = await client
     .from('chat_messages')
@@ -146,7 +144,7 @@ export async function persistMessage(
   event: H3Event,
   metadata: unknown = null,
 ): Promise<string> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const messageId = randomUUID()
   const normalizedRole: 'user' | 'assistant' =
@@ -178,7 +176,7 @@ export async function persistMessage(
  * List a user's chat sessions, newest first (Recents rail).
  */
 export async function listSessions(userId: string, event: H3Event) {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const { data, error } = await client
     .from('chat_sessions')
@@ -205,7 +203,7 @@ export async function assertSessionOwnership(
   userId: string,
   event: H3Event,
 ): Promise<boolean> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const { data } = await client
     .from('chat_sessions')
@@ -224,7 +222,7 @@ export async function fetchLatestDocumentPayload(
   sessionId: string,
   event: H3Event,
 ): Promise<{ title: string; htmlContent: string } | null> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const { data, error } = await client
     .from('chat_messages')
@@ -258,7 +256,7 @@ export async function fetchSessionTimeline(
   sessionId: string,
   event: H3Event,
 ): Promise<StoredChatMessage[]> {
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   const { data, error } = await client
     .from('chat_messages')

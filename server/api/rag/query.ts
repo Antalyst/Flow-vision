@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import { translateTextToQuery } from '~~/server/utils/ttqt';
 import { generateDocumentTemplate } from '~~/server/utils/formatter';
 import { extractTextFromFile } from '~~/server/utils/documentParser';
@@ -253,7 +252,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     });
   }
 
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const ttqtOutput = (await translateTextToQuery(aiPrompt)) as TextToQueryOutput;
 
   // The org filter is mandatory and unconditional — no cross-tenant reads.

@@ -1,4 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
 import { hash } from 'bcrypt-ts'
 
 export default defineEventHandler(async (event) => {
@@ -6,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const { email, password, full_name, acctype_id, birth_date, org_code } = body
   const db = event.context.db
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   if (!email || !password || !full_name || !acctype_id) {
     throw createError({

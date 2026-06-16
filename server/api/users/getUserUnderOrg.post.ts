@@ -1,5 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 export default defineEventHandler(async(event) => {
   try {
     const body = await readBody(event);
@@ -12,7 +10,7 @@ export default defineEventHandler(async(event) => {
       });
     }
 
-    const client = await serverSupabaseServiceRole(event)
+    const client = useServerSupabase()
 
     const { data, error } = await client
       .from('users')

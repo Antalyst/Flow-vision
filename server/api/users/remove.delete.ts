@@ -1,5 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 /**
  * DELETE /api/users/remove
  * Permanently removes a user account.
@@ -27,7 +25,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Administrators cannot remove their own account via this endpoint' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   // Resolve admin org
   const { data: adminRow } = await client

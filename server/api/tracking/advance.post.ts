@@ -1,5 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 // ── Valid status pipeline ──────────────────────────────────────────────
 const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'DISCREPANCY_REPORTED', 'COMPLETED'] as const
 type TrackingStatus = typeof VALID_STATUSES[number]
@@ -31,7 +29,7 @@ const TRANSITIONS: Record<TrackingStatus, TrackingStatus[]> = {
  *   notes?        string   optional actor notes
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const body   = await readBody(event)
 
   const { document_id, status: nextStatus, notes } = body

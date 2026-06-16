@@ -1,5 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 /**
  * POST /api/tracking/pickup
  *
@@ -20,7 +18,7 @@ import { serverSupabaseClient } from '#supabase/server'
  *   - Only messengers may call this endpoint.
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const body   = await readBody(event)
 
   const { qr_code_data } = body

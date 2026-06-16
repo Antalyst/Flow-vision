@@ -1,11 +1,5 @@
-import { d as defineEventHandler, b as readBody, c as createError, x as getCookie, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, e as readBody, c as createError, v as getCookie, a as useServerSupabase } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -27,7 +21,7 @@ const toggleStatus_post = defineEventHandler(async (event) => {
   if (!sessionUserId || sessionRole !== "client") {
     throw createError({ statusCode: 403, message: "Forbidden: administrator access required" });
   }
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data: adminRow } = await client.from("users").select("org_id").eq("user_id", sessionUserId).single();
   if (!(adminRow == null ? void 0 : adminRow.org_id)) {
     throw createError({ statusCode: 403, message: "Administrator has no organization" });

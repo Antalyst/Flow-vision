@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -18,7 +12,7 @@ import 'node:path';
 
 const queue_get = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const query = getQuery(event);
   const scope = parseScope(query.scope);
   const limit = Math.min(Number((_a = query.limit) != null ? _a : 100), 500);

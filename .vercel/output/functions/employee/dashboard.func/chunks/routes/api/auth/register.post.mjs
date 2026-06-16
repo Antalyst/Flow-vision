@@ -1,12 +1,6 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../../_/nitro.mjs';
 import { hash } from 'bcrypt-ts';
-import '@supabase/ssr';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -21,7 +15,7 @@ const register_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { email, password, full_name, acctype_id, birth_date, org_code } = body;
   event.context.db;
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   if (!email || !password || !full_name || !acctype_id) {
     throw createError({
       statusCode: 400,

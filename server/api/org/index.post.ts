@@ -1,10 +1,8 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { name, user_id } = body;
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   if (!name || !user_id) {
     throw createError({

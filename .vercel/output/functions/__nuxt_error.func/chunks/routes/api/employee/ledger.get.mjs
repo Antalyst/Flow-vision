@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, i as parseScope, j as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, h as parseScope, i as resolveActorContextWithOffices, c as createError } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -18,7 +12,7 @@ import 'node:path';
 
 const ledger_get = defineEventHandler(async (event) => {
   var _a, _b;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const query = getQuery(event);
   const scope = parseScope((_a = query.scope) != null ? _a : "LOCAL");
   const limit = Math.min(Number((_b = query.limit) != null ? _b : 50), 200);

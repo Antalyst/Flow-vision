@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
 /**
@@ -28,7 +27,7 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *   limit   number               default 50, max 200
  */
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
   const query  = getQuery(event)
 
   // LOCAL is the default for the ledger (personal/office view)

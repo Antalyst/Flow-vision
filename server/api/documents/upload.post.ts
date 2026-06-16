@@ -1,4 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
 /**
  * POST /api/documents/upload
  *
@@ -47,7 +46,7 @@ interface ResolvedRouteStep {
 
 export default defineEventHandler(async (event) => {
   const db     = event.context.db
-  const client = await serverSupabaseClient(event)
+  const client = useServerSupabase()
 
   if (!db) {
     throw createError({

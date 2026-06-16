@@ -1,10 +1,4 @@
-import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { createHash, randomUUID } from 'node:crypto';
-import { FunctionsClient } from '@supabase/functions-js';
-import { PostgrestClient } from '@supabase/postgrest-js';
-import { RealtimeClient } from '@supabase/realtime-js';
-import { StorageClient } from '@supabase/storage-js';
-import { AuthClient } from '@supabase/auth-js';
 import http from 'node:http';
 import https from 'node:https';
 import { EventEmitter } from 'node:events';
@@ -1121,7 +1115,6 @@ function getRequestHeader(event, name) {
   const value = headers[name.toLowerCase()];
   return value;
 }
-const getHeader = getRequestHeader;
 function getRequestHost(event, opts = {}) {
   if (opts.xForwardedHost) {
     const _header = event.node.req.headers["x-forwarded-host"];
@@ -1543,7 +1536,6 @@ const setHeaders = setResponseHeaders;
 function setResponseHeader(event, name, value) {
   event.node.res.setHeader(name, value);
 }
-const setHeader = setResponseHeader;
 function appendResponseHeader(event, name, value) {
   let current = event.node.res.getHeader(name);
   if (!current) {
@@ -4677,7 +4669,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "972299af-e7a2-4a29-9e16-6693e2ed2fb7",
+    "buildId": "33d421ad-8c10-4ffa-ba8a-ba2a1de97eb9",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -4707,30 +4699,7 @@ const _inlineRuntimeConfig = {
   },
   "public": {
     "supabaseUrl": "https://ryohgztqeuzpsjwwjmdd.supabase.co",
-    "supabaseAnonKey": "sb_publishable_jENK8LR7AGYeeWOk6VhhfQ_ne0fLw-A",
-    "supabase": {
-      "url": "https://ryohgztqeuzpsjwwjmdd.supabase.co",
-      "key": "sb_publishable_jENK8LR7AGYeeWOk6VhhfQ_ne0fLw-A",
-      "redirect": false,
-      "redirectOptions": {
-        "login": "/",
-        "callback": "/",
-        "exclude": [
-          "/*"
-        ],
-        "cookieRedirect": false,
-        "saveRedirectToCookie": false
-      },
-      "cookieName": "sb",
-      "cookiePrefix": "sb-ryohgztqeuzpsjwwjmdd-auth-token",
-      "useSsrCookies": true,
-      "cookieOptions": {
-        "maxAge": 28800,
-        "sameSite": "lax",
-        "secure": true
-      },
-      "clientOptions": {}
-    }
+    "supabaseAnonKey": "sb_publishable_jENK8LR7AGYeeWOk6VhhfQ_ne0fLw-A"
   },
   "mysqlHost": "srv1322.hstgr.io",
   "mysqlUser": "u520834156_usrFV2026",
@@ -4739,10 +4708,6 @@ const _inlineRuntimeConfig = {
   "supabaseServiceKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5b2hnenRxZXV6cHNqd3dqbWRkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzc0MzU5NCwiZXhwIjoyMDkzMzE5NTk0fQ.whkwgjRtpXu7WVz6uiiuAIO5kNIY2wkcvyiF-se3s78",
   "icon": {
     "serverKnownCssClasses": []
-  },
-  "supabase": {
-    "serviceKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5b2hnenRxZXV6cHNqd3dqbWRkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Nzc0MzU5NCwiZXhwIjoyMDkzMzE5NTk0fQ.whkwgjRtpXu7WVz6uiiuAIO5kNIY2wkcvyiF-se3s78",
-    "secretKey": ""
   }
 };
 const envOptions = {
@@ -5398,971 +5363,224 @@ async function analyzeDocumentBuffer(fileBuffer, mimeType) {
   }
 }
 
-async function fetchWithRetry(req, init) {
-  const retries = 3;
-  for (let attempt = 1; attempt <= retries; attempt++) {
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+function encodeFilterValue(value) {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") return String(value);
+  const str = String(value);
+  if (/^[0-9a-f-]{36}$/i.test(str) || /^[A-Z0-9_]+$/.test(str)) return str;
+  return `"${str.replace(/"/g, '\\"')}"`;
+}
+class PostgrestQueryBuilder {
+  constructor(baseUrl, table, headers) {
+    __publicField(this, "baseUrl", baseUrl);
+    __publicField(this, "table", table);
+    __publicField(this, "headers", headers);
+    __publicField(this, "method", "GET");
+    __publicField(this, "selectColumns", "*");
+    __publicField(this, "filters", []);
+    __publicField(this, "orders", []);
+    __publicField(this, "limitValue");
+    __publicField(this, "body");
+    __publicField(this, "wantSingle", false);
+    __publicField(this, "wantMaybeSingle", false);
+    __publicField(this, "countMode");
+    __publicField(this, "headOnly", false);
+    __publicField(this, "returning", false);
+  }
+  select(columns = "*", options) {
+    this.selectColumns = columns;
+    if (options == null ? void 0 : options.count) this.countMode = options.count;
+    if (options == null ? void 0 : options.head) this.headOnly = true;
+    return this;
+  }
+  insert(payload) {
+    this.method = "POST";
+    this.body = payload;
+    return this;
+  }
+  update(payload) {
+    this.method = "PATCH";
+    this.body = payload;
+    return this;
+  }
+  delete() {
+    this.method = "DELETE";
+    return this;
+  }
+  eq(column, value) {
+    this.filters.push(`${column}=eq.${encodeFilterValue(value)}`);
+    return this;
+  }
+  neq(column, value) {
+    this.filters.push(`${column}=neq.${encodeFilterValue(value)}`);
+    return this;
+  }
+  in(column, values) {
+    const encoded = values.map(encodeFilterValue).join(",");
+    this.filters.push(`${column}=in.(${encoded})`);
+    return this;
+  }
+  or(expression) {
+    this.filters.push(`or=(${expression})`);
+    return this;
+  }
+  is(column, value) {
+    this.filters.push(`${column}=is.${encodeFilterValue(value)}`);
+    return this;
+  }
+  ilike(column, pattern) {
+    this.filters.push(`${column}=ilike.${encodeFilterValue(pattern)}`);
+    return this;
+  }
+  order(column, options = {}) {
+    this.orders.push(`${column}.${options.ascending === false ? "desc" : "asc"}`);
+    return this;
+  }
+  limit(count) {
+    this.limitValue = count;
+    return this;
+  }
+  single() {
+    this.wantSingle = true;
+    return this.execute();
+  }
+  maybeSingle() {
+    this.wantMaybeSingle = true;
+    return this.execute();
+  }
+  then(onfulfilled, onrejected) {
+    return this.execute().then(onfulfilled, onrejected);
+  }
+  markReturning() {
+    this.returning = true;
+  }
+  buildUrl() {
+    const params = new URLSearchParams();
+    if (this.method === "GET" || this.returning || this.method === "PATCH" || this.method === "DELETE") {
+      params.set("select", this.selectColumns);
+    }
+    for (const filter of this.filters) {
+      const idx = filter.indexOf("=");
+      if (idx === -1) continue;
+      params.append(filter.slice(0, idx), filter.slice(idx + 1));
+    }
+    for (const order of this.orders) params.append("order", order);
+    if (this.limitValue != null) params.set("limit", String(this.limitValue));
+    const qs = params.toString();
+    return `${this.baseUrl}/rest/v1/${this.table}${qs ? `?${qs}` : ""}`;
+  }
+  buildHeaders() {
+    const reqHeaders = {
+      ...this.headers,
+      "Content-Type": "application/json"
+    };
+    const prefer = [];
+    if (this.countMode) prefer.push(`count=${this.countMode}`);
+    if (this.returning) prefer.push("return=representation");
+    else if (this.method === "POST" || this.method === "PATCH") prefer.push("return=minimal");
+    if (prefer.length) reqHeaders.Prefer = prefer.join(",");
+    if (this.wantSingle || this.wantMaybeSingle) {
+      reqHeaders.Accept = "application/vnd.pgrst.object+json";
+    }
+    return reqHeaders;
+  }
+  async execute() {
+    var _a, _b;
+    if (this.method === "POST" && (this.wantSingle || this.wantMaybeSingle || this.selectColumns !== "*")) {
+      this.markReturning();
+    }
+    if (this.method === "PATCH" || this.method === "DELETE") {
+      if (this.selectColumns !== "*" || this.wantSingle || this.wantMaybeSingle) this.markReturning();
+    }
+    const url = this.buildUrl();
+    const reqHeaders = this.buildHeaders();
     try {
-      return await fetch(req, init);
-    } catch (error) {
-      if (init?.signal?.aborted) {
-        throw error;
+      const response = await $fetch.raw(url, {
+        method: this.method,
+        headers: reqHeaders,
+        body: this.method === "GET" ? void 0 : this.body,
+        ignoreResponseError: true
+      });
+      const countHeader = response.headers.get("content-range");
+      let count = null;
+      if (countHeader) {
+        const match = countHeader.match(/\/(\d+)$/);
+        if (match) count = Number(match[1]);
       }
-      if (attempt === retries) {
-        const { headers: _headers, ...safeInit } = init ?? {};
-        console.error(`Error fetching request ${req}`, error, safeInit);
-        throw error;
+      if (response.status >= 400) {
+        const errBody = (_a = response._data) != null ? _a : {};
+        const error = {
+          message: errBody.message || `Request failed with status ${response.status}`,
+          code: errBody.code,
+          details: errBody.details,
+          hint: errBody.hint
+        };
+        if (this.wantMaybeSingle && (response.status === 406 || response.status === 404)) {
+          return { data: null, error: null, count };
+        }
+        return { data: null, error, count };
       }
-      console.warn(`Retrying fetch attempt ${attempt + 1} for request: ${req}`);
-      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+      if (this.headOnly) {
+        return { data: null, error: null, count };
+      }
+      const data = (_b = response._data) != null ? _b : null;
+      if (this.wantMaybeSingle && (data === null || Array.isArray(data) && data.length === 0)) {
+        return { data: null, error: null, count };
+      }
+      if (this.wantSingle && Array.isArray(data) && data.length === 0) {
+        return { data: null, error: { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" }, count };
+      }
+      if (!this.wantSingle && !this.wantMaybeSingle && data === null && (this.method === "POST" || this.method === "PATCH" || this.method === "DELETE")) {
+        return { data: null, error: null, count };
+      }
+      return { data, error: null, count };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown fetch error";
+      return { data: null, error: { message } };
     }
   }
-  throw new Error("Unreachable code");
 }
-
-function setCookies(event, cookies, headers = {}) {
-  const response = event.node.res;
-  const headersWritable = () => !response.headersSent && !response.writableEnded;
-  if (!headersWritable()) {
-    return;
-  }
-  for (const { name, value, options } of cookies) {
-    if (!headersWritable()) {
-      break;
+async function broadcastMessage(baseUrl, apiKey, channelName, event, payload) {
+  await $fetch(`${baseUrl}/realtime/v1/api/broadcast`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: {
+      messages: [{ topic: channelName, event, payload }]
     }
-    setCookie(event, name, value, options);
-  }
-  for (const [key, value] of Object.entries(headers)) {
-    if (!headersWritable()) {
-      break;
-    }
-    setHeader(event, key, value);
-  }
+  });
 }
-
-const serverSupabaseClient = async (event) => {
-  if (!event.context._supabaseClient) {
-    const {
-      url,
-      key,
-      cookiePrefix,
-      cookieOptions,
-      clientOptions: { auth = {}, global = {} }
-    } = useRuntimeConfig(event).public.supabase;
-    event.context._supabaseClient = createServerClient(url, key, {
-      auth,
-      cookies: {
-        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
-        setAll: (cookies, headers) => setCookies(event, cookies, headers)
+const useServerSupabase = () => {
+  const config = useRuntimeConfig();
+  const supabaseUrl = String(config.public.supabaseUrl || "").replace(/\/$/, "");
+  const supabaseKey = String(config.supabaseServiceKey || "");
+  const headers = {
+    apikey: supabaseKey,
+    Authorization: `Bearer ${supabaseKey}`
+  };
+  return {
+    from: (table) => new PostgrestQueryBuilder(supabaseUrl, table, headers),
+    /** @deprecated Use broadcastMessage via documentIssues helper instead */
+    channel: (channelName) => ({
+      subscribe: async () => {
       },
-      cookieOptions: {
-        ...cookieOptions,
-        name: cookiePrefix
-      },
-      global: {
-        fetch: fetchWithRetry,
-        ...global
+      send: async (msg) => {
+        if (msg.type === "broadcast") {
+          await broadcastMessage(supabaseUrl, supabaseKey, channelName, msg.event, msg.payload);
+        }
       }
-    });
-  }
-  return event.context._supabaseClient;
-};
-
-//#region src/lib/version.ts
-const version = "2.108.2";
-
-//#endregion
-//#region src/lib/constants.ts
-let JS_ENV = "";
-let JS_RUNTIME_VERSION;
-if (typeof Deno !== "undefined") {
-	var _Deno$version;
-	JS_ENV = "deno";
-	JS_RUNTIME_VERSION = (_Deno$version = Deno.version) === null || _Deno$version === void 0 ? void 0 : _Deno$version.deno;
-} else if (typeof document !== "undefined") JS_ENV = "web";
-else if (typeof navigator !== "undefined" && navigator.product === "ReactNative") JS_ENV = "react-native";
-else {
-	var _process$version;
-	JS_ENV = "node";
-	JS_RUNTIME_VERSION = typeof process !== "undefined" ? (_process$version = process.version) === null || _process$version === void 0 ? void 0 : _process$version.replace(/^v/, "") : void 0;
-}
-const _runtimeMeta = [`runtime=${JS_ENV}`];
-if (JS_RUNTIME_VERSION) _runtimeMeta.push(`runtime-version=${JS_RUNTIME_VERSION}`);
-const DEFAULT_HEADERS = { "X-Client-Info": `supabase-js/${version}; ${_runtimeMeta.join("; ")}` };
-const DEFAULT_GLOBAL_OPTIONS = { headers: DEFAULT_HEADERS };
-const DEFAULT_DB_OPTIONS = { schema: "public" };
-const DEFAULT_AUTH_OPTIONS = {
-	autoRefreshToken: true,
-	persistSession: true,
-	detectSessionInUrl: true,
-	flowType: "implicit"
-};
-const DEFAULT_REALTIME_OPTIONS = {};
-const DEFAULT_TRACE_PROPAGATION_OPTIONS = {
-	enabled: false,
-	respectSamplingDecision: true
-};
-
-//#endregion
-//#region ../../../node_modules/.pnpm/tslib@2.8.1/node_modules/tslib/tslib.es6.mjs
-function __awaiter(thisArg, _arguments, P, generator) {
-	function adopt(value) {
-		return value instanceof P ? value : new P(function(resolve) {
-			resolve(value);
-		});
-	}
-	return new (P || (P = Promise))(function(resolve, reject) {
-		function fulfilled(value) {
-			try {
-				step(generator.next(value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function rejected(value) {
-			try {
-				step(generator["throw"](value));
-			} catch (e) {
-				reject(e);
-			}
-		}
-		function step(result) {
-			result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-		}
-		step((generator = generator.apply(thisArg, [])).next());
-	});
-}
-
-//#endregion
-//#region ../../shared/tracing/dist/module/extract.js
-let otelModulePromise = null;
-const OTEL_PKG = "@opentelemetry/api";
-function loadOtel() {
-	if (otelModulePromise === null) otelModulePromise = import(/* webpackIgnore: true */ /* turbopackIgnore: true */ /* @vite-ignore */ OTEL_PKG).catch(() => null);
-	return otelModulePromise;
-}
-/**
-* Extract trace context from the OpenTelemetry API.
-*
-* Returns null if `@opentelemetry/api` is not installed or there is no active
-* trace context. The dynamic import is cached after the first call.
-*
-* @returns Trace context with traceparent, tracestate, and baggage headers, or null if unavailable
-*/
-function extractTraceContext() {
-	return __awaiter(this, void 0, void 0, function* () {
-		try {
-			const otel = yield loadOtel();
-			if (!otel || !otel.propagation || !otel.context) return null;
-			const carrier = {};
-			otel.propagation.inject(otel.context.active(), carrier);
-			const traceparent = carrier["traceparent"];
-			if (!traceparent) return null;
-			return {
-				traceparent,
-				tracestate: carrier["tracestate"],
-				baggage: carrier["baggage"]
-			};
-		} catch (_a) {
-			return null;
-		}
-	});
-}
-
-//#endregion
-//#region ../../shared/tracing/dist/module/parse.js
-/**
-* Parse W3C traceparent header according to the specification.
-*
-* The traceparent header format is: version-traceid-parentid-traceflags
-* - version: 2 hex digits (currently always "00")
-* - traceid: 32 hex digits (128-bit trace identifier)
-* - parentid: 16 hex digits (64-bit span/parent identifier)
-* - traceflags: 2 hex digits (8-bit flags, bit 0 is sampled flag)
-*
-* @param traceparent - The traceparent header value
-* @returns Parsed traceparent object, or null if invalid format
-*
-* @see https://www.w3.org/TR/trace-context/#traceparent-header
-*
-* @example
-* ```typescript
-* const parsed = parseTraceParent('00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01')
-*
-* console.log(parsed)
-* // {
-* //   version: '00',
-* //   traceId: '0af7651916cd43dd8448eb211c80319c',
-* //   parentId: 'b7ad6b7169203331',
-* //   traceFlags: '01',
-* //   isSampled: true
-* // }
-* ```
-*/
-function parseTraceParent(traceparent) {
-	if (!traceparent || typeof traceparent !== "string") return null;
-	const parts = traceparent.split("-");
-	if (parts.length !== 4) return null;
-	const [version$1, traceId, parentId, traceFlags] = parts;
-	if (version$1.length !== 2 || traceId.length !== 32 || parentId.length !== 16 || traceFlags.length !== 2) return null;
-	const hexRegex = /^[0-9a-f]+$/i;
-	if (!hexRegex.test(version$1) || !hexRegex.test(traceId) || !hexRegex.test(parentId) || !hexRegex.test(traceFlags)) return null;
-	if (traceId === "00000000000000000000000000000000" || parentId === "0000000000000000") return null;
-	return {
-		version: version$1,
-		traceId,
-		parentId,
-		traceFlags,
-		isSampled: (parseInt(traceFlags, 16) & 1) === 1
-	};
-}
-
-//#endregion
-//#region ../../shared/tracing/dist/module/validate.js
-/**
-* Check if trace context should be propagated to the target URL.
-*
-* This function checks if the target URL matches any of the configured
-* propagation targets. Targets can be:
-* - String: Exact hostname match or wildcard domain (*.example.com)
-* - RegExp: Pattern matching hostname
-* - Function: Custom logic to determine if URL should receive trace context
-*
-* @param targetUrl - The URL to check
-* @param targets - Array of propagation targets
-* @returns True if trace context should be propagated, false otherwise
-*
-* @example
-* ```typescript
-* const targets = [
-*   'myproject.supabase.co',           // Exact match
-*   '*.supabase.co',                   // Wildcard domain
-*   /.*\.supabase\.co$/,               // Regex pattern
-*   (url) => url.hostname === 'localhost' // Custom function
-* ]
-*
-* shouldPropagateToTarget('https://myproject.supabase.co/rest/v1/table', targets)
-* // true
-*
-* shouldPropagateToTarget('https://evil.com/api', targets)
-* // false
-* ```
-*/
-function shouldPropagateToTarget(targetUrl, targets) {
-	if (!targetUrl || !targets || targets.length === 0) return false;
-	let url;
-	if (targetUrl instanceof URL) url = targetUrl;
-	else try {
-		url = new URL(targetUrl);
-	} catch (error) {
-		return false;
-	}
-	for (const target of targets) try {
-		if (typeof target === "string") {
-			if (matchStringTarget(url.hostname, target)) return true;
-		} else if (target instanceof RegExp) {
-			if (target.test(url.hostname)) return true;
-		} else if (typeof target === "function") {
-			if (target(url)) return true;
-		}
-	} catch (error) {
-		continue;
-	}
-	return false;
-}
-/**
-* Match hostname against string target (exact match or wildcard)
-*
-* @param hostname - The hostname to check
-* @param target - The target pattern (exact or wildcard)
-* @returns True if hostname matches target
-*/
-function matchStringTarget(hostname, target) {
-	if (target === hostname) return true;
-	if (target.startsWith("*.")) {
-		const domain = target.slice(2);
-		if (hostname.endsWith(domain)) {
-			if (hostname === domain || hostname.endsWith("." + domain)) return true;
-		}
-	}
-	return false;
-}
-
-//#endregion
-//#region ../../shared/tracing/dist/module/defaults.js
-/**
-* Generate default propagation targets based on the Supabase project URL.
-*
-* By default, trace context is only propagated to Supabase domains for
-* security. This prevents leaking trace context to potentially malicious
-* third-party services.
-*
-* Wildcard strings (e.g. `*.supabase.co`) are matched with linear string
-* operations rather than regex, avoiding ReDoS risk.
-*
-* @param supabaseUrl - The Supabase project URL
-* @returns Array of default propagation targets
-*/
-function getDefaultPropagationTargets(supabaseUrl) {
-	const targets = [];
-	try {
-		const url = new URL(supabaseUrl);
-		targets.push(url.hostname);
-	} catch (error) {}
-	targets.push("*.supabase.co", "*.supabase.in");
-	targets.push("localhost", "127.0.0.1", "[::1]");
-	return targets;
-}
-
-//#endregion
-//#region \0@oxc-project+runtime@0.103.0/helpers/typeof.js
-function _typeof(o) {
-	"@babel/helpers - typeof";
-	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
-		return typeof o$1;
-	} : function(o$1) {
-		return o$1 && "function" == typeof Symbol && o$1.constructor === Symbol && o$1 !== Symbol.prototype ? "symbol" : typeof o$1;
-	}, _typeof(o);
-}
-
-//#endregion
-//#region \0@oxc-project+runtime@0.103.0/helpers/toPrimitive.js
-function toPrimitive(t, r) {
-	if ("object" != _typeof(t) || !t) return t;
-	var e = t[Symbol.toPrimitive];
-	if (void 0 !== e) {
-		var i = e.call(t, r);
-		if ("object" != _typeof(i)) return i;
-		throw new TypeError("@@toPrimitive must return a primitive value.");
-	}
-	return ("string" === r ? String : Number)(t);
-}
-
-//#endregion
-//#region \0@oxc-project+runtime@0.103.0/helpers/toPropertyKey.js
-function toPropertyKey(t) {
-	var i = toPrimitive(t, "string");
-	return "symbol" == _typeof(i) ? i : i + "";
-}
-
-//#endregion
-//#region \0@oxc-project+runtime@0.103.0/helpers/defineProperty.js
-function _defineProperty(e, r, t) {
-	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-		value: t,
-		enumerable: true,
-		configurable: true,
-		writable: true
-	}) : e[r] = t, e;
-}
-
-//#endregion
-//#region \0@oxc-project+runtime@0.103.0/helpers/objectSpread2.js
-function ownKeys(e, r) {
-	var t = Object.keys(e);
-	if (Object.getOwnPropertySymbols) {
-		var o = Object.getOwnPropertySymbols(e);
-		r && (o = o.filter(function(r$1) {
-			return Object.getOwnPropertyDescriptor(e, r$1).enumerable;
-		})), t.push.apply(t, o);
-	}
-	return t;
-}
-function _objectSpread2(e) {
-	for (var r = 1; r < arguments.length; r++) {
-		var t = null != arguments[r] ? arguments[r] : {};
-		r % 2 ? ownKeys(Object(t), true).forEach(function(r$1) {
-			_defineProperty(e, r$1, t[r$1]);
-		}) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r$1) {
-			Object.defineProperty(e, r$1, Object.getOwnPropertyDescriptor(t, r$1));
-		});
-	}
-	return e;
-}
-
-//#endregion
-//#region src/lib/fetch.ts
-const resolveFetch = (customFetch) => {
-	if (customFetch) return (...args) => customFetch(...args);
-	return (...args) => fetch(...args);
-};
-const resolveHeadersConstructor = () => {
-	return Headers;
-};
-const fetchWithAuth = (supabaseKey, supabaseUrl, getAccessToken, customFetch, tracePropagationOptions) => {
-	const fetch$1 = resolveFetch(customFetch);
-	const HeadersConstructor = resolveHeadersConstructor();
-	const traceEnabled = (tracePropagationOptions === null || tracePropagationOptions === void 0 ? void 0 : tracePropagationOptions.enabled) === true;
-	const respectSampling = (tracePropagationOptions === null || tracePropagationOptions === void 0 ? void 0 : tracePropagationOptions.respectSamplingDecision) !== false;
-	const traceTargets = traceEnabled ? getDefaultPropagationTargets(supabaseUrl) : null;
-	return async (input, init) => {
-		var _await$getAccessToken;
-		const accessToken = (_await$getAccessToken = await getAccessToken()) !== null && _await$getAccessToken !== void 0 ? _await$getAccessToken : supabaseKey;
-		let headers = new HeadersConstructor(init === null || init === void 0 ? void 0 : init.headers);
-		if (!headers.has("apikey")) headers.set("apikey", supabaseKey);
-		if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${accessToken}`);
-		if (traceTargets) {
-			const traceHeaders = await getTraceHeaders(input, traceTargets, respectSampling);
-			if (traceHeaders) {
-				if (traceHeaders.traceparent && !headers.has("traceparent")) headers.set("traceparent", traceHeaders.traceparent);
-				if (traceHeaders.tracestate && !headers.has("tracestate")) headers.set("tracestate", traceHeaders.tracestate);
-				if (traceHeaders.baggage && !headers.has("baggage")) headers.set("baggage", traceHeaders.baggage);
-			}
-		}
-		return fetch$1(input, _objectSpread2(_objectSpread2({}, init), {}, { headers }));
-	};
-};
-async function getTraceHeaders(input, targets, respectSampling) {
-	if (!shouldPropagateToTarget(typeof input === "string" ? input : input instanceof URL ? input : input.url, targets)) return null;
-	const traceContext = await extractTraceContext();
-	if (!traceContext || !traceContext.traceparent) return null;
-	if (respectSampling) {
-		const parsed = parseTraceParent(traceContext.traceparent);
-		if (parsed && !parsed.isSampled) return null;
-	}
-	return traceContext;
-}
-
-//#endregion
-//#region src/lib/helpers.ts
-function normalizeTracePropagation(value) {
-	return typeof value === "boolean" ? { enabled: value } : value;
-}
-function ensureTrailingSlash(url) {
-	return url.endsWith("/") ? url : url + "/";
-}
-function applySettingDefaults(options, defaults) {
-	var _DEFAULT_GLOBAL_OPTIO, _globalOptions$header, _ref, _tracePropagationOpti, _ref2, _tracePropagationOpti2;
-	const { db: dbOptions, auth: authOptions, realtime: realtimeOptions, global: globalOptions } = options;
-	const { db: DEFAULT_DB_OPTIONS$1, auth: DEFAULT_AUTH_OPTIONS$1, realtime: DEFAULT_REALTIME_OPTIONS$1, global: DEFAULT_GLOBAL_OPTIONS$1 } = defaults;
-	const tracePropagationOptions = normalizeTracePropagation(options.tracePropagation);
-	const DEFAULT_TRACE_PROPAGATION_OPTIONS$1 = normalizeTracePropagation(defaults.tracePropagation);
-	const result = {
-		db: _objectSpread2(_objectSpread2({}, DEFAULT_DB_OPTIONS$1), dbOptions),
-		auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS$1), authOptions),
-		realtime: _objectSpread2(_objectSpread2({}, DEFAULT_REALTIME_OPTIONS$1), realtimeOptions),
-		storage: {},
-		global: _objectSpread2(_objectSpread2(_objectSpread2({}, DEFAULT_GLOBAL_OPTIONS$1), globalOptions), {}, { headers: _objectSpread2(_objectSpread2({}, (_DEFAULT_GLOBAL_OPTIO = DEFAULT_GLOBAL_OPTIONS$1 === null || DEFAULT_GLOBAL_OPTIONS$1 === void 0 ? void 0 : DEFAULT_GLOBAL_OPTIONS$1.headers) !== null && _DEFAULT_GLOBAL_OPTIO !== void 0 ? _DEFAULT_GLOBAL_OPTIO : {}), (_globalOptions$header = globalOptions === null || globalOptions === void 0 ? void 0 : globalOptions.headers) !== null && _globalOptions$header !== void 0 ? _globalOptions$header : {}) }),
-		tracePropagation: {
-			enabled: (_ref = (_tracePropagationOpti = tracePropagationOptions === null || tracePropagationOptions === void 0 ? void 0 : tracePropagationOptions.enabled) !== null && _tracePropagationOpti !== void 0 ? _tracePropagationOpti : DEFAULT_TRACE_PROPAGATION_OPTIONS$1 === null || DEFAULT_TRACE_PROPAGATION_OPTIONS$1 === void 0 ? void 0 : DEFAULT_TRACE_PROPAGATION_OPTIONS$1.enabled) !== null && _ref !== void 0 ? _ref : false,
-			respectSamplingDecision: (_ref2 = (_tracePropagationOpti2 = tracePropagationOptions === null || tracePropagationOptions === void 0 ? void 0 : tracePropagationOptions.respectSamplingDecision) !== null && _tracePropagationOpti2 !== void 0 ? _tracePropagationOpti2 : DEFAULT_TRACE_PROPAGATION_OPTIONS$1 === null || DEFAULT_TRACE_PROPAGATION_OPTIONS$1 === void 0 ? void 0 : DEFAULT_TRACE_PROPAGATION_OPTIONS$1.respectSamplingDecision) !== null && _ref2 !== void 0 ? _ref2 : true
-		},
-		accessToken: async () => ""
-	};
-	if (options.accessToken) result.accessToken = options.accessToken;
-	else delete result.accessToken;
-	return result;
-}
-/**
-* Validates a Supabase client URL
-*
-* @param {string} supabaseUrl - The Supabase client URL string.
-* @returns {URL} - The validated base URL.
-* @throws {Error}
-*/
-function validateSupabaseUrl(supabaseUrl) {
-	const trimmedUrl = supabaseUrl === null || supabaseUrl === void 0 ? void 0 : supabaseUrl.trim();
-	if (!trimmedUrl) throw new Error("supabaseUrl is required.");
-	if (!trimmedUrl.match(/^https?:\/\//i)) throw new Error("Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.");
-	try {
-		return new URL(ensureTrailingSlash(trimmedUrl));
-	} catch (_unused) {
-		throw Error("Invalid supabaseUrl: Provided URL is malformed.");
-	}
-}
-
-//#endregion
-//#region src/lib/SupabaseAuthClient.ts
-var SupabaseAuthClient = class extends AuthClient {
-	constructor(options) {
-		super(options);
-	}
-};
-
-//#endregion
-//#region src/SupabaseClient.ts
-/**
-* Supabase Client.
-*
-* An isomorphic Javascript client for interacting with Postgres.
-*/
-var SupabaseClient = class {
-	/**
-	* Create a new client for use in the browser.
-	*
-	* @category Initializing
-	*
-	* @param supabaseUrl The unique Supabase URL which is supplied when you create a new project in your project dashboard.
-	* @param supabaseKey The unique Supabase Key which is supplied when you create a new project in your project dashboard.
-	* @param options.db.schema You can switch in between schemas. The schema needs to be on the list of exposed schemas inside Supabase.
-	* @param options.auth.autoRefreshToken Set to "true" if you want to automatically refresh the token before expiring.
-	* @param options.auth.persistSession Set to "true" if you want to automatically save the user session into local storage.
-	* @param options.auth.detectSessionInUrl Set to "true" if you want to automatically detects OAuth grants in the URL and signs in the user.
-	* @param options.realtime Options passed along to realtime-js constructor.
-	* @param options.storage Options passed along to the storage-js constructor.
-	* @param options.global.fetch A custom fetch implementation.
-	* @param options.global.headers Any additional headers to send with each network request.
-	*
-	* @example Creating a client
-	* ```js
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* // Create a single supabase client for interacting with your database
-	* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
-	* ```
-	*
-	* @example With a custom domain
-	* ```js
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* // Use a custom domain as the supabase URL
-	* const supabase = createClient('https://my-custom-domain.com', 'your-publishable-key')
-	* ```
-	*
-	* @example With additional parameters
-	* ```js
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* const options = {
-	*   db: {
-	*     schema: 'public',
-	*   },
-	*   auth: {
-	*     autoRefreshToken: true,
-	*     persistSession: true,
-	*     detectSessionInUrl: true
-	*   },
-	*   global: {
-	*     headers: { 'x-my-custom-header': 'my-app-name' },
-	*   },
-	* }
-	* const supabase = createClient("https://xyzcompany.supabase.co", "your-publishable-key", options)
-	* ```
-	*
-	* @exampleDescription With custom schemas
-	* By default the API server points to the `public` schema. You can enable other database schemas within the Dashboard.
-	* Go to [Settings > API > Exposed schemas](/dashboard/project/_/settings/api) and add the schema which you want to expose to the API.
-	*
-	* Note: each client connection can only access a single schema, so the code above can access the `other_schema` schema but cannot access the `public` schema.
-	*
-	* @example With custom schemas
-	* ```js
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key', {
-	*   // Provide a custom schema. Defaults to "public".
-	*   db: { schema: 'other_schema' }
-	* })
-	* ```
-	*
-	* @exampleDescription Custom fetch implementation
-	* `supabase-js` uses the [`cross-fetch`](https://www.npmjs.com/package/cross-fetch) library to make HTTP requests,
-	* but an alternative `fetch` implementation can be provided as an option.
-	* This is most useful in environments where `cross-fetch` is not compatible (for instance Cloudflare Workers).
-	*
-	* @example Custom fetch implementation
-	* ```js
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key', {
-	*   global: { fetch: fetch.bind(globalThis) }
-	* })
-	* ```
-	*
-	* @exampleDescription React Native options with AsyncStorage
-	* For React Native we recommend using `AsyncStorage` as the storage implementation for Supabase Auth.
-	*
-	* @example React Native options with AsyncStorage
-	* ```js
-	* import 'react-native-url-polyfill/auto'
-	* import { createClient } from '@supabase/supabase-js'
-	* import AsyncStorage from "@react-native-async-storage/async-storage";
-	*
-	* const supabase = createClient("https://xyzcompany.supabase.co", "your-publishable-key", {
-	*   auth: {
-	*     storage: AsyncStorage,
-	*     autoRefreshToken: true,
-	*     persistSession: true,
-	*     detectSessionInUrl: false,
-	*   },
-	* });
-	* ```
-	*
-	* @exampleDescription React Native options with Expo SecureStore
-	* If you wish to encrypt the user's session information, you can use `aes-js` and store the encryption key in Expo SecureStore.
-	* The `aes-js` library, a reputable JavaScript-only implementation of the AES encryption algorithm in CTR mode.
-	* A new 256-bit encryption key is generated using the `react-native-get-random-values` library.
-	* This key is stored inside Expo's SecureStore, while the value is encrypted and placed inside AsyncStorage.
-	*
-	* Please make sure that:
-	* - You keep the `expo-secure-store`, `aes-js` and `react-native-get-random-values` libraries up-to-date.
-	* - Choose the correct [`SecureStoreOptions`](https://docs.expo.dev/versions/latest/sdk/securestore/#securestoreoptions) for your app's needs.
-	*   E.g. [`SecureStore.WHEN_UNLOCKED`](https://docs.expo.dev/versions/latest/sdk/securestore/#securestorewhen_unlocked) regulates when the data can be accessed.
-	* - Carefully consider optimizations or other modifications to the above example, as those can lead to introducing subtle security vulnerabilities.
-	*
-	* @example React Native options with Expo SecureStore
-	* ```ts
-	* import 'react-native-url-polyfill/auto'
-	* import { createClient } from '@supabase/supabase-js'
-	* import AsyncStorage from '@react-native-async-storage/async-storage';
-	* import * as SecureStore from 'expo-secure-store';
-	* import * as aesjs from 'aes-js';
-	* import 'react-native-get-random-values';
-	*
-	* // As Expo's SecureStore does not support values larger than 2048
-	* // bytes, an AES-256 key is generated and stored in SecureStore, while
-	* // it is used to encrypt/decrypt values stored in AsyncStorage.
-	* class LargeSecureStore {
-	*   private async _encrypt(key: string, value: string) {
-	*     const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
-	*
-	*     const cipher = new aesjs.ModeOfOperation.ctr(encryptionKey, new aesjs.Counter(1));
-	*     const encryptedBytes = cipher.encrypt(aesjs.utils.utf8.toBytes(value));
-	*
-	*     await SecureStore.setItemAsync(key, aesjs.utils.hex.fromBytes(encryptionKey));
-	*
-	*     return aesjs.utils.hex.fromBytes(encryptedBytes);
-	*   }
-	*
-	*   private async _decrypt(key: string, value: string) {
-	*     const encryptionKeyHex = await SecureStore.getItemAsync(key);
-	*     if (!encryptionKeyHex) {
-	*       return encryptionKeyHex;
-	*     }
-	*
-	*     const cipher = new aesjs.ModeOfOperation.ctr(aesjs.utils.hex.toBytes(encryptionKeyHex), new aesjs.Counter(1));
-	*     const decryptedBytes = cipher.decrypt(aesjs.utils.hex.toBytes(value));
-	*
-	*     return aesjs.utils.utf8.fromBytes(decryptedBytes);
-	*   }
-	*
-	*   async getItem(key: string) {
-	*     const encrypted = await AsyncStorage.getItem(key);
-	*     if (!encrypted) { return encrypted; }
-	*
-	*     return await this._decrypt(key, encrypted);
-	*   }
-	*
-	*   async removeItem(key: string) {
-	*     await AsyncStorage.removeItem(key);
-	*     await SecureStore.deleteItemAsync(key);
-	*   }
-	*
-	*   async setItem(key: string, value: string) {
-	*     const encrypted = await this._encrypt(key, value);
-	*
-	*     await AsyncStorage.setItem(key, encrypted);
-	*   }
-	* }
-	*
-	* const supabase = createClient("https://xyzcompany.supabase.co", "your-publishable-key", {
-	*   auth: {
-	*     storage: new LargeSecureStore(),
-	*     autoRefreshToken: true,
-	*     persistSession: true,
-	*     detectSessionInUrl: false,
-	*   },
-	* });
-	* ```
-	*
-	* @example With a database query
-	* ```ts
-	* import { createClient } from '@supabase/supabase-js'
-	*
-	* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
-	*
-	* const { data } = await supabase.from('profiles').select('*')
-	* ```
-	*
-	* @exampleDescription With OpenTelemetry tracing
-	* Opt in to W3C trace context propagation so the `trace_id` from your
-	* client-side spans is attached to Supabase requests and appears in API
-	* Gateway and Edge Function logs. Requires `@opentelemetry/api` to be
-	* installed in your application. See [Tracing with the JS SDK](https://supabase.com/docs/guides/telemetry/client-side-tracing).
-	*
-	* @example With OpenTelemetry tracing
-	* ```ts
-	* import { createClient } from '@supabase/supabase-js'
-	* import { trace } from '@opentelemetry/api'
-	*
-	* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key', {
-	*   tracePropagation: true,
-	* })
-	*
-	* const tracer = trace.getTracer('my-app')
-	*
-	* await tracer.startActiveSpan('fetch-users', async (span) => {
-	*   // Outgoing request carries the active trace context.
-	*   const { data, error } = await supabase.from('users').select('*')
-	*   span.end()
-	* })
-	* ```
-	*/
-	constructor(supabaseUrl, supabaseKey, options) {
-		var _settings$auth$storag, _settings$global$head;
-		this.supabaseUrl = supabaseUrl;
-		this.supabaseKey = supabaseKey;
-		const baseUrl = validateSupabaseUrl(supabaseUrl);
-		if (!supabaseKey) throw new Error("supabaseKey is required.");
-		this.realtimeUrl = new URL("realtime/v1", baseUrl);
-		this.realtimeUrl.protocol = this.realtimeUrl.protocol.replace("http", "ws");
-		this.authUrl = new URL("auth/v1", baseUrl);
-		this.storageUrl = new URL("storage/v1", baseUrl);
-		this.functionsUrl = new URL("functions/v1", baseUrl);
-		const defaultStorageKey = `sb-${baseUrl.hostname.split(".")[0]}-auth-token`;
-		const DEFAULTS = {
-			db: DEFAULT_DB_OPTIONS,
-			realtime: DEFAULT_REALTIME_OPTIONS,
-			auth: _objectSpread2(_objectSpread2({}, DEFAULT_AUTH_OPTIONS), {}, { storageKey: defaultStorageKey }),
-			global: DEFAULT_GLOBAL_OPTIONS,
-			tracePropagation: DEFAULT_TRACE_PROPAGATION_OPTIONS
-		};
-		const settings = applySettingDefaults(options !== null && options !== void 0 ? options : {}, DEFAULTS);
-		this.settings = settings;
-		this.storageKey = (_settings$auth$storag = settings.auth.storageKey) !== null && _settings$auth$storag !== void 0 ? _settings$auth$storag : "";
-		this.headers = (_settings$global$head = settings.global.headers) !== null && _settings$global$head !== void 0 ? _settings$global$head : {};
-		if (!settings.accessToken) {
-			var _settings$auth;
-			this.auth = this._initSupabaseAuthClient((_settings$auth = settings.auth) !== null && _settings$auth !== void 0 ? _settings$auth : {}, this.headers, settings.global.fetch);
-		} else {
-			this.accessToken = settings.accessToken;
-			this.auth = new Proxy({}, { get: (_, prop) => {
-				throw new Error(`@supabase/supabase-js: Supabase Client is configured with the accessToken option, accessing supabase.auth.${String(prop)} is not possible`);
-			} });
-		}
-		this.fetch = fetchWithAuth(supabaseKey, supabaseUrl, this._getAccessToken.bind(this), settings.global.fetch, settings.tracePropagation);
-		this.realtime = this._initRealtimeClient(_objectSpread2({
-			headers: this.headers,
-			accessToken: this._getAccessToken.bind(this),
-			fetch: this.fetch
-		}, settings.realtime));
-		if (this.accessToken) Promise.resolve(this.accessToken()).then((token) => this.realtime.setAuth(token)).catch((e) => console.warn("Failed to set initial Realtime auth token:", e));
-		this.rest = new PostgrestClient(new URL("rest/v1", baseUrl).href, {
-			headers: this.headers,
-			schema: settings.db.schema,
-			fetch: this.fetch,
-			timeout: settings.db.timeout,
-			urlLengthLimit: settings.db.urlLengthLimit
-		});
-		this.storage = new StorageClient(this.storageUrl.href, this.headers, this.fetch, options === null || options === void 0 ? void 0 : options.storage);
-		if (!settings.accessToken) this._listenForAuthEvents();
-	}
-	/**
-	* Supabase Functions allows you to deploy and invoke edge functions.
-	*/
-	get functions() {
-		return new FunctionsClient(this.functionsUrl.href, {
-			headers: this.headers,
-			customFetch: this.fetch
-		});
-	}
-	/**
-	* Perform a query on a table or a view.
-	*
-	* @param relation - The table or view name to query
-	*/
-	from(relation) {
-		return this.rest.from(relation);
-	}
-	/**
-	* Select a schema to query or perform an function (rpc) call.
-	*
-	* The schema needs to be on the list of exposed schemas inside Supabase.
-	*
-	* @param schema - The schema to query
-	*/
-	schema(schema) {
-		return this.rest.schema(schema);
-	}
-	/**
-	* Perform a function call.
-	*
-	* @param fn - The function name to call
-	* @param args - The arguments to pass to the function call
-	* @param options - Named parameters
-	* @param options.head - When set to `true`, `data` will not be returned.
-	* Useful if you only need the count.
-	* @param options.get - When set to `true`, the function will be called with
-	* read-only access mode.
-	* @param options.count - Count algorithm to use to count rows returned by the
-	* function. Only applicable for [set-returning
-	* functions](https://www.postgresql.org/docs/current/functions-srf.html).
-	*
-	* `"exact"`: Exact but slow count algorithm. Performs a `COUNT(*)` under the
-	* hood.
-	*
-	* `"planned"`: Approximated but fast count algorithm. Uses the Postgres
-	* statistics under the hood.
-	*
-	* `"estimated"`: Uses exact count for low numbers and planned count for high
-	* numbers.
-	*/
-	rpc(fn, args = {}, options = {
-		head: false,
-		get: false,
-		count: void 0
-	}) {
-		return this.rest.rpc(fn, args, options);
-	}
-	/**
-	* Creates a Realtime channel with Broadcast, Presence, and Postgres Changes.
-	*
-	* @param {string} name - The name of the Realtime channel.
-	* @param {Object} opts - The options to pass to the Realtime channel.
-	*
-	* @category Realtime
-	*/
-	channel(name, opts = { config: {} }) {
-		return this.realtime.channel(name, opts);
-	}
-	/**
-	* Returns all Realtime channels.
-	*
-	* @category Realtime
-	*
-	* @example Get all channels
-	* ```js
-	* const channels = supabase.getChannels()
-	* ```
-	*/
-	getChannels() {
-		return this.realtime.getChannels();
-	}
-	/**
-	* Unsubscribes and removes Realtime channel from Realtime client.
-	*
-	* @param {RealtimeChannel} channel - The name of the Realtime channel.
-	*
-	*
-	* @category Realtime
-	*
-	* @remarks
-	* - Removing a channel is a great way to maintain the performance of your project's Realtime service as well as your database if you're listening to Postgres changes. Supabase will automatically handle cleanup 30 seconds after a client is disconnected, but unused channels may cause degradation as more clients are simultaneously subscribed.
-	*
-	* @example Removes a channel
-	* ```js
-	* supabase.removeChannel(myChannel)
-	* ```
-	*/
-	removeChannel(channel) {
-		return this.realtime.removeChannel(channel);
-	}
-	/**
-	* Unsubscribes and removes all Realtime channels from Realtime client.
-	*
-	* @category Realtime
-	*
-	* @remarks
-	* - Removing channels is a great way to maintain the performance of your project's Realtime service as well as your database if you're listening to Postgres changes. Supabase will automatically handle cleanup 30 seconds after a client is disconnected, but unused channels may cause degradation as more clients are simultaneously subscribed.
-	*
-	* @example Remove all channels
-	* ```js
-	* supabase.removeAllChannels()
-	* ```
-	*/
-	removeAllChannels() {
-		return this.realtime.removeAllChannels();
-	}
-	async _getAccessToken() {
-		var _this = this;
-		var _data$session$access_, _data$session;
-		if (_this.accessToken) return await _this.accessToken();
-		const { data } = await _this.auth.getSession();
-		return (_data$session$access_ = (_data$session = data.session) === null || _data$session === void 0 ? void 0 : _data$session.access_token) !== null && _data$session$access_ !== void 0 ? _data$session$access_ : _this.supabaseKey;
-	}
-	_initSupabaseAuthClient({ autoRefreshToken, persistSession, detectSessionInUrl, storage, userStorage, storageKey, flowType, lock, debug, throwOnError, experimental, lockAcquireTimeout, skipAutoInitialize }, headers, fetch$1) {
-		const authHeaders = {
-			Authorization: `Bearer ${this.supabaseKey}`,
-			apikey: `${this.supabaseKey}`
-		};
-		return new SupabaseAuthClient({
-			url: this.authUrl.href,
-			headers: _objectSpread2(_objectSpread2({}, authHeaders), headers),
-			storageKey,
-			autoRefreshToken,
-			persistSession,
-			detectSessionInUrl,
-			storage,
-			userStorage,
-			flowType,
-			lock,
-			debug,
-			throwOnError,
-			experimental,
-			fetch: fetch$1,
-			lockAcquireTimeout,
-			skipAutoInitialize,
-			hasCustomAuthorizationHeader: Object.keys(this.headers).some((key) => key.toLowerCase() === "authorization")
-		});
-	}
-	_initRealtimeClient(options) {
-		return new RealtimeClient(this.realtimeUrl.href, _objectSpread2(_objectSpread2({}, options), {}, { params: _objectSpread2(_objectSpread2({}, { apikey: this.supabaseKey }), options === null || options === void 0 ? void 0 : options.params) }));
-	}
-	_listenForAuthEvents() {
-		return this.auth.onAuthStateChange((event, session) => {
-			this._handleTokenChanged(event, "CLIENT", session === null || session === void 0 ? void 0 : session.access_token);
-		});
-	}
-	_handleTokenChanged(event, source, token) {
-		if ((event === "TOKEN_REFRESHED" || event === "SIGNED_IN") && this.changedAccessToken !== token) {
-			this.changedAccessToken = token;
-			this.realtime.setAuth(token);
-		} else if (event === "SIGNED_OUT") {
-			this.realtime.setAuth();
-			if (source == "STORAGE") this.auth.signOut();
-			this.changedAccessToken = void 0;
-		}
-	}
-};
-
-//#endregion
-//#region src/index.ts
-/**
-* Creates a new Supabase Client.
-*
-* @example Creating a Supabase client
-* ```ts
-* import { createClient } from '@supabase/supabase-js'
-*
-* const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
-* const { data, error } = await supabase.from('profiles').select('*')
-* ```
-*/
-const createClient = (supabaseUrl, supabaseKey, options) => {
-	return new SupabaseClient(supabaseUrl, supabaseKey, options);
-};
-function shouldShowDeprecationWarning() {
-	const _process = globalThis["process"];
-	if (!_process) return false;
-	const processVersion = _process["version"];
-	if (processVersion === void 0 || processVersion === null) return false;
-	const versionMatch = processVersion.match(/^v(\d+)\./);
-	if (!versionMatch) return false;
-	return parseInt(versionMatch[1], 10) <= 18;
-}
-if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
-
-const serverSupabaseServiceRole = (event) => {
-  const config = useRuntimeConfig(event);
-  const secretKey = config.supabase.secretKey;
-  const serviceKey = config.supabase.serviceKey;
-  const url = config.public.supabase.url;
-  const serverKey = secretKey || serviceKey;
-  if (!serverKey) {
-    throw new Error("Missing server key. Set `NUXT_SUPABASE_SECRET_KEY` in your environment variables.");
-  }
-  if (!event.context._supabaseServiceRole) {
-    event.context._supabaseServiceRole = createClient(url, serverKey, {
-      auth: {
-        detectSessionInUrl: false,
-        persistSession: false,
-        autoRefreshToken: false
-      },
-      global: {
-        fetch: fetchWithRetry
-      }
-    });
-  }
-  return event.context._supabaseServiceRole;
+    }),
+    removeChannel: async () => {
+    },
+    broadcast: (channelName, event, payload) => broadcastMessage(supabaseUrl, supabaseKey, channelName, event, payload)
+  };
 };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -6377,7 +5595,7 @@ async function resolveTenant(event) {
       statusMessage: "Unauthenticated: a valid client or employee session is required."
     });
   }
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data: sessionUser, error } = await client.from("users").select("org_id").eq("user_id", userId).single();
   const orgId = (sessionUser == null ? void 0 : sessionUser.org_id) ? String(sessionUser.org_id) : null;
   if (error || !orgId || !UUID_REGEX.test(orgId)) {
@@ -6389,7 +5607,7 @@ async function resolveTenant(event) {
   return { userId, orgId, role: userRole };
 }
 async function ensureSession(sessionId, orgId, userId, title, event) {
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await client.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
     if (owned == null ? void 0 : owned.id) {
@@ -6415,7 +5633,7 @@ async function ensureSession(sessionId, orgId, userId, title, event) {
   return newId;
 }
 async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data, error } = await client.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(limit);
   if (error || !data) {
     return [];
@@ -6423,7 +5641,7 @@ async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
   return data.slice().reverse();
 }
 async function persistMessage(sessionId, role, content, event, metadata = null) {
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const messageId = randomUUID();
   const normalizedRole = String(role).toLowerCase() === "assistant" ? "assistant" : "user";
   const payload = {
@@ -6445,7 +5663,7 @@ async function persistMessage(sessionId, role, content, event, metadata = null) 
   return messageId;
 }
 async function listSessions(userId, event) {
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data, error } = await client.from("chat_sessions").select("id, title, created_at").eq("user_id", String(userId)).order("created_at", { ascending: false }).limit(50);
   if (error) {
     throw createError$1({
@@ -6457,7 +5675,7 @@ async function listSessions(userId, event) {
 }
 async function fetchLatestDocumentPayload(sessionId, event) {
   var _a;
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data, error } = await client.from("chat_messages").select("metadata, created_at").eq("session_id", sessionId).eq("role", "assistant").order("created_at", { ascending: false }).limit(15);
   if (error || !data) {
     return null;
@@ -8699,8 +7917,8 @@ async function assertReportingOfficeAccess(supabase, actor, officeId) {
   }
   return { id: String(office.id), name: office.name, code: (_a = office.code) != null ? _a : null };
 }
-async function broadcastIssueRealtime(event, orgId, issueId, broadcastEvent, payload) {
-  const admin = await serverSupabaseServiceRole(event);
+async function broadcastIssueRealtime(_event, orgId, issueId, broadcastEvent, payload) {
+  const client = useServerSupabase();
   const channels = [
     issueRealtimeChannel(orgId, issueId),
     orgLogisticsChannel(orgId)
@@ -8708,31 +7926,12 @@ async function broadcastIssueRealtime(event, orgId, issueId, broadcastEvent, pay
   try {
     await Promise.all(
       channels.map(
-        (channelName) => sendBroadcast(admin, channelName, broadcastEvent, payload)
+        (channelName) => client.broadcast(channelName, broadcastEvent, payload)
       )
     );
   } catch (err) {
     console.warn("[documentIssues] Realtime broadcast failed:", err);
   }
-}
-async function sendBroadcast(admin, channelName, event, payload) {
-  const channel = admin.channel(channelName, {
-    config: { broadcast: { ack: false, self: true } }
-  });
-  await new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("Realtime subscribe timeout")), 5e3);
-    channel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        clearTimeout(timeout);
-        resolve();
-      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-        clearTimeout(timeout);
-        reject(new Error(`Channel ${channelName} status: ${status}`));
-      }
-    });
-  });
-  await channel.send({ type: "broadcast", event, payload });
-  await admin.removeChannel(channel);
 }
 
 const groq$3 = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -9502,5 +8701,5 @@ function useNitroApp() {
 }
 runNitroPlugins(nitroApp);
 
-export { parseURL as $, extractTextFromFile as A, analyzeDocument as B, assertMethod as C, ensureSession as D, fetchRecentMessages as E, fetchLatestDocumentPayload as F, persistMessage as G, classifyIntent as H, ISSUE_ALLOWED_ROLES as I, reviseDocumentPayload as J, wantsSpreadsheetFormat as K, generateConversationalReply as L, translateTextToQuery as M, generateDocumentTemplate as N, synthesizeDocumentPayload as O, eventHandler as P, buildAssetsURL as Q, publicAssetsURL as R, useRuntimeConfig as S, encodePath as T, UUID_REGEX as U, defineRenderHandler as V, destr as W, getRouteRules as X, getResponseStatusText as Y, getResponseStatus as Z, klona as _, getQuery as a, decodePath as a0, hasProtocol as a1, isScriptProtocol as a2, joinURL as a3, defuFn as a4, sanitizeStatusCode as a5, getRequestHeader as a6, isEqual as a7, getContext as a8, $fetch$1 as a9, baseURL as aa, hash$1 as ab, defu as ac, executeAsync as ad, getHeader as ae, setHeader as af, withTrailingSlash as ag, withoutTrailingSlash as ah, readBody as b, createError$1 as c, defineEventHandler as d, setCookie as e, deleteCookie as f, getRouteRulesForPath as g, serverSupabaseClient as h, parseScope as i, resolveActorContextWithOffices as j, assertDocumentOrgAccess as k, listSessions as l, assertReportingOfficeAccess as m, broadcastIssueRealtime as n, orgLogisticsChannel as o, parseQuery as p, issueRealtimeChannel as q, resolveTenant as r, serverSupabaseServiceRole as s, toNodeListener as t, useNitroApp as u, assertIssueOrgAccess as v, withQuery as w, getCookie as x, readMultipartFormData as y, analyzeDocumentBuffer as z };
+export { decodePath as $, analyzeDocument as A, assertMethod as B, ensureSession as C, fetchRecentMessages as D, fetchLatestDocumentPayload as E, persistMessage as F, classifyIntent as G, reviseDocumentPayload as H, ISSUE_ALLOWED_ROLES as I, wantsSpreadsheetFormat as J, generateConversationalReply as K, translateTextToQuery as L, generateDocumentTemplate as M, synthesizeDocumentPayload as N, eventHandler as O, buildAssetsURL as P, publicAssetsURL as Q, useRuntimeConfig as R, encodePath as S, defineRenderHandler as T, UUID_REGEX as U, destr as V, getRouteRules as W, getResponseStatusText as X, getResponseStatus as Y, klona as Z, parseURL as _, useServerSupabase as a, hasProtocol as a0, isScriptProtocol as a1, joinURL as a2, defuFn as a3, sanitizeStatusCode as a4, getRequestHeader as a5, isEqual as a6, getContext as a7, $fetch$1 as a8, baseURL as a9, hash$1 as aa, defu as ab, executeAsync as ac, withTrailingSlash as ad, withoutTrailingSlash as ae, getQuery as b, createError$1 as c, defineEventHandler as d, readBody as e, deleteCookie as f, getRouteRulesForPath as g, parseScope as h, resolveActorContextWithOffices as i, assertDocumentOrgAccess as j, assertReportingOfficeAccess as k, listSessions as l, broadcastIssueRealtime as m, issueRealtimeChannel as n, orgLogisticsChannel as o, parseQuery as p, assertIssueOrgAccess as q, resolveTenant as r, setCookie as s, toNodeListener as t, useNitroApp as u, getCookie as v, withQuery as w, readMultipartFormData as x, analyzeDocumentBuffer as y, extractTextFromFile as z };
 //# sourceMappingURL=nitro.mjs.map

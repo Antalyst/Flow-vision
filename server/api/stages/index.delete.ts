@@ -1,8 +1,6 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const client = useServerSupabase()
     const query = getQuery(event)
     const stage_id = query.stage_id || query.id
 

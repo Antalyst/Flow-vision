@@ -1,12 +1,6 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError, e as setCookie } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError, s as setCookie } from '../../../_/nitro.mjs';
 import { compare } from 'bcrypt-ts';
-import '@supabase/ssr';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -20,7 +14,7 @@ import 'node:path';
 const login_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { email, password } = body;
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   console.log("Login attempt for email:", email);
   const { data: user, error: userError } = await client.from("users").select("*").eq("email", email).single();
   if (userError || !user) {

@@ -1,5 +1,3 @@
-import { serverSupabaseClient } from '#supabase/server'
-
 interface WorkflowItemInput {
   office_id: string | number
   step_number: number
@@ -7,7 +5,7 @@ interface WorkflowItemInput {
 
 export default defineEventHandler(async (event) => {
   try {
-    const client = await serverSupabaseClient(event)
+    const client = useServerSupabase()
     const body = await readBody(event)
     // office_id: null → Global route (org-wide, admin-created)
     //            number → Local route (scoped to this sub-office branch)

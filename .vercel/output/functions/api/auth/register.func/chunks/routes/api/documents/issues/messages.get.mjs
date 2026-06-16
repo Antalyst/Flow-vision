@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError, v as assertIssueOrgAccess, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, b as getQuery, c as createError, q as assertIssueOrgAccess, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -18,7 +12,7 @@ import 'node:path';
 
 const messages_get = defineEventHandler(async (event) => {
   var _a, _b;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const query = getQuery(event);
   const issueId = String((_a = query.issue_id) != null ? _a : "").trim();
   const limit = Math.min(Math.max(Number((_b = query.limit) != null ? _b : 100), 1), 500);

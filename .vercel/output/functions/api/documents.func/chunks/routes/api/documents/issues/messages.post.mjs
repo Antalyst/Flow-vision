@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, v as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, n as broadcastIssueRealtime, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, q as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, m as broadcastIssueRealtime, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -18,7 +12,7 @@ import 'node:path';
 
 const messages_post = defineEventHandler(async (event) => {
   var _a, _b, _c;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const body = await readBody(event);
   const issueId = String((_a = body == null ? void 0 : body.issue_id) != null ? _a : "").trim();
   const messageText = String((_b = body == null ? void 0 : body.message_text) != null ? _b : "").trim();

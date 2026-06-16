@@ -1,11 +1,5 @@
-import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, k as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, m as assertReportingOfficeAccess, n as broadcastIssueRealtime, o as orgLogisticsChannel, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, j as assertDocumentOrgAccess, I as ISSUE_ALLOWED_ROLES, k as assertReportingOfficeAccess, m as broadcastIssueRealtime, o as orgLogisticsChannel, n as issueRealtimeChannel } from '../../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -18,7 +12,7 @@ import 'node:path';
 
 const create_post = defineEventHandler(async (event) => {
   var _a, _b, _c, _d, _e;
-  const client = await serverSupabaseClient(event);
+  const client = useServerSupabase();
   const body = await readBody(event);
   const documentId = String((_a = body == null ? void 0 : body.document_id) != null ? _a : "").trim();
   const reportedOfficeId = String((_b = body == null ? void 0 : body.reported_by_office_id) != null ? _b : "").trim();

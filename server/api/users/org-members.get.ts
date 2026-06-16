@@ -1,5 +1,3 @@
-import { serverSupabaseServiceRole } from '#supabase/server'
-
 /**
  * GET /api/users/org-members
  * Returns all non-client members of an organization (employees + messengers).
@@ -27,7 +25,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = await serverSupabaseServiceRole(event)
+  const client = useServerSupabase()
 
   // Confirm the calling admin's org_id matches the requested orgId
   const { data: adminRow, error: adminErr } = await client

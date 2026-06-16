@@ -1,11 +1,5 @@
-import { d as defineEventHandler, b as readBody, s as serverSupabaseServiceRole, c as createError } from '../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, e as readBody, a as useServerSupabase, c as createError } from '../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -19,7 +13,7 @@ import 'node:path';
 const index_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
   const { name, user_id } = body;
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   if (!name || !user_id) {
     throw createError({
       statusCode: 400,

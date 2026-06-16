@@ -1,11 +1,5 @@
-import { d as defineEventHandler, a as getQuery, c as createError, x as getCookie, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
-import '@supabase/ssr';
+import { d as defineEventHandler, b as getQuery, c as createError, v as getCookie, a as useServerSupabase } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import '@supabase/functions-js';
-import '@supabase/postgrest-js';
-import '@supabase/realtime-js';
-import '@supabase/storage-js';
-import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -30,7 +24,7 @@ const remove_delete = defineEventHandler(async (event) => {
   if (String(userId) === String(sessionUserId)) {
     throw createError({ statusCode: 400, message: "Administrators cannot remove their own account via this endpoint" });
   }
-  const client = await serverSupabaseServiceRole(event);
+  const client = useServerSupabase();
   const { data: adminRow } = await client.from("users").select("org_id").eq("user_id", sessionUserId).single();
   if (!(adminRow == null ? void 0 : adminRow.org_id)) {
     throw createError({ statusCode: 403, message: "Administrator has no organization" });
