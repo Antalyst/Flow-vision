@@ -11,7 +11,6 @@ import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

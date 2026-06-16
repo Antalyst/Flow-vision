@@ -5,7 +5,6 @@ import { ab as hash } from '../_/nitro.mjs';
 import { b as useNuxtApp, c as useAppConfig, e as useAsyncData, d as useRuntimeConfig } from './server.mjs';
 import { u as useHead$1, h as headSymbol } from '../routes/renderer.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

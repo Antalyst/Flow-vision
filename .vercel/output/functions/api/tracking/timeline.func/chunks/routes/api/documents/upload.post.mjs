@@ -1,6 +1,5 @@
 import { d as defineEventHandler, v as useMySQL, a as useServerSupabase, c as createError, x as getCookie, y as readMultipartFormData, z as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
 import { randomUUID } from 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -13,7 +12,7 @@ import 'node:path';
 const ALLOWED_ROLES = ["client", "employee"];
 const upload_post = defineEventHandler(async (event) => {
   var _a, _b;
-  const db = useMySQL();
+  const db = await useMySQL();
   const client = useServerSupabase();
   if (!db) {
     throw createError({

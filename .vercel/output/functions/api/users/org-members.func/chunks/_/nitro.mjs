@@ -1,5 +1,4 @@
 import { createHash, randomUUID } from 'node:crypto';
-import mysql from 'mysql2/promise';
 import http from 'node:http';
 import https from 'node:https';
 import { EventEmitter } from 'node:events';
@@ -4669,7 +4668,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "90894732-41a7-4a74-9bba-97005973bb98",
+    "buildId": "e93940cb-402a-4684-9a9e-24e5f74f7787",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -8332,13 +8331,21 @@ async function classifyIntent(userPrompt, history = [], hasActiveDocument = fals
 }
 
 let pool = null;
-const useMySQL = () => {
+let mysqlModule = null;
+async function loadMysql() {
+  if (!mysqlModule) {
+    mysqlModule = await import('mysql2/promise');
+  }
+  return mysqlModule;
+}
+const useMySQL = async () => {
   const config = useRuntimeConfig();
   if (!config.mysqlHost || !config.mysqlUser) {
     console.error("CRITICAL: MySQL environment variables are missing inside the runtime config!");
     return null;
   }
   if (!pool) {
+    const mysql = await loadMysql();
     pool = mysql.createPool({
       host: config.mysqlHost,
       user: config.mysqlUser,

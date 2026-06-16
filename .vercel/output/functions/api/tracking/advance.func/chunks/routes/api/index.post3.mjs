@@ -1,6 +1,5 @@
 import { d as defineEventHandler, y as readMultipartFormData, c as createError, A as extractTextFromFile, B as analyzeDocument } from '../../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

@@ -1,6 +1,5 @@
 import { d as defineEventHandler, a as useServerSupabase, e as readBody, c as createError, x as getCookie } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

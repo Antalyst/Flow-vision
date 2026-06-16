@@ -5,7 +5,6 @@ import { ssrRenderAttrs, ssrRenderComponent, ssrRenderClass, ssrInterpolate, ssr
 import { _ as _export_sfc, a as useAuthStore, u as useTheme } from './server.mjs';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

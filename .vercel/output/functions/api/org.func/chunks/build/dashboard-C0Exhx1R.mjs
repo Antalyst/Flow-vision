@@ -5,7 +5,6 @@ import __nuxt_component_0 from './index-CSZJBLRw.mjs';
 import { u as useDashboardEntrance } from './useDashboardEntrance-W2ntCYX9.mjs';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

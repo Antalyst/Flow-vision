@@ -4,7 +4,6 @@ import { W as WorkspacePlaceholder } from './WorkspacePlaceholder-PmZMLpyA.mjs';
 import './server.mjs';
 import '../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';

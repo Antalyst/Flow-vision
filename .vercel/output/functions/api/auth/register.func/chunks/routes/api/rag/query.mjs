@@ -1,6 +1,5 @@
 import { d as defineEventHandler, C as assertMethod, e as readBody, c as createError, r as resolveTenant, D as ensureSession, E as fetchRecentMessages, F as fetchLatestDocumentPayload, G as persistMessage, H as classifyIntent, J as reviseDocumentPayload, K as wantsSpreadsheetFormat, L as generateConversationalReply, v as useMySQL, a as useServerSupabase, M as translateTextToQuery, A as extractTextFromFile, N as generateDocumentTemplate, O as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -87,7 +86,7 @@ User Request: ${prompt}`;
       reply: reply2
     };
   }
-  const mysqlDb = useMySQL();
+  const mysqlDb = await useMySQL();
   if (!mysqlDb) {
     throw createError({
       statusCode: 500,

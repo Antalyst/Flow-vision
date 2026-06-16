@@ -1,8 +1,16 @@
-import mysql from 'mysql2/promise'
+import type { Pool } from 'mysql2/promise'
 
-let pool: mysql.Pool | null = null
+let pool: Pool | null = null
+let mysqlModule: typeof import('mysql2/promise') | null = null
 
-export const useMySQL = () => {
+async function loadMysql() {
+  if (!mysqlModule) {
+    mysqlModule = await import('mysql2/promise')
+  }
+  return mysqlModule
+}
+
+export const useMySQL = async (): Promise<Pool | null> => {
   const config = useRuntimeConfig()
 
   if (!config.mysqlHost || !config.mysqlUser) {
@@ -11,6 +19,7 @@ export const useMySQL = () => {
   }
 
   if (!pool) {
+    const mysql = await loadMysql()
     pool = mysql.createPool({
       host: config.mysqlHost,
       user: config.mysqlUser,

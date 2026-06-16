@@ -5,7 +5,6 @@ import { R as publicAssetsURL } from '../_/nitro.mjs';
 import { a as useAuthStore, j as _imports_1, b as useNuxtApp } from './server.mjs';
 import { defineStore } from 'pinia';
 import 'node:crypto';
-import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';
