@@ -46,8 +46,7 @@ export const analyzeDocument = async (text: string): Promise<DocumentAnalysis> =
   if (!trimmed) return { ...FALLBACK_ANALYSIS }
 
   try {
-    const { default: Groq } = await import('groq-sdk')
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+    const groq = useGroq()
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',

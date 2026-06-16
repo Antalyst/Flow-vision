@@ -4669,7 +4669,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "8a565b75-fde7-49c9-81e2-eab3be392420",
+    "buildId": "90894732-41a7-4a74-9bba-97005973bb98",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -5243,432 +5243,6 @@ async function resolveActorContextWithOffices(event, supabase) {
   }
   const officeIds = (officeRows != null ? officeRows : []).map((o) => String(o.id));
   return { ...base, officeIds };
-}
-
-async function extractPdfText(buffer) {
-  const { extractText, getDocumentProxy } = await import('./index.mjs');
-  const pdf = await getDocumentProxy(new Uint8Array(buffer));
-  const { text } = await extractText(pdf, { mergePages: true });
-  return text != null ? text : "";
-}
-const extractTextFromFile = async (file) => {
-  const filename = file.filename.toLowerCase();
-  let text = "";
-  try {
-    if (filename.endsWith(".pdf")) {
-      text = await extractPdfText(file.data);
-    } else if (filename.endsWith(".docx") || filename.endsWith(".doc")) {
-      const mammoth = await import('mammoth');
-      const result = await mammoth.extractRawText({ buffer: file.data });
-      text = result.value;
-    } else if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
-      text = `Excel Spreadsheet Document titled: ${file.filename}. Contains structured spreadsheet ledger metrics.`;
-    } else {
-      text = file.data.toString("utf-8");
-    }
-  } catch (parseError) {
-    console.warn(`Parser failed to read text contents for ${filename}, falling back to metadata description.`);
-    text = `Document File Name: ${file.filename}`;
-  }
-  return text.replace(/\s+/g, " ").trim().substring(0, 4e3);
-};
-
-const FALLBACK_ANALYSIS = {
-  title: "Untitled Document",
-  description: "The document contents could not be automatically analyzed. Please review and update the details manually."
-};
-const MIME_TO_EXTENSION = {
-  "application/pdf": ".pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-  "application/msword": ".doc",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
-  "application/vnd.ms-excel": ".xls",
-  "text/plain": ".txt",
-  "text/csv": ".csv",
-  "application/json": ".json"
-};
-const resolveExtension = (mimeType) => {
-  var _a;
-  return MIME_TO_EXTENSION[(_a = mimeType == null ? void 0 : mimeType.toLowerCase) == null ? void 0 : _a.call(mimeType)] || ".txt";
-};
-const normalizeAnalysis = (raw) => {
-  const title = typeof (raw == null ? void 0 : raw.title) === "string" && raw.title.trim() ? raw.title.trim() : FALLBACK_ANALYSIS.title;
-  const description = typeof (raw == null ? void 0 : raw.description) === "string" && raw.description.trim() ? raw.description.trim() : FALLBACK_ANALYSIS.description;
-  return { title, description };
-};
-const analyzeDocument = async (text) => {
-  var _a, _b;
-  const trimmed = (text || "").trim();
-  if (!trimmed) return { ...FALLBACK_ANALYSIS };
-  try {
-    const { default: Groq } = await Promise.resolve().then(function () { return index; });
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.2,
-      max_tokens: 1e3,
-      messages: [
-        {
-          role: "system",
-          content: "You analyze documents. Return ONLY a JSON object with two string keys: 'title' and 'description'. The 'title' is a concise, human-readable document title. The 'description' is a precise summary of EXACTLY two sentences. If the content is unreadable, encrypted, or empty, use 'Untitled Document' for title and explain that the content could not be read in the description."
-        },
-        { role: "user", content: `Document Content:
-${trimmed}` }
-      ],
-      response_format: { type: "json_object" }
-    });
-    const content = ((_b = (_a = completion.choices[0]) == null ? void 0 : _a.message) == null ? void 0 : _b.content) || "{}";
-    return normalizeAnalysis(JSON.parse(content));
-  } catch (error) {
-    console.error("[aiAnalyzer] analyzeDocument failed:", error);
-    return { ...FALLBACK_ANALYSIS };
-  }
-};
-async function analyzeDocumentBuffer(fileBuffer, mimeType) {
-  if (!fileBuffer || !fileBuffer.length) {
-    return { ...FALLBACK_ANALYSIS };
-  }
-  try {
-    const extractedText = await extractTextFromFile({
-      filename: `document${resolveExtension(mimeType)}`,
-      data: fileBuffer
-    });
-    const context = (extractedText == null ? void 0 : extractedText.trim()) || "";
-    if (!context) return { ...FALLBACK_ANALYSIS };
-    return await analyzeDocument(context);
-  } catch (error) {
-    console.error("[aiAnalyzer] analyzeDocumentBuffer failed:", error);
-    return { ...FALLBACK_ANALYSIS };
-  }
-}
-
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-function encodeFilterValue(value) {
-  if (value === null) return "null";
-  if (typeof value === "boolean") return String(value);
-  if (typeof value === "number") return String(value);
-  const str = String(value);
-  if (/^[0-9a-f-]{36}$/i.test(str) || /^[A-Z0-9_]+$/.test(str)) return str;
-  return `"${str.replace(/"/g, '\\"')}"`;
-}
-class PostgrestQueryBuilder {
-  constructor(baseUrl, table, headers) {
-    __publicField(this, "baseUrl", baseUrl);
-    __publicField(this, "table", table);
-    __publicField(this, "headers", headers);
-    __publicField(this, "method", "GET");
-    __publicField(this, "selectColumns", "*");
-    __publicField(this, "filters", []);
-    __publicField(this, "orders", []);
-    __publicField(this, "limitValue");
-    __publicField(this, "body");
-    __publicField(this, "wantSingle", false);
-    __publicField(this, "wantMaybeSingle", false);
-    __publicField(this, "countMode");
-    __publicField(this, "headOnly", false);
-    __publicField(this, "returning", false);
-  }
-  select(columns = "*", options) {
-    this.selectColumns = columns;
-    if (options == null ? void 0 : options.count) this.countMode = options.count;
-    if (options == null ? void 0 : options.head) this.headOnly = true;
-    return this;
-  }
-  insert(payload) {
-    this.method = "POST";
-    this.body = payload;
-    return this;
-  }
-  update(payload) {
-    this.method = "PATCH";
-    this.body = payload;
-    return this;
-  }
-  delete() {
-    this.method = "DELETE";
-    return this;
-  }
-  eq(column, value) {
-    this.filters.push(`${column}=eq.${encodeFilterValue(value)}`);
-    return this;
-  }
-  neq(column, value) {
-    this.filters.push(`${column}=neq.${encodeFilterValue(value)}`);
-    return this;
-  }
-  in(column, values) {
-    const encoded = values.map(encodeFilterValue).join(",");
-    this.filters.push(`${column}=in.(${encoded})`);
-    return this;
-  }
-  or(expression) {
-    this.filters.push(`or=(${expression})`);
-    return this;
-  }
-  is(column, value) {
-    this.filters.push(`${column}=is.${encodeFilterValue(value)}`);
-    return this;
-  }
-  ilike(column, pattern) {
-    this.filters.push(`${column}=ilike.${encodeFilterValue(pattern)}`);
-    return this;
-  }
-  order(column, options = {}) {
-    this.orders.push(`${column}.${options.ascending === false ? "desc" : "asc"}`);
-    return this;
-  }
-  limit(count) {
-    this.limitValue = count;
-    return this;
-  }
-  single() {
-    this.wantSingle = true;
-    return this.execute();
-  }
-  maybeSingle() {
-    this.wantMaybeSingle = true;
-    return this.execute();
-  }
-  then(onfulfilled, onrejected) {
-    return this.execute().then(onfulfilled, onrejected);
-  }
-  markReturning() {
-    this.returning = true;
-  }
-  buildUrl() {
-    const params = new URLSearchParams();
-    if (this.method === "GET" || this.returning || this.method === "PATCH" || this.method === "DELETE") {
-      params.set("select", this.selectColumns);
-    }
-    for (const filter of this.filters) {
-      const idx = filter.indexOf("=");
-      if (idx === -1) continue;
-      params.append(filter.slice(0, idx), filter.slice(idx + 1));
-    }
-    for (const order of this.orders) params.append("order", order);
-    if (this.limitValue != null) params.set("limit", String(this.limitValue));
-    const qs = params.toString();
-    return `${this.baseUrl}/rest/v1/${this.table}${qs ? `?${qs}` : ""}`;
-  }
-  buildHeaders() {
-    const reqHeaders = {
-      ...this.headers,
-      "Content-Type": "application/json"
-    };
-    const prefer = [];
-    if (this.countMode) prefer.push(`count=${this.countMode}`);
-    if (this.returning) prefer.push("return=representation");
-    else if (this.method === "POST" || this.method === "PATCH") prefer.push("return=minimal");
-    if (prefer.length) reqHeaders.Prefer = prefer.join(",");
-    if (this.wantSingle || this.wantMaybeSingle) {
-      reqHeaders.Accept = "application/vnd.pgrst.object+json";
-    }
-    return reqHeaders;
-  }
-  async execute() {
-    var _a, _b;
-    if (this.method === "POST" && (this.wantSingle || this.wantMaybeSingle || this.selectColumns !== "*")) {
-      this.markReturning();
-    }
-    if (this.method === "PATCH" || this.method === "DELETE") {
-      if (this.selectColumns !== "*" || this.wantSingle || this.wantMaybeSingle) this.markReturning();
-    }
-    const url = this.buildUrl();
-    const reqHeaders = this.buildHeaders();
-    try {
-      const response = await $fetch.raw(url, {
-        method: this.method,
-        headers: reqHeaders,
-        body: this.method === "GET" ? void 0 : this.body,
-        ignoreResponseError: true
-      });
-      const countHeader = response.headers.get("content-range");
-      let count = null;
-      if (countHeader) {
-        const match = countHeader.match(/\/(\d+)$/);
-        if (match) count = Number(match[1]);
-      }
-      if (response.status >= 400) {
-        const errBody = (_a = response._data) != null ? _a : {};
-        const error = {
-          message: errBody.message || `Request failed with status ${response.status}`,
-          code: errBody.code,
-          details: errBody.details,
-          hint: errBody.hint
-        };
-        if (this.wantMaybeSingle && (response.status === 406 || response.status === 404)) {
-          return { data: null, error: null, count };
-        }
-        return { data: null, error, count };
-      }
-      if (this.headOnly) {
-        return { data: null, error: null, count };
-      }
-      const data = (_b = response._data) != null ? _b : null;
-      if (this.wantMaybeSingle && (data === null || Array.isArray(data) && data.length === 0)) {
-        return { data: null, error: null, count };
-      }
-      if (this.wantSingle && Array.isArray(data) && data.length === 0) {
-        return { data: null, error: { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" }, count };
-      }
-      if (!this.wantSingle && !this.wantMaybeSingle && data === null && (this.method === "POST" || this.method === "PATCH" || this.method === "DELETE")) {
-        return { data: null, error: null, count };
-      }
-      return { data, error: null, count };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown fetch error";
-      return { data: null, error: { message } };
-    }
-  }
-}
-async function broadcastMessage(baseUrl, apiKey, channelName, event, payload) {
-  await $fetch(`${baseUrl}/realtime/v1/api/broadcast`, {
-    method: "POST",
-    headers: {
-      apikey: apiKey,
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: {
-      messages: [{ topic: channelName, event, payload }]
-    }
-  });
-}
-const useServerSupabase = () => {
-  const config = useRuntimeConfig();
-  const supabaseUrl = String(config.public.supabaseUrl || "").replace(/\/$/, "");
-  const supabaseKey = String(config.supabaseServiceKey || "");
-  const headers = {
-    apikey: supabaseKey,
-    Authorization: `Bearer ${supabaseKey}`
-  };
-  return {
-    from: (table) => new PostgrestQueryBuilder(supabaseUrl, table, headers),
-    /** @deprecated Use broadcastMessage via documentIssues helper instead */
-    channel: (channelName) => ({
-      subscribe: async () => {
-      },
-      send: async (msg) => {
-        if (msg.type === "broadcast") {
-          await broadcastMessage(supabaseUrl, supabaseKey, channelName, msg.event, msg.payload);
-        }
-      }
-    }),
-    removeChannel: async () => {
-    },
-    broadcast: (channelName, event, payload) => broadcastMessage(supabaseUrl, supabaseKey, channelName, event, payload)
-  };
-};
-
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ALLOWED_ROLES = ["client", "employee"];
-const MEMORY_WINDOW = 5;
-async function resolveTenant(event) {
-  const userId = getCookie(event, "user_session");
-  const userRole = getCookie(event, "user_role");
-  if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
-    throw createError$1({
-      statusCode: 401,
-      statusMessage: "Unauthenticated: a valid client or employee session is required."
-    });
-  }
-  const client = useServerSupabase();
-  const { data: sessionUser, error } = await client.from("users").select("org_id").eq("user_id", userId).single();
-  const orgId = (sessionUser == null ? void 0 : sessionUser.org_id) ? String(sessionUser.org_id) : null;
-  if (error || !orgId || !UUID_REGEX.test(orgId)) {
-    throw createError$1({
-      statusCode: 403,
-      statusMessage: "Forbidden: no valid organization scope is bound to this session."
-    });
-  }
-  return { userId, orgId, role: userRole };
-}
-async function ensureSession(sessionId, orgId, userId, title, event) {
-  const client = useServerSupabase();
-  if (sessionId && UUID_REGEX.test(sessionId)) {
-    const { data: owned } = await client.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
-    if (owned == null ? void 0 : owned.id) {
-      return owned.id;
-    }
-  }
-  const newId = randomUUID();
-  const sessionTitle = (title || "New chat").trim().slice(0, 60) || "New chat";
-  const { error } = await client.from("chat_sessions").insert({
-    id: newId,
-    org_id: String(orgId),
-    user_id: String(userId),
-    title: sessionTitle,
-    created_at: (/* @__PURE__ */ new Date()).toISOString()
-  });
-  if (error) {
-    console.error("Postgres Insertion Error Details:", error);
-    throw createError$1({
-      statusCode: 500,
-      statusMessage: `Failed to provision chat session: ${error.message}`
-    });
-  }
-  return newId;
-}
-async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
-  const client = useServerSupabase();
-  const { data, error } = await client.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(limit);
-  if (error || !data) {
-    return [];
-  }
-  return data.slice().reverse();
-}
-async function persistMessage(sessionId, role, content, event, metadata = null) {
-  const client = useServerSupabase();
-  const messageId = randomUUID();
-  const normalizedRole = String(role).toLowerCase() === "assistant" ? "assistant" : "user";
-  const payload = {
-    id: messageId,
-    session_id: sessionId,
-    role: normalizedRole,
-    content: typeof content === "string" ? content : String(content != null ? content : ""),
-    metadata: metadata != null ? metadata : null,
-    created_at: (/* @__PURE__ */ new Date()).toISOString()
-  };
-  const { error } = await client.from("chat_messages").insert(payload);
-  if (error) {
-    console.error("Postgres Insertion Error Details:", error);
-    throw createError$1({
-      statusCode: 500,
-      statusMessage: `Failed to persist chat message: ${error.message}`
-    });
-  }
-  return messageId;
-}
-async function listSessions(userId, event) {
-  const client = useServerSupabase();
-  const { data, error } = await client.from("chat_sessions").select("id, title, created_at").eq("user_id", String(userId)).order("created_at", { ascending: false }).limit(50);
-  if (error) {
-    throw createError$1({
-      statusCode: 500,
-      statusMessage: `Failed to load chat sessions: ${error.message}`
-    });
-  }
-  return data != null ? data : [];
-}
-async function fetchLatestDocumentPayload(sessionId, event) {
-  var _a;
-  const client = useServerSupabase();
-  const { data, error } = await client.from("chat_messages").select("metadata, created_at").eq("session_id", sessionId).eq("role", "assistant").order("created_at", { ascending: false }).limit(15);
-  if (error || !data) {
-    return null;
-  }
-  for (const row of data) {
-    const dp = (_a = row == null ? void 0 : row.metadata) == null ? void 0 : _a.documentPayload;
-    if (dp == null ? void 0 : dp.htmlContent) {
-      return {
-        title: String(dp.title || "Document"),
-        htmlContent: String(dp.htmlContent)
-      };
-    }
-  }
-  return null;
 }
 
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
@@ -7774,30 +7348,446 @@ Groq.Models = Models;
 Groq.Batches = Batches;
 Groq.Files = Files;
 
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+let client = null;
+function useGroq() {
+  if (!client) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw createError$1({
+        statusCode: 500,
+        statusMessage: "GROQ_API_KEY is not configured for this deployment."
+      });
+    }
+    client = new Groq({ apiKey });
+  }
+  return client;
+}
 
-const index = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
-  __proto__: null,
-  APIConnectionError: APIConnectionError,
-  APIConnectionTimeoutError: APIConnectionTimeoutError,
-  APIError: APIError,
-  APIPromise: APIPromise,
-  APIUserAbortError: APIUserAbortError,
-  AuthenticationError: AuthenticationError,
-  BadRequestError: BadRequestError,
-  ConflictError: ConflictError,
-  Groq: Groq,
-  GroqError: GroqError,
-  InternalServerError: InternalServerError,
-  NotFoundError: NotFoundError,
-  PermissionDeniedError: PermissionDeniedError,
-  RateLimitError: RateLimitError,
-  UnprocessableEntityError: UnprocessableEntityError,
-  default: Groq,
-  toFile: toFile
-}, Symbol.toStringTag, { value: 'Module' }));
+async function extractPdfText(buffer) {
+  const { extractText, getDocumentProxy } = await import('./index.mjs');
+  const pdf = await getDocumentProxy(new Uint8Array(buffer));
+  const { text } = await extractText(pdf, { mergePages: true });
+  return text != null ? text : "";
+}
+const extractTextFromFile = async (file) => {
+  const filename = file.filename.toLowerCase();
+  let text = "";
+  try {
+    if (filename.endsWith(".pdf")) {
+      text = await extractPdfText(file.data);
+    } else if (filename.endsWith(".docx") || filename.endsWith(".doc")) {
+      const mammoth = await import('mammoth');
+      const result = await mammoth.extractRawText({ buffer: file.data });
+      text = result.value;
+    } else if (filename.endsWith(".xlsx") || filename.endsWith(".xls")) {
+      text = `Excel Spreadsheet Document titled: ${file.filename}. Contains structured spreadsheet ledger metrics.`;
+    } else {
+      text = file.data.toString("utf-8");
+    }
+  } catch (parseError) {
+    console.warn(`Parser failed to read text contents for ${filename}, falling back to metadata description.`);
+    text = `Document File Name: ${file.filename}`;
+  }
+  return text.replace(/\s+/g, " ").trim().substring(0, 4e3);
+};
 
-const groq$4 = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const FALLBACK_ANALYSIS = {
+  title: "Untitled Document",
+  description: "The document contents could not be automatically analyzed. Please review and update the details manually."
+};
+const MIME_TO_EXTENSION = {
+  "application/pdf": ".pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+  "application/vnd.ms-excel": ".xls",
+  "text/plain": ".txt",
+  "text/csv": ".csv",
+  "application/json": ".json"
+};
+const resolveExtension = (mimeType) => {
+  var _a;
+  return MIME_TO_EXTENSION[(_a = mimeType == null ? void 0 : mimeType.toLowerCase) == null ? void 0 : _a.call(mimeType)] || ".txt";
+};
+const normalizeAnalysis = (raw) => {
+  const title = typeof (raw == null ? void 0 : raw.title) === "string" && raw.title.trim() ? raw.title.trim() : FALLBACK_ANALYSIS.title;
+  const description = typeof (raw == null ? void 0 : raw.description) === "string" && raw.description.trim() ? raw.description.trim() : FALLBACK_ANALYSIS.description;
+  return { title, description };
+};
+const analyzeDocument = async (text) => {
+  var _a, _b;
+  const trimmed = (text || "").trim();
+  if (!trimmed) return { ...FALLBACK_ANALYSIS };
+  try {
+    const groq = useGroq();
+    const completion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.2,
+      max_tokens: 1e3,
+      messages: [
+        {
+          role: "system",
+          content: "You analyze documents. Return ONLY a JSON object with two string keys: 'title' and 'description'. The 'title' is a concise, human-readable document title. The 'description' is a precise summary of EXACTLY two sentences. If the content is unreadable, encrypted, or empty, use 'Untitled Document' for title and explain that the content could not be read in the description."
+        },
+        { role: "user", content: `Document Content:
+${trimmed}` }
+      ],
+      response_format: { type: "json_object" }
+    });
+    const content = ((_b = (_a = completion.choices[0]) == null ? void 0 : _a.message) == null ? void 0 : _b.content) || "{}";
+    return normalizeAnalysis(JSON.parse(content));
+  } catch (error) {
+    console.error("[aiAnalyzer] analyzeDocument failed:", error);
+    return { ...FALLBACK_ANALYSIS };
+  }
+};
+async function analyzeDocumentBuffer(fileBuffer, mimeType) {
+  if (!fileBuffer || !fileBuffer.length) {
+    return { ...FALLBACK_ANALYSIS };
+  }
+  try {
+    const extractedText = await extractTextFromFile({
+      filename: `document${resolveExtension(mimeType)}`,
+      data: fileBuffer
+    });
+    const context = (extractedText == null ? void 0 : extractedText.trim()) || "";
+    if (!context) return { ...FALLBACK_ANALYSIS };
+    return await analyzeDocument(context);
+  } catch (error) {
+    console.error("[aiAnalyzer] analyzeDocumentBuffer failed:", error);
+    return { ...FALLBACK_ANALYSIS };
+  }
+}
+
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+function encodeFilterValue(value) {
+  if (value === null) return "null";
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") return String(value);
+  const str = String(value);
+  if (/^[0-9a-f-]{36}$/i.test(str) || /^[A-Z0-9_]+$/.test(str)) return str;
+  return `"${str.replace(/"/g, '\\"')}"`;
+}
+class PostgrestQueryBuilder {
+  constructor(baseUrl, table, headers) {
+    __publicField(this, "baseUrl", baseUrl);
+    __publicField(this, "table", table);
+    __publicField(this, "headers", headers);
+    __publicField(this, "method", "GET");
+    __publicField(this, "selectColumns", "*");
+    __publicField(this, "filters", []);
+    __publicField(this, "orders", []);
+    __publicField(this, "limitValue");
+    __publicField(this, "body");
+    __publicField(this, "wantSingle", false);
+    __publicField(this, "wantMaybeSingle", false);
+    __publicField(this, "countMode");
+    __publicField(this, "headOnly", false);
+    __publicField(this, "returning", false);
+  }
+  select(columns = "*", options) {
+    this.selectColumns = columns;
+    if (options == null ? void 0 : options.count) this.countMode = options.count;
+    if (options == null ? void 0 : options.head) this.headOnly = true;
+    return this;
+  }
+  insert(payload) {
+    this.method = "POST";
+    this.body = payload;
+    return this;
+  }
+  update(payload) {
+    this.method = "PATCH";
+    this.body = payload;
+    return this;
+  }
+  delete() {
+    this.method = "DELETE";
+    return this;
+  }
+  eq(column, value) {
+    this.filters.push(`${column}=eq.${encodeFilterValue(value)}`);
+    return this;
+  }
+  neq(column, value) {
+    this.filters.push(`${column}=neq.${encodeFilterValue(value)}`);
+    return this;
+  }
+  in(column, values) {
+    const encoded = values.map(encodeFilterValue).join(",");
+    this.filters.push(`${column}=in.(${encoded})`);
+    return this;
+  }
+  or(expression) {
+    this.filters.push(`or=(${expression})`);
+    return this;
+  }
+  is(column, value) {
+    this.filters.push(`${column}=is.${encodeFilterValue(value)}`);
+    return this;
+  }
+  ilike(column, pattern) {
+    this.filters.push(`${column}=ilike.${encodeFilterValue(pattern)}`);
+    return this;
+  }
+  order(column, options = {}) {
+    this.orders.push(`${column}.${options.ascending === false ? "desc" : "asc"}`);
+    return this;
+  }
+  limit(count) {
+    this.limitValue = count;
+    return this;
+  }
+  single() {
+    this.wantSingle = true;
+    return this.execute();
+  }
+  maybeSingle() {
+    this.wantMaybeSingle = true;
+    return this.execute();
+  }
+  then(onfulfilled, onrejected) {
+    return this.execute().then(onfulfilled, onrejected);
+  }
+  markReturning() {
+    this.returning = true;
+  }
+  buildUrl() {
+    const params = new URLSearchParams();
+    if (this.method === "GET" || this.returning || this.method === "PATCH" || this.method === "DELETE") {
+      params.set("select", this.selectColumns);
+    }
+    for (const filter of this.filters) {
+      const idx = filter.indexOf("=");
+      if (idx === -1) continue;
+      params.append(filter.slice(0, idx), filter.slice(idx + 1));
+    }
+    for (const order of this.orders) params.append("order", order);
+    if (this.limitValue != null) params.set("limit", String(this.limitValue));
+    const qs = params.toString();
+    return `${this.baseUrl}/rest/v1/${this.table}${qs ? `?${qs}` : ""}`;
+  }
+  buildHeaders() {
+    const reqHeaders = {
+      ...this.headers,
+      "Content-Type": "application/json"
+    };
+    const prefer = [];
+    if (this.countMode) prefer.push(`count=${this.countMode}`);
+    if (this.returning) prefer.push("return=representation");
+    else if (this.method === "POST" || this.method === "PATCH") prefer.push("return=minimal");
+    if (prefer.length) reqHeaders.Prefer = prefer.join(",");
+    if (this.wantSingle || this.wantMaybeSingle) {
+      reqHeaders.Accept = "application/vnd.pgrst.object+json";
+    }
+    return reqHeaders;
+  }
+  async execute() {
+    var _a, _b;
+    if (this.method === "POST" && (this.wantSingle || this.wantMaybeSingle || this.selectColumns !== "*")) {
+      this.markReturning();
+    }
+    if (this.method === "PATCH" || this.method === "DELETE") {
+      if (this.selectColumns !== "*" || this.wantSingle || this.wantMaybeSingle) this.markReturning();
+    }
+    const url = this.buildUrl();
+    const reqHeaders = this.buildHeaders();
+    try {
+      const response = await $fetch.raw(url, {
+        method: this.method,
+        headers: reqHeaders,
+        body: this.method === "GET" ? void 0 : this.body,
+        ignoreResponseError: true
+      });
+      const countHeader = response.headers.get("content-range");
+      let count = null;
+      if (countHeader) {
+        const match = countHeader.match(/\/(\d+)$/);
+        if (match) count = Number(match[1]);
+      }
+      if (response.status >= 400) {
+        const errBody = (_a = response._data) != null ? _a : {};
+        const error = {
+          message: errBody.message || `Request failed with status ${response.status}`,
+          code: errBody.code,
+          details: errBody.details,
+          hint: errBody.hint
+        };
+        if (this.wantMaybeSingle && (response.status === 406 || response.status === 404)) {
+          return { data: null, error: null, count };
+        }
+        return { data: null, error, count };
+      }
+      if (this.headOnly) {
+        return { data: null, error: null, count };
+      }
+      const data = (_b = response._data) != null ? _b : null;
+      if (this.wantMaybeSingle && (data === null || Array.isArray(data) && data.length === 0)) {
+        return { data: null, error: null, count };
+      }
+      if (this.wantSingle && Array.isArray(data) && data.length === 0) {
+        return { data: null, error: { message: "JSON object requested, multiple (or no) rows returned", code: "PGRST116" }, count };
+      }
+      if (!this.wantSingle && !this.wantMaybeSingle && data === null && (this.method === "POST" || this.method === "PATCH" || this.method === "DELETE")) {
+        return { data: null, error: null, count };
+      }
+      return { data, error: null, count };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown fetch error";
+      return { data: null, error: { message } };
+    }
+  }
+}
+async function broadcastMessage(baseUrl, apiKey, channelName, event, payload) {
+  await $fetch(`${baseUrl}/realtime/v1/api/broadcast`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: {
+      messages: [{ topic: channelName, event, payload }]
+    }
+  });
+}
+const useServerSupabase = () => {
+  const config = useRuntimeConfig();
+  const supabaseUrl = String(config.public.supabaseUrl || "").replace(/\/$/, "");
+  const supabaseKey = String(config.supabaseServiceKey || "");
+  const headers = {
+    apikey: supabaseKey,
+    Authorization: `Bearer ${supabaseKey}`
+  };
+  return {
+    from: (table) => new PostgrestQueryBuilder(supabaseUrl, table, headers),
+    /** @deprecated Use broadcastMessage via documentIssues helper instead */
+    channel: (channelName) => ({
+      subscribe: async () => {
+      },
+      send: async (msg) => {
+        if (msg.type === "broadcast") {
+          await broadcastMessage(supabaseUrl, supabaseKey, channelName, msg.event, msg.payload);
+        }
+      }
+    }),
+    removeChannel: async () => {
+    },
+    broadcast: (channelName, event, payload) => broadcastMessage(supabaseUrl, supabaseKey, channelName, event, payload)
+  };
+};
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ALLOWED_ROLES = ["client", "employee"];
+const MEMORY_WINDOW = 5;
+async function resolveTenant(event) {
+  const userId = getCookie(event, "user_session");
+  const userRole = getCookie(event, "user_role");
+  if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
+    throw createError$1({
+      statusCode: 401,
+      statusMessage: "Unauthenticated: a valid client or employee session is required."
+    });
+  }
+  const client = useServerSupabase();
+  const { data: sessionUser, error } = await client.from("users").select("org_id").eq("user_id", userId).single();
+  const orgId = (sessionUser == null ? void 0 : sessionUser.org_id) ? String(sessionUser.org_id) : null;
+  if (error || !orgId || !UUID_REGEX.test(orgId)) {
+    throw createError$1({
+      statusCode: 403,
+      statusMessage: "Forbidden: no valid organization scope is bound to this session."
+    });
+  }
+  return { userId, orgId, role: userRole };
+}
+async function ensureSession(sessionId, orgId, userId, title, event) {
+  const client = useServerSupabase();
+  if (sessionId && UUID_REGEX.test(sessionId)) {
+    const { data: owned } = await client.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
+    if (owned == null ? void 0 : owned.id) {
+      return owned.id;
+    }
+  }
+  const newId = randomUUID();
+  const sessionTitle = (title || "New chat").trim().slice(0, 60) || "New chat";
+  const { error } = await client.from("chat_sessions").insert({
+    id: newId,
+    org_id: String(orgId),
+    user_id: String(userId),
+    title: sessionTitle,
+    created_at: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  if (error) {
+    console.error("Postgres Insertion Error Details:", error);
+    throw createError$1({
+      statusCode: 500,
+      statusMessage: `Failed to provision chat session: ${error.message}`
+    });
+  }
+  return newId;
+}
+async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
+  const client = useServerSupabase();
+  const { data, error } = await client.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(limit);
+  if (error || !data) {
+    return [];
+  }
+  return data.slice().reverse();
+}
+async function persistMessage(sessionId, role, content, event, metadata = null) {
+  const client = useServerSupabase();
+  const messageId = randomUUID();
+  const normalizedRole = String(role).toLowerCase() === "assistant" ? "assistant" : "user";
+  const payload = {
+    id: messageId,
+    session_id: sessionId,
+    role: normalizedRole,
+    content: typeof content === "string" ? content : String(content != null ? content : ""),
+    metadata: metadata != null ? metadata : null,
+    created_at: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  const { error } = await client.from("chat_messages").insert(payload);
+  if (error) {
+    console.error("Postgres Insertion Error Details:", error);
+    throw createError$1({
+      statusCode: 500,
+      statusMessage: `Failed to persist chat message: ${error.message}`
+    });
+  }
+  return messageId;
+}
+async function listSessions(userId, event) {
+  const client = useServerSupabase();
+  const { data, error } = await client.from("chat_sessions").select("id, title, created_at").eq("user_id", String(userId)).order("created_at", { ascending: false }).limit(50);
+  if (error) {
+    throw createError$1({
+      statusCode: 500,
+      statusMessage: `Failed to load chat sessions: ${error.message}`
+    });
+  }
+  return data != null ? data : [];
+}
+async function fetchLatestDocumentPayload(sessionId, event) {
+  var _a;
+  const client = useServerSupabase();
+  const { data, error } = await client.from("chat_messages").select("metadata, created_at").eq("session_id", sessionId).eq("role", "assistant").order("created_at", { ascending: false }).limit(15);
+  if (error || !data) {
+    return null;
+  }
+  for (const row of data) {
+    const dp = (_a = row == null ? void 0 : row.metadata) == null ? void 0 : _a.documentPayload;
+    if (dp == null ? void 0 : dp.htmlContent) {
+      return {
+        title: String(dp.title || "Document"),
+        htmlContent: String(dp.htmlContent)
+      };
+    }
+  }
+  return null;
+}
+
 async function generateConversationalReply(userPrompt, history = []) {
   var _a, _b, _c;
   const systemInstruction = `
@@ -7820,7 +7810,7 @@ async function generateConversationalReply(userPrompt, history = []) {
     { role: "user", content: userPrompt }
   ];
   try {
-    const completion = await groq$4.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages,
       model: "llama-3.3-70b-versatile",
       temperature: 0.4
@@ -7913,7 +7903,6 @@ async function broadcastIssueRealtime(_event, orgId, issueId, broadcastEvent, pa
   }
 }
 
-const groq$3 = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const HTML_BODY_RULES = `
     - Use semantic HTML only: <h2>, <h3>, <p>, <ul>, <li>, <strong>, <table>, <thead>,
       <tbody>, <tr>, <th>, <td>. NEVER include <script>, <style>, inline style attributes,
@@ -8051,7 +8040,7 @@ async function reviseToSpreadsheetMatrix(existing, critique, history = []) {
     ${SPREADSHEET_TABLE_SPEC}
   `;
   try {
-    const completion = await groq$3.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
         ...history.slice(-4).map((m) => ({ role: m.role, content: m.content })),
@@ -8127,7 +8116,7 @@ async function synthesizeDocumentPayload(userPrompt, rows, blueprint) {
     return clone;
   });
   try {
-    const completion = await groq$3.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
         {
@@ -8183,7 +8172,7 @@ async function reviseDocumentPayload(existing, critique, history = []) {
     ${HTML_BODY_RULES}
   `;
   try {
-    const completion = await groq$3.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
         ...history.slice(-4).map((m) => ({ role: m.role, content: m.content })),
@@ -8214,9 +8203,6 @@ Formatting critique to apply: "${critique}"`
   }
 }
 
-const groq$2 = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
 async function generateDocumentTemplate(userPrompt, dbRows) {
   var _a, _b;
   const systemInstruction = `
@@ -8264,7 +8250,7 @@ async function generateDocumentTemplate(userPrompt, dbRows) {
   `;
   const databaseContextString = JSON.stringify(dbRows, null, 2);
   try {
-    const chatCompletion = await groq$2.chat.completions.create({
+    const chatCompletion = await useGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
         {
@@ -8289,7 +8275,6 @@ ${databaseContextString}`
   }
 }
 
-const groq$1 = new Groq({ apiKey: process.env.GROQ_API_KEY });
 async function classifyIntent(userPrompt, history = [], hasActiveDocument = false) {
   var _a, _b;
   const systemInstruction = `
@@ -8324,7 +8309,7 @@ async function classifyIntent(userPrompt, history = [], hasActiveDocument = fals
     { role: "user", content: userPrompt }
   ];
   try {
-    const completion = await groq$1.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages,
       model: "llama-3.3-70b-versatile",
       response_format: { type: "json_object" },
@@ -8367,9 +8352,6 @@ const useMySQL = () => {
   return pool;
 };
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
 async function translateTextToQuery(userPrompt) {
   var _a, _b;
   const systemInstruction = `
@@ -8400,7 +8382,7 @@ async function translateTextToQuery(userPrompt) {
     }
   `;
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await useGroq().chat.completions.create({
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: userPrompt }

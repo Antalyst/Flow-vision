@@ -4,10 +4,7 @@
 // this fuses the retrieved SQL rows (and the formatter's layout blueprint) into a
 // clean, semantic textual document: executive summary, section headers, and an
 // organized layout table. Output conforms to the unified documentPayload shape.
-import Groq from 'groq-sdk'
 import type { IntentMessage } from './intentRouter'
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export interface DocumentPayload {
   title: string
@@ -231,7 +228,7 @@ async function reviseToSpreadsheetMatrix(
   `
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: 'system', content: systemInstruction },
         ...history.slice(-4).map((m) => ({ role: m.role, content: m.content })),
@@ -325,7 +322,7 @@ export async function synthesizeDocumentPayload(
   })
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: 'system', content: systemInstruction },
         {
@@ -399,7 +396,7 @@ export async function reviseDocumentPayload(
   `
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages: [
         { role: 'system', content: systemInstruction },
         ...history.slice(-4).map((m) => ({ role: m.role, content: m.content })),

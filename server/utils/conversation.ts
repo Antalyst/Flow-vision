@@ -3,10 +3,7 @@
 // Conversational NLP layer. Used when the Intent Router classifies a prompt as
 // general conversation rather than a structured data request. Carries rolling
 // chat memory so follow-ups ("explain the previous answer") stay coherent.
-import Groq from 'groq-sdk'
 import type { IntentMessage } from './intentRouter'
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
 export async function generateConversationalReply(
   userPrompt: string,
@@ -34,7 +31,7 @@ export async function generateConversationalReply(
   ]
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await useGroq().chat.completions.create({
       messages,
       model: 'llama-3.3-70b-versatile',
       temperature: 0.4,
