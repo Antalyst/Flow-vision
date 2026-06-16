@@ -1,9 +1,11 @@
 import { d as defineEventHandler, D as assertMethod, h as readBody, a as createError, r as resolveTenant, E as ensureSession, F as fetchRecentMessages, G as fetchLatestDocumentPayload, H as persistMessage, J as classifyIntent, K as reviseDocumentPayload, L as wantsSpreadsheetFormat, M as generateConversationalReply, N as translateTextToQuery, B as extractTextFromFile, O as generateDocumentTemplate, P as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import 'groq-sdk';
-import 'tslib';
-import 'iceberg-js';
+import '@supabase/functions-js';
+import '@supabase/postgrest-js';
+import '@supabase/realtime-js';
+import '@supabase/storage-js';
+import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -13,8 +15,7 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '../../../_/index2.mjs';
-import 'cookie';
+import '@supabase/ssr';
 
 const HYDRATION_FALLBACK_TEXT = "Physical document contents are unreadable or missing.";
 const buildSearchWords = (ttqtOutput) => {

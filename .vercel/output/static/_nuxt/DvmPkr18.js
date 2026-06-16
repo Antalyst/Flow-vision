@@ -1,1 +1,0 @@
-import{W as o}from"./COHHhKJw.js";import{d as e,e as a,o as r}from"./DTafa3Qx.js";const p=e({__name:"workload-analytics",setup(t){return(c,s)=>(r(),a(o,{title:"Workload Analytics"}))}});export{p as default};

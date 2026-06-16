@@ -1,12 +1,12 @@
 {
-  "date": "2026-06-16T00:08:13.861Z",
+  "date": "2026-06-16T01:06:02.946Z",
   "preset": "vercel",
   "framework": {
     "name": "nuxt",
-    "version": "4.3.1"
+    "version": "4.4.8"
   },
   "versions": {
-    "nitro": "2.13.1"
+    "nitro": "2.13.4"
   },
   "commands": {
     "preview": "",

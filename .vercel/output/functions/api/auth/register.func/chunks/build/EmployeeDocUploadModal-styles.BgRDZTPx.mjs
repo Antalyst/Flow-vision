@@ -1,8 +1,0 @@
-const EmployeeDocUploadModal_vue_vue_type_style_index_0_scoped_53ca7b25_lang = ".drawer-fade-enter-active[data-v-53ca7b25],.drawer-fade-leave-active[data-v-53ca7b25]{transition:opacity .2s ease}.drawer-fade-enter-from[data-v-53ca7b25],.drawer-fade-leave-to[data-v-53ca7b25]{opacity:0}.drawer-slide-enter-active[data-v-53ca7b25],.drawer-slide-leave-active[data-v-53ca7b25]{transition:transform .3s cubic-bezier(.16,1,.3,1)}.drawer-slide-enter-from[data-v-53ca7b25],.drawer-slide-leave-to[data-v-53ca7b25]{transform:translate(100%)}.route-expand-enter-active[data-v-53ca7b25]{transition:all .35s cubic-bezier(.16,1,.3,1)}.route-expand-leave-active[data-v-53ca7b25]{transition:all .2s ease}.route-expand-enter-from[data-v-53ca7b25],.route-expand-leave-to[data-v-53ca7b25]{max-height:0;opacity:0;transform:translateY(-6px)}.route-expand-enter-to[data-v-53ca7b25],.route-expand-leave-from[data-v-53ca7b25]{max-height:400px;opacity:1;transform:translateY(0)}.fade-in-enter-active[data-v-53ca7b25]{transition:all .2s ease}.fade-in-leave-active[data-v-53ca7b25]{transition:all .15s ease}.fade-in-enter-from[data-v-53ca7b25],.fade-in-leave-to[data-v-53ca7b25]{opacity:0;transform:scale(.95)}";
-
-const EmployeeDocUploadModalStyles_BgRDZTPx = [
-  EmployeeDocUploadModal_vue_vue_type_style_index_0_scoped_53ca7b25_lang
-];
-
-export { EmployeeDocUploadModalStyles_BgRDZTPx as default };
-//# sourceMappingURL=EmployeeDocUploadModal-styles.BgRDZTPx.mjs.map

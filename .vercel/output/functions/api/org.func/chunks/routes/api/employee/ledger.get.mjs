@@ -1,9 +1,11 @@
 import { d as defineEventHandler, e as getQuery, j as parseScope, k as resolveActorContextWithOffices, a as createError } from '../../../_/nitro.mjs';
 import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
 import 'node:crypto';
-import 'groq-sdk';
-import 'tslib';
-import 'iceberg-js';
+import '@supabase/functions-js';
+import '@supabase/postgrest-js';
+import '@supabase/realtime-js';
+import '@supabase/storage-js';
+import '@supabase/auth-js';
 import 'node:http';
 import 'node:https';
 import 'node:events';
@@ -13,8 +15,7 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '../../../_/index2.mjs';
-import 'cookie';
+import '@supabase/ssr';
 
 const ledger_get = defineEventHandler(async (event) => {
   var _a, _b;
