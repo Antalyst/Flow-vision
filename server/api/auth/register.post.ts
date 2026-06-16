@@ -3,7 +3,6 @@ import { hash } from 'bcrypt-ts'
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { email, password, full_name, acctype_id, birth_date, org_code } = body
-  const db = event.context.db
 
   const client = useServerSupabase()
 

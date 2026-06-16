@@ -244,12 +244,12 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   }
 
   // ── Branch B: structured NLQ data-builder pipeline ────────────────────────
-  const mysqlDb = event.context.db;
+  const mysqlDb = useMySQL()
   if (!mysqlDb) {
     throw createError({
       statusCode: 500,
       statusMessage: 'MySQL database connector is not available on the request context.',
-    });
+    })
   }
 
   const client = useServerSupabase();

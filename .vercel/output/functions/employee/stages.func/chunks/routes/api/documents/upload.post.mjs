@@ -1,27 +1,10 @@
-import { d as defineEventHandler, a as useServerSupabase, c as createError, v as getCookie, x as readMultipartFormData, y as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, v as useMySQL, a as useServerSupabase, c as createError, x as getCookie, y as readMultipartFormData, z as analyzeDocumentBuffer } from '../../../_/nitro.mjs';
 import { randomUUID } from 'node:crypto';
+import 'mysql2/promise';
 import 'node:http';
 import 'node:https';
 import 'node:events';
 import 'node:buffer';
-import 'sql-escaper';
-import 'events';
-import 'lru.min';
-import 'process';
-import 'net';
-import 'tls';
-import 'timers';
-import 'stream';
-import 'denque';
-import 'buffer';
-import 'long';
-import 'iconv-lite';
-import 'crypto';
-import 'zlib';
-import 'generate-function';
-import 'url';
-import 'aws-ssl-profiles';
-import 'named-placeholders';
 import '@iconify/utils';
 import 'consola';
 import 'node:fs';
@@ -30,7 +13,7 @@ import 'node:path';
 const ALLOWED_ROLES = ["client", "employee"];
 const upload_post = defineEventHandler(async (event) => {
   var _a, _b;
-  const db = event.context.db;
+  const db = useMySQL();
   const client = useServerSupabase();
   if (!db) {
     throw createError({

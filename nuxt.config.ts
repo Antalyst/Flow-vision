@@ -31,7 +31,23 @@ export default defineNuxtConfig({
 
   nitro: {
     externals: {
-      inline: ['mysql2', 'groq-sdk', 'unpdf']
-    }
+      // Only inline packages that bundle cleanly. mysql2 must stay external —
+      // inlining breaks safer-buffer's Buffer.hasOwnProperty checks at runtime.
+      inline: ['groq-sdk', 'unpdf'],
+      traceInclude: [
+        'mysql2',
+        'mysql2/**',
+        'sql-escaper/**',
+        'iconv-lite/**',
+        'safer-buffer/**',
+        'aws-ssl-profiles/**',
+        'named-placeholders/**',
+        'generate-function/**',
+        'denque/**',
+        'lru.min/**',
+        'long/**',
+        'is-property/**',
+      ],
+    },
   },
 })

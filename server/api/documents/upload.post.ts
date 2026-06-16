@@ -45,7 +45,7 @@ interface ResolvedRouteStep {
 }
 
 export default defineEventHandler(async (event) => {
-  const db     = event.context.db
+  const db = useMySQL()
   const client = useServerSupabase()
 
   if (!db) {
