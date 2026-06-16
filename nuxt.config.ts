@@ -3,39 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: false },
   ssr: true,
-  nitro: {
-    experimental: {
-      output: {
-        inlineNodeModules: true
-      }
-    },  
-    externals: {
-      inline: [
-        'unpdf',
-        'groq-sdk',
-        '@supabase/supabase-js',
-        '@supabase/ssr',
-        '@supabase/auth-js',
-        '@supabase/postgrest-js',
-        '@supabase/realtime-js',
-        '@supabase/storage-js',
-        '@supabase/functions-js',
-        '@supabase/phoenix',
-      ],
-      traceInclude: [
-        'groq-sdk',
-        '@supabase/supabase-js',
-        '@supabase/ssr',
-        '@supabase/auth-js',
-        '@supabase/postgrest-js',
-        '@supabase/realtime-js',
-        '@supabase/storage-js',
-        '@supabase/functions-js',
-        '@supabase/phoenix',
-        'mammoth',
-      ],
-    },
-  },
+ 
   runtimeConfig: {
     mysqlHost: process.env.MYSQL_HOST,
     mysqlUser: process.env.MYSQL_USER,
