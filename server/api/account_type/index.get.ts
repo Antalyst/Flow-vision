@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const client = createClient(
-    config.public.supabaseUrl, 
-    config.supabaseServiceKey
-  )
+  const client = await serverSupabaseServiceRole(event)
 
   try {
     const { data: accountTypes, error } = await client

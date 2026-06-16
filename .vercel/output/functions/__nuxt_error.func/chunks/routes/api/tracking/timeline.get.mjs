@@ -1,5 +1,5 @@
-import { d as defineEventHandler, e as getQuery, a as createError, y as getCookie } from '../../../_/nitro.mjs';
-import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, a as getQuery, c as createError, x as getCookie } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const timeline_get = defineEventHandler(async (event) => {
   var _a;

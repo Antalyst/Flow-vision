@@ -1,5 +1,5 @@
-import { d as defineEventHandler, D as assertMethod, h as readBody, a as createError, r as resolveTenant, E as ensureSession, F as fetchRecentMessages, G as fetchLatestDocumentPayload, H as persistMessage, J as classifyIntent, K as reviseDocumentPayload, L as wantsSpreadsheetFormat, M as generateConversationalReply, N as translateTextToQuery, B as extractTextFromFile, O as generateDocumentTemplate, P as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
-import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
+import { d as defineEventHandler, C as assertMethod, b as readBody, c as createError, r as resolveTenant, D as ensureSession, E as fetchRecentMessages, F as fetchLatestDocumentPayload, G as persistMessage, H as classifyIntent, J as reviseDocumentPayload, K as wantsSpreadsheetFormat, L as generateConversationalReply, h as serverSupabaseClient, M as translateTextToQuery, A as extractTextFromFile, N as generateDocumentTemplate, O as synthesizeDocumentPayload } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const HYDRATION_FALLBACK_TEXT = "Physical document contents are unreadable or missing.";
 const buildSearchWords = (ttqtOutput) => {
@@ -50,12 +49,12 @@ const query = defineEventHandler(async (event) => {
   const { orgId, userId } = await resolveTenant(event);
   const scope = body.scope === "LOCAL" ? "LOCAL" : "GLOBAL";
   const rawOfficeIds = Array.isArray(body.officeIds) ? body.officeIds.map(String).filter(Boolean) : [];
-  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);
-  const history = await fetchRecentMessages(sessionId);
+  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt, event);
+  const history = await fetchRecentMessages(sessionId, event);
   const memory = history.map((m) => ({ role: m.role, content: m.content }));
-  const activeDocument = await fetchLatestDocumentPayload(sessionId);
+  const activeDocument = await fetchLatestDocumentPayload(sessionId, event);
   try {
-    await persistMessage(sessionId, "user", prompt);
+    await persistMessage(sessionId, "user", prompt, event);
   } catch (error2) {
     console.error("Postgres Insertion Error Details:", error2);
   }
@@ -68,7 +67,7 @@ User Request: ${prompt}`;
     const documentPayload2 = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
     const reply2 = wantsSpreadsheetFormat(prompt) ? `Converted \u201C${documentPayload2.title}\u201D into a spreadsheet data matrix.` : `Updated \u201C${documentPayload2.title}\u201D with your requested changes.`;
     try {
-      await persistMessage(sessionId, "assistant", reply2, { documentPayload: documentPayload2 });
+      await persistMessage(sessionId, "assistant", reply2, event, { documentPayload: documentPayload2 });
     } catch (error2) {
       console.error("Postgres Insertion Error Details:", error2);
     }
@@ -83,7 +82,7 @@ User Request: ${prompt}`;
   if (intent === "conversation") {
     const reply2 = await generateConversationalReply(aiPrompt, memory);
     try {
-      await persistMessage(sessionId, "assistant", reply2);
+      await persistMessage(sessionId, "assistant", reply2, event);
     } catch (error2) {
       console.error("Postgres Insertion Error Details:", error2);
     }
@@ -188,7 +187,7 @@ User Request: ${prompt}`;
   );
   const reply = buildDataReplySummary(hydratedRows.length, ttqtOutput.documentType);
   try {
-    await persistMessage(sessionId, "assistant", reply, { documentPayload });
+    await persistMessage(sessionId, "assistant", reply, event, { documentPayload });
   } catch (error2) {
     console.error("Postgres Insertion Error Details:", error2);
   }

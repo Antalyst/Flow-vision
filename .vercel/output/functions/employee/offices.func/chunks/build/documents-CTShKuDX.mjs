@@ -10,6 +10,7 @@ import { D as DocumentLivePreview, a as DocumentPrintCanvas } from './documentLi
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -31,7 +32,6 @@ import 'unhead/server';
 import 'devalue';
 import 'unhead/utils';
 import 'vue-router';
-import '@supabase/ssr';
 import '@vue/shared';
 import 'pdf-lib';
 import 'docx-preview';

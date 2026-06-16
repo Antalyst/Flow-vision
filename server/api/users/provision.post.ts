@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { hash } from 'bcrypt-ts'
 
 /**
@@ -16,7 +16,6 @@ import { hash } from 'bcrypt-ts'
  *   role       string  must be 'messenger' (validated server-side)
  */
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
   const body   = await readBody(event)
 
   const { full_name, email, password, role: requestedRole } = body
@@ -39,7 +38,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Only messenger accounts can be provisioned via this endpoint' })
   }
 
-  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
+  const client = await serverSupabaseServiceRole(event)
 
   // --- Resolve admin's org_id (server-side, not from body) ---------------
   const { data: adminRow, error: adminErr } = await client

@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 /**
  * DELETE /api/users/remove
@@ -9,7 +9,6 @@ import { createClient } from '@supabase/supabase-js'
  *   userId  – target user's user_id
  */
 export default defineEventHandler(async (event) => {
-  const config  = useRuntimeConfig()
   const query   = getQuery(event)
   const userId  = query.userId as string | undefined
 
@@ -28,7 +27,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Administrators cannot remove their own account via this endpoint' })
   }
 
-  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
+  const client = await serverSupabaseServiceRole(event)
 
   // Resolve admin org
   const { data: adminRow } = await client

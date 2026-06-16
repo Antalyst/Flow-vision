@@ -1,4 +1,5 @@
-import { d as defineEventHandler, r as resolveTenant, e as getQuery, U as UUID_REGEX, a as createError, f as getAdminClient } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, r as resolveTenant, a as getQuery, U as UUID_REGEX, c as createError, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -25,7 +26,7 @@ const messages_get = defineEventHandler(async (event) => {
       statusMessage: 'A valid "session_id" query parameter is required.'
     });
   }
-  const supabase = getAdminClient();
+  const supabase = await serverSupabaseServiceRole(event);
   const { data: ownedSession, error: ownershipError } = await supabase.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
   if (ownershipError) {
     console.error("Database read failed (chat_sessions):", ownershipError);

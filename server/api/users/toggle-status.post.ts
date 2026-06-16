@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 /**
  * POST /api/users/toggle-status
@@ -10,7 +10,6 @@ import { createClient } from '@supabase/supabase-js'
  *   status  0 | 1            required – 0 = inactive, 1 = active
  */
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
   const body   = await readBody(event)
   const { userId, status } = body
 
@@ -25,7 +24,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
   }
 
-  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
+  const client = await serverSupabaseServiceRole(event)
 
   // Resolve admin's org_id
   const { data: adminRow } = await client

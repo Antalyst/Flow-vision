@@ -1,6 +1,6 @@
-import { d as defineEventHandler, h as readBody, y as getCookie, a as createError } from '../../_/nitro.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, x as getCookie, c as createError } from '../../_/nitro.mjs';
 import { randomBytes } from 'node:crypto';
-import { s as serverSupabaseClient } from '../../_/serverSupabaseClient.mjs';
+import '@supabase/ssr';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
 import '@supabase/realtime-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const generateOfficeCode = () => "OFF-" + randomBytes(3).toString("hex").toUpperCase();
 const index_post = defineEventHandler(async (event) => {

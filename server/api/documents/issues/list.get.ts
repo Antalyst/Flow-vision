@@ -2,9 +2,6 @@ import { serverSupabaseClient } from '#supabase/server'
 import {
   ISSUE_ALLOWED_ROLES,
   assertDocumentOrgAccess,
-  broadcastIssueRealtime,
-  issueRealtimeChannel,
-  orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
 
 /**

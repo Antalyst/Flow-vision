@@ -5,7 +5,8 @@
  */
 
 import type { H3Event } from 'h3'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
 
 export const ISSUE_ALLOWED_ROLES = ['client', 'employee'] as const
@@ -160,23 +161,13 @@ export async function assertReportingOfficeAccess(
  *   supabase.channel('org:{orgId}:logistics')
  */
 export async function broadcastIssueRealtime(
+  event: H3Event,
   orgId: string,
   issueId: string,
-  event: string,
+  broadcastEvent: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const config = useRuntimeConfig()
-  const url    = config.public.supabaseUrl as string
-  const key    = config.supabaseServiceKey as string
-
-  if (!url || !key) {
-    console.warn('[documentIssues] Realtime broadcast skipped — missing Supabase config.')
-    return
-  }
-
-  const admin = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
+  const admin = await serverSupabaseServiceRole(event)
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),
@@ -186,7 +177,7 @@ export async function broadcastIssueRealtime(
   try {
     await Promise.all(
       channels.map((channelName) =>
-        sendBroadcast(admin, channelName, event, payload),
+        sendBroadcast(admin, channelName, broadcastEvent, payload),
       ),
     )
   } catch (err) {

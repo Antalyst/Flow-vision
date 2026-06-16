@@ -3,6 +3,7 @@ import { ssrRenderComponent } from 'vue/server-renderer';
 import { W as WorkspacePlaceholder } from './WorkspacePlaceholder-PmZMLpyA.mjs';
 import './server.mjs';
 import '../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -20,7 +21,6 @@ import 'node:fs';
 import 'node:path';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
 import '@vue/shared';
 import '@iconify/vue';
 

@@ -5,6 +5,7 @@ import { _ as _export_sfc, a as useAuthStore, u as useTheme } from './server.mjs
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -27,7 +28,6 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
 import '@vue/shared';
 
 const _sfc_main$1 = /* @__PURE__ */ defineComponent({

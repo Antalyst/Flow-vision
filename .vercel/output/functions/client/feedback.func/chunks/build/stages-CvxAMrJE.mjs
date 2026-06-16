@@ -7,6 +7,7 @@ import { u as useStageStore } from './stage-DmVB2S1_.mjs';
 import '@iconify/vue';
 import '@iconify/utils/lib/css/icon';
 import '../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -29,7 +30,6 @@ import 'devalue';
 import 'unhead/utils';
 import 'pinia';
 import 'vue-router';
-import '@supabase/ssr';
 import '@vue/shared';
 
 const _sfc_main$1 = /* @__PURE__ */ defineComponent({

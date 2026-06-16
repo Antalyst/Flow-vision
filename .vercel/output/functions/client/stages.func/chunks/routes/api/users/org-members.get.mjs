@@ -1,4 +1,5 @@
-import { d as defineEventHandler, e as getQuery, a as createError, y as getCookie, c as createClient, b as useRuntimeConfig } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, a as getQuery, c as createError, x as getCookie, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -17,7 +18,6 @@ import 'node:path';
 
 const orgMembers_get = defineEventHandler(async (event) => {
   var _a;
-  const config = useRuntimeConfig();
   const query = getQuery(event);
   const orgId = query.orgId;
   const role = (_a = query.role) != null ? _a : "all";
@@ -29,7 +29,7 @@ const orgMembers_get = defineEventHandler(async (event) => {
   if (!sessionUserId || sessionRole !== "client") {
     throw createError({ statusCode: 403, message: "Forbidden: administrator access required" });
   }
-  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey);
+  const client = await serverSupabaseServiceRole(event);
   const { data: adminRow, error: adminErr } = await client.from("users").select("org_id").eq("user_id", sessionUserId).single();
   if (adminErr || !adminRow) {
     throw createError({ statusCode: 403, message: "Could not verify administrator identity" });

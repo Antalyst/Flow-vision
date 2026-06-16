@@ -1,4 +1,5 @@
-import { d as defineEventHandler, b as useRuntimeConfig, h as readBody, a as createError, c as createClient } from '../../../_/nitro.mjs';
+import { d as defineEventHandler, b as readBody, c as createError, s as serverSupabaseServiceRole } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -18,7 +19,6 @@ import 'node:path';
 const getUserUnderOrg_post = defineEventHandler(async (event) => {
   var _a;
   try {
-    const config = useRuntimeConfig();
     const body = await readBody(event);
     const org_id = (_a = body == null ? void 0 : body.org_id) != null ? _a : body == null ? void 0 : body.orgId;
     if (org_id == null || org_id === "") {
@@ -27,10 +27,7 @@ const getUserUnderOrg_post = defineEventHandler(async (event) => {
         message: "org_id is required"
       });
     }
-    const client = createClient(
-      config.public.supabaseUrl,
-      config.supabaseServiceKey
-    );
+    const client = await serverSupabaseServiceRole(event);
     const { data, error } = await client.from("users").select("user_id, full_name, email, role, org_id").eq("org_id", org_id).eq("role", "employee").order("full_name", { ascending: true });
     if (error) {
       throw createError({

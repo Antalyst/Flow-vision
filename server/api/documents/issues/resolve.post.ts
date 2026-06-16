@@ -108,8 +108,8 @@ export default defineEventHandler(async (event) => {
     timestamp:     new Date().toISOString(),
   }
 
-  await broadcastIssueRealtime(actor.orgId, issueId, 'issue_resolved', payload)
-  await broadcastIssueRealtime(actor.orgId, issueId, 'logistics_alert', {
+  await broadcastIssueRealtime(event, actor.orgId, issueId, 'issue_resolved', payload)
+  await broadcastIssueRealtime(event, actor.orgId, issueId, 'logistics_alert', {
     type:          'logistics_alert',
     document_id:   issue.document_id,
     document_title: document.title,

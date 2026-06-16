@@ -1,3 +1,4 @@
+import { createServerClient, parseCookieHeader } from '@supabase/ssr';
 import { createHash, randomUUID } from 'node:crypto';
 import { FunctionsClient } from '@supabase/functions-js';
 import { PostgrestClient } from '@supabase/postgrest-js';
@@ -4676,7 +4677,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "a7cfdc68-eb71-42c6-a236-955e2c1f2a24",
+    "buildId": "4fba60bb-10e7-4f08-af15-aab7699df2ed",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -5395,6 +5396,75 @@ async function analyzeDocumentBuffer(fileBuffer, mimeType) {
     return { ...FALLBACK_ANALYSIS };
   }
 }
+
+async function fetchWithRetry(req, init) {
+  const retries = 3;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fetch(req, init);
+    } catch (error) {
+      if (init?.signal?.aborted) {
+        throw error;
+      }
+      if (attempt === retries) {
+        const { headers: _headers, ...safeInit } = init ?? {};
+        console.error(`Error fetching request ${req}`, error, safeInit);
+        throw error;
+      }
+      console.warn(`Retrying fetch attempt ${attempt + 1} for request: ${req}`);
+      await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+    }
+  }
+  throw new Error("Unreachable code");
+}
+
+function setCookies(event, cookies, headers = {}) {
+  const response = event.node.res;
+  const headersWritable = () => !response.headersSent && !response.writableEnded;
+  if (!headersWritable()) {
+    return;
+  }
+  for (const { name, value, options } of cookies) {
+    if (!headersWritable()) {
+      break;
+    }
+    setCookie(event, name, value, options);
+  }
+  for (const [key, value] of Object.entries(headers)) {
+    if (!headersWritable()) {
+      break;
+    }
+    setHeader(event, key, value);
+  }
+}
+
+const serverSupabaseClient = async (event) => {
+  if (!event.context._supabaseClient) {
+    const {
+      url,
+      key,
+      cookiePrefix,
+      cookieOptions,
+      clientOptions: { auth = {}, global = {} }
+    } = useRuntimeConfig(event).public.supabase;
+    event.context._supabaseClient = createServerClient(url, key, {
+      auth,
+      cookies: {
+        getAll: () => parseCookieHeader(getHeader(event, "Cookie") ?? ""),
+        setAll: (cookies, headers) => setCookies(event, cookies, headers)
+      },
+      cookieOptions: {
+        ...cookieOptions,
+        name: cookiePrefix
+      },
+      global: {
+        fetch: fetchWithRetry,
+        ...global
+      }
+    });
+  }
+  return event.context._supabaseClient;
+};
 
 //#region src/lib/version.ts
 const version = "2.108.2";
@@ -6270,30 +6340,33 @@ function shouldShowDeprecationWarning() {
 }
 if (shouldShowDeprecationWarning()) console.warn("⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217");
 
+const serverSupabaseServiceRole = (event) => {
+  const config = useRuntimeConfig(event);
+  const secretKey = config.supabase.secretKey;
+  const serviceKey = config.supabase.serviceKey;
+  const url = config.public.supabase.url;
+  const serverKey = secretKey || serviceKey;
+  if (!serverKey) {
+    throw new Error("Missing server key. Set `NUXT_SUPABASE_SECRET_KEY` in your environment variables.");
+  }
+  if (!event.context._supabaseServiceRole) {
+    event.context._supabaseServiceRole = createClient(url, serverKey, {
+      auth: {
+        detectSessionInUrl: false,
+        persistSession: false,
+        autoRefreshToken: false
+      },
+      global: {
+        fetch: fetchWithRetry
+      }
+    });
+  }
+  return event.context._supabaseServiceRole;
+};
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ALLOWED_ROLES = ["client", "employee"];
 const MEMORY_WINDOW = 5;
-let adminClient = null;
-function getAdminClient() {
-  var _a;
-  if (!adminClient) {
-    const config = useRuntimeConfig();
-    const url = (_a = config.public) == null ? void 0 : _a.supabaseUrl;
-    const serviceKey = config.supabaseServiceKey;
-    if (!url || !serviceKey) {
-      console.error(
-        "Database write failed: missing Supabase admin credentials",
-        { hasUrl: Boolean(url), hasServiceKey: Boolean(serviceKey) }
-      );
-      throw createError$1({
-        statusCode: 500,
-        statusMessage: "Supabase service-role credentials are not configured on the server."
-      });
-    }
-    adminClient = createClient(url, serviceKey);
-  }
-  return adminClient;
-}
 async function resolveTenant(event) {
   const userId = getCookie(event, "user_session");
   const userRole = getCookie(event, "user_role");
@@ -6303,7 +6376,7 @@ async function resolveTenant(event) {
       statusMessage: "Unauthenticated: a valid client or employee session is required."
     });
   }
-  const supabase = getAdminClient();
+  const supabase = await serverSupabaseServiceRole(event);
   const { data: sessionUser, error } = await supabase.from("users").select("org_id").eq("user_id", userId).single();
   const orgId = (sessionUser == null ? void 0 : sessionUser.org_id) ? String(sessionUser.org_id) : null;
   if (error || !orgId || !UUID_REGEX.test(orgId)) {
@@ -6314,8 +6387,8 @@ async function resolveTenant(event) {
   }
   return { userId, orgId, role: userRole };
 }
-async function ensureSession(sessionId, orgId, userId, title) {
-  const supabase = getAdminClient();
+async function ensureSession(sessionId, orgId, userId, title, event) {
+  const supabase = await serverSupabaseServiceRole(event);
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await supabase.from("chat_sessions").select("id").eq("id", sessionId).eq("user_id", String(userId)).maybeSingle();
     if (owned == null ? void 0 : owned.id) {
@@ -6340,16 +6413,16 @@ async function ensureSession(sessionId, orgId, userId, title) {
   }
   return newId;
 }
-async function fetchRecentMessages(sessionId, limit = MEMORY_WINDOW) {
-  const supabase = getAdminClient();
+async function fetchRecentMessages(sessionId, event, limit = MEMORY_WINDOW) {
+  const supabase = await serverSupabaseServiceRole(event);
   const { data, error } = await supabase.from("chat_messages").select("role, content, metadata, created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(limit);
   if (error || !data) {
     return [];
   }
   return data.slice().reverse();
 }
-async function persistMessage(sessionId, role, content, metadata = null) {
-  const supabase = getAdminClient();
+async function persistMessage(sessionId, role, content, event, metadata = null) {
+  const supabase = await serverSupabaseServiceRole(event);
   const messageId = randomUUID();
   const normalizedRole = String(role).toLowerCase() === "assistant" ? "assistant" : "user";
   const payload = {
@@ -6370,8 +6443,8 @@ async function persistMessage(sessionId, role, content, metadata = null) {
   }
   return messageId;
 }
-async function listSessions(userId) {
-  const supabase = getAdminClient();
+async function listSessions(userId, event) {
+  const supabase = await serverSupabaseServiceRole(event);
   const { data, error } = await supabase.from("chat_sessions").select("id, title, created_at").eq("user_id", String(userId)).order("created_at", { ascending: false }).limit(50);
   if (error) {
     throw createError$1({
@@ -6381,9 +6454,9 @@ async function listSessions(userId) {
   }
   return data != null ? data : [];
 }
-async function fetchLatestDocumentPayload(sessionId) {
+async function fetchLatestDocumentPayload(sessionId, event) {
   var _a;
-  const supabase = getAdminClient();
+  const supabase = await serverSupabaseServiceRole(event);
   const { data, error } = await supabase.from("chat_messages").select("metadata, created_at").eq("session_id", sessionId).eq("role", "assistant").order("created_at", { ascending: false }).limit(15);
   if (error || !data) {
     return null;
@@ -8625,17 +8698,8 @@ async function assertReportingOfficeAccess(client, actor, officeId) {
   }
   return { id: String(office.id), name: office.name, code: (_a = office.code) != null ? _a : null };
 }
-async function broadcastIssueRealtime(orgId, issueId, event, payload) {
-  const config = useRuntimeConfig();
-  const url = config.public.supabaseUrl;
-  const key = config.supabaseServiceKey;
-  if (!url || !key) {
-    console.warn("[documentIssues] Realtime broadcast skipped \u2014 missing Supabase config.");
-    return;
-  }
-  const admin = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false }
-  });
+async function broadcastIssueRealtime(event, orgId, issueId, broadcastEvent, payload) {
+  const admin = await serverSupabaseServiceRole(event);
   const channels = [
     issueRealtimeChannel(orgId, issueId),
     orgLogisticsChannel(orgId)
@@ -8643,7 +8707,7 @@ async function broadcastIssueRealtime(orgId, issueId, event, payload) {
   try {
     await Promise.all(
       channels.map(
-        (channelName) => sendBroadcast(admin, channelName, event, payload)
+        (channelName) => sendBroadcast(admin, channelName, broadcastEvent, payload)
       )
     );
   } catch (err) {
@@ -9437,5 +9501,5 @@ function useNitroApp() {
 }
 runNitroPlugins(nitroApp);
 
-export { getResponseStatus as $, analyzeDocumentBuffer as A, extractTextFromFile as B, analyzeDocument as C, assertMethod as D, ensureSession as E, fetchRecentMessages as F, fetchLatestDocumentPayload as G, persistMessage as H, ISSUE_ALLOWED_ROLES as I, classifyIntent as J, reviseDocumentPayload as K, wantsSpreadsheetFormat as L, generateConversationalReply as M, translateTextToQuery as N, generateDocumentTemplate as O, synthesizeDocumentPayload as P, eventHandler as Q, setHeader as R, getHeader as S, buildAssetsURL as T, UUID_REGEX as U, publicAssetsURL as V, encodePath as W, defineRenderHandler as X, destr as Y, getRouteRules as Z, getResponseStatusText as _, createError$1 as a, klona as a0, parseURL as a1, decodePath as a2, hasProtocol as a3, isScriptProtocol as a4, joinURL as a5, defuFn as a6, sanitizeStatusCode as a7, getRequestHeader as a8, isEqual as a9, getContext as aa, $fetch$1 as ab, baseURL as ac, hash$1 as ad, defu as ae, executeAsync as af, withTrailingSlash as ag, withoutTrailingSlash as ah, useRuntimeConfig as b, createClient as c, defineEventHandler as d, getQuery as e, getAdminClient as f, getRouteRulesForPath as g, readBody as h, deleteCookie as i, parseScope as j, resolveActorContextWithOffices as k, listSessions as l, assertDocumentOrgAccess as m, assertReportingOfficeAccess as n, broadcastIssueRealtime as o, parseQuery as p, orgLogisticsChannel as q, resolveTenant as r, setCookie as s, toNodeListener as t, useNitroApp as u, issueRealtimeChannel as v, withQuery as w, assertIssueOrgAccess as x, getCookie as y, readMultipartFormData as z };
+export { parseURL as $, extractTextFromFile as A, analyzeDocument as B, assertMethod as C, ensureSession as D, fetchRecentMessages as E, fetchLatestDocumentPayload as F, persistMessage as G, classifyIntent as H, ISSUE_ALLOWED_ROLES as I, reviseDocumentPayload as J, wantsSpreadsheetFormat as K, generateConversationalReply as L, translateTextToQuery as M, generateDocumentTemplate as N, synthesizeDocumentPayload as O, eventHandler as P, buildAssetsURL as Q, publicAssetsURL as R, useRuntimeConfig as S, encodePath as T, UUID_REGEX as U, defineRenderHandler as V, destr as W, getRouteRules as X, getResponseStatusText as Y, getResponseStatus as Z, klona as _, getQuery as a, decodePath as a0, hasProtocol as a1, isScriptProtocol as a2, joinURL as a3, defuFn as a4, sanitizeStatusCode as a5, getRequestHeader as a6, isEqual as a7, getContext as a8, $fetch$1 as a9, baseURL as aa, hash$1 as ab, defu as ac, executeAsync as ad, getHeader as ae, setHeader as af, withTrailingSlash as ag, withoutTrailingSlash as ah, readBody as b, createError$1 as c, defineEventHandler as d, setCookie as e, deleteCookie as f, getRouteRulesForPath as g, serverSupabaseClient as h, parseScope as i, resolveActorContextWithOffices as j, assertDocumentOrgAccess as k, listSessions as l, assertReportingOfficeAccess as m, broadcastIssueRealtime as n, orgLogisticsChannel as o, parseQuery as p, issueRealtimeChannel as q, resolveTenant as r, serverSupabaseServiceRole as s, toNodeListener as t, useNitroApp as u, assertIssueOrgAccess as v, withQuery as w, getCookie as x, readMultipartFormData as y, analyzeDocumentBuffer as z };
 //# sourceMappingURL=nitro.mjs.map

@@ -1,5 +1,5 @@
 // server/utils/hybridDatabase.ts
-import { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { extractTextFromFile } from './documentParser'
 
 export interface QueryFilters {

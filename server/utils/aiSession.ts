@@ -8,8 +8,8 @@
 // pipeline is not blocked by RLS — multi-tenant isolation is instead enforced
 // explicitly in every query below.
 import { randomUUID } from 'node:crypto'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { H3Event } from 'h3'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const ALLOWED_ROLES = ['client', 'employee']
@@ -28,33 +28,6 @@ export interface StoredChatMessage {
   created_at?: string
 }
 
-// ── Lazy service-role client (built once per server runtime) ────────────────
-let adminClient: SupabaseClient | null = null
-
-export function getAdminClient(): SupabaseClient {
-  if (!adminClient) {
-    const config = useRuntimeConfig()
-    const url = config.public?.supabaseUrl
-    const serviceKey = config.supabaseServiceKey
-
-    if (!url || !serviceKey) {
-      // Surface a misconfigured service role immediately — without it, RLS will
-      // silently reject every chat insert and reads come back empty.
-      console.error(
-        'Database write failed: missing Supabase admin credentials',
-        { hasUrl: Boolean(url), hasServiceKey: Boolean(serviceKey) }
-      )
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Supabase service-role credentials are not configured on the server.',
-      })
-    }
-
-    adminClient = createClient(url, serviceKey)
-  }
-  return adminClient
-}
-
 /**
  * Resolve the authenticated tenant from trusted session cookies + the users table.
  * Fails CLOSED: throws 401 when the session is missing/unauthorized and 403 when
@@ -71,7 +44,7 @@ export async function resolveTenant(event: H3Event): Promise<TenantContext> {
     })
   }
 
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
   const { data: sessionUser, error } = await supabase
     .from('users')
     .select('org_id')
@@ -98,9 +71,10 @@ export async function ensureSession(
   sessionId: string | null | undefined,
   orgId: string,
   userId: string,
-  title?: string
+  title: string | undefined,
+  event: H3Event,
 ): Promise<string> {
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   if (sessionId && UUID_REGEX.test(sessionId)) {
     const { data: owned } = await supabase
@@ -118,8 +92,6 @@ export async function ensureSession(
   const newId = randomUUID()
   const sessionTitle = (title || 'New chat').trim().slice(0, 60) || 'New chat'
 
-  // Supply id + created_at explicitly so the insert succeeds even if the table
-  // was created without column defaults.
   const { error } = await supabase.from('chat_sessions').insert({
     id: newId,
     org_id: String(orgId),
@@ -144,9 +116,10 @@ export async function ensureSession(
  */
 export async function fetchRecentMessages(
   sessionId: string,
-  limit: number = MEMORY_WINDOW
+  event: H3Event,
+  limit: number = MEMORY_WINDOW,
 ): Promise<StoredChatMessage[]> {
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   const { data, error } = await supabase
     .from('chat_messages')
@@ -164,25 +137,18 @@ export async function fetchRecentMessages(
 
 /**
  * Write-through persistence of a single chat turn, using the service-role
- * client to bypass RLS. The insert maps exactly to the chat_messages schema:
- *   id (uuid) · session_id (uuid) · role (text 'user'|'assistant') ·
- *   content (text) · metadata (jsonb) · created_at (timestamptz)
- *
- * id + created_at are supplied explicitly so the row writes even when the table
- * lacks column defaults. Throws (with the exact DB error logged) on failure so
- * the write never fails silently.
+ * client to bypass RLS.
  */
 export async function persistMessage(
   sessionId: string,
   role: 'user' | 'assistant',
   content: string,
-  metadata: unknown = null
+  event: H3Event,
+  metadata: unknown = null,
 ): Promise<string> {
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   const messageId = randomUUID()
-  // Must match the chat_messages_role_check constraint exactly: lowercase
-  // 'user' or 'assistant'.
   const normalizedRole: 'user' | 'assistant' =
     String(role).toLowerCase() === 'assistant' ? 'assistant' : 'user'
 
@@ -210,13 +176,9 @@ export async function persistMessage(
 
 /**
  * List a user's chat sessions, newest first (Recents rail).
- *
- * Ownership is keyed STRICTLY on user_id — the reliable per-user identity. We
- * intentionally do not also gate reads on org_id here: a stale/mismatched org
- * scope was silently producing empty result sets even when the user owned rows.
  */
-export async function listSessions(userId: string) {
-  const supabase = getAdminClient()
+export async function listSessions(userId: string, event: H3Event) {
+  const supabase = await serverSupabaseServiceRole(event)
 
   const { data, error } = await supabase
     .from('chat_sessions')
@@ -240,9 +202,10 @@ export async function listSessions(userId: string) {
  */
 export async function assertSessionOwnership(
   sessionId: string,
-  userId: string
+  userId: string,
+  event: H3Event,
 ): Promise<boolean> {
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   const { data } = await supabase
     .from('chat_sessions')
@@ -255,14 +218,13 @@ export async function assertSessionOwnership(
 }
 
 /**
- * Find the most recent assistant document payload in a session, so a follow-up
- * formatting critique can revise the existing document (the "active document").
- * Scans recent assistant turns rather than just the last memory window.
+ * Find the most recent assistant document payload in a session.
  */
 export async function fetchLatestDocumentPayload(
-  sessionId: string
+  sessionId: string,
+  event: H3Event,
 ): Promise<{ title: string; htmlContent: string } | null> {
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   const { data, error } = await supabase
     .from('chat_messages')
@@ -292,8 +254,11 @@ export async function fetchLatestDocumentPayload(
 /**
  * Complete chronological message timeline for a session.
  */
-export async function fetchSessionTimeline(sessionId: string): Promise<StoredChatMessage[]> {
-  const supabase = getAdminClient()
+export async function fetchSessionTimeline(
+  sessionId: string,
+  event: H3Event,
+): Promise<StoredChatMessage[]> {
+  const supabase = await serverSupabaseServiceRole(event)
 
   const { data, error } = await supabase
     .from('chat_messages')

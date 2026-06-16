@@ -1,5 +1,5 @@
-import { d as defineEventHandler, e as getQuery, a as createError } from '../../../_/nitro.mjs';
-import { s as serverSupabaseClient } from '../../../_/serverSupabaseClient.mjs';
+import { d as defineEventHandler, a as getQuery, c as createError, h as serverSupabaseClient } from '../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const myOffices_get = defineEventHandler(async (event) => {
   const query = getQuery(event);

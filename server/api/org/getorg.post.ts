@@ -1,14 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
   const body = await readBody(event);
   const { user_id } = body;
 
-  const client = createClient(
-    config.public.supabaseUrl, 
-    config.supabaseServiceKey
-  )
+  const client = await serverSupabaseServiceRole(event)
 
   if (!user_id) {
     throw createError({

@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
     sender_role: actor.userRole,
   }
 
-  await broadcastIssueRealtime(actor.orgId, issueId, 'new_message', {
+  await broadcastIssueRealtime(event, actor.orgId, issueId, 'new_message', {
     type:      'new_message',
     issue_id:  issueId,
     message:   enriched,

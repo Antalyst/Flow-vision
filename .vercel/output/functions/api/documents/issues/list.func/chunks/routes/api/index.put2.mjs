@@ -1,5 +1,5 @@
-import { d as defineEventHandler, h as readBody, a as createError } from '../../_/nitro.mjs';
-import { s as serverSupabaseClient } from '../../_/serverSupabaseClient.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError } from '../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const index_put = defineEventHandler(async (event) => {
   try {

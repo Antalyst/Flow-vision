@@ -1,9 +1,10 @@
 import { _ as __nuxt_component_3 } from './nuxt-link-BkIUUJ0e.mjs';
 import { ref, watch, mergeProps, withCtx, createTextVNode, unref, useSSRContext } from 'vue';
 import { ssrRenderAttrs, ssrRenderAttr, ssrRenderComponent, ssrRenderList, ssrRenderClass, ssrInterpolate, ssrRenderDynamicModel, ssrIncludeBooleanAttr, ssrLooseContain, ssrRenderSlot } from 'vue/server-renderer';
-import { V as publicAssetsURL } from '../_/nitro.mjs';
+import { R as publicAssetsURL } from '../_/nitro.mjs';
 import { a as useAuthStore, k as _imports_1, j as useState } from './server.mjs';
 import { defineStore } from 'pinia';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -20,7 +21,6 @@ import 'consola';
 import 'node:fs';
 import 'node:path';
 import 'vue-router';
-import '@supabase/ssr';
 import '@vue/shared';
 import '@iconify/vue';
 

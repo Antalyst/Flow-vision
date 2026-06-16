@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { serverSupabaseServiceRole } from '#supabase/server'
 import { compare } from 'bcrypt-ts'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
   const body = await readBody(event)
   const { email, password } = body
 
-  const client = createClient(
-    config.public.supabaseUrl, 
-    config.supabaseServiceKey
-  )
+  const client = await serverSupabaseServiceRole(event)
 
   // 1. Find user by email in public.users
   console.log("Login attempt for email:", email);

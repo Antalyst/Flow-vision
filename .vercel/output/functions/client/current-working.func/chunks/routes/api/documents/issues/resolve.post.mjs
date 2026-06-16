@@ -1,5 +1,5 @@
-import { d as defineEventHandler, h as readBody, a as createError, x as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, o as broadcastIssueRealtime, q as orgLogisticsChannel, v as issueRealtimeChannel } from '../../../../_/nitro.mjs';
-import { s as serverSupabaseClient } from '../../../../_/serverSupabaseClient.mjs';
+import { d as defineEventHandler, h as serverSupabaseClient, b as readBody, c as createError, v as assertIssueOrgAccess, I as ISSUE_ALLOWED_ROLES, n as broadcastIssueRealtime, o as orgLogisticsChannel, q as issueRealtimeChannel } from '../../../../_/nitro.mjs';
+import '@supabase/ssr';
 import 'node:crypto';
 import '@supabase/functions-js';
 import '@supabase/postgrest-js';
@@ -15,7 +15,6 @@ import '@iconify/utils';
 import 'consola';
 import 'node:fs';
 import 'node:path';
-import '@supabase/ssr';
 
 const resolve_post = defineEventHandler(async (event) => {
   var _a, _b, _c;
@@ -73,8 +72,8 @@ const resolve_post = defineEventHandler(async (event) => {
     trackingEvent: trackingEvent != null ? trackingEvent : null,
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   };
-  await broadcastIssueRealtime(actor.orgId, issueId, "issue_resolved", payload);
-  await broadcastIssueRealtime(actor.orgId, issueId, "logistics_alert", {
+  await broadcastIssueRealtime(event, actor.orgId, issueId, "issue_resolved", payload);
+  await broadcastIssueRealtime(event, actor.orgId, issueId, "logistics_alert", {
     type: "logistics_alert",
     document_id: issue.document_id,
     document_title: document.title,

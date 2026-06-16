@@ -1,4 +1,5 @@
-import { resolveTenant, getAdminClient, UUID_REGEX } from '~~/server/utils/aiSession'
+import { resolveTenant, UUID_REGEX } from '~~/server/utils/aiSession'
+import { serverSupabaseServiceRole } from '#supabase/server'
 
 // GET /api/ai/messages?session_id=...
 // Two-step read:
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const supabase = getAdminClient()
+  const supabase = await serverSupabaseServiceRole(event)
 
   // 1. Ownership: the parent session must match BOTH id AND user_id.
   //    user_id is character varying(255) in the DDL, so cast to a string to

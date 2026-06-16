@@ -157,19 +157,19 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     : [];
 
   // 2. Validate or provision the active chat session.
-  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);
+  const sessionId = await ensureSession(body.session_id, orgId, userId, prompt, event);
 
   // 3. Hydrate rolling conversational memory (last 5 turns).
-  const history = await fetchRecentMessages(sessionId);
+  const history = await fetchRecentMessages(sessionId, event);
   const memory = history.map((m) => ({ role: m.role, content: m.content }));
 
   // 3b. Resolve the "active document" — the latest document the user has been
   //     working on — so a follow-up critique can revise it in place.
-  const activeDocument = await fetchLatestDocumentPayload(sessionId);
+  const activeDocument = await fetchLatestDocumentPayload(sessionId, event);
 
   // 4. Write-through the inbound user prompt (awaited; errors surfaced, not silent).
   try {
-    await persistMessage(sessionId, 'user', prompt);
+    await persistMessage(sessionId, 'user', prompt, event);
   } catch (error) {
     console.error('Postgres Insertion Error Details:', error);
   }
@@ -212,7 +212,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
       : `Updated “${documentPayload.title}” with your requested changes.`;
 
     try {
-      await persistMessage(sessionId, 'assistant', reply, { documentPayload });
+      await persistMessage(sessionId, 'assistant', reply, event, { documentPayload });
     } catch (error) {
       console.error('Postgres Insertion Error Details:', error);
     }
@@ -231,7 +231,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     const reply = await generateConversationalReply(aiPrompt, memory);
 
     try {
-      await persistMessage(sessionId, 'assistant', reply);
+      await persistMessage(sessionId, 'assistant', reply, event);
     } catch (error) {
       console.error('Postgres Insertion Error Details:', error);
     }
@@ -383,7 +383,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   // { documentPayload: { title, htmlContent } } so a refresh rehydrates the canvas.
   // Each turn is a discrete row insert — existing messages/sessions are untouched.
   try {
-    await persistMessage(sessionId, 'assistant', reply, { documentPayload });
+    await persistMessage(sessionId, 'assistant', reply, event, { documentPayload });
   } catch (error) {
     console.error('Postgres Insertion Error Details:', error);
   }
