@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   nitro: {
+    experimental: {
+      output: {
+        inlineNodeModules: true
+      }
+    },  
     externals: {
       inline: [
         'unpdf',
