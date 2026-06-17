@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { randomBytes } from 'node:crypto'
+import { logActivityForEvent } from '~~/server/utils/activityLog'
 
 /** Generates a human-readable short code: OFF-XXXXXX */
 const generateOfficeCode = (): string =>
@@ -42,6 +43,14 @@ export default defineEventHandler(async (event) => {
         message: error.message || 'Failed to create office',
       })
     }
+
+    await logActivityForEvent(event, client, {
+      actionType: 'system',
+      details: `Created office "${name}" (${officeCode}).`,
+      message: `Created office "${name}"`,
+      officeId: rows?.id ?? null,
+      metadata: { office_code: officeCode, assigned_user: user_id },
+    })
 
     return {
       status: 200,

@@ -170,6 +170,8 @@ onMounted(() => {
   if (auth.isLoggedIn && !auth.currentOrg) {
     auth.fetchMyOrg()
   }
+  const { fetchNotifications } = useMessengerNotifications()
+  fetchNotifications(true)
 })
 </script>
 

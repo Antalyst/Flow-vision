@@ -1,4 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { logActivitySafe, trackingStatusToActionType } from '~~/server/utils/activityLog'
+import { notifyClientStatusUpdate } from '~~/server/utils/notifications'
 
 // ── Valid status pipeline ──────────────────────────────────────────────
 const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'DISCREPANCY_REPORTED', 'COMPLETED'] as const
@@ -57,7 +59,7 @@ export default defineEventHandler(async (event) => {
   // ── Fetch the document (with org isolation check) ────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
     .eq('id', document_id)
     .single()
 
@@ -178,6 +180,30 @@ export default defineEventHandler(async (event) => {
   if (updateErr) {
     throw createError({ statusCode: 500, message: `Failed to update document status: ${updateErr.message}` })
   }
+
+  const advanceMessage =
+    notes ??
+    `${actorRow.full_name} advanced "${doc.title}" from ${currentStatus} to ${nextStatus}`
+
+  await logActivitySafe({
+    orgId: String(doc.org_id),
+    userId: actorId,
+    userName: actorRow.full_name,
+    actorName: actorRow.full_name,
+    actionType: trackingStatusToActionType(nextStatus),
+    details: advanceMessage,
+    message: advanceMessage,
+    documentId: document_id,
+    metadata: { from_status: currentStatus, to_status: nextStatus },
+  }, client)
+
+  await notifyClientStatusUpdate({
+    orgId: String(doc.org_id),
+    documentId: document_id,
+    documentTitle: doc.title,
+    trackingStatus: nextStatus,
+    clientUserId: doc.user_id ? String(doc.user_id) : null,
+  })
 
   return {
     success: true,

@@ -1,4 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { logActivitySafe } from '~~/server/utils/activityLog'
+import { broadcastPickupNotification, notifyClientStatusUpdate } from '~~/server/utils/notifications'
 
 /**
  * POST /api/tracking/dropoff
@@ -83,7 +85,7 @@ export default defineEventHandler(async (event) => {
   // ── Find this messenger's active IN_TRANSIT document ──────────────────
   const { data: activeDocs, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, tracking_status, current_step, stage_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id')
     .eq('assigned_messenger_id', actorId)
     .eq('org_id', messengerOrgId)
     .eq('tracking_status', 'IN_TRANSIT')
@@ -191,6 +193,43 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+
+  const dropoffMessage = isFinalStop
+    ? `${actorRow.full_name} completed delivery of "${targetDoc.title}" at ${office.name}`
+    : `${actorRow.full_name} checked in "${targetDoc.title}" at ${office.name}`
+
+  await logActivitySafe({
+    orgId: messengerOrgId,
+    officeId: String(office_id),
+    userId: actorId,
+    userName: actorRow.full_name,
+    actorName: actorRow.full_name,
+    actionType: isFinalStop ? 'system' : 'dropoff',
+    details: dropoffMessage,
+    message: dropoffMessage,
+    documentId: targetDoc.id,
+    metadata: { tracking_status: finalStatus, office_name: office.name },
+  }, client)
+
+  await notifyClientStatusUpdate({
+    orgId: messengerOrgId,
+    documentId: targetDoc.id,
+    documentTitle: targetDoc.title,
+    trackingStatus: finalStatus,
+    clientUserId: targetDoc.user_id ? String(targetDoc.user_id) : null,
+  })
+
+  if (!isFinalStop) {
+    try {
+      await broadcastPickupNotification(client, {
+        orgId: messengerOrgId,
+        documentId: targetDoc.id,
+        documentTitle: targetDoc.title,
+      })
+    } catch (hookErr) {
+      console.warn('[Dropoff] Pickup notification broadcast failed:', hookErr)
+    }
+  }
 
   return {
     success:        true,

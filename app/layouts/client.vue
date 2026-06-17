@@ -143,6 +143,7 @@ const mobileMenuOpen = ref(false)
 const mobileNavItems = [
   { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-fill' },
   { to: '/client/documents', label: 'Documents', icon: 'ph:files-fill' },
+  { to: '/client/activity', label: 'Activity', icon: 'ph:clock-counter-clockwise-fill' },
   { to: '/client/ai', label: 'AI', icon: 'ph:brain-fill' },
   { to: '/client/reports', label: 'Reports', icon: 'ph:chart-bar-fill' },
   { to: '/client/settings', label: 'Settings', icon: 'ph:gear-six-fill' },
@@ -159,6 +160,8 @@ onMounted(() => {
   if (auth.isLoggedIn && !auth.currentOrg) {
     auth.fetchMyOrg()
   }
+  const { refresh } = useClientNotificationBadge()
+  refresh()
 })
 </script>
 

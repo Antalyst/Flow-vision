@@ -45,10 +45,10 @@ module.exports = {
         }],
       },
       colors: {
-        'heading-dark': '#1D1D1D',
-        'primary-btn': '#F77934',
+        'heading-dark': '#353839',
+        'primary-btn': '#F47D2F',
         'rich-black': '#121212',
-        'rich-orange': '#FF620C',
+        'rich-orange': '#F47D2F',
         'card-dark': '#1A1A1A',
         'card-border': '#2A2A2A',
         'surface': '#F9F9F9',

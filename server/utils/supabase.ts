@@ -106,6 +106,16 @@ class PostgrestQueryBuilder implements PromiseLike<{ data: unknown; error: Supab
     return this
   }
 
+  gte(column: string, value: unknown): this {
+    this.filters.push(`${column}=gte.${encodeFilterValue(value)}`)
+    return this
+  }
+
+  lte(column: string, value: unknown): this {
+    this.filters.push(`${column}=lte.${encodeFilterValue(value)}`)
+    return this
+  }
+
   order(column: string, options: OrderOptions = {}): this {
     this.orders.push(`${column}.${options.ascending === false ? 'desc' : 'asc'}`)
     return this
@@ -274,6 +284,16 @@ export const useServerSupabase = () => {
 
   return {
     from: (table: string) => new PostgrestQueryBuilder(supabaseUrl, table, headers),
+
+    rpc: <T = unknown>(fn: string, args: Record<string, unknown> = {}) =>
+      $fetch<T>(`${supabaseUrl}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+        body: args,
+      }),
 
     /** @deprecated Use broadcastMessage via documentIssues helper instead */
     channel: (channelName: string) => ({

@@ -83,7 +83,7 @@ export async function resolveActorContext(
   }
 
   // Cookie-role vs DB-role cross-check — defend against tampered cookies
-  if (String(actorRow.role) !== String(userRole)) {
+  if (String(actorRow.role).toLowerCase() !== String(userRole).toLowerCase()) {
     throw createError({
       statusCode: 403,
       message: 'Role mismatch: session cookie does not match database profile.',

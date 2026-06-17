@@ -64,64 +64,52 @@ const areaPoints = computed(() => {
 </script>
 
 <template>
-  <div class="dashboard-card dashboard-card-hover p-5 flex flex-col gap-3 relative overflow-hidden">
-    <!-- Top row -->
-    <div class="flex items-center justify-between">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+  <div
+    class="matrix-card group relative overflow-hidden p-5 transition-all duration-300 hover:scale-[1.02]"
+  >
+    <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60" />
+
+    <div class="relative flex items-center justify-between">
+      <h3 class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
         {{ title }}
       </h3>
-      <button
-        type="button"
-        class="text-gray-400 hover:text-rich-orange transition-colors duration-200"
-      >
-        <Icon name="ph:arrows-out-simple" class="w-4 h-4" />
-      </button>
+      <span class="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
     </div>
 
-    <!-- Middle -->
-    <div class="flex items-end justify-between gap-4">
-      <!-- Left side: value + trend -->
+    <div class="relative mt-4 flex items-end justify-between gap-4">
       <div class="flex flex-col gap-1">
-        <p class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+        <p class="text-3xl font-bold tracking-tight text-white">
           {{ value }}
         </p>
         <div class="flex items-center gap-1.5">
           <span
             class="text-xs font-semibold"
-            :class="trendUp ? 'text-emerald-500' : 'text-red-500'"
+            :class="trendUp ? 'text-amber-400' : 'text-red-400'"
           >
             {{ trend }}
           </span>
-          <span class="text-xs text-muted">vs last week</span>
+          <span class="text-xs text-zinc-500">vs last week</span>
         </div>
       </div>
 
-      <!-- Right side: sparkline -->
       <svg
         width="100"
         height="40"
         viewBox="0 0 100 40"
-        class="flex-shrink-0"
+        class="flex-shrink-0 opacity-90"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#FF620C" stop-opacity="0.3" />
-            <stop offset="100%" stop-color="#FF620C" stop-opacity="0.02" />
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02" />
           </linearGradient>
         </defs>
-
-        <!-- Filled area under the line -->
-        <polygon
-          :points="areaPoints"
-          :fill="`url(#${gradientId})`"
-        />
-
-        <!-- Sparkline -->
+        <polygon :points="areaPoints" :fill="`url(#${gradientId})`" />
         <polyline
           :points="polylinePoints"
           fill="none"
-          stroke="#FF620C"
+          stroke="#f59e0b"
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"

@@ -99,7 +99,7 @@
                   </div>
                 </td>
                 <td class="whitespace-nowrap px-5 py-4">
-                  {{ getOfficeName(doc.office_id) }}
+                  {{ getOfficeName(doc) }}
                 </td>
                 <td class="whitespace-nowrap px-5 py-4">
                   {{ doc.uploader_name || 'Unknown' }}
@@ -196,11 +196,16 @@ const filteredDocuments = computed(() => {
   })
 })
 
-const getOfficeName = (officeId: string | number | null) => {
-  if (officeId == null) return 'Unassigned'
+const orgFallbackName = computed(() =>
+  String(authStore.currentOrg?.name || authStore.currentOrg?.code || authStore.user?.org_id || 'Organization')
+)
+
+const getOfficeName = (doc: DocumentRecord) => {
+  const officeId = doc.office_id
+  if (officeId == null || officeId === '') return orgFallbackName.value
   return (
     officeStore.offices.find((office) => String(office.id) === String(officeId))?.name ||
-    'Unassigned'
+    orgFallbackName.value
   )
 }
 

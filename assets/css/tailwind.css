@@ -48,6 +48,14 @@
     @apply hover:shadow-card-hover dark:hover:shadow-none hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200;
   }
 
+  .matrix-card {
+    @apply rounded-2xl border border-zinc-800 bg-zinc-900/80 shadow-[0_8px_30px_rgba(0,0,0,0.35)];
+  }
+
+  .matrix-card-glass {
+    @apply rounded-2xl border border-zinc-800/80 bg-zinc-900/70 shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl;
+  }
+
   .nav-item {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200;
     @apply text-gray-600 dark:text-gray-400 hover:text-rich-orange hover:bg-rich-orange/5 dark:hover:bg-rich-orange/10;

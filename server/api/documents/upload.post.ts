@@ -32,6 +32,9 @@
 import { randomUUID } from 'node:crypto'
 import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
+import { logActivitySafe } from '~~/server/utils/activityLog'
+import { broadcastPickupNotification } from '~~/server/utils/notifications'
+import { resolveUniqueQrCode } from '~~/server/utils/documentQr'
 
 const ALLOWED_ROLES = ['client', 'employee'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
@@ -358,7 +361,7 @@ export default defineEventHandler(async (event) => {
   // ─────────────────────────────────────────────────────────────────────
 
   const documentId = randomUUID()
-  const qrCode     = clientQrCode || `QR-${Math.random().toString(36).substring(2, 11).toUpperCase()}`
+  const qrCode     = await resolveUniqueQrCode(client, clientQrCode)
 
   // Derive effective office_id for legacy compatibility:
   //  - employee: use their origin office
@@ -487,6 +490,34 @@ export default defineEventHandler(async (event) => {
       console.warn('[Upload] Non-fatal: failed to seed CREATED tracking event:', trackErr)
     }
 
+    const docTitle = aiAnalysis.title ?? (supabaseDoc as { title?: string }).title ?? 'Document'
+
+    const uploadMessage = `${actorName ?? 'User'} uploaded "${docTitle}"`
+
+    const activityLogId = await logActivitySafe({
+      orgId: String(orgId),
+      officeId: resolvedRole === 'client' ? null : effectiveOfficeId,
+      userId,
+      userName: actorName,
+      actorName: actorName,
+      actionType: 'upload',
+      details: uploadMessage,
+      message: uploadMessage,
+      documentId: supabaseDoc.id,
+      metadata: { creator_role: resolvedRole, tracking_status: 'CREATED' },
+    }, client)
+
+    let notificationId: string | null = null
+    try {
+      notificationId = await broadcastPickupNotification(client, {
+        orgId: String((supabaseDoc as { org_id?: string }).org_id ?? orgId),
+        documentId: supabaseDoc.id,
+        documentTitle: docTitle,
+      })
+    } catch (notificationErr) {
+      console.error('[Upload] Messenger notification broadcast failed:', notificationErr)
+    }
+
     // ─────────────────────────────────────────────────────────────────
     // Response
     // ─────────────────────────────────────────────────────────────────
@@ -514,6 +545,8 @@ export default defineEventHandler(async (event) => {
       metadata: {
         ...supabaseDoc,
         mysql_storage_id: mysqlInsertedId,
+        activity_log_id: activityLogId,
+        notification_id: notificationId,
       },
       storage: {
         engine:   'Hostinger_MySQL_Blob',
@@ -523,7 +556,11 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     // Compensating write: delete the Supabase row if blob linking failed mid-flight
     if (supabaseDocId) {
-      await client.from('documents').delete().eq('id', supabaseDocId).catch(() => {})
+      try {
+        await client.from('documents').delete().eq('id', supabaseDocId)
+      } catch {
+        // Best-effort rollback — ignore delete failures
+      }
     }
 
     console.error('[Document Upload] Pipeline failed:', error)

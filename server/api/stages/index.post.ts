@@ -1,4 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { logActivityForEvent } from '~~/server/utils/activityLog'
 
 interface WorkflowItemInput {
   office_id: string | number
@@ -121,6 +122,14 @@ export default defineEventHandler(async (event) => {
 
       persistedWorkflowItems = steps || []
     }
+
+    await logActivityForEvent(event, client, {
+      actionType: 'system',
+      details: `Created workflow stage "${stage_name}" with ${persistedWorkflowItems.length} checkpoint(s).`,
+      message: `Created workflow stage "${stage_name}"`,
+      officeId: office_id != null ? String(office_id) : null,
+      metadata: { stage_id: stage.stage_id, step_count: persistedWorkflowItems.length },
+    })
 
     return {
       status: 201,

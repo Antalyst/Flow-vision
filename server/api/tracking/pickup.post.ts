@@ -1,4 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { logActivitySafe } from '~~/server/utils/activityLog'
+import { notifyClientStatusUpdate } from '~~/server/utils/notifications'
 
 /**
  * POST /api/tracking/pickup
@@ -6,18 +8,8 @@ import { serverSupabaseClient } from '#supabase/server'
  * Handshake Part 1 – Messenger scans the QR code on a physical document.
  *
  * Flow:
- *   CREATED  →  PICKED_UP  →  IN_TRANSIT   (two atomic tracking events in one call)
- *
- * The PICKED_UP + IN_TRANSIT pair are written together because the physical act of
- * picking up a document implies immediate transit toward the first destination.
- *
- * Body:
- *   qr_code_data  string  The raw QR text scanned from the document (e.g. "QR-3F9A2C8B1")
- *
- * Security:
- *   - Actor org_id is derived server-side from the session cookie, never from the body.
- *   - If the document belongs to a different org, returns 403 SECURITY_ORG_MISMATCH.
- *   - Only messengers may call this endpoint.
+ *   PICKED_UP (after accept)  →  IN_TRANSIT
+ *   CREATED / ARRIVED_AT_OFFICE (legacy)  →  PICKED_UP  →  IN_TRANSIT
  */
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -29,7 +21,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'qr_code_data is required' })
   }
 
-  // ── Auth: messenger only ──────────────────────────────────────────────
   const actorId   = getCookie(event, 'user_session')
   const actorRole = getCookie(event, 'user_role')
 
@@ -38,7 +29,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: only messenger accounts can perform document pickups' })
   }
 
-  // ── Resolve messenger's org_id (server-side) ──────────────────────────
   const { data: actorRow, error: actorErr } = await client
     .from('users')
     .select('org_id, full_name')
@@ -51,10 +41,9 @@ export default defineEventHandler(async (event) => {
 
   const messengerOrgId = String(actorRow.org_id)
 
-  // ── Find document by QR code ──────────────────────────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id')
     .eq('qr_code_data', qr_code_data.trim())
     .maybeSingle()
 
@@ -67,7 +56,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // ── SECURITY: cross-org leakage guard ─────────────────────────────────
   if (String(doc.org_id) !== messengerOrgId) {
     throw createError({
       statusCode: 403,
@@ -76,16 +64,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // ── State validation ──────────────────────────────────────────────────
-  const allowedFromStates = ['CREATED', 'ARRIVED_AT_OFFICE']
-  if (!allowedFromStates.includes(doc.tracking_status)) {
+  if (doc.assigned_messenger_id && doc.assigned_messenger_id !== actorId) {
     throw createError({
-      statusCode: 422,
-      message: `Cannot pick up a document in "${doc.tracking_status}" status. Document must be CREATED or ARRIVED_AT_OFFICE.`,
+      statusCode: 403,
+      message: 'This package is assigned to another messenger. Only the assigned messenger may scan this document.',
     })
   }
 
-  // ── Resolve next route step and office ────────────────────────────────
+  const isPostClaim = doc.tracking_status === 'PICKED_UP'
+  const allowedFromStates = ['CREATED', 'ARRIVED_AT_OFFICE', 'PICKED_UP']
+
+  if (!allowedFromStates.includes(doc.tracking_status)) {
+    throw createError({
+      statusCode: 422,
+      message: `Cannot pick up a document in "${doc.tracking_status}" status. Document must be CREATED, ARRIVED_AT_OFFICE, or PICKED_UP.`,
+    })
+  }
+
   const nextStep = doc.current_step + 1
   let officeId:   number | null = null
   let officeName: string | null = null
@@ -100,26 +95,26 @@ export default defineEventHandler(async (event) => {
 
     if (stepRow) {
       officeId   = stepRow.office_id
-      officeName = (stepRow as any).offices?.name ?? null
+      officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
     }
   }
 
   const now = new Date().toISOString()
 
-  // ── Write PICKED_UP event ─────────────────────────────────────────────
-  await client.from('document_tracking_events').insert({
-    document_id:  doc.id,
-    org_id:       messengerOrgId,
-    status:       'PICKED_UP',
-    step_index:   doc.current_step,
-    actor_id:     actorId,
-    actor_role:   'messenger',
-    actor_name:   actorRow.full_name,
-    notes:        `Document physically acquired by ${actorRow.full_name}.`,
-    created_at:   now,
-  })
+  if (!isPostClaim) {
+    await client.from('document_tracking_events').insert({
+      document_id:  doc.id,
+      org_id:       messengerOrgId,
+      status:       'PICKED_UP',
+      step_index:   doc.current_step,
+      actor_id:     actorId,
+      actor_role:   'messenger',
+      actor_name:   actorRow.full_name,
+      notes:        `Document physically acquired by ${actorRow.full_name}.`,
+      created_at:   now,
+    })
+  }
 
-  // ── Write IN_TRANSIT event ────────────────────────────────────────────
   await client.from('document_tracking_events').insert({
     document_id:  doc.id,
     org_id:       messengerOrgId,
@@ -135,9 +130,6 @@ export default defineEventHandler(async (event) => {
       : `In transit toward Step ${nextStep}.`,
   })
 
-  // ── Update document state ─────────────────────────────────────────────
-  // current_office_id is cleared while the document is physically in transit
-  // between offices — it will be set again on ARRIVED_AT_OFFICE.
   const { data: updatedDoc, error: updateErr } = await client
     .from('documents')
     .update({
@@ -151,6 +143,29 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+
+  const scanMessage = `${actorRow.full_name} scanned QR for "${doc.title}" and moved it to IN_TRANSIT`
+
+  await logActivitySafe({
+    orgId: messengerOrgId,
+    officeId: doc.origin_office_id ?? null,
+    userId: actorId,
+    userName: actorRow.full_name,
+    actorName: actorRow.full_name,
+    actionType: 'scan',
+    details: scanMessage,
+    message: scanMessage,
+    documentId: doc.id,
+    metadata: { tracking_status: 'IN_TRANSIT', step: nextStep },
+  }, client)
+
+  await notifyClientStatusUpdate({
+    orgId: messengerOrgId,
+    documentId: doc.id,
+    documentTitle: doc.title,
+    trackingStatus: 'IN_TRANSIT',
+    clientUserId: doc.user_id ? String(doc.user_id) : null,
+  })
 
   return {
     success: true,

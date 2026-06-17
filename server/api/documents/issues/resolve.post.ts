@@ -6,6 +6,7 @@ import {
   issueRealtimeChannel,
   orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
+import { logActivitySafe } from '~~/server/utils/activityLog'
 
 /**
  * POST /api/documents/issues/resolve
@@ -99,6 +100,19 @@ export default defineEventHandler(async (event) => {
     })
     .select('*')
     .single()
+
+  await logActivitySafe({
+    orgId: actor.orgId,
+    userId: actor.userId,
+    userName: actor.fullName,
+    actorName: actor.fullName,
+    actionType: 'issue_resolve',
+    details: resolveNotes,
+    message: `Issue resolved: ${issue.title}`,
+    documentId: issue.document_id,
+    officeId: issue.reported_by_office_id ?? null,
+    metadata: { issue_id: issueId },
+  }, client)
 
   const payload = {
     type:          'issue_resolved',

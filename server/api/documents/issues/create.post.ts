@@ -7,6 +7,7 @@ import {
   issueRealtimeChannel,
   orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
+import { logActivitySafe } from '~~/server/utils/activityLog'
 
 /**
  * POST /api/documents/issues/create
@@ -112,6 +113,19 @@ export default defineEventHandler(async (event) => {
   if (trackErr) {
     console.warn('[issues/create] Tracking event write failed:', trackErr.message)
   }
+
+  await logActivitySafe({
+    orgId: actor.orgId,
+    userId: actor.userId,
+    userName: actor.fullName,
+    actorName: actor.fullName,
+    actionType: 'issue_report',
+    details: alertNotes,
+    message: `Issue reported on "${document.title}": ${title}`,
+    documentId: documentId,
+    officeId: reportedOfficeId,
+    metadata: { issue_id: issue.id, office_name: reportingOffice.name },
+  }, client)
 
   // ── 4. Optional opening chat message ────────────────────────────────
   let openingMessage = null

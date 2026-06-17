@@ -548,6 +548,8 @@ const handlePrintAndSubmit = async () => {
   }
 
   errorMessage.value = typeof res.error === 'string' ? res.error : 'Upload failed.'
+  // Partial uploads may have persisted the printed code — allocate a fresh label for retry.
+  currentTrackingId.value = generateTrackingId()
 }
 </script>
 

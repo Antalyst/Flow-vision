@@ -869,9 +869,11 @@ const handlePrintAndSubmit = async () => {
       printQrDataUrl.value = ''
     } else {
       errorMessage.value = 'Upload failed. Please try again.'
+      currentTrackingId.value = generateTrackingId()
     }
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Upload failed. Please try again.'
+    currentTrackingId.value = generateTrackingId()
   } finally {
     uploading.value = false
   }

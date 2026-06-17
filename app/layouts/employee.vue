@@ -176,6 +176,8 @@ onMounted(() => {
   if (auth.isLoggedIn && !auth.currentOrg) {
     auth.fetchMyOrg()
   }
+  const { fetchNotifications } = useEmployeeNotifications()
+  fetchNotifications(true)
 })
 </script>
 
