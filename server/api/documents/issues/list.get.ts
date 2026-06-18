@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: issues, error } = await client
     .from('document_issues')
-    .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
+    .select('id, document_id, org_id, reported_by_office_id, target_office_id, issue_type, details, title, status, created_at')
     .eq('document_id', documentId)
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })

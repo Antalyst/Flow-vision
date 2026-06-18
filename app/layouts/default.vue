@@ -26,181 +26,229 @@
       </div>
     </nav>
   
-    <div v-if="registerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div class="relative bg-white w-full max-w-5xl min-h-[600px] rounded-md shadow-2xl overflow-hidden flex">
-          <div class="hidden lg:flex flex-1 relative bg-[url('/bg/bg.png')] bg-cover bg-center items-center justify-center p-12">
-              <div class="absolute inset-0 bg-black/20"></div>
-              <div class="relative z-10 text-center">
-                  <img src="/logo/Logos.png" class="w-20 mx-auto mb-4 brightness-0 invert" alt="FlowVision">
-                  <h1 class="text-4xl font-bold text-white tracking-tight">Join FlowVision</h1>
-                  <p class="text-white/80 mt-2">Start managing your workflow today.</p>
-              </div>
+    <Transition name="modal-fade">
+      <div
+        v-if="registerModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        @click.self="registerModal = false"
+      >
+        <div
+          class="relative flex w-full max-w-4xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-onyx-border dark:bg-onyx-black"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="register-modal-title"
+        >
+          <div class="hidden flex-1 flex-col justify-between bg-onyx-black p-10 lg:flex">
+            <div>
+              <img src="/logo/Logos.png" class="mb-6 h-10 w-auto brightness-0 invert" alt="FlowVision">
+              <h2 class="text-3xl font-bold tracking-tight text-white-pure">Join FlowVision</h2>
+              <p class="mt-2 max-w-xs text-sm leading-relaxed text-white-muted">
+                Start managing your workflow with a unified document routing platform.
+              </p>
+            </div>
+            <div class="h-1 w-16 rounded-full bg-candy-orange" />
           </div>
 
-          <div class="flex-1 bg-white p-8 md:p-10 flex flex-col justify-center relative overflow-y-auto max-h-[90vh]">
-              <button @click="registerModal = false" class="absolute top-6 right-8 text-3xl text-gray-400 hover:text-gray-800 transition">
-                  &times;
-              </button>
+          <div class="relative flex max-h-[90vh] flex-1 flex-col overflow-y-auto p-8 md:p-10">
+            <button
+              type="button"
+              class="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-lg text-white-muted transition hover:bg-zinc-100 hover:text-onyx-black dark:hover:bg-onyx-card dark:hover:text-white-pure"
+              aria-label="Close registration"
+              @click="registerModal = false"
+            >
+              <Icon name="ph:x-bold" class="h-4 w-4" />
+            </button>
 
-              <div class="w-full max-w-md mx-auto">
-                  <div class="mb-6 text-center lg:text-left">
-                      <h1 class="text-3xl font-bold text-gray-900 mb-1">Create Account</h1>
-                      <p class="text-gray-500 text-sm">Select your account type to get started.</p>
-                  </div>
-
-                  <div class="flex bg-gray-100 p-1 rounded-md w-full mb-6">
-                      <button 
-                        v-for="accType in accTypeData" 
-                        :key="accType.accType_id" 
-                        @click="selectType(accType)" 
-                        type="button"
-                        :class="[
-                          'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
-                        
-                          selectedType === accType.acctype_id
-                          ? 'bg-white text-[#D96518] shadow-sm' 
-                          : 'text-gray-500 hover:text-gray-700'
-                        ]"
-                      >
-                        {{ accType.name }}
-                      </button>
-                  </div>
-
-                  <form @submit.prevent="handleRegister" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Full name</label>
-                          <input v-model="form.full_name" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="text" required placeholder="Juan D. Dela Cruz">
-                      </div>
-
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Email</label>
-                          <input v-model="form.email" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="email" required placeholder="example@gmail.com">
-                      </div>
-
-                      <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1 md:col-span-2">
-                        <label class="text-xs font-bold text-[#D96518] uppercase">Organization Code</label>
-                        <input 
-                          v-model="form.org_code" 
-                          class="w-full px-4 py-2 rounded-md border border-[#D96518] outline-none bg-orange-50/30" 
-                          type="text" 
-                          required 
-                          placeholder="Enter provided code"
-                        >
-                      </div>
-
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Birth Date</label>
-                          <input v-model="form.birth_date" type="date" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors text-gray-700">
-                      </div>
-
-                      <div class="flex flex-col gap-1">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Password</label>
-                          <input v-model="form.password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="password" required>
-                      </div>
-
-                      <div class="flex flex-col gap-1">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Confirm</label>
-                          <input v-model="form.confirm_password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="password" required>
-                      </div>
-
-                      <button type="submit" class="md:col-span-2 w-full bg-[#D96518] hover:bg-[#e06b2a] text-white py-3 rounded-md font-bold mt-2 transition-colors">
-                          Create Account
-                      </button>
-                  </form>
-
-                  <p class="mt-6 text-center text-sm text-gray-500">
-                      Already have an account? 
-                      <button @click="registerModal = false; loginModal = true" class="font-bold text-[#D96518] hover:underline ml-1">Sign in</button>
-                  </p>
+            <div class="mx-auto w-full max-w-md">
+              <div class="mb-6 text-center lg:text-left">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Get started</p>
+                <h1 id="register-modal-title" class="mt-1 text-2xl font-bold text-onyx-black dark:text-white-pure">
+                  Create Account
+                </h1>
+                <p class="mt-1 text-sm text-white-muted">Select your account type to continue.</p>
               </div>
-          </div>
-      </div>
-    </div>
 
-    <div v-if="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div class="relative bg-white w-full max-w-5xl min-h-[600px] rounded-md shadow-2xl overflow-hidden flex">
-            
-            <div class="hidden lg:flex flex-1 relative bg-[url('/bg/bg.png')] bg-cover bg-center items-center justify-center p-12">
-                <div class="absolute inset-0 bg-black/20"></div>
-                <div class="relative z-10 text-center">
-                    <img src="/logo/Logos.png" class="w-20 mx-auto mb-4 brightness-0 invert" alt="FlowVision">
-                    <h1 class="text-4xl font-bold text-white tracking-tight">FlowVision</h1>
+              <div class="mb-6 flex w-full rounded-xl border border-zinc-200 bg-white-surface p-1 dark:border-onyx-border dark:bg-onyx-card">
+                <button
+                  v-for="accType in accTypeData"
+                  :key="accType.accType_id"
+                  type="button"
+                  class="flex-1 rounded-lg py-2.5 text-sm font-semibold capitalize transition-all"
+                  :class="selectedType === accType.acctype_id
+                    ? 'bg-candy-orange text-white-pure shadow-md shadow-candy-orange/25'
+                    : 'text-white-muted hover:text-onyx-black dark:hover:text-white-pure'"
+                  @click="selectType(accType)"
+                >
+                  {{ accType.name }}
+                </button>
+              </div>
+
+              <form @submit.prevent="handleRegister" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="flex flex-col gap-1.5 md:col-span-2">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-onyx-black dark:text-white-muted">Full name</label>
+                  <input v-model="form.full_name" :class="inputClass" type="text" required placeholder="Juan D. Dela Cruz">
                 </div>
+
+                <div class="flex flex-col gap-1.5 md:col-span-2">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-onyx-black dark:text-white-muted">Email</label>
+                  <input v-model="form.email" :class="inputClass" type="email" required placeholder="name@company.com">
+                </div>
+
+                <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1.5 md:col-span-2">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-candy-orange">Organization code</label>
+                  <input
+                    v-model="form.org_code"
+                    :class="[inputClass, 'border-candy-orange/40 bg-candy-orange/5 dark:bg-candy-orange/10']"
+                    type="text"
+                    required
+                    placeholder="Enter provided code"
+                  >
+                </div>
+
+                <div class="flex flex-col gap-1.5 md:col-span-2">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-onyx-black dark:text-white-muted">Birth date</label>
+                  <input v-model="form.birth_date" type="date" :class="inputClass">
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-onyx-black dark:text-white-muted">Password</label>
+                  <input v-model="form.password" :class="inputClass" type="password" required placeholder="••••••••">
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-onyx-black dark:text-white-muted">Confirm</label>
+                  <input v-model="form.confirm_password" :class="inputClass" type="password" required placeholder="••••••••">
+                </div>
+
+                <button type="submit" :class="primaryBtnClass" class="md:col-span-2">
+                  Create Account
+                </button>
+              </form>
+
+              <p class="mt-6 text-center text-sm text-white-muted">
+                Already have an account?
+                <button
+                  type="button"
+                  class="ml-1 font-semibold text-candy-orange transition hover:text-candy-hover"
+                  @click="registerModal = false; loginModal = true"
+                >
+                  Sign in
+                </button>
+              </p>
             </div>
-
-            <div class="flex-1 bg-white p-8 md:p-16 flex flex-col justify-center relative">
-              <button @click="loginModal = false" class="absolute top-6 right-8 text-3xl text-gray-400 hover:text-gray-800 transition">
-                  &times;
-              </button>
-
-              <div class="w-full max-w-sm mx-auto">
-                  <div class="mb-8">
-                      <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-                      <p class="text-gray-500 text-sm">Please enter your details to sign in.</p>
-                  </div>
-
-                  <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-                      <div class="flex flex-col gap-1.5">
-                          <label class="text-sm font-semibold text-gray-700">Email Address</label>
-                          <input 
-                              v-model="login.email" 
-                              type="email" 
-                              required 
-                              placeholder="name@company.com"
-                              class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors"
-                          >
-                      </div>
-
-                      <div class="flex flex-col gap-1.5">
-                          <label class="text-sm font-semibold text-gray-700">Password</label>
-                          <div class="relative w-full">
-                              <input 
-                                  v-model="login.password" 
-                                  :type="showPassword ? 'text' : 'password'" 
-                                  required 
-                                  placeholder="••••••••"
-                                  class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors pr-12"
-                              >
-                              <button 
-                                  type="button"
-                                  @click="showPassword = !showPassword"
-                                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#D96518]"
-                              >
-                                  <span class="text-xs font-bold uppercase">{{ showPassword ? 'Hide' : 'Show' }}</span>
-                              </button>
-                          </div>
-                      </div>
-
-                      <div class="flex items-center justify-between mt-1">
-                          <label class="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                  v-model="login.rememberMe" 
-                                  type="checkbox" 
-                                  class="w-4 h-4 rounded-md accent-[#D96518]"
-                              >
-                              <span class="text-sm text-gray-600">Remember me</span>
-                          </label>
-                          <button type="button" class="text-sm font-medium text-[#D96518] hover:underline">
-                              Forgot password?
-                          </button>
-                      </div>
-
-                      <button 
-                          type="submit" 
-                          class="w-full bg-[#D96518] hover:bg-[#e06b2a] text-white py-2.5 rounded-md font-bold mt-4 transition-colors"
-                      >
-                          Sign in
-                      </button>
-                  </form>
-
-                  <p class="mt-8 text-center text-sm text-gray-500">
-                      Don't have an account? 
-                      <button @click="loginModal = false; registerModal = true" class="font-bold text-[#D96518] hover:underline ml-1">Create account</button>
-                  </p>
-              </div>
-            </div>
+          </div>
         </div>
-    </div>
+      </div>
+    </Transition>
+
+    <Transition name="modal-fade">
+      <div
+        v-if="loginModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        @click.self="loginModal = false"
+      >
+        <div
+          class="relative flex w-full max-w-4xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-onyx-border dark:bg-onyx-black"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="login-modal-title"
+        >
+          <div class="hidden flex-1 flex-col justify-between bg-onyx-black p-10 lg:flex">
+            <div>
+              <img src="/logo/Logos.png" class="mb-6 h-10 w-auto brightness-0 invert" alt="FlowVision">
+              <h2 class="text-3xl font-bold tracking-tight text-white-pure">FlowVision</h2>
+              <p class="mt-2 max-w-xs text-sm leading-relaxed text-white-muted">
+                Sign in to manage documents, routes, and real-time fulfillment.
+              </p>
+            </div>
+            <div class="h-1 w-16 rounded-full bg-candy-orange" />
+          </div>
+
+          <div class="relative flex flex-1 flex-col justify-center p-8 md:p-12">
+            <button
+              type="button"
+              class="absolute right-5 top-5 inline-flex h-9 w-9 items-center justify-center rounded-lg text-white-muted transition hover:bg-zinc-100 hover:text-onyx-black dark:hover:bg-onyx-card dark:hover:text-white-pure"
+              aria-label="Close sign in"
+              @click="loginModal = false"
+            >
+              <Icon name="ph:x-bold" class="h-4 w-4" />
+            </button>
+
+            <div class="mx-auto w-full max-w-sm">
+              <div class="mb-8">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Welcome back</p>
+                <h1 id="login-modal-title" class="mt-1 text-2xl font-bold text-onyx-black dark:text-white-pure">
+                  Sign In
+                </h1>
+                <p class="mt-1 text-sm text-white-muted">Enter your credentials to access your workspace.</p>
+              </div>
+
+              <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-sm font-semibold text-onyx-black dark:text-white-pure">Email address</label>
+                  <input
+                    v-model="login.email"
+                    type="email"
+                    required
+                    placeholder="name@company.com"
+                    :class="inputClass"
+                  >
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-sm font-semibold text-onyx-black dark:text-white-pure">Password</label>
+                  <div class="relative w-full">
+                    <input
+                      v-model="login.password"
+                      :type="showPassword ? 'text' : 'password'"
+                      required
+                      placeholder="••••••••"
+                      :class="[inputClass, 'pr-16']"
+                    >
+                    <button
+                      type="button"
+                      class="absolute inset-y-0 right-0 flex items-center px-4 text-xs font-semibold uppercase tracking-wide text-white-muted transition hover:text-candy-orange"
+                      @click="showPassword = !showPassword"
+                    >
+                      {{ showPassword ? 'Hide' : 'Show' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-1 flex items-center justify-between">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      v-model="login.rememberMe"
+                      type="checkbox"
+                      class="h-4 w-4 rounded border-zinc-300 accent-candy-orange dark:border-onyx-border"
+                    >
+                    <span class="text-sm text-white-muted">Remember me</span>
+                  </label>
+                  <button type="button" class="text-sm font-medium text-candy-orange transition hover:text-candy-hover">
+                    Forgot password?
+                  </button>
+                </div>
+
+                <button type="submit" :class="primaryBtnClass">
+                  Log In
+                </button>
+              </form>
+
+              <p class="mt-8 text-center text-sm text-white-muted">
+                Don't have an account?
+                <button
+                  type="button"
+                  class="ml-1 font-semibold text-candy-orange transition hover:text-candy-hover"
+                  @click="loginModal = false; registerModal = true"
+                >
+                  Create account
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
     <main class="w-full p-2">
       <slot />
     </main>
@@ -210,10 +258,17 @@
 <script setup>
 
 import { useAuthStore } from '~/stores/auth'
-const {startLoading, stopLoading} = useLoading();
-const employeeAuth = useEmployeeAuthStore();
+const { startLoading, stopLoading } = useLoading()
+const employeeAuth = useEmployeeAuthStore()
 
-const showPassword = ref(false);
+const inputClass = computed(() =>
+  'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-onyx-black outline-none transition placeholder:text-white-muted focus:border-candy-orange focus:ring-2 focus:ring-candy-orange/25 dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure'
+)
+
+const primaryBtnClass =
+  'mt-2 w-full rounded-lg bg-candy-orange py-3 font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition-all hover:bg-opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/40'
+
+const showPassword = ref(false)
 const auth = useAuthStore() 
 const accTypeData = ref([])
 const selectedType = ref(null)
@@ -416,3 +471,23 @@ watch(selectedType, (newVal)=>{
   
 })
 </script>
+
+<style scoped>
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+.modal-fade-enter-active > div,
+.modal-fade-leave-active > div {
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-from > div,
+.modal-fade-leave-to > div {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+</style>

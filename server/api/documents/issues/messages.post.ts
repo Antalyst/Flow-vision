@@ -5,6 +5,8 @@ import {
   broadcastIssueRealtime,
   issueRealtimeChannel,
 } from '~~/server/utils/documentIssues'
+import { broadcastComplianceMessageNotification } from '~~/server/utils/notifications'
+import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 
 /**
  * POST /api/documents/issues/messages
@@ -62,6 +64,46 @@ export default defineEventHandler(async (event) => {
     ...message,
     sender_name: actor.fullName,
     sender_role: actor.userRole,
+  }
+
+  if (issue.target_office_id) {
+    const actorWithOffices = await resolveActorContextWithOffices(event, client)
+    const senderOffices = new Set(actorWithOffices.officeIds.map(String))
+    const reporterOffice = String(issue.reported_by_office_id)
+    const targetOfficeId = String(issue.target_office_id)
+
+    const recipientOfficeId = senderOffices.has(reporterOffice)
+      ? targetOfficeId
+      : senderOffices.has(targetOfficeId)
+        ? reporterOffice
+        : targetOfficeId
+
+    const { data: docRow } = await client
+      .from('documents')
+      .select('title')
+      .eq('id', issue.document_id)
+      .maybeSingle()
+
+    const { data: recipientOffice } = await client
+      .from('offices')
+      .select('name')
+      .eq('id', recipientOfficeId)
+      .maybeSingle()
+
+    try {
+      await broadcastComplianceMessageNotification({
+        orgId: actor.orgId,
+        documentId: issue.document_id,
+        documentTitle: (docRow as { title?: string } | null)?.title ?? 'Document',
+        issueId: issue.id,
+        targetOfficeId: recipientOfficeId,
+        targetOfficeName: (recipientOffice as { name?: string } | null)?.name ?? null,
+        senderName: actor.fullName,
+        preview: messageText,
+      })
+    } catch (notifyErr) {
+      console.warn('[issues/messages] Compliance notification failed:', notifyErr)
+    }
   }
 
   await broadcastIssueRealtime(actor.orgId, issueId, 'new_message', {

@@ -8,6 +8,7 @@ import {
   orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
+import { broadcastComplianceIssueNotification } from '~~/server/utils/notifications'
 
 /**
  * POST /api/documents/issues/create
@@ -32,11 +33,16 @@ export default defineEventHandler(async (event) => {
 
   const documentId        = String(body?.document_id ?? '').trim()
   const reportedOfficeId  = String(body?.reported_by_office_id ?? '').trim()
+  const targetOfficeId    = String(body?.target_office_id ?? '').trim()
+  const issueType         = String(body?.issue_type ?? '').trim()
+  const details           = String(body?.details ?? '').trim()
   const title             = String(body?.title ?? '').trim()
   const initialMessage    = String(body?.message_text ?? '').trim()
 
   if (!documentId)       throw createError({ statusCode: 400, message: 'document_id is required.' })
   if (!reportedOfficeId) throw createError({ statusCode: 400, message: 'reported_by_office_id is required.' })
+  if (!targetOfficeId)   throw createError({ statusCode: 400, message: 'target_office_id is required.' })
+  if (!issueType)        throw createError({ statusCode: 400, message: 'issue_type is required.' })
   if (!title)            throw createError({ statusCode: 400, message: 'title is required.' })
 
   const { actor, document } = await assertDocumentOrgAccess(event, client, documentId)
@@ -50,6 +56,22 @@ export default defineEventHandler(async (event) => {
 
   const reportingOffice = await assertReportingOfficeAccess(client, actor, reportedOfficeId)
 
+  const { data: targetOffice, error: targetOfficeErr } = await client
+    .from('offices')
+    .select('id, name, code, org_id')
+    .eq('id', targetOfficeId)
+    .maybeSingle()
+
+  if (targetOfficeErr) {
+    throw createError({ statusCode: 500, message: targetOfficeErr.message })
+  }
+  if (!targetOffice || String(targetOffice.org_id) !== actor.orgId) {
+    throw createError({
+      statusCode: 404,
+      message: 'Target office not found or does not belong to your organisation.',
+    })
+  }
+
   // ── 1. Create issue row ───────────────────────────────────────────────
   const { data: issue, error: issueErr } = await client
     .from('document_issues')
@@ -57,10 +79,13 @@ export default defineEventHandler(async (event) => {
       document_id:           documentId,
       org_id:                actor.orgId,
       reported_by_office_id: reportedOfficeId,
+      target_office_id:      targetOfficeId,
+      issue_type:            issueType,
+      details:               details || null,
       title,
       status:                'OPEN',
     })
-    .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
+    .select('id, document_id, org_id, reported_by_office_id, target_office_id, issue_type, details, title, status, created_at')
     .single()
 
   if (issueErr || !issue) {
@@ -126,6 +151,21 @@ export default defineEventHandler(async (event) => {
     officeId: reportedOfficeId,
     metadata: { issue_id: issue.id, office_name: reportingOffice.name },
   }, client)
+
+  try {
+    await broadcastComplianceIssueNotification({
+      orgId: actor.orgId,
+      documentId,
+      documentTitle: document.title,
+      issueId: issue.id,
+      issueTitle: title,
+      targetOfficeId,
+      targetOfficeName: targetOffice?.name ?? null,
+      reporterName: actor.fullName,
+    })
+  } catch (notifyErr) {
+    console.warn('[issues/create] Compliance notification failed:', notifyErr)
+  }
 
   // ── 4. Optional opening chat message ────────────────────────────────
   let openingMessage = null

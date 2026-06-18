@@ -133,6 +133,106 @@ export async function broadcastInboundOfficeNotification(
   return (data as { id: string }).id
 }
 
+export interface ComplianceIssueNotificationInput {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  issueId: string
+  issueTitle: string
+  targetOfficeId: string
+  targetOfficeName?: string | null
+  reporterName?: string | null
+}
+
+/** Notify employees at the targeted office desk about a new compliance issue. */
+export async function broadcastComplianceIssueNotification(
+  input: ComplianceIssueNotificationInput,
+): Promise<string | null> {
+  if (!input.targetOfficeId) {
+    console.error('[notifications] Compliance alert skipped: target office is required', input)
+    return null
+  }
+
+  const deskLabel = input.targetOfficeName || 'your office'
+  const message =
+    `${input.reporterName || 'An employee'} flagged "${input.documentTitle}" ` +
+    `(${input.issueTitle}). Open Compliance Logs to review and respond.`
+
+  const row = {
+    org_id: input.orgId,
+    office_id: input.targetOfficeId,
+    document_id: input.documentId,
+    target_role: 'employee',
+    user_id: null,
+    title: 'Compliance Issue Reported',
+    message,
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Compliance issue alert failed:', error?.message, row)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
+export interface ComplianceMessageNotificationInput {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  issueId: string
+  targetOfficeId: string
+  targetOfficeName?: string | null
+  senderName?: string | null
+  preview: string
+}
+
+/** Notify the targeted office when a new compliance thread message arrives. */
+export async function broadcastComplianceMessageNotification(
+  input: ComplianceMessageNotificationInput,
+): Promise<string | null> {
+  if (!input.targetOfficeId) return null
+
+  const row = {
+    org_id: input.orgId,
+    office_id: input.targetOfficeId,
+    document_id: input.documentId,
+    target_role: 'employee',
+    user_id: null,
+    title: 'New Compliance Message',
+    message:
+      `${input.senderName || 'A colleague'} messaged about "${input.documentTitle}": ` +
+      `"${input.preview.slice(0, 120)}${input.preview.length > 120 ? '…' : ''}"`,
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Compliance message alert failed:', error?.message, row)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
 /** Notify the document creator (client role) when tracking status changes. */
 export async function notifyClientStatusUpdate(
   input: ClientStatusNotificationInput,

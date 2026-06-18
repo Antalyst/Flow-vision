@@ -15,6 +15,9 @@ export interface DocumentIssueRow {
   document_id: string
   org_id: string
   reported_by_office_id: string
+  target_office_id?: string | null
+  issue_type?: string | null
+  details?: string | null
   title: string
   status: 'OPEN' | 'RESOLVED'
   created_at: string
@@ -86,7 +89,7 @@ export async function assertIssueOrgAccess(
 
   const { data: issue, error } = await client
     .from('document_issues')
-    .select('id, document_id, org_id, reported_by_office_id, title, status, created_at')
+    .select('id, document_id, org_id, reported_by_office_id, target_office_id, issue_type, details, title, status, created_at')
     .eq('id', issueId)
     .maybeSingle()
 

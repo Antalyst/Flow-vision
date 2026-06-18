@@ -41,7 +41,9 @@
     <!-- ── Mode label ───────────────────────────────────────────────────── -->
     <div class="px-4 pb-3 text-center">
       <p class="text-xs text-white/50">
-        <span v-if="mode === 'pickup'">Scan the QR code <strong class="text-amber-400">printed on the document</strong></span>
+        <span v-if="mode === 'pickup'">
+          Scan a <strong class="text-amber-400">document QR</strong> or the client's <strong class="text-amber-400">dispatch station badge</strong>
+        </span>
         <span v-else>Scan the QR code <strong class="text-amber-400">posted on the office wall</strong></span>
       </p>
     </div>
@@ -80,14 +82,27 @@
                 <Icon name="ph:check-circle-fill" class="h-6 w-6 text-emerald-400" />
               </span>
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold uppercase tracking-widest text-emerald-400">Pickup Confirmed</p>
-                <p class="mt-1 text-sm font-bold text-white truncate">{{ resultData?.document?.title || 'Document' }}</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  {{ resultData?.checkpoint_only ? 'Origin Checkpoint' : 'Pickup Confirmed' }}
+                </p>
+                <p v-if="resultData?.office?.name" class="mt-1 text-xs text-white/60">
+                  Station: <strong class="text-white/80">{{ resultData.office.name }}</strong>
+                </p>
+                <p v-if="resultData?.document?.title" class="mt-1 text-sm font-bold text-white truncate">
+                  {{ resultData.document.title }}
+                </p>
+                <p v-else-if="resultData?.checkpoint_only" class="mt-1 text-sm text-white/80">
+                  Checked in — no documents waiting at this station.
+                </p>
                 <p v-if="resultData?.destination?.office_name" class="mt-1 text-xs text-white/60">
                   <Icon name="ph:map-pin-fill" class="inline h-3 w-3 text-amber-400 mr-1" />
                   Heading to <strong class="text-white/80">{{ resultData.destination.office_name }}</strong>
                   <span class="ml-1 text-amber-400">(Step {{ resultData.destination.step }})</span>
                 </p>
-                <div class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                <div
+                  v-if="resultData?.document"
+                  class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400"
+                >
                   <Icon name="ph:motorcycle-fill" class="h-3 w-3" />
                   IN TRANSIT
                 </div>
@@ -281,7 +296,13 @@ const handleScan = async (raw: string) => {
   }
 
   if (payload.type === 'office' && mode.value === 'pickup') {
-    errorMessage.value = 'You scanned an office QR in Pickup mode. Switch to Drop-off mode to check in at an office.'
+    errorMessage.value = 'You scanned an office drop-off QR in Pickup mode. Switch to Drop-off mode to check in at an office.'
+    scanState.value = 'error'
+    return
+  }
+
+  if (payload.type === 'checkpoint' && mode.value === 'dropoff') {
+    errorMessage.value = 'You scanned a dispatch station QR in Drop-off mode. Switch to Pickup mode to collect from the origin desk.'
     scanState.value = 'error'
     return
   }
@@ -292,6 +313,14 @@ const handleScan = async (raw: string) => {
       const res = await $fetch<any>('/api/tracking/pickup', {
         method: 'POST',
         body: { qr_code_data: payload.qr },
+      })
+      resultData.value = res.data
+      scanState.value  = 'success'
+
+    } else if (payload.type === 'checkpoint') {
+      const res = await $fetch<any>('/api/tracking/checkpoint-pickup', {
+        method: 'POST',
+        body: { office_id: payload.office_id },
       })
       resultData.value = res.data
       scanState.value  = 'success'

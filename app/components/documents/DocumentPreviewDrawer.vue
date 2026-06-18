@@ -123,34 +123,60 @@
                 </div>
               </div>
 
-              <div v-if="steps.length" class="relative space-y-0">
-                <div
+              <div v-if="steps.length" class="relative space-y-1">
+                <button
                   v-for="(step, index) in steps"
                   :key="`${step.office_id}-${index}`"
-                  class="relative flex gap-4 pb-6 last:pb-0"
+                  type="button"
+                  class="group relative flex w-full cursor-pointer select-none gap-4 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-zinc-800/50 dark:hover:bg-onyx-border/40"
+                  :class="isPipelineOfficeSelected(step)
+                    ? 'bg-candy-orange/10 ring-1 ring-candy-orange/40'
+                    : ''"
+                  :disabled="!pipelineMessagingEnabled"
+                  @click="selectPipelineOffice(step)"
                 >
                   <div
                     v-if="index < steps.length - 1"
-                    class="absolute left-[15px] top-8 h-full w-0.5"
+                    class="pointer-events-none absolute left-[23px] top-10 h-[calc(100%-8px)] w-0.5"
                     :class="isStepDone(step) ? 'bg-candy-orange' : isDark ? 'bg-onyx-border' : 'bg-gray-200'"
                   />
                   <div
-                    class="relative z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full border text-xs font-bold transition"
-                    :class="stepNodeClass(step)"
+                    class="relative z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full border text-xs font-bold transition group-hover:border-candy-orange"
+                    :class="pipelineStepNodeClass(step)"
                   >
                     <Icon v-if="isStepDone(step)" name="ph:check-bold" class="h-4 w-4" />
                     <span v-else>{{ step.step_number }}</span>
                   </div>
-                  <div class="min-w-0 flex-1 pt-1">
-                    <p class="text-sm font-semibold" :class="isStepUpcoming(step) ? mutedClass : ''">
-                      Step {{ step.step_number }}: {{ step.office_name }}
-                    </p>
+                  <div class="min-w-0 flex-1 pt-0.5">
+                    <div class="flex items-center gap-2">
+                      <p class="text-sm font-semibold" :class="isStepUpcoming(step) ? mutedClass : ''">
+                        Step {{ step.step_number }}: {{ step.office_name }}
+                      </p>
+                      <Icon
+                        v-if="pipelineMessagingEnabled"
+                        name="ph:chat-teardrop-dots"
+                        class="h-3.5 w-3.5 text-candy-orange opacity-0 transition group-hover:opacity-100"
+                        :class="isPipelineOfficeSelected(step) ? 'opacity-100' : ''"
+                      />
+                    </div>
                     <p class="mt-0.5 text-xs" :class="stepLabelClass(step)">
                       {{ stepStateLabel(step) }}
+                      <span v-if="pipelineMessagingEnabled" class="ml-1 hidden sm:inline" :class="mutedClass">
+                        · Click to message this desk
+                      </span>
                     </p>
                   </div>
-                </div>
+                </button>
               </div>
+
+              <DocumentPipelineOfficeChat
+                v-if="selectedPipelineOffice && pipelineMessagingEnabled && document"
+                :document="document"
+                :office="selectedPipelineOffice"
+                :offices="messagingOffices"
+                @close="selectedPipelineOffice = null"
+                @updated="emit('compliance-updated', $event)"
+              />
 
               <div
                 v-else
@@ -166,6 +192,31 @@
               :document-id="document.id"
               :active="isOpen"
             />
+
+            <!-- Compliance flag action -->
+            <section
+              v-if="showComplianceActions"
+              class="rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-4"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
+                    Compliance Review
+                  </p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    Flag incomplete hard copies and message the responsible office desk.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-[0.98]"
+                  @click="emit('flag-issue')"
+                >
+                  <Icon name="ph:warning-fill" class="h-4 w-4" />
+                  Flag Issue / Incomplete
+                </button>
+              </div>
+            </section>
 
             <slot name="extra" />
 
@@ -244,6 +295,9 @@ import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
 import DocumentLiveFilePreview from './DocumentLiveFilePreview.vue'
+import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
+
+interface MessagingOffice { id: string; name: string }
 
 export interface PreviewDocument {
   id: string
@@ -272,16 +326,32 @@ interface StageStep {
   office_name: string
 }
 
+interface SelectedPipelineOffice {
+  office_id: string | number
+  office_name: string
+  step_number: number
+}
+
 const props = withDefaults(defineProps<{
   isOpen: boolean
   document: PreviewDocument | null
   widthClass?: string
   officeResolver?: (officeId: string | number | null | undefined) => string
+  showComplianceActions?: boolean
+  pipelineMessagingEnabled?: boolean
+  messagingOffices?: MessagingOffice[]
 }>(), {
   widthClass: 'lg:max-w-2xl lg:w-[42rem]',
+  showComplianceActions: false,
+  pipelineMessagingEnabled: false,
+  messagingOffices: () => [],
 })
 
-const emit = defineEmits<{ (e: 'close'): void }>()
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'flag-issue'): void
+  (e: 'compliance-updated', payload: { tracking_status: string }): void
+}>()
 
 const officeStore = useOfficeStore()
 const stageStore = useStageStore()
@@ -289,6 +359,7 @@ const { isDark } = useTheme()
 
 const qrCanvas = ref<HTMLCanvasElement | null>(null)
 const downloading = ref(false)
+const selectedPipelineOffice = ref<SelectedPipelineOffice | null>(null)
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
 const cellClass = computed(() =>
@@ -379,6 +450,32 @@ const stepNodeClass = (step: StageStep) => {
   if (isStepDone(step)) return 'bg-candy-orange text-white-pure border-candy-orange'
   if (isStepCurrent(step)) return 'border-candy-orange text-candy-orange bg-candy-orange/10 animate-pulse'
   return isDark.value ? 'border-onyx-border text-white-muted' : 'border-gray-200 text-gray-400'
+}
+
+const pipelineStepNodeClass = (step: StageStep) => {
+  const base = stepNodeClass(step)
+  if (isPipelineOfficeSelected(step)) {
+    return `${base} border-candy-orange ring-2 ring-candy-orange/30`
+  }
+  return base
+}
+
+const isPipelineOfficeSelected = (step: StageStep) =>
+  selectedPipelineOffice.value != null &&
+  String(selectedPipelineOffice.value.office_id) === String(step.office_id)
+
+const selectPipelineOffice = (step: StageStep) => {
+  if (!props.pipelineMessagingEnabled) return
+  const isSame =
+    selectedPipelineOffice.value &&
+    String(selectedPipelineOffice.value.office_id) === String(step.office_id)
+  selectedPipelineOffice.value = isSame
+    ? null
+    : {
+        office_id: step.office_id,
+        office_name: step.office_name,
+        step_number: step.step_number,
+      }
 }
 
 const stepLabelClass = (step: StageStep) => {
@@ -477,11 +574,20 @@ const handleDownloadPdf = async () => {
 }
 
 watch(
+  () => [props.isOpen, props.document?.id] as const,
+  ([open]) => {
+    if (!open) selectedPipelineOffice.value = null
+  },
+)
+
+watch(
   () => [props.isOpen, props.document?.qr_code_data, props.document?.id] as const,
   async ([open]) => {
     if (open) {
       await nextTick()
       await renderQrCanvas()
+    } else {
+      selectedPipelineOffice.value = null
     }
   },
   { immediate: true },

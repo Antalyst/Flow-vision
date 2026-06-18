@@ -4,39 +4,35 @@
     :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50/80'"
   >
 
-    <!-- ── Report trigger (ARRIVED_AT_OFFICE, no open issue) ───────────── -->
-    <div
-      v-if="canReportDiscrepancy"
-      class="px-6 py-4"
-    >
+    <!-- ── Report trigger ─────────────────────────────────────────────── -->
+    <div v-if="canReportDiscrepancy" class="px-6 py-4">
       <button
         type="button"
         class="group flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-candy-orange/40 bg-candy-orange/10 px-4 py-3.5 text-sm font-bold text-candy-orange shadow-lg shadow-candy-orange/10 transition-all duration-300 hover:border-candy-orange hover:bg-candy-orange hover:text-white hover:shadow-candy-orange/30 active:scale-[0.98]"
-        @click="showReportForm = true"
+        @click="openReportForm"
       >
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
-        Report Document Discrepancy
+        Flag Issue / Incomplete
       </button>
       <p class="mt-2 text-center text-[11px]" :class="mutedText">
-        Flag missing pages, skipped signatures, or other hard-copy problems.
+        Report missing signatures, incomplete forms, or damaged hard copies.
       </p>
     </div>
 
     <!-- ── Active issue chat terminal ─────────────────────────────────── -->
     <div
       v-if="activeIssue"
-      class="flex min-h-[280px] flex-1 flex-col backdrop-blur-md"
-      :class="isDark ? 'bg-slate-900/40' : 'bg-white/60'"
+      class="flex min-h-[300px] flex-1 flex-col"
+      :class="isDark ? 'bg-onyx-black' : 'bg-zinc-50'"
     >
-      <!-- Chat header -->
       <div
         class="flex items-start justify-between gap-3 border-b px-5 py-3.5"
-        :class="isDark ? 'border-white/10' : 'border-gray-200/80'"
+        :class="isDark ? 'border-white/10 bg-zinc-950' : 'border-gray-200 bg-white'"
       >
         <div class="min-w-0">
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-candy-orange" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Issue Thread</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
             <span
               class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase"
               :class="activeIssue.status === 'OPEN'
@@ -44,11 +40,14 @@
                 : 'border-green-400/40 bg-green-400/10 text-green-400'"
             >
               <span class="h-1.5 w-1.5 rounded-full bg-current" :class="activeIssue.status === 'OPEN' ? 'animate-pulse' : ''" />
-              {{ activeIssue.status }}
+              {{ activeIssue.status === 'OPEN' ? 'Flagged' : activeIssue.status }}
             </span>
           </div>
           <p class="mt-1 truncate text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
-            {{ activeIssue.title }}
+            {{ activeIssue.issue_type || activeIssue.title }}
+          </p>
+          <p v-if="targetOfficeLabel" class="mt-1 text-[11px]" :class="mutedText">
+            Messaging: <span class="font-semibold text-candy-orange">{{ targetOfficeLabel }}</span>
           </p>
         </div>
 
@@ -61,15 +60,11 @@
         >
           <Icon v-if="resolving" name="ph:spinner-gap" class="h-3.5 w-3.5 animate-spin" />
           <Icon v-else name="ph:check-circle-fill" class="h-3.5 w-3.5" />
-          Mark as Resolved
+          Mark Resolved
         </button>
       </div>
 
-      <!-- Messages -->
-      <div
-        ref="messagesEl"
-        class="flex-1 space-y-3 overflow-y-auto px-5 py-4"
-      >
+      <div ref="messagesEl" class="flex-1 space-y-3 overflow-y-auto px-5 py-4">
         <div v-if="loadingMessages" class="flex items-center justify-center py-8" :class="mutedText">
           <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-candy-orange" />
           Loading conversation…
@@ -79,41 +74,32 @@
           <article
             v-for="msg in messages"
             :key="msg.id"
-            class="flex gap-3"
-            :class="isOwnMessage(msg) ? 'flex-row-reverse' : ''"
+            class="flex"
+            :class="isOwnMessage(msg) ? 'justify-end' : 'justify-start'"
           >
-            <!-- Avatar -->
             <div
-              class="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold"
+              class="max-w-[82%] rounded-2xl px-4 py-3 shadow-sm"
               :class="isOwnMessage(msg)
-                ? 'bg-candy-orange text-white shadow-md shadow-candy-orange/30'
-                : isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-700'"
+                ? 'bg-candy-orange text-white shadow-candy-orange/20'
+                : isDark
+                  ? 'bg-zinc-950 text-gray-100 border border-white/10'
+                  : 'bg-zinc-950 text-gray-100'"
             >
-              {{ initials(msg.sender_name) }}
-            </div>
-
-            <!-- Bubble -->
-            <div
-              class="max-w-[78%] rounded-2xl border px-3.5 py-2.5 shadow-sm backdrop-blur-sm"
-              :class="isOwnMessage(msg)
-                ? 'border-candy-orange/30 bg-candy-orange/10'
-                : isDark ? 'border-white/10 bg-white/[0.06]' : 'border-gray-200 bg-white/80'"
-            >
-              <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
-                <span class="text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+              <div class="mb-1 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold" :class="isOwnMessage(msg) ? 'text-white' : 'text-candy-orange'">
                   {{ msg.sender_name || 'Unknown' }}
                 </span>
                 <span
-                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide"
-                  :class="tierBadgeClass(msg)"
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                  :class="isOwnMessage(msg)
+                    ? 'bg-white/15 text-white'
+                    : 'bg-candy-orange/15 text-candy-orange'"
                 >
                   {{ speakerTier(msg) }}
                 </span>
               </div>
-              <p class="text-sm leading-relaxed" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                {{ msg.message_text }}
-              </p>
-              <p class="mt-1.5 text-[10px]" :class="mutedText">
+              <p class="text-sm leading-relaxed">{{ msg.message_text }}</p>
+              <p class="mt-2 text-[10px]" :class="isOwnMessage(msg) ? 'text-white/70' : 'text-gray-500'">
                 {{ fmtTime(msg.created_at) }}
               </p>
             </div>
@@ -121,41 +107,30 @@
         </template>
 
         <div v-else class="py-8 text-center text-sm" :class="mutedText">
-          No messages yet. Start the conversation below.
-        </div>
-
-        <!-- Typing indicator -->
-        <div v-if="isTyping" class="flex items-center gap-2 px-1">
-          <span class="flex gap-1">
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:0ms]" />
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:120ms]" />
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:240ms]" />
-          </span>
-          <span class="text-[11px] font-medium text-candy-orange">Composing…</span>
+          No messages yet. Start the compliance conversation below.
         </div>
       </div>
 
-      <!-- Composer -->
       <form
         v-if="activeIssue.status === 'OPEN'"
         class="border-t px-4 py-3"
-        :class="isDark ? 'border-white/10' : 'border-gray-200/80'"
+        :class="isDark ? 'border-white/10 bg-zinc-950' : 'border-gray-200 bg-white'"
         @submit.prevent="sendMessage"
       >
         <div
-          class="flex items-end gap-2 rounded-xl border p-2 backdrop-blur-md transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
-          :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-white/70'"
+          class="flex items-end gap-2 rounded-xl border p-2 transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
+          :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-zinc-50'"
         >
           <textarea
             v-model="draftMessage"
             rows="2"
-            placeholder="Describe the discrepancy or reply to the branch…"
+            placeholder="Send a compliance note to the selected office desk…"
             class="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-gray-400"
-            @input="onDraftInput"
+            :class="isDark ? 'text-white' : 'text-gray-900'"
           />
           <button
             type="submit"
-            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-candy-orange text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-candy-orange text-white shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!draftMessage.trim() || sending"
             aria-label="Send message"
           >
@@ -171,7 +146,7 @@
       <div
         v-if="showReportForm"
         class="absolute inset-0 z-20 flex flex-col backdrop-blur-md"
-        :class="isDark ? 'bg-black/70' : 'bg-white/80'"
+        :class="isDark ? 'bg-black/80' : 'bg-white/90'"
       >
         <div class="flex items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <div>
@@ -190,12 +165,24 @@
 
         <form class="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5" @submit.prevent="submitReport">
           <label class="block">
-            <span class="text-sm font-semibold text-candy-orange">Issue Summary <span class="text-red-500">*</span></span>
-            <input
-              v-model="reportForm.title"
-              type="text"
-              maxlength="255"
-              placeholder="e.g. Missing signature on page 3"
+            <span class="text-sm font-semibold text-candy-orange">Issue Type <span class="text-red-500">*</span></span>
+            <select
+              v-model="reportForm.issue_type"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+              :class="inputClass"
+              required
+            >
+              <option value="">Select issue type…</option>
+              <option v-for="type in ISSUE_TYPES" :key="type" :value="type">{{ type }}</option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-sm font-semibold">Problem Details <span class="text-red-500">*</span></span>
+            <textarea
+              v-model="reportForm.details"
+              rows="3"
+              placeholder="Describe what is wrong with the physical hard copy…"
               class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
@@ -215,16 +202,40 @@
             </select>
           </label>
 
-          <label class="block flex-1">
-            <span class="text-sm font-semibold">Initial Message</span>
-            <textarea
-              v-model="reportForm.message_text"
-              rows="4"
-              placeholder="Describe what is wrong with the physical hard copy…"
-              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
-              :class="inputClass"
-            />
-          </label>
+          <div class="block">
+            <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-red-500">*</span></span>
+            <p class="mt-1 text-[11px]" :class="mutedText">
+              Choose who should receive this compliance thread based on the routing pipeline.
+            </p>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+              <button
+                v-for="target in chatTargets"
+                :key="target.id"
+                type="button"
+                class="rounded-xl border p-3 text-left transition"
+                :class="reportForm.target_office_id === target.id
+                  ? 'border-candy-orange bg-candy-orange/10 ring-2 ring-candy-orange/30'
+                  : isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
+                @click="selectChatTarget(target)"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">
+                  {{ target.role === 'origin' ? 'Option A' : 'Option B' }}
+                </p>
+                <p class="mt-1 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                  {{ target.name }}
+                </p>
+                <p class="mt-1 text-[11px]" :class="mutedText">
+                  {{ target.role === 'origin'
+                    ? 'Contact originating registration office'
+                    : 'Contact previous hand-off checkpoint' }}
+                </p>
+              </button>
+            </div>
+            <p v-if="loadingTargets" class="mt-2 text-xs" :class="mutedText">Resolving pipeline offices…</p>
+            <p v-else-if="!chatTargets.length" class="mt-2 text-xs text-amber-500">
+              No routing offices found. Ensure this document has an origin office assigned.
+            </p>
+          </div>
 
           <p v-if="reportError" class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-500">
             {{ reportError }}
@@ -241,12 +252,12 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] disabled:opacity-50"
-              :disabled="reporting || !reportForm.title.trim() || !reportForm.reported_by_office_id"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover disabled:opacity-50"
+              :disabled="reporting || !canSubmitReport"
             >
               <Icon v-if="reporting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
               <Icon v-else name="ph:warning-fill" class="h-4 w-4" />
-              Submit Report
+              Submit Flag
             </button>
           </div>
         </form>
@@ -261,6 +272,14 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useIssueChatRealtime } from '~/composables/useIssueChatRealtime'
 
+const ISSUE_TYPES = [
+  'Missing Signatures',
+  'Incomplete Forms',
+  'Damaged Hard Copy',
+  'Wrong Document Version',
+  'Other',
+] as const
+
 interface LedgerDoc {
   id: string
   user_id: string
@@ -271,11 +290,21 @@ interface LedgerDoc {
 
 interface OfficeRecord { id: string; name: string; code?: string }
 
+interface ChatTarget {
+  id: string
+  name: string
+  code: string | null
+  role: 'origin' | 'previous_handoff'
+}
+
 interface IssueRow {
   id: string
   document_id: string
   org_id: string
   reported_by_office_id: string
+  target_office_id?: string | null
+  issue_type?: string | null
+  details?: string | null
   title: string
   status: 'OPEN' | 'RESOLVED'
   created_at: string
@@ -306,21 +335,21 @@ const { isDark } = useTheme()
 const showReportForm = ref(false)
 const activeIssue    = ref<IssueRow | null>(null)
 const messages       = ref<ChatMessage[]>([])
+const chatTargets    = ref<ChatTarget[]>([])
+const loadingTargets = ref(false)
 const draftMessage   = ref('')
 const loadingMessages = ref(false)
 const sending        = ref(false)
 const reporting      = ref(false)
 const resolving      = ref(false)
 const reportError    = ref('')
-const isTyping       = ref(false)
 const messagesEl     = ref<HTMLElement | null>(null)
 
-let typingTimer: ReturnType<typeof setTimeout> | null = null
-
 const reportForm = reactive({
-  title: '',
+  issue_type: '',
+  details: '',
   reported_by_office_id: '',
-  message_text: '',
+  target_office_id: '',
 })
 
 const orgId   = computed(() => String(auth.user?.org_id ?? ''))
@@ -339,13 +368,66 @@ const canReportDiscrepancy = computed(() =>
   !showReportForm.value
 )
 
+const canSubmitReport = computed(() =>
+  Boolean(
+    reportForm.issue_type &&
+    reportForm.details.trim() &&
+    reportForm.reported_by_office_id &&
+    reportForm.target_office_id,
+  )
+)
+
+const targetOfficeLabel = computed(() => {
+  if (!activeIssue.value?.target_office_id) return ''
+  const match = props.offices.find((o) => String(o.id) === String(activeIssue.value!.target_office_id))
+  return match?.name || chatTargets.value.find((t) => t.id === String(activeIssue.value!.target_office_id))?.name || ''
+})
+
 const canResolveIssue = computed(() => {
   if (!activeIssue.value || activeIssue.value.status !== 'OPEN') return false
   if (auth.user?.role === 'client') return true
-  return props.offices.some(
-    (o) => String(o.id) === String(activeIssue.value!.reported_by_office_id),
-  )
+  const issueOfficeIds = [
+    activeIssue.value.reported_by_office_id,
+    activeIssue.value.target_office_id,
+  ].filter(Boolean).map(String)
+  return props.offices.some((o) => issueOfficeIds.includes(String(o.id)))
 })
+
+const openReportForm = async () => {
+  showReportForm.value = true
+  await fetchChatTargets()
+  if (props.offices.length === 1) {
+    reportForm.reported_by_office_id = String(props.offices[0].id)
+  }
+}
+
+defineExpose({ openReportForm })
+
+const fetchChatTargets = async () => {
+  if (!props.document?.id) return
+  loadingTargets.value = true
+  try {
+    const res = await $fetch<{
+      success: boolean
+      data: { targets: ChatTarget[] }
+    }>('/api/documents/issues/chat-targets', {
+      params: { document_id: props.document.id },
+    })
+    chatTargets.value = res.data?.targets ?? []
+    if (chatTargets.value.length === 1) {
+      reportForm.target_office_id = chatTargets.value[0].id
+    }
+  } catch (err) {
+    console.error('[IssueChat] fetchChatTargets:', err)
+    chatTargets.value = []
+  } finally {
+    loadingTargets.value = false
+  }
+}
+
+const selectChatTarget = (target: ChatTarget) => {
+  reportForm.target_office_id = target.id
+}
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -396,6 +478,8 @@ const fetchMessages = async (id: string) => {
 const submitReport = async () => {
   reportError.value = ''
   reporting.value = true
+  const title = `${reportForm.issue_type}: ${reportForm.details.trim().slice(0, 180)}`
+
   try {
     const res = await $fetch<{
       success: boolean
@@ -405,16 +489,20 @@ const submitReport = async () => {
       body: {
         document_id:           props.document.id,
         reported_by_office_id: reportForm.reported_by_office_id,
-        title:                 reportForm.title.trim(),
-        message_text:          reportForm.message_text.trim() || undefined,
+        target_office_id:      reportForm.target_office_id,
+        issue_type:            reportForm.issue_type,
+        details:               reportForm.details.trim(),
+        title,
+        message_text:          reportForm.details.trim(),
       },
     })
 
     activeIssue.value = res.data.issue
     showReportForm.value = false
-    reportForm.title = ''
-    reportForm.message_text = ''
+    reportForm.issue_type = ''
+    reportForm.details = ''
     reportForm.reported_by_office_id = ''
+    reportForm.target_office_id = ''
 
     emit('updated', { tracking_status: res.data.document.tracking_status })
     await fetchMessages(res.data.issue.id)
@@ -430,7 +518,6 @@ const sendMessage = async () => {
   if (!text || !activeIssue.value || sending.value) return
 
   sending.value = true
-  isTyping.value = false
   try {
     const res = await $fetch<{ success: boolean; data: ChatMessage }>(
       '/api/documents/issues/messages',
@@ -475,41 +562,13 @@ const handleResolve = async () => {
   }
 }
 
-const onDraftInput = () => {
-  isTyping.value = true
-  if (typingTimer) clearTimeout(typingTimer)
-  typingTimer = setTimeout(() => { isTyping.value = false }, 900)
-}
-
 const isOwnMessage = (msg: ChatMessage) =>
   String(msg.sender_id) === String(auth.user?.user_id)
 
 const speakerTier = (msg: ChatMessage): string => {
   if (msg.sender_role === 'client') return 'Organisation Admin'
-  if (String(msg.sender_id) === String(props.document.user_id)) return 'Originating Office Admin'
-  if (activeIssue.value && String(msg.sender_id) !== String(props.document.user_id)) {
-    return 'Registrar Branch Reviewer'
-  }
-  return 'Office Reviewer'
-}
-
-const tierBadgeClass = (msg: ChatMessage) => {
-  if (msg.sender_role === 'client') {
-    return isDark.value
-      ? 'border-blue-400/30 bg-blue-400/10 text-blue-300'
-      : 'border-blue-400/30 bg-blue-50 text-blue-600'
-  }
-  if (String(msg.sender_id) === String(props.document.user_id)) {
-    return 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
-  }
-  return isDark.value
-    ? 'border-teal-400/30 bg-teal-400/10 text-teal-300'
-    : 'border-teal-400/30 bg-teal-50 text-teal-700'
-}
-
-const initials = (name: string | null) => {
-  if (!name) return '?'
-  return name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  if (String(msg.sender_id) === String(props.document.user_id)) return 'Originating Office'
+  return 'Checkpoint Reviewer'
 }
 
 const fmtTime = (v: string) =>

@@ -1,6 +1,7 @@
 export type FlowVisionQrPayload =
   | { type: 'document'; qr: string }
   | { type: 'office'; id: string }
+  | { type: 'checkpoint'; office_id: string }
   | { type: 'unknown' }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -29,7 +30,20 @@ export function parseFlowVisionQr(raw: string): FlowVisionQrPayload {
     }
   }
 
-  // Office checkpoint: flowvision://office/{uuid}
+  // Client / origin checkpoint: flowvision://track/checkpoint?office_id={uuid}
+  if (/^flowvision:\/\/track\/checkpoint\b/i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
+      const officeId = url.searchParams.get('office_id')?.trim()
+      if (officeId && UUID_RE.test(officeId)) {
+        return { type: 'checkpoint', office_id: officeId }
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  // Office checkpoint (drop-off): flowvision://office/{uuid}
   const officeMatch = trimmed.match(/^flowvision:\/\/office\/([0-9a-f-]{36})$/i)
   if (officeMatch?.[1] && UUID_RE.test(officeMatch[1])) {
     return { type: 'office', id: officeMatch[1] }

@@ -184,6 +184,7 @@
         <option value="PICKED_UP">Picked Up</option>
         <option value="IN_TRANSIT">In Transit</option>
         <option value="ARRIVED_AT_OFFICE">At Office</option>
+        <option value="DISCREPANCY_REPORTED">Flagged</option>
         <option value="COMPLETED">Completed</option>
       </select>
     </div>
@@ -368,13 +369,19 @@
     <DocumentPreviewDrawer
       :is-open="!!activeDocument"
       :document="activeDocument"
+      show-compliance-actions
+      pipeline-messaging-enabled
+      :messaging-offices="myOffices"
       width-class="lg:w-[60%] lg:max-w-4xl"
       :office-resolver="resolveOfficeName"
       @close="closeDocumentPreview"
+      @flag-issue="issueChatRef?.openReportForm()"
+      @compliance-updated="handleIssueUpdated"
     >
       <template #footer>
         <DocumentIssueChatPanel
           v-if="activeDocument"
+          ref="issueChatRef"
           :document="activeDocument"
           :offices="myOffices"
           @updated="handleIssueUpdated"
@@ -396,6 +403,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 import { useStageStore } from '~/stores/stage'
 import EmployeeDocUploadModal from './EmployeeDocUploadModal.vue'
@@ -430,6 +438,8 @@ interface OfficeRecord { id: string; name: string; code?: string }
 
 // ── Stores & composables ──────────────────────────────────────────────
 const auth       = useAuthStore()
+const route      = useRoute()
+const router     = useRouter()
 const stageStore = useStageStore()
 const { isDark } = useTheme()
 
@@ -440,6 +450,7 @@ const myOffices     = ref<OfficeRecord[]>([])
 const loading       = ref(false)
 const isUploadOpen  = ref(false)
 const activeDocument = ref<LedgerDoc | null>(null)
+const issueChatRef   = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
 const search        = ref('')
 const officeFilter  = ref<string>('all')
 const statusFilter  = ref<string>('all')
@@ -593,10 +604,31 @@ const fmtDate = (v?: string) => {
 // ── Detail drawer open ────────────────────────────────────────────────
 const openDocumentPreview = (doc: LedgerDoc) => {
   activeDocument.value = doc
+  router.replace({ query: { ...route.query, document: doc.id } })
 }
 
 const closeDocumentPreview = () => {
   activeDocument.value = null
+  const query = { ...route.query }
+  delete query.document
+  router.replace({ query })
+}
+
+const openDocumentFromQuery = async () => {
+  const documentId = String(route.query.document ?? '').trim()
+  if (!documentId) return
+
+  const existing = docs.value.find((d) => String(d.id) === documentId)
+  if (existing) {
+    activeDocument.value = existing
+    return
+  }
+
+  if (!docs.value.length) await fetchDocs()
+  const match = docs.value.find((d) => String(d.id) === documentId)
+  if (match) {
+    activeDocument.value = match
+  }
 }
 
 // ── Data fetching ─────────────────────────────────────────────────────
@@ -658,6 +690,12 @@ onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
   await Promise.all([fetchMyOffices(), fetchDocs(), stageStore.fetchStages()])
   nextTick(updateIndicator)
+  await openDocumentFromQuery()
+})
+
+watch(() => route.query.document, async () => {
+  if (route.query.document) await openDocumentFromQuery()
+  else if (!route.query.document) activeDocument.value = null
 })
 </script>
 
