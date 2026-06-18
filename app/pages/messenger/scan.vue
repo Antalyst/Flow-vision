@@ -244,7 +244,12 @@
 import { computed, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'
-import { parseFlowVisionQr } from '~/utils/parseFlowVisionQr'
+import {
+  buildDocumentTrackQrPayload,
+  extractCheckpointOfficeId,
+  extractDocumentTrackId,
+  parseFlowVisionQr,
+} from '~/utils/parseFlowVisionQr'
 
 definePageMeta({ layout: 'messenger' })
 
@@ -274,81 +279,130 @@ const resultCardClass = computed(() => {
   }
 })
 
+// ── Scan actions ───────────────────────────────────────────────────────
+const handleDocumentPickup = async (qrCodeData: string) => {
+  const res = await $fetch<any>('/api/tracking/pickup', {
+    method: 'POST',
+    body: { qr_code_data: qrCodeData },
+  })
+  resultData.value = res.data
+  scanState.value  = 'success'
+}
+
+const handleCheckpointPickup = async (officeId: string) => {
+  const res = await $fetch<any>('/api/tracking/checkpoint-pickup', {
+    method: 'POST',
+    body: { office_id: officeId },
+  })
+  resultData.value = res.data
+  scanState.value  = 'success'
+}
+
+const handleDocumentDropOff = async (officeId: string) => {
+  const res = await $fetch<any>('/api/tracking/dropoff', {
+    method: 'POST',
+    body: { office_id: officeId },
+  })
+  resultData.value = res
+  scanState.value  = 'success'
+}
+
+const applyScanError = (err: any) => {
+  const msg  = err?.data?.message ?? err?.message ?? 'An unexpected error occurred.'
+  const code = err?.data?.data?.code ?? ''
+
+  if (code === 'SECURITY_ORG_MISMATCH' || msg.includes('SECURITY_ORG_MISMATCH')) {
+    scanState.value    = 'security-error'
+    errorMessage.value = msg
+  } else if (code === 'ROUTE_MISMATCH' || msg.includes('ROUTE_MISMATCH')) {
+    scanState.value    = 'route-error'
+    errorMessage.value = msg.replace('ROUTE_MISMATCH: ', '')
+  } else {
+    scanState.value    = 'error'
+    errorMessage.value = msg
+  }
+}
+
 // ── Scan handler ───────────────────────────────────────────────────────
 const handleScan = async (raw: string) => {
-  rawScan.value    = raw
-  scanState.value  = 'processing'
-  resultData.value = null
+  rawScan.value      = raw
+  scanState.value    = 'processing'
+  resultData.value   = null
   errorMessage.value = ''
 
-  const payload = parseFlowVisionQr(raw)
-
-  if (payload.type === 'unknown') {
-    scanState.value = 'unknown'
-    return
-  }
-
-  // Guard: document QR in dropoff mode (or vice versa) — auto-switch or warn
-  if (payload.type === 'document' && mode.value === 'dropoff') {
-    errorMessage.value = 'You scanned a document QR in Drop-off mode. Switch to Pickup mode to pick up a document.'
-    scanState.value = 'error'
-    return
-  }
-
-  if (payload.type === 'office' && mode.value === 'pickup') {
-    errorMessage.value = 'You scanned an office drop-off QR in Pickup mode. Switch to Drop-off mode to check in at an office.'
-    scanState.value = 'error'
-    return
-  }
-
-  if (payload.type === 'checkpoint' && mode.value === 'dropoff') {
-    errorMessage.value = 'You scanned a dispatch station QR in Drop-off mode. Switch to Pickup mode to collect from the origin desk.'
-    scanState.value = 'error'
-    return
-  }
+  const scannedText = raw.trim()
 
   try {
+    if (scannedText.startsWith('flowvision://track/checkpoint')) {
+      const targetOfficeId = extractCheckpointOfficeId(scannedText)
+      if (!targetOfficeId) {
+        errorMessage.value = 'Invalid FlowVision QR format. Please scan a valid office checkpoint.'
+        scanState.value = 'error'
+        return
+      }
+
+      if (mode.value === 'dropoff') {
+        await handleDocumentDropOff(targetOfficeId)
+      } else {
+        await handleCheckpointPickup(targetOfficeId)
+      }
+      return
+    }
+
+    if (scannedText.startsWith('flowvision://track/doc')) {
+      const documentId = extractDocumentTrackId(scannedText)
+      if (!documentId) {
+        errorMessage.value = 'Invalid FlowVision QR format. Please scan a valid document tracking code.'
+        scanState.value = 'error'
+        return
+      }
+
+      if (mode.value === 'dropoff') {
+        errorMessage.value = 'You scanned a document QR in Drop-off mode. Switch to Pickup mode to pick up a document.'
+        scanState.value = 'error'
+        return
+      }
+
+      await handleDocumentPickup(buildDocumentTrackQrPayload(documentId))
+      return
+    }
+
+    const payload = parseFlowVisionQr(scannedText)
+
+    if (payload.type === 'unknown') {
+      scanState.value = 'unknown'
+      return
+    }
+
     if (payload.type === 'document') {
-      // ── Pickup handshake ───────────────────────────────────────────
-      const res = await $fetch<any>('/api/tracking/pickup', {
-        method: 'POST',
-        body: { qr_code_data: payload.qr },
-      })
-      resultData.value = res.data
-      scanState.value  = 'success'
-
-    } else if (payload.type === 'checkpoint') {
-      const res = await $fetch<any>('/api/tracking/checkpoint-pickup', {
-        method: 'POST',
-        body: { office_id: payload.office_id },
-      })
-      resultData.value = res.data
-      scanState.value  = 'success'
-
-    } else if (payload.type === 'office') {
-      // ── Dropoff handshake ──────────────────────────────────────────
-      const res = await $fetch<any>('/api/tracking/dropoff', {
-        method: 'POST',
-        body: { office_id: payload.id },
-      })
-      resultData.value = res
-      scanState.value  = 'success'
+      if (mode.value === 'dropoff') {
+        errorMessage.value = 'You scanned a document QR in Drop-off mode. Switch to Pickup mode to pick up a document.'
+        scanState.value = 'error'
+        return
+      }
+      await handleDocumentPickup(payload.qr)
+      return
     }
 
+    if (payload.type === 'office') {
+      if (mode.value === 'pickup') {
+        errorMessage.value = 'You scanned an office drop-off QR in Pickup mode. Switch to Drop-off mode to check in at an office.'
+        scanState.value = 'error'
+        return
+      }
+      await handleDocumentDropOff(payload.id)
+      return
+    }
+
+    if (payload.type === 'checkpoint') {
+      if (mode.value === 'dropoff') {
+        await handleDocumentDropOff(payload.office_id)
+      } else {
+        await handleCheckpointPickup(payload.office_id)
+      }
+    }
   } catch (err: any) {
-    const msg  = err?.data?.message ?? err?.message ?? 'An unexpected error occurred.'
-    const code = err?.data?.data?.code ?? ''
-
-    if (code === 'SECURITY_ORG_MISMATCH' || msg.includes('SECURITY_ORG_MISMATCH')) {
-      scanState.value    = 'security-error'
-      errorMessage.value = msg
-    } else if (code === 'ROUTE_MISMATCH' || msg.includes('ROUTE_MISMATCH')) {
-      scanState.value    = 'route-error'
-      errorMessage.value = msg.replace('ROUTE_MISMATCH: ', '')
-    } else {
-      scanState.value    = 'error'
-      errorMessage.value = msg
-    }
+    applyScanError(err)
   }
 }
 

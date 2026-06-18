@@ -17,7 +17,7 @@ import { broadcastPickupNotification, notifyClientStatusUpdate } from '~~/server
  *   4. The scanned office matches the document's expected next step in the route.
  *
  * Body:
- *   office_id   string (UUID)   The office UUID extracted from "flowvision://office/[UUID]"
+ *   office_id   string (UUID)   From flowvision://office/{uuid} or flowvision://track/checkpoint?office_id={uuid}
  *
  * Security:
  *   - org_id is ALWAYS read server-side from the session; never trusted from the body.

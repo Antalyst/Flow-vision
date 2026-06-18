@@ -11,36 +11,46 @@ export function buildDocumentTrackQrPayload(documentId: string): string {
   return `flowvision://track/doc?id=${documentId}`
 }
 
+/** Extract office UUID from `flowvision://track/checkpoint?office_id={uuid}`. */
+export function extractCheckpointOfficeId(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!/^flowvision:\/\/track\/checkpoint\b/i.test(trimmed)) return null
+  try {
+    const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
+    const officeId = url.searchParams.get('office_id')?.trim()
+    return officeId && UUID_RE.test(officeId) ? officeId : null
+  } catch {
+    return null
+  }
+}
+
+/** Extract document UUID from `flowvision://track/doc?id={uuid}`. */
+export function extractDocumentTrackId(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!/^flowvision:\/\/track\/doc\b/i.test(trimmed)) return null
+  try {
+    const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
+    const documentId = url.searchParams.get('id')?.trim()
+    return documentId && UUID_RE.test(documentId) ? documentId : null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Classifies a raw QR decode string into a FlowVision document or office checkpoint payload.
  */
 export function parseFlowVisionQr(raw: string): FlowVisionQrPayload {
   const trimmed = raw.trim()
 
-  // Document deep link: flowvision://track/doc?id={uuid}
-  if (/^flowvision:\/\/track\/doc\b/i.test(trimmed)) {
-    try {
-      const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
-      const documentId = url.searchParams.get('id')?.trim()
-      if (documentId && UUID_RE.test(documentId)) {
-        return { type: 'document', qr: buildDocumentTrackQrPayload(documentId) }
-      }
-    } catch {
-      // fall through to unknown
-    }
+  const documentId = extractDocumentTrackId(trimmed)
+  if (documentId) {
+    return { type: 'document', qr: buildDocumentTrackQrPayload(documentId) }
   }
 
-  // Client / origin checkpoint: flowvision://track/checkpoint?office_id={uuid}
-  if (/^flowvision:\/\/track\/checkpoint\b/i.test(trimmed)) {
-    try {
-      const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
-      const officeId = url.searchParams.get('office_id')?.trim()
-      if (officeId && UUID_RE.test(officeId)) {
-        return { type: 'checkpoint', office_id: officeId }
-      }
-    } catch {
-      // fall through
-    }
+  const checkpointOfficeId = extractCheckpointOfficeId(trimmed)
+  if (checkpointOfficeId) {
+    return { type: 'checkpoint', office_id: checkpointOfficeId }
   }
 
   // Office checkpoint (drop-off): flowvision://office/{uuid}
