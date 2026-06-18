@@ -4,7 +4,7 @@
     <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white' : 'text-gray-900'">
           My Sub-Branch Offices
         </h1>
@@ -18,7 +18,7 @@
 
       <button
         type="button"
-        class="inline-flex items-center gap-2 rounded-xl bg-rich-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rich-orange/25 transition-all duration-200 hover:scale-[1.02] hover:bg-[#e95a0b] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-rich-orange/50"
+        class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:scale-[1.02] hover:bg-[#e95a0b] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
         @click="openCreate"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -32,11 +32,11 @@
         class="col-span-1 sm:col-span-2 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
         :class="glassSurface"
       >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-rich-orange/10">
-          <Icon name="ph:shield-check-fill" class="h-4 w-4 text-rich-orange" />
+        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
+          <Icon name="ph:shield-check-fill" class="h-4 w-4 text-candy-orange" />
         </div>
         <div class="min-w-0">
-          <p class="text-[11px] font-bold uppercase tracking-widest text-rich-orange">Isolated Scope</p>
+          <p class="text-[11px] font-bold uppercase tracking-widest text-candy-orange">Isolated Scope</p>
           <p class="mt-0.5 truncate text-xs" :class="mutedText">
             org_id
             <span class="font-mono font-bold" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
@@ -54,11 +54,11 @@
         class="flex items-center gap-3 rounded-xl border px-4 py-3"
         :class="glassSurface"
       >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-rich-orange/10">
-          <Icon name="ph:buildings-fill" class="h-4 w-4 text-rich-orange" />
+        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
+          <Icon name="ph:buildings-fill" class="h-4 w-4 text-candy-orange" />
         </div>
         <div>
-          <p class="text-[11px] font-bold uppercase tracking-widest text-rich-orange">Offices</p>
+          <p class="text-[11px] font-bold uppercase tracking-widest text-candy-orange">Offices</p>
           <p class="mt-0.5 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ offices.length }}
           </p>
@@ -93,8 +93,8 @@
       class="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center"
       :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50'"
     >
-      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rich-orange/10">
-        <Icon name="ph:buildings-fill" class="h-8 w-8 text-rich-orange/60" />
+      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-candy-orange/10">
+        <Icon name="ph:buildings-fill" class="h-8 w-8 text-candy-orange/60" />
       </div>
       <p class="font-bold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">No offices registered yet</p>
       <p class="mt-1 text-sm" :class="mutedText">
@@ -102,7 +102,7 @@
       </p>
       <button
         type="button"
-        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-rich-orange px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rich-orange/25 transition hover:bg-[#e95a0b]"
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
         @click="openCreate"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -132,8 +132,8 @@
             :class="isDark ? 'border-white/10' : 'border-gray-200'"
           >
             <div>
-              <div class="mb-1 h-0.5 w-8 rounded-full bg-rich-orange" />
-              <p class="text-[10px] font-bold uppercase tracking-widest text-rich-orange">
+              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
                 {{ drawerMode === 'create' ? 'Register' : 'Update' }}
               </p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
@@ -160,7 +160,7 @@
                 v-model.trim="form.name"
                 type="text"
                 placeholder="e.g. Accounting Dept, HR Sub-Branch"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -175,7 +175,7 @@
                 v-model.trim="form.code"
                 type="text"
                 placeholder="e.g. ACC-001"
-                class="mt-2 w-full rounded-xl border px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 font-mono text-sm uppercase outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 maxlength="20"
               />
@@ -184,9 +184,9 @@
             <!-- Isolation notice -->
             <div
               class="rounded-xl border p-4"
-              :class="isDark ? 'border-rich-orange/20 bg-rich-orange/5' : 'border-orange-200 bg-orange-50'"
+              :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
             >
-              <div class="flex items-center gap-2 text-sm font-semibold text-rich-orange">
+              <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
                 <Icon name="ph:shield-check-fill" class="h-4 w-4" />
                 Data Isolation Active
               </div>
@@ -228,7 +228,7 @@
             <button
               type="button"
               :disabled="!form.name || saving"
-              class="inline-flex items-center gap-2 rounded-xl bg-rich-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rich-orange/25 transition-all hover:bg-[#e95a0b] disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] disabled:cursor-not-allowed disabled:opacity-50"
               @click="handleSave"
             >
               <Icon v-if="saving" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />

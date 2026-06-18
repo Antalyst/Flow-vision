@@ -17,7 +17,7 @@
       >
         <header class="flex items-start justify-between gap-4 border-b px-5 py-5" :class="borderClass">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-rich-orange">Documents</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-candy-orange">Documents</p>
             <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
             <p class="mt-1 text-xs" :class="mutedTextClass">
               The file is AI-analyzed, then split-stored across Supabase and blob storage.
@@ -25,7 +25,7 @@
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-rich-orange hover:bg-rich-orange/10"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
             aria-label="Close"
             @click="handleClose"
           >
@@ -57,14 +57,14 @@
           <label
             class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition"
             :class="[
-              isDragging ? 'border-rich-orange bg-rich-orange/10' : borderClass,
+              isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass,
               documentStore.canUploadDocuments ? '' : 'pointer-events-none opacity-50',
             ]"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
             @drop.prevent="handleDrop"
           >
-            <Icon name="ph:cloud-arrow-up" class="h-10 w-10 text-rich-orange" />
+            <Icon name="ph:cloud-arrow-up" class="h-10 w-10 text-candy-orange" />
             <div>
               <p class="text-sm font-semibold" :class="headingClass">
                 {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
@@ -87,7 +87,7 @@
             <span class="text-sm font-semibold" :class="headingClass">Target Workflow Stage</span>
             <select
               v-model="selectedStageId"
-              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             >
@@ -110,10 +110,10 @@
           <div
             v-if="selectedFile"
             class="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"
-            :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'"
+            :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
           >
             <div class="flex min-w-0 items-center gap-3">
-              <Icon name="ph:file-text" class="h-5 w-5 flex-none text-rich-orange" />
+              <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
               <div class="min-w-0">
                 <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
                 <p class="text-xs" :class="mutedTextClass">{{ formatSize(selectedFile.size) }}</p>
@@ -136,10 +136,10 @@
               <label
                 class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition"
                 :class="selectedStrategy === 'embedded'
-                  ? 'border-rich-orange bg-rich-orange/5'
-                  : (isDark ? 'border-card-border' : 'border-gray-200')"
+                  ? 'border-candy-orange bg-candy-orange/5'
+                  : (isDark ? 'border-onyx-border' : 'border-gray-200')"
               >
-                <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#FF620C]" />
+                <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" />
                 <span>
                   <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
                   <span class="block text-xs" :class="mutedTextClass">
@@ -151,10 +151,10 @@
               <label
                 class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition"
                 :class="selectedStrategy === 'standalone'
-                  ? 'border-rich-orange bg-rich-orange/5'
-                  : (isDark ? 'border-card-border' : 'border-gray-200')"
+                  ? 'border-candy-orange bg-candy-orange/5'
+                  : (isDark ? 'border-onyx-border' : 'border-gray-200')"
               >
-                <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#FF620C]" />
+                <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
                 <span>
                   <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
                   <span class="block text-xs" :class="mutedTextClass">
@@ -170,7 +170,7 @@
             <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
             <select
               v-model.number="selectedQrSize"
-              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
             >
               <option :value="50" :style="optionStyle">Small (50px × 50px)</option>
@@ -186,9 +186,9 @@
           <div
             v-if="documentStore.lastAnalysis"
             class="rounded-lg border p-4"
-            :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'"
+            :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
           >
-            <div class="flex items-center gap-2 text-sm font-semibold text-rich-orange">
+            <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
               <Icon name="ph:sparkle" class="h-4 w-4" />
               AI Analysis
             </div>
@@ -206,14 +206,14 @@
           <button
             type="button"
             class="rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
-            :class="isDark ? 'border-card-border text-white' : 'border-gray-200 text-rich-black'"
+            :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
             @click="handleClose"
           >
             Cancel
           </button>
           <button
             type="submit"
-            class="inline-flex items-center gap-2 rounded-lg bg-[#FF620C] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="!canSubmit"
           >
             <Icon v-if="documentStore.uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -277,15 +277,15 @@ watch(
 )
 
 const surfaceClass = computed(() =>
-  isDark.value ? 'border-card-border bg-[#1A1A1A] shadow-card-dark' : 'border-gray-200 bg-white'
+  isDark.value ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card' : 'border-gray-200 bg-white'
 )
-const borderClass = computed(() => (isDark.value ? 'border-card-border' : 'border-gray-200'))
+const borderClass = computed(() => (isDark.value ? 'border-onyx-border' : 'border-gray-200'))
 const mutedTextClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
-const headingClass = computed(() => (isDark.value ? 'text-white' : 'text-rich-black'))
+const headingClass = computed(() => (isDark.value ? 'text-white' : 'text-onyx-black'))
 const inputClass = computed(() =>
   isDark.value
-    ? 'border-card-border bg-rich-black text-white placeholder:text-gray-500'
-    : 'border-gray-200 bg-white text-rich-black placeholder:text-gray-400'
+    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
+    : 'border-gray-200 bg-white text-onyx-black placeholder:text-gray-400'
 )
 const optionStyle = computed(() =>
   isDark.value

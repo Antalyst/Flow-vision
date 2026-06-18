@@ -2,7 +2,7 @@
   <div class="space-y-6 pb-24 lg:pb-8">
     <div>
       <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-        <Icon name="ph:clock-counter-clockwise-fill" class="h-4 w-4 text-rich-orange" />
+        <Icon name="ph:clock-counter-clockwise-fill" class="h-4 w-4 text-candy-orange" />
         <span>Employee Portal</span>
         <Icon name="ph:caret-right" class="h-3 w-3" />
         <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Activity</span>

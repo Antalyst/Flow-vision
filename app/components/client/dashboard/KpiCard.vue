@@ -67,28 +67,28 @@ const areaPoints = computed(() => {
   <div
     class="matrix-card group relative overflow-hidden p-5 transition-all duration-300 hover:scale-[1.02]"
   >
-    <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60" />
+    <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-candy-orange/10 blur-2xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
 
     <div class="relative flex items-center justify-between">
-      <h3 class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+      <h3 class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white-muted">
         {{ title }}
       </h3>
-      <span class="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+      <span class="h-2 w-2 rounded-full bg-candy-orange shadow-[0_0_8px_rgba(244,125,47,0.8)]" />
     </div>
 
     <div class="relative mt-4 flex items-end justify-between gap-4">
       <div class="flex flex-col gap-1">
-        <p class="text-3xl font-bold tracking-tight text-white">
+        <p class="text-3xl font-bold tracking-tight text-onyx-black dark:text-white-pure">
           {{ value }}
         </p>
         <div class="flex items-center gap-1.5">
           <span
             class="text-xs font-semibold"
-            :class="trendUp ? 'text-amber-400' : 'text-red-400'"
+            :class="trendUp ? 'text-candy-orange' : 'text-red-500'"
           >
             {{ trend }}
           </span>
-          <span class="text-xs text-zinc-500">vs last week</span>
+          <span class="text-xs text-zinc-500 dark:text-white-muted">vs last week</span>
         </div>
       </div>
 
@@ -101,15 +101,15 @@ const areaPoints = computed(() => {
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35" />
-            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.02" />
+            <stop offset="0%" stop-color="#F47D2F" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="#F47D2F" stop-opacity="0.02" />
           </linearGradient>
         </defs>
         <polygon :points="areaPoints" :fill="`url(#${gradientId})`" />
         <polyline
           :points="polylinePoints"
           fill="none"
-          stroke="#f59e0b"
+          stroke="#F47D2F"
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"

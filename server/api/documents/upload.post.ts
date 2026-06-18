@@ -20,9 +20,10 @@
  *       stage_steps sequence is verified to belong to the caller's org_id.
  *       Any cross-tenant pointer throws an immediate access exception.
  *   6.  AI document analysis
- *   7.  Supabase document insert
- *   8.  MySQL blob insert + back-link
- *   9.  Tracking ledger initialization
+ *   7.  Generate document id + flowvision:// QR payload; stamp QR onto .docx/.xlsx
+ *   8.  Supabase document insert
+ *   9.  MySQL blob insert (QR-stamped file) + back-link
+ *  10.  Tracking ledger initialization
  *         • Writes CREATED event with full route-schema snapshot in notes
  *         • Status: CREATED @ origin_office_id
  *         • Route sequence serialized as: Step 1 → Step 2 → … → Final
@@ -34,7 +35,8 @@ import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { broadcastPickupNotification } from '~~/server/utils/notifications'
-import { resolveUniqueQrCode } from '~~/server/utils/documentQr'
+import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
+import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
 
 const ALLOWED_ROLES = ['client', 'employee'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
@@ -117,7 +119,6 @@ export default defineEventHandler(async (event) => {
 
   const fileItem       = formData.find((f) => f.name === 'file')
   const stageIdRaw     = get('stage_id')
-  const clientQrCode   = get('qr_code_data')
   const originOfficeId = get('origin_office_id')   // UUID string | null
   const officeIdLegacy = get('office_id')           // legacy field — kept for compatibility
 
@@ -361,7 +362,23 @@ export default defineEventHandler(async (event) => {
   // ─────────────────────────────────────────────────────────────────────
 
   const documentId = randomUUID()
-  const qrCode     = await resolveUniqueQrCode(client, clientQrCode)
+  const qrCode     = buildDocumentTrackQrPayload(documentId)
+
+  let storageBuffer: Buffer = Buffer.from(fileItem.data)
+  if (requiresQrStamp(fileName, mimeType)) {
+    try {
+      storageBuffer = await stampDocumentWithQr(storageBuffer, fileName, mimeType, qrCode)
+    } catch (stampErr) {
+      console.error('[Upload] QR stamp failed:', stampErr)
+      throw createError({
+        statusCode: 422,
+        message:
+          `Could not embed the tracking QR code into "${fileName}". ` +
+          'Please verify the file is a valid .docx or .xlsx document and try again.',
+        data: { code: 'QR_STAMP_FAILED' },
+      })
+    }
+  }
 
   // Derive effective office_id for legacy compatibility:
   //  - employee: use their origin office
@@ -405,7 +422,7 @@ export default defineEventHandler(async (event) => {
 
     const [mysqlResult] = await db.execute(
       'INSERT INTO document_storage (document_uuid, file_blob, file_name, mime_type) VALUES (?, ?, ?, ?)',
-      [supabaseDoc.id, fileItem.data, fileName, mimeType],
+      [supabaseDoc.id, storageBuffer, fileName, mimeType],
     )
     mysqlInsertedId = (mysqlResult as any).insertId
 

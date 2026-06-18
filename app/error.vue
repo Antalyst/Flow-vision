@@ -19,7 +19,7 @@
 
     <button 
       @click="handleError"
-      class="px-8 py-3 bg-[#F77934] text-white font-medium rounded-md shadow-lg hover:bg-[#e66d2c] transition-all transform hover:-translate-y-1"
+      class="px-8 py-3 bg-[#D96518] text-white font-medium rounded-md shadow-lg hover:bg-[#e66d2c] transition-all transform hover:-translate-y-1"
     >
       Back to Home
     </button>

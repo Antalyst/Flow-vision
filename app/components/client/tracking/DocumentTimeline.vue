@@ -6,13 +6,13 @@
         <span class="text-xs font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
           Route Progress
         </span>
-        <span class="text-xs font-mono font-bold text-rich-orange">
+        <span class="text-xs font-mono font-bold text-candy-orange">
           {{ summary.current_step }} / {{ summary.total_steps }} offices
         </span>
       </div>
       <div class="h-2 w-full overflow-hidden rounded-full" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
         <div
-          class="h-full rounded-full bg-gradient-to-r from-rich-orange to-amber-400 transition-all duration-700"
+          class="h-full rounded-full bg-gradient-to-r from-candy-orange to-amber-400 transition-all duration-700"
           :style="{ width: `${summary.progress_pct}%` }"
         />
       </div>
@@ -205,11 +205,11 @@ const statusStyle = (status: string) => {
       }
     case 'ARRIVED_AT_OFFICE':
       return {
-        badge:      'bg-rich-orange/10 text-rich-orange',
-        dot:        'bg-rich-orange',
-        iconBorder: 'border-rich-orange',
-        iconColor:  'text-rich-orange',
-        textAccent: 'text-rich-orange',
+        badge:      'bg-candy-orange/10 text-candy-orange',
+        dot:        'bg-candy-orange',
+        iconBorder: 'border-candy-orange',
+        iconColor:  'text-candy-orange',
+        textAccent: 'text-candy-orange',
       }
     case 'COMPLETED':
       return {

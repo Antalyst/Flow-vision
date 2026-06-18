@@ -7,7 +7,7 @@
       <button
         type="button"
         class="rounded-lg border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
-        :class="isDark ? 'border-card-border text-gray-300' : 'border-gray-200 text-gray-600'"
+        :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
         :disabled="loading"
         @click="fetchNotifications(true)"
       >
@@ -30,7 +30,7 @@
         v-for="item in notifications"
         :key="item.id"
         class="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-        :class="isDark ? 'border-card-border bg-card-dark/30' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-onyx-border bg-onyx-card/30' : 'border-gray-200 bg-white'"
       >
         <div class="min-w-0">
           <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ item.title }}</p>
@@ -74,7 +74,7 @@ const {
 
 const mutedClass = computed(() => (isDark.value ? 'text-gray-500' : 'text-gray-400'))
 const emptyClass = computed(() =>
-  isDark.value ? 'border-card-border text-gray-500' : 'border-gray-200 text-gray-400',
+  isDark.value ? 'border-onyx-border text-gray-500' : 'border-gray-200 text-gray-400',
 )
 
 function formatWhen(iso) {

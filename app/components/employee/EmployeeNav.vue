@@ -11,7 +11,7 @@
           <span class="truncate">{{ item.label }}</span>
           <span
             v-if="item.to === '/employee/notifications' && badgeCount > 0"
-            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rich-orange px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-candy-orange px-1.5 text-[10px] font-bold text-white"
           >
             {{ badgeCount > 9 ? '9+' : badgeCount }}
           </span>
@@ -68,10 +68,10 @@ watch(() => route.path, () => {
 
 <style scoped>
 .nav-item-employee-active {
-  @apply text-rich-orange bg-rich-orange/[0.08] dark:text-[#FF8040] dark:bg-rich-orange/[0.10] relative;
+  @apply text-candy-orange bg-candy-orange/[0.08] dark:text-[#F47D2F] dark:bg-candy-orange/[0.10] relative;
 }
 .nav-item-employee-active::before {
   content: '';
-  @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-rich-orange rounded-full;
+  @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
 }
 </style>

@@ -39,7 +39,7 @@ const gridLines = ['0%', '25%', '50%', '75%']
         Document Volume Trend
       </h3>
       <button
-        class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-card-border text-sm text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 bg-white dark:bg-card-dark"
+        class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-onyx-border text-sm text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-200 bg-white dark:bg-onyx-card"
       >
         <Icon name="lucide:calendar" class="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
         <span class="font-medium">Last week</span>
@@ -56,7 +56,7 @@ const gridLines = ['0%', '25%', '50%', '75%']
         <span class="text-sm font-semibold text-emerald-500">
           {{ trendPercent }}
         </span>
-        <span class="text-sm text-muted">
+        <span class="text-sm text-white-muted">
           vs last week
         </span>
       </div>
@@ -78,19 +78,19 @@ const gridLines = ['0%', '25%', '50%', '75%']
       <div
         v-for="line in gridLines"
         :key="'grid-' + line"
-        class="absolute left-0 right-10 border-t border-gray-100 dark:border-card-border"
+        class="absolute left-0 right-10 border-t border-gray-100 dark:border-onyx-border"
         :style="{ top: line }"
       />
 
       <!-- Bottom zero line -->
       <div
-        class="absolute left-0 right-10 border-t border-gray-200 dark:border-card-border"
+        class="absolute left-0 right-10 border-t border-gray-200 dark:border-onyx-border"
         style="top: 100%"
       />
 
       <!-- Average dashed line -->
       <div
-        class="absolute left-0 right-10 border-t-2 border-dashed border-rich-orange/40 z-[1]"
+        class="absolute left-0 right-10 border-t-2 border-dashed border-candy-orange/40 z-[1]"
         :style="{ top: ((1 - avgValue / maxValue) * 100) + '%' }"
       />
 
@@ -115,8 +115,8 @@ const gridLines = ['0%', '25%', '50%', '75%']
           <div
             class="w-full max-w-[48px] rounded-t-lg transition-all duration-300 cursor-pointer"
             :class="hoveredIndex === index
-              ? 'bg-rich-orange scale-[1.02]'
-              : 'bg-rich-orange/25 dark:bg-rich-orange/20'"
+              ? 'bg-candy-orange scale-[1.02]'
+              : 'bg-candy-orange/25 dark:bg-candy-orange/20'"
             :style="{ height: (item.value / maxValue * 100) + '%' }"
           />
 

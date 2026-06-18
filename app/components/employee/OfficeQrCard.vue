@@ -6,19 +6,19 @@
       : 'border-gray-200 bg-white shadow-card'"
   >
     <!-- Orange top accent bar -->
-    <div class="h-1 w-full bg-gradient-to-r from-rich-orange via-[#ff8040] to-rich-orange/40" />
+    <div class="h-1 w-full bg-gradient-to-r from-candy-orange via-[#ff8040] to-candy-orange/40" />
 
     <div class="flex flex-1 flex-col gap-4 p-5">
       <!-- Office meta -->
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <Icon name="ph:buildings-fill" class="h-4 w-4 flex-none text-rich-orange" />
+            <Icon name="ph:buildings-fill" class="h-4 w-4 flex-none text-candy-orange" />
             <h3 class="truncate text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
               {{ office.name }}
             </h3>
           </div>
-          <p class="mt-1 font-mono text-[11px] font-semibold text-rich-orange">
+          <p class="mt-1 font-mono text-[11px] font-semibold text-candy-orange">
             {{ office.code || derivedCode }}
           </p>
         </div>
@@ -27,7 +27,7 @@
         <div class="flex flex-shrink-0 items-center gap-1">
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-rich-orange/10 hover:text-rich-orange"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
             :class="isDark ? 'text-gray-400' : 'text-gray-500'"
             title="Edit office"
             @click="emit('edit', office)"
@@ -58,7 +58,7 @@
             class="h-full w-full object-contain"
           />
           <div v-else class="flex flex-col items-center gap-2">
-            <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-rich-orange" />
+            <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-candy-orange" />
             <span class="text-[10px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Generating…</span>
           </div>
         </div>
@@ -91,8 +91,8 @@
         :disabled="!qrDataUrl"
         class="flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
         :class="isDark
-          ? 'border-rich-orange/30 bg-rich-orange/10 text-rich-orange hover:bg-rich-orange/20'
-          : 'border-rich-orange/30 bg-orange-50 text-rich-orange hover:bg-orange-100'"
+          ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange hover:bg-candy-orange/20'
+          : 'border-candy-orange/30 bg-orange-50 text-candy-orange hover:bg-orange-100'"
         @click="downloadQr"
       >
         <Icon name="ph:download-simple-bold" class="h-3.5 w-3.5" />

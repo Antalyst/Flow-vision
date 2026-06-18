@@ -12,7 +12,7 @@
           <span class="truncate">{{ item.label }}</span>
           <span
             v-if="item.to === '/client/notifications' && unreadCount > 0"
-            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-rich-orange px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[10px] font-bold text-white"
           >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
           </span>

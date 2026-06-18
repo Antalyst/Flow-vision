@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-[1800px] mx-auto h-screen max-h-screen overflow-hidden bg-[#121212] dark:bg-[#121212] light:bg-[#F9F9F9]">
+  <div class="h-screen max-h-screen w-full max-w-[1800px] mx-auto overflow-hidden bg-white-pure transition-colors duration-300 dark:bg-onyx-black">
     <GlobalLoading />
     <NuxtLayout>
       <NuxtPage />

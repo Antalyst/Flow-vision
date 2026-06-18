@@ -21,7 +21,7 @@
       <div
         v-if="auth.currentOrg"
         class="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm"
-        :class="isDark ? 'bg-card-dark border-card-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
+        :class="isDark ? 'bg-onyx-card border-onyx-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
       >
         <Icon name="ph:building-office-fill" class="w-4 h-4 text-amber-500" />
         <div>
@@ -63,7 +63,7 @@
           v-for="delivery in deliveries"
           :key="delivery.id"
           class="flex items-center gap-4 rounded-xl border p-4 transition-colors"
-          :class="isDark ? 'border-card-border hover:bg-white/[0.02]' : 'border-gray-100 hover:bg-gray-50'"
+          :class="isDark ? 'border-onyx-border hover:bg-white/[0.02]' : 'border-gray-100 hover:bg-gray-50'"
         >
           <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
             <Icon name="ph:package-fill" class="w-4 h-4 text-amber-500" />

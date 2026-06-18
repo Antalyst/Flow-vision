@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { Chart as ChartJSChart } from 'chart.js'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,43 +32,52 @@ const props = defineProps<{
   loading?: boolean
 }>()
 
+const {
+  themeKey,
+  candy,
+  buildCartesianScales,
+  buildLegendPlugin,
+  buildTooltipPlugin,
+  watchChartTheme,
+} = useChartTheme()
+
 const activeChartIndex = ref(0)
 const slideDirection = ref<'next' | 'prev'>('next')
 
+const trafficChartRef = ref<{ chart: ChartJSChart } | null>(null)
+const barChartRef = ref<{ chart: ChartJSChart } | null>(null)
+const messengerChartRef = ref<{ chart: ChartJSChart } | null>(null)
+
+watchChartTheme(() => {
+  if (activeChartIndex.value === 0) return trafficChartRef.value?.chart
+  if (activeChartIndex.value === 1) return barChartRef.value?.chart
+  return messengerChartRef.value?.chart
+})
+
 const slides = [
-  {
-    title: 'Document Traffic Forecast',
-    subtitle: 'Historical volume with 7-day linear projection',
-  },
-  {
-    title: 'Workstation Congestion',
-    subtitle: 'Historical processing avg vs live desk delay',
-  },
-  {
-    title: 'Messenger Dispatch Lag',
-    subtitle: 'Average pickup wait times across the week',
-  },
+  { title: 'Document Traffic Forecast', subtitle: 'Historical volume with 7-day linear projection' },
+  { title: 'Workstation Congestion', subtitle: 'Historical processing avg vs live desk delay' },
+  { title: 'Messenger Dispatch Lag', subtitle: 'Average pickup wait times across the week' },
 ]
 
-const gridColor = 'rgba(255,255,255,0.06)'
-const textColor = '#a1a1aa'
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: buildLegendPlugin(),
+    tooltip: buildTooltipPlugin(),
+  },
+  scales: buildCartesianScales(),
+}))
 
-const commonScales = computed(() => ({
-  x: {
-    grid: { color: gridColor },
-    ticks: { color: textColor, font: { size: 11 } },
-  },
-  y: {
-    grid: { color: gridColor },
-    ticks: { color: textColor, font: { size: 11 } },
-    beginAtZero: true,
-  },
+const congestionOptions = computed(() => ({
+  ...chartOptions.value,
+  indexAxis: 'y' as const,
 }))
 
 const trafficChartData = computed(() => {
   const c = props.charts?.trafficForecast
   if (!c) return null
-
   const histLen = c.historical.length
   const forecastLen = c.forecast.length
   const labels = [...c.labels, ...c.forecastLabels]
@@ -80,8 +90,8 @@ const trafficChartData = computed(() => {
       {
         label: 'Historical',
         data: historical,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.12)',
+        borderColor: candy.primary,
+        backgroundColor: candy.soft,
         tension: 0.35,
         pointRadius: 3,
         fill: false,
@@ -89,7 +99,7 @@ const trafficChartData = computed(() => {
       {
         label: 'Forecast',
         data: forecast,
-        borderColor: '#fb923c',
+        borderColor: candy.forecast,
         borderDash: [6, 4],
         backgroundColor: 'transparent',
         tension: 0.35,
@@ -103,20 +113,19 @@ const trafficChartData = computed(() => {
 const congestionChartData = computed(() => {
   const c = props.charts?.workstationCongestion
   if (!c) return null
-
   return {
     labels: c.labels,
     datasets: [
       {
         label: 'Historical avg (hrs)',
         data: c.historicalAvgHours,
-        backgroundColor: 'rgba(245, 158, 11, 0.65)',
+        backgroundColor: candy.strong,
         borderRadius: 6,
       },
       {
         label: 'Current delay (hrs)',
         data: c.currentDelayHours,
-        backgroundColor: 'rgba(113, 113, 122, 0.55)',
+        backgroundColor: 'rgba(160, 160, 160, 0.45)',
         borderRadius: 6,
       },
     ],
@@ -126,15 +135,14 @@ const congestionChartData = computed(() => {
 const messengerChartData = computed(() => {
   const c = props.charts?.messengerLag
   if (!c) return null
-
   return {
     labels: c.labels,
     datasets: [
       {
         label: 'Avg pickup wait (hrs)',
         data: c.waitHours,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.22)',
+        borderColor: candy.primary,
+        backgroundColor: candy.medium,
         fill: true,
         tension: 0.4,
         pointRadius: 3,
@@ -142,9 +150,9 @@ const messengerChartData = computed(() => {
       {
         label: 'Projected (hrs)',
         data: c.forecastHours.slice(0, c.labels.length),
-        borderColor: '#fbbf24',
+        borderColor: candy.forecast,
         borderDash: [5, 4],
-        backgroundColor: 'rgba(251, 191, 36, 0.08)',
+        backgroundColor: candy.soft,
         fill: true,
         tension: 0.4,
         pointRadius: 2,
@@ -152,22 +160,6 @@ const messengerChartData = computed(() => {
     ],
   }
 })
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      labels: { color: textColor, boxWidth: 12 },
-    },
-  },
-  scales: commonScales.value,
-}))
-
-const congestionOptions = computed(() => ({
-  indexAxis: 'y' as const,
-  ...chartOptions.value,
-}))
 
 const microBlocks = computed(() => {
   const m = props.microSummaries
@@ -198,13 +190,13 @@ function goToSlide(index: number) {
   <div class="matrix-card-glass p-6 transition-all duration-300 hover:scale-[1.005]">
     <div class="mb-6 flex items-start justify-between gap-4">
       <div>
-        <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
           Predictive Analytics · {{ activeChartIndex + 1 }}/{{ slides.length }}
         </p>
-        <h3 class="mt-1 text-sm font-semibold text-white">
+        <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">
           {{ slides[activeChartIndex]?.title }}
         </h3>
-        <p class="mt-0.5 text-xs text-zinc-400">
+        <p class="mt-0.5 text-xs text-zinc-500 dark:text-white-muted">
           {{ slides[activeChartIndex]?.subtitle }}
         </p>
       </div>
@@ -212,7 +204,7 @@ function goToSlide(index: number) {
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 transition hover:border-amber-500/50 hover:text-amber-400"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Previous chart"
           @click="prevSlide"
         >
@@ -220,7 +212,7 @@ function goToSlide(index: number) {
         </button>
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-700 text-zinc-400 transition hover:border-amber-500/50 hover:text-amber-400"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Next chart"
           @click="nextSlide"
         >
@@ -230,10 +222,10 @@ function goToSlide(index: number) {
     </div>
 
     <div
-      class="relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-950/40 p-4 backdrop-blur-md"
+      class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white-pure/60 p-4 backdrop-blur-md transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-black/40"
     >
-      <div v-if="loading" class="flex h-[280px] items-center justify-center text-sm text-zinc-500">
-        <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-amber-500" />
+      <div v-if="loading" class="flex h-[280px] items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
+        <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-candy-orange" />
         Loading predictive charts…
       </div>
 
@@ -242,24 +234,27 @@ function goToSlide(index: number) {
           :name="slideDirection === 'next' ? 'chart-slide-next' : 'chart-slide-prev'"
           mode="out-in"
         >
-          <div :key="activeChartIndex" class="absolute inset-0">
+          <div :key="`${activeChartIndex}-${themeKey}`" class="absolute inset-0">
             <ClientOnly>
               <Line
                 v-if="activeChartIndex === 0 && trafficChartData"
+                ref="trafficChartRef"
                 :data="trafficChartData"
                 :options="chartOptions"
               />
               <Bar
                 v-else-if="activeChartIndex === 1 && congestionChartData"
+                ref="barChartRef"
                 :data="congestionChartData"
                 :options="congestionOptions"
               />
               <Line
                 v-else-if="activeChartIndex === 2 && messengerChartData"
+                ref="messengerChartRef"
                 :data="messengerChartData"
                 :options="chartOptions"
               />
-              <div v-else class="flex h-full items-center justify-center text-sm text-zinc-500">
+              <div v-else class="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
                 No chart data available yet.
               </div>
             </ClientOnly>
@@ -274,7 +269,7 @@ function goToSlide(index: number) {
         :key="index"
         type="button"
         class="h-2 rounded-full transition-all duration-300"
-        :class="index === activeChartIndex ? 'w-6 bg-amber-500' : 'w-2 bg-zinc-700'"
+        :class="index === activeChartIndex ? 'w-6 bg-candy-orange' : 'w-2 bg-zinc-300 dark:bg-onyx-border'"
         :aria-label="`Show chart ${index + 1}`"
         @click="goToSlide(index)"
       />
@@ -284,13 +279,13 @@ function goToSlide(index: number) {
       <div
         v-for="block in microBlocks"
         :key="block.label"
-        class="rounded-xl border border-zinc-800 bg-zinc-950/70 px-4 py-3 transition-all duration-300 hover:border-amber-500/30"
+        class="rounded-xl border border-zinc-200 bg-white-surface px-4 py-3 transition-all duration-300 hover:border-candy-orange/30 dark:border-onyx-border dark:bg-onyx-black/70"
       >
         <div class="mb-1 flex items-center gap-2">
-          <Icon :name="block.icon" class="h-3.5 w-3.5 text-amber-500" />
-          <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">{{ block.label }}</span>
+          <Icon :name="block.icon" class="h-3.5 w-3.5 text-candy-orange" />
+          <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-white-muted">{{ block.label }}</span>
         </div>
-        <p class="text-lg font-bold text-white">{{ block.value }}</p>
+        <p class="text-lg font-bold text-onyx-black dark:text-white-pure">{{ block.value }}</p>
       </div>
     </div>
   </div>

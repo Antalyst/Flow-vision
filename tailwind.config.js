@@ -8,8 +8,6 @@ module.exports = {
     'border-collapse',
     'text-sm',
     'border',
-    'border-slate-200',
-    'bg-slate-50',
     'px-4',
     'py-3',
     'py-2.5',
@@ -18,20 +16,15 @@ module.exports = {
     'font-semibold',
     'uppercase',
     'tracking-wider',
-    'text-slate-500',
-    'text-slate-700',
     'align-top',
-    'odd:bg-white',
-    'even:bg-slate-50',
-    'hover:bg-orange-50/40',
     'transition-colors',
   ],
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: '2rem',
       screens: {
-        "2xl": "1800px",
+        '2xl': '1800px',
       },
     },
     extend: {
@@ -40,30 +33,33 @@ module.exports = {
         dashboard: ['Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        'heading': ['1.5rem', {
+        heading: ['1.5rem', {
           fontWeight: '500',
         }],
       },
       colors: {
-        'heading-dark': '#353839',
-        'primary-btn': '#F47D2F',
-        'rich-black': '#121212',
-        'rich-orange': '#F47D2F',
-        'card-dark': '#1A1A1A',
-        'card-border': '#2A2A2A',
-        'surface': '#F9F9F9',
-        'muted': '#A0A0A0',
-        'sidebar-dark': '#161616',
+        // --- THE ONYX PALETTE (Dark Context Foundations) ---
+        'onyx-black': '#121212', // App Canvas & Dashboard background
+        'onyx-sidebar': '#161616', // Navigation Sidebar fill
+        'onyx-card': '#1A1A1A', // Component Containers & Cards
+        'onyx-border': '#2A2A2A', // High-end minimalist layout borders
+
+        // --- THE CANDY ORANGE PALETTE (Active High-Contrast Accents) ---
+        'candy-orange': '#F47D2F', // Core Primary interactive buttons & glowing badges
+        'candy-hover': '#D96518', // Rich active hover click states
+
+        // --- THE WHITE PALETTE (Clean Readable Data Elements) ---
+        'white-pure': '#FFFFFF', // Primary readable text and high-contrast titles
+        'white-surface': '#F9F9F9', // Light readable content zones
+        'white-muted': '#A0A0A0', // Subtitle information text descriptors
       },
       boxShadow: {
-        'card': '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
-        'card-hover': '0 4px 12px rgba(0,0,0,0.08)',
-        'card-dark': '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',
-        'sidebar': '2px 0 8px rgba(0,0,0,0.04)',
-        'sidebar-dark': '2px 0 12px rgba(0,0,0,0.4)',
+        card: '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',
+        'card-hover': '0 8px 24px rgba(244,125,47,0.1)', // Subtle Candy Orange glowing drop shadow on hover
+        'sidebar-dark': '2px 0 12px rgba(0,0,0,0.5)',
       },
       borderRadius: {
-        'card': '14px',
+        card: '14px',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

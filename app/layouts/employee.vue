@@ -1,14 +1,14 @@
 <template>
   <div
     class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
-    :class="isDark ? 'bg-rich-black text-white' : 'bg-surface text-heading-dark'"
+    :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'"
   >
     <!-- ── Mobile top bar ────────────────────────────────────────────── -->
     <div
       class="md:hidden flex items-center justify-between px-4 py-3 border-b sticky top-0 z-50"
-      :class="isDark ? 'bg-card-dark border-card-border' : 'bg-white border-gray-200'"
+      :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
-      <button class="p-2 -ml-2 rounded-xl transition hover:bg-gray-100 dark:hover:bg-rich-black/50" @click="mobileMenuOpen = true">
+      <button class="p-2 -ml-2 rounded-xl transition hover:bg-gray-100 dark:hover:bg-onyx-black/50" @click="mobileMenuOpen = true">
         <Icon name="ph:list" class="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
       <div class="flex items-center gap-2">
@@ -35,7 +35,7 @@
         <aside
           v-if="mobileMenuOpen"
           class="fixed left-0 top-0 bottom-0 w-[280px] z-[70] md:hidden overflow-y-auto"
-          :class="isDark ? 'bg-card-dark border-r border-card-border' : 'bg-white border-r border-gray-200'"
+          :class="isDark ? 'bg-onyx-card border-r border-onyx-border' : 'bg-white border-r border-gray-200'"
         >
           <div class="p-4">
             <div class="flex items-center justify-between mb-6">
@@ -43,7 +43,7 @@
                 <img :src="brandLogo" alt="FlowVision" class="w-8 h-8" />
                 <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">FlowVision</span>
               </div>
-              <button class="p-2 rounded-xl transition hover:bg-gray-100 dark:hover:bg-rich-black/50" @click="mobileMenuOpen = false">
+              <button class="p-2 rounded-xl transition hover:bg-gray-100 dark:hover:bg-onyx-black/50" @click="mobileMenuOpen = false">
                 <Icon name="ph:x" class="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -58,7 +58,7 @@
       <!-- ── Desktop sidebar ──────────────────────────────────────────── -->
       <aside
         class="hidden md:flex md:w-64 h-full flex-shrink-0 flex-col border-r"
-        :class="isDark ? 'bg-sidebar-dark border-card-border' : 'bg-white border-gray-200'"
+        :class="isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200'"
       >
         <!-- Brand -->
         <div class="px-5 pt-5 pb-2 flex-none">
@@ -95,7 +95,7 @@
         <!-- Bottom profile -->
         <div
           class="flex-none border-t px-3 py-3"
-          :class="isDark ? 'border-card-border' : 'border-gray-200'"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
         >
           <EmployeeSidebarFooter :user="auth.user" @logout="auth.logout()" />
         </div>
@@ -104,7 +104,7 @@
       <!-- ── Main content ─────────────────────────────────────────────── -->
       <main
         class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 md:p-8"
-        :class="isDark ? 'bg-rich-black' : 'bg-surface'"
+        :class="isDark ? 'bg-onyx-black' : 'bg-white-surface'"
       >
         <!-- Org-scope guard: org_id must be present for employee context -->
         <div
@@ -113,7 +113,7 @@
         >
           <div
             class="w-full max-w-sm rounded-xl border p-8 text-center"
-            :class="isDark ? 'bg-card-dark border-card-border' : 'bg-white border-gray-200'"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
             <Icon name="ph:building-office-slash" class="mx-auto mb-4 w-12 h-12 text-sky-500/60" />
             <h2 class="text-lg font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">No organisation assigned</h2>
@@ -132,7 +132,7 @@
     <!-- ── Mobile bottom nav ─────────────────────────────────────────── -->
     <nav
       class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom"
-      :class="isDark ? 'bg-card-dark border-card-border' : 'bg-white border-gray-200'"
+      :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
       <div class="flex items-center justify-around px-2 py-2">
         <NuxtLink

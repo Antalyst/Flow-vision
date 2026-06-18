@@ -21,8 +21,8 @@
           :class="borderClass"
         >
           <div>
-            <div class="mb-1 h-0.5 w-8 rounded-full bg-rich-orange" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-rich-orange">
+            <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
             </p>
             <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
@@ -32,7 +32,7 @@
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-rich-orange/10 hover:text-rich-orange"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-candy-orange/10 hover:text-candy-orange"
             aria-label="Close"
             @click="handleClose"
           >
@@ -58,7 +58,7 @@
             <!-- 1. Origin Office (mandatory) -->
             <div>
               <label class="block">
-                <span class="text-sm font-semibold text-rich-orange">
+                <span class="text-sm font-semibold text-candy-orange">
                   Origin Office <span class="text-red-500">*</span>
                 </span>
                 <p class="mt-0.5 text-[11px]" :class="mutedClass">
@@ -66,7 +66,7 @@
                 </p>
                 <select
                   v-model="selectedOriginOfficeId"
-                  class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                  class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                   :class="inputClass"
                   required
                   @change="onOriginOfficeChange"
@@ -90,12 +90,12 @@
             <!-- 2. Drop zone -->
             <label
               class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-7 text-center transition"
-              :class="isDragging ? 'border-rich-orange bg-rich-orange/10' : borderClass"
+              :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
               @dragover.prevent="isDragging = true"
               @dragleave.prevent="isDragging = false"
               @drop.prevent="handleDrop"
             >
-              <Icon name="ph:cloud-arrow-up" class="h-9 w-9 text-rich-orange" />
+              <Icon name="ph:cloud-arrow-up" class="h-9 w-9 text-candy-orange" />
               <div>
                 <p class="text-sm font-semibold" :class="headingClass">
                   {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
@@ -115,10 +115,10 @@
             <div
               v-if="selectedFile"
               class="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"
-              :class="isDark ? 'border-white/10 bg-rich-black/40' : 'border-gray-200 bg-gray-50'"
+              :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex min-w-0 items-center gap-3">
-                <Icon name="ph:file-text" class="h-5 w-5 flex-none text-rich-orange" />
+                <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
                 <div class="min-w-0">
                   <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
                   <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
@@ -160,7 +160,7 @@
                     type="button"
                     class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 select-none"
                     :class="routeTab === tab.value
-                      ? 'bg-rich-orange text-white shadow'
+                      ? 'bg-candy-orange text-white shadow'
                       : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
                     @click="routeTab = tab.value"
                   >
@@ -173,13 +173,13 @@
               <!-- Route description line -->
               <p class="mt-2 text-[11px]" :class="mutedClass">
                 <span v-if="routeTab === 'global'">
-                  <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-rich-orange" />
+                  <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-candy-orange" />
                   Organisation-wide routes created by your Client Admin — available to all offices.
                 </span>
                 <span v-else>
-                  <Icon name="ph:buildings-fill" class="inline h-3 w-3 text-rich-orange" />
+                  <Icon name="ph:buildings-fill" class="inline h-3 w-3 text-candy-orange" />
                   Custom routes built specifically for
-                  <span class="font-semibold text-rich-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
+                  <span class="font-semibold text-candy-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
                 </span>
               </p>
 
@@ -208,7 +208,7 @@
                   <span>
                     No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
                     <template v-if="routeTab === 'local'">
-                      <NuxtLink to="/employee/stages" class="text-rich-orange hover:underline">Create one</NuxtLink> in Stages.
+                      <NuxtLink to="/employee/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Stages.
                     </template>
                   </span>
                 </div>
@@ -218,11 +218,11 @@
                   v-for="stage in visibleRoutes"
                   :key="stage.stage_id"
                   type="button"
-                  class="group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 hover:border-rich-orange/40"
+                  class="group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange/40"
                   :class="selectedStageId === String(stage.stage_id)
                     ? isDark
-                      ? 'border-rich-orange bg-rich-orange/10 shadow-md shadow-rich-orange/10'
-                      : 'border-rich-orange bg-orange-50 shadow-md shadow-rich-orange/10'
+                      ? 'border-candy-orange bg-candy-orange/10 shadow-md shadow-candy-orange/10'
+                      : 'border-candy-orange bg-orange-50 shadow-md shadow-candy-orange/10'
                     : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
                   @click="selectRoute(stage)"
                 >
@@ -233,7 +233,7 @@
                         <div
                           class="flex h-4 w-4 flex-none items-center justify-center rounded-full transition-all"
                           :class="selectedStageId === String(stage.stage_id)
-                            ? 'bg-rich-orange'
+                            ? 'bg-candy-orange'
                             : isDark ? 'border border-white/20' : 'border border-gray-300'"
                         >
                           <Icon
@@ -253,12 +253,12 @@
                           class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
                           :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                         >
-                          <span class="h-1 w-1 rounded-full bg-rich-orange/60" />
+                          <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
                           {{ stop }}
                         </span>
                         <span
                           v-if="getRouteSteps(stage.stage_id).length > 3"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-rich-orange"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-candy-orange"
                         >
                           +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                         </span>
@@ -271,7 +271,7 @@
                         class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
                         :class="routeTab === 'global'
                           ? 'border-blue-400/30 bg-blue-400/10 text-blue-400'
-                          : 'border-rich-orange/30 bg-rich-orange/10 text-rich-orange'"
+                          : 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'"
                       >
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
@@ -290,14 +290,14 @@
                   v-if="selectedStageId && selectedTimelineSteps.length"
                   class="mt-4 overflow-hidden rounded-xl border"
                   :class="isDark
-                    ? 'border-rich-orange/20 bg-rich-orange/[0.03]'
+                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
                     : 'border-orange-200 bg-orange-50/60'"
                 >
                   <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-rich-orange/15' : 'border-orange-200/70'">
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-2">
-                      <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-rich-orange" />
-                      <span class="text-[11px] font-bold uppercase tracking-wider text-rich-orange">Route Preview</span>
+                      <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
                     </div>
                     <span class="text-[10px]" :class="mutedClass">
                       {{ selectedTimelineSteps.length + 1 }} stops &middot; Messenger run
@@ -310,18 +310,18 @@
 
                       <!-- ── Origin node (always first) ─────────────── -->
                       <div class="flex flex-col items-center" style="min-width: 80px">
-                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-rich-orange shadow-lg shadow-rich-orange/40">
+                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange shadow-lg shadow-candy-orange/40">
                           <Icon name="ph:map-pin-fill" class="h-5 w-5 text-white" />
                           <!-- Pulse ring -->
-                          <span class="absolute inset-0 animate-ping rounded-full bg-rich-orange opacity-20" />
+                          <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
                         </div>
                         <p
-                          class="mt-2 max-w-[76px] text-center text-[10px] font-bold leading-tight text-rich-orange"
+                          class="mt-2 max-w-[76px] text-center text-[10px] font-bold leading-tight text-candy-orange"
                           style="word-break: break-word"
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-full bg-rich-orange/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-rich-orange">
+                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-candy-orange">
                           Origin
                         </span>
                       </div>
@@ -335,9 +335,9 @@
                         <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
                           <div
                             class="h-px flex-1"
-                            :class="isDark ? 'bg-rich-orange/30' : 'bg-rich-orange/40'"
+                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
                           />
-                          <Icon name="ph:caret-right-fill" class="h-3 w-3 flex-none text-rich-orange/50" />
+                          <Icon name="ph:caret-right-fill" class="h-3 w-3 flex-none text-candy-orange/50" />
                         </div>
 
                         <!-- Step node -->
@@ -346,10 +346,10 @@
                           <div
                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
                             :class="idx === selectedTimelineSteps.length - 1
-                              ? 'border-rich-orange bg-rich-orange text-white shadow-lg shadow-rich-orange/30'
+                              ? 'border-candy-orange bg-candy-orange text-white shadow-lg shadow-candy-orange/30'
                               : isDark
-                                ? 'border-rich-orange/60 bg-rich-orange/10 text-rich-orange'
-                                : 'border-rich-orange bg-orange-50 text-rich-orange'"
+                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
+                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
                           >
                             <Icon
                               v-if="idx === selectedTimelineSteps.length - 1"
@@ -371,7 +371,7 @@
                           <!-- Step label -->
                           <span
                             class="mt-0.5 text-[9px]"
-                            :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-rich-orange' : mutedClass"
+                            :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
                           >
                             {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
                           </span>
@@ -381,18 +381,18 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-rich-orange/15' : 'border-orange-200/70'">
+                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
-                        <Icon name="ph:buildings-fill" class="h-3 w-3 text-rich-orange" />
-                        <strong class="text-rich-orange">{{ selectedOriginOfficeName || '—' }}</strong>
+                        <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
+                        <strong class="text-candy-orange">{{ selectedOriginOfficeName || '—' }}</strong>
                       </span>
                       <Icon name="ph:arrow-right" class="h-3 w-3" />
                       <span>{{ selectedTimelineSteps.length }} office{{ selectedTimelineSteps.length !== 1 ? 's' : '' }} in route</span>
                       <Icon name="ph:arrow-right" class="h-3 w-3" />
                       <span class="flex items-center gap-1">
-                        <Icon name="ph:flag-checkered-fill" class="h-3 w-3 text-rich-orange" />
-                        <strong class="text-rich-orange">{{ finalDestinationName }}</strong>
+                        <Icon name="ph:flag-checkered-fill" class="h-3 w-3 text-candy-orange" />
+                        <strong class="text-candy-orange">{{ finalDestinationName }}</strong>
                       </span>
                     </div>
                   </div>
@@ -407,10 +407,10 @@
                 <label
                   class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
                   :class="selectedStrategy === 'embedded'
-                    ? 'border-rich-orange bg-rich-orange/5'
+                    ? 'border-candy-orange bg-candy-orange/5'
                     : isDark ? 'border-white/10' : 'border-gray-200'"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#FF620C]" />
+                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" />
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
                     <span class="block text-xs" :class="mutedClass">
@@ -422,10 +422,10 @@
                 <label
                   class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
                   :class="selectedStrategy === 'standalone'
-                    ? 'border-rich-orange bg-rich-orange/5'
+                    ? 'border-candy-orange bg-candy-orange/5'
                     : isDark ? 'border-white/10' : 'border-gray-200'"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#FF620C]" />
+                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
                     <span class="block text-xs" :class="mutedClass">
@@ -441,7 +441,7 @@
               <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
               <select
                 v-model.number="selectedQrSize"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
               >
                 <option :value="50"  :style="optionStyle">Small (50px × 50px)</option>
@@ -464,7 +464,7 @@
               class="rounded-xl border p-4"
               :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
             >
-              <div class="flex items-center gap-2 text-sm font-semibold text-rich-orange">
+              <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
                 <Icon name="ph:sparkle-fill" class="h-4 w-4" />
                 AI Analysis
               </div>
@@ -485,8 +485,8 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold text-rich-orange"
-                :class="isDark ? 'border-rich-orange/20 bg-rich-orange/5' : 'border-orange-200 bg-orange-50'"
+                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold text-candy-orange"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
                 <span class="truncate">{{ selectedRouteName }}</span>
@@ -506,7 +506,7 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl bg-rich-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rich-orange/25 transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="!canSubmit"
             >
               <Icon v-if="uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -685,7 +685,7 @@ const mutedClass   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-
 const headingClass = computed(() => isDark.value ? 'text-white' : 'text-gray-900')
 const inputClass   = computed(() =>
   isDark.value
-    ? 'border-white/10 bg-rich-black text-white placeholder:text-gray-500'
+    ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 const optionStyle = computed(() =>

@@ -1,13 +1,13 @@
 <template>
   <div class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
-    :class="isDark ? 'bg-rich-black text-white' : 'bg-surface text-heading-dark'">
+    :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 
     <!-- Mobile Top Bar -->
     <div
-      class="fv-enter-header md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-card-border bg-white dark:bg-card-dark sticky top-0 z-50"
+      class="fv-enter-header md:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-onyx-border bg-white dark:bg-onyx-card sticky top-0 z-50"
       :class="entranceVisibleClass"
     >
-      <button @click="mobileMenuOpen = true" class="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-rich-black/50 transition">
+      <button @click="mobileMenuOpen = true" class="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-onyx-black/50 transition">
         <Icon name="ph:list" class="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
       <div class="flex items-center gap-2">
@@ -16,7 +16,7 @@
             </div>
         <span class="text-base font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
       </div>
-      <button class="p-2 -mr-2 rounded-xl hover:bg-gray-100 dark:hover:bg-rich-black/50 transition">
+      <button class="p-2 -mr-2 rounded-xl hover:bg-gray-100 dark:hover:bg-onyx-black/50 transition">
         <Icon name="ph:bell" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
       </button>
     </div>
@@ -29,7 +29,7 @@
       <Transition name="slide-menu">
         <aside v-if="mobileMenuOpen"
           class="fixed left-0 top-0 bottom-0 w-[280px] z-[70] md:hidden overflow-y-auto"
-          :class="isDark ? 'bg-card-dark border-r border-card-border' : 'bg-white border-r border-gray-200'">
+          :class="isDark ? 'bg-onyx-card border-r border-onyx-border' : 'bg-white border-r border-gray-200'">
           <div class="p-4">
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center gap-2.5">
@@ -38,7 +38,7 @@
                 </div>
                 <span class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
               </div>
-              <button @click="mobileMenuOpen = false" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-rich-black/50 transition">
+              <button @click="mobileMenuOpen = false" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-onyx-black/50 transition">
                 <Icon name="ph:x" class="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -54,7 +54,7 @@
       <!-- Desktop Sidebar -->
       <aside
         class="fv-enter-sidebar relative z-30 hidden md:flex md:w-64 h-full flex-shrink-0 flex-col overflow-hidden border-r"
-        :class="[isDark ? 'bg-sidebar-dark border-card-border' : 'bg-white border-gray-200', entranceVisibleClass]"
+        :class="[isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200', entranceVisibleClass]"
       >
 
         <!-- Brand -->
@@ -64,7 +64,7 @@
               <img :src="brandLogo" alt="FlowVision Logo" class="w-10 h-10" />
             </div>
             <span class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
-            <button class="ml-auto p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-card-dark transition">
+            <button class="ml-auto p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition">
               <Icon name="ph:sidebar-simple" class="w-4 h-4 text-gray-400" />
             </button>
           </div>
@@ -75,13 +75,13 @@
             <input type="text" placeholder="Search anything"
               class="w-full pl-9 pr-16 py-2.5 rounded-xl text-xs outline-none transition border"
               :class="isDark
-                ? 'bg-rich-black/50 border-card-border text-gray-300 placeholder:text-gray-500 focus:border-rich-orange/50'
-                : 'bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-400 focus:border-rich-orange/50'" />
+                ? 'bg-onyx-black/50 border-onyx-border text-gray-300 placeholder:text-gray-500 focus:border-candy-orange/50'
+                : 'bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-400 focus:border-candy-orange/50'" />
             <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <kbd class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                :class="isDark ? 'bg-card-border text-gray-400' : 'bg-gray-200 text-gray-500'">⌘</kbd>
+                :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">⌘</kbd>
               <kbd class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                :class="isDark ? 'bg-card-border text-gray-400' : 'bg-gray-200 text-gray-500'">K</kbd>
+                :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">K</kbd>
             </div>
           </div>
         </div>
@@ -93,13 +93,13 @@
 
         <!-- Bottom Profile -->
         <div class="flex-none border-t px-3 py-3"
-          :class="isDark ? 'border-card-border' : 'border-gray-200'">
+          :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
           <SidebarProfile :user="auth.user" @logout="auth.logout()" />
         </div>
       </aside>
 
       <!-- Main Content -->
-      <main class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 md:p-8" :class="isDark ? 'bg-rich-black' : 'bg-surface'">
+      <main class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 md:p-8" :class="isDark ? 'bg-onyx-black' : 'bg-white-surface'">
         <div class="w-full">
           <ClientOrgSetup v-if="auth.needsOrgSetup" />
           <slot v-else />
@@ -109,13 +109,13 @@
 
     <!-- Mobile Bottom Navigation -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom"
-      :class="isDark ? 'bg-card-dark border-card-border' : 'bg-white border-gray-200'">
+      :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
       <div class="flex items-center justify-around px-2 py-2">
         <NuxtLink v-for="item in mobileNavItems" :key="item.to"
           :to="item.to"
           class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[56px]"
           :class="isActive(item.to)
-            ? 'text-rich-orange'
+            ? 'text-candy-orange'
             : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'">
           <Icon :name="item.icon" class="w-5 h-5" />
           <span class="text-[10px] font-semibold">{{ item.label }}</span>

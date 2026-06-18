@@ -1,10 +1,10 @@
 <template>
-  <section class="w-full space-y-6 pb-24 lg:pb-8 animate-fade-in" :class="isDark ? 'text-white' : 'text-rich-black'">
+  <section class="w-full space-y-6 pb-24 lg:pb-8 animate-fade-in" :class="isDark ? 'text-white' : 'text-onyx-black'">
 
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">User Management</h1>
         <p class="mt-1 text-sm animate-pulse" :class="mutedClass">
           {{ auth.currentOrg?.name || '—' }} · org_id {{ auth.user?.org_id }}
@@ -43,7 +43,7 @@
 
     <!-- ── Filter tabs + search ────────────────────────────────────────── -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex rounded-xl border p-1" :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'">
+      <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
         <button
           v-for="tab in TABS"
           :key="tab.value"
@@ -71,7 +71,7 @@
 
       <div
         class="flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all"
-        :class="isDark ? 'border-card-border bg-rich-black/40 focus-within:border-rich-orange' : 'border-gray-200 bg-white focus-within:border-rich-orange'"
+        :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-white focus-within:border-candy-orange'"
       >
         <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-shrink-0" :class="mutedClass" />
         <input
@@ -88,7 +88,7 @@
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
-          <thead :class="isDark ? 'bg-rich-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
+          <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
             <tr>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Member</th>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Role</th>
@@ -220,7 +220,7 @@
       <div
         v-if="!loading && filteredMembers.length"
         class="flex items-center justify-between border-t px-6 py-3"
-        :class="[borderClass, isDark ? 'bg-rich-black/20' : 'bg-gray-50/70']"
+        :class="[borderClass, isDark ? 'bg-onyx-black/20' : 'bg-gray-50/70']"
       >
         <p class="text-xs" :class="mutedClass">
           Showing {{ filteredMembers.length }} of {{ members.length }} members
@@ -234,8 +234,8 @@
     <!-- ── Org scope info card ─────────────────────────────────────────── -->
     <article class="rounded-xl border p-5 transition-all duration-300" :class="surfaceClass">
       <div class="flex items-start gap-3">
-        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-rich-orange/10">
-          <Icon name="ph:shield-check-fill" class="h-5 w-5 text-rich-orange" />
+        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/10">
+          <Icon name="ph:shield-check-fill" class="h-5 w-5 text-candy-orange" />
         </span>
         <div class="space-y-1 min-w-0">
           <p class="font-semibold text-sm" :class="isDark ? 'text-gray-100' : 'text-gray-900'">Cross-Tenant Isolation Enforced</p>
@@ -263,7 +263,7 @@
         <form
           v-if="drawerOpen"
           class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-lg flex-col border-l shadow-2xl"
-          :class="isDark ? 'bg-[#1A1A1A] border-card-border' : 'bg-white border-gray-200'"
+          :class="isDark ? 'bg-[#1A1A1A] border-onyx-border' : 'bg-white border-gray-200'"
           @submit.prevent="handleProvision"
         >
           <header
@@ -363,10 +363,10 @@
             <!-- Org scope lock -->
             <div
               class="rounded-xl border p-4 text-sm"
-              :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'"
+              :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex items-center gap-2 font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                <Icon name="ph:lock-fill" class="h-4 w-4 text-rich-orange" />
+                <Icon name="ph:lock-fill" class="h-4 w-4 text-candy-orange" />
                 Organization Scope Lock
               </div>
               <p class="mt-2 text-xs leading-5" :class="mutedClass">
@@ -385,7 +385,7 @@
                   {{ auth.currentOrg?.code ?? '—' }}
                 </dd>
                 <dt :class="mutedClass">Org ID</dt>
-                <dd class="font-mono font-semibold text-right text-rich-orange">{{ auth.user?.org_id }}</dd>
+                <dd class="font-mono font-semibold text-right text-candy-orange">{{ auth.user?.org_id }}</dd>
               </dl>
             </div>
 
@@ -403,7 +403,7 @@
             <button
               type="button"
               class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5"
-              :class="isDark ? 'border-card-border text-gray-300' : 'border-gray-200 text-gray-700'"
+              :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-700'"
               @click="closeDrawer"
             >
               Cancel
@@ -503,8 +503,8 @@ const stats = computed(() => [
     label: 'Total Members',
     value: members.value.length,
     icon: 'ph:users-three-fill',
-    iconBg: 'bg-rich-orange/10',
-    iconColor: 'text-rich-orange',
+    iconBg: 'bg-candy-orange/10',
+    iconColor: 'text-candy-orange',
   },
   {
     label: 'Employees',
@@ -532,14 +532,14 @@ const stats = computed(() => [
 // ── Theme helpers ──────────────────────────────────────────────────────
 const surfaceClass = computed(() =>
   isDark.value
-    ? 'border-card-border bg-[#1A1A1A] shadow-card-dark'
+    ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card'
     : 'border-gray-200 bg-white'
 )
-const borderClass  = computed(() => isDark.value ? 'border-card-border' : 'border-gray-200')
+const borderClass  = computed(() => isDark.value ? 'border-onyx-border' : 'border-gray-200')
 const mutedClass   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const inputClass   = computed(() =>
   isDark.value
-    ? 'border-card-border bg-rich-black text-white placeholder:text-gray-500'
+    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 

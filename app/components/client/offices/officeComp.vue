@@ -1,12 +1,12 @@
 <template>
   <section
     class="w-full space-y-6 pb-24 lg:pb-8 animate-fade-in"
-    :class="isDark ? 'text-white' : 'text-rich-black'"
+    :class="isDark ? 'text-white' : 'text-onyx-black'"
   >
     <!-- Header banner -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange"></div>
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange"></div>
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Offices Management</h1>
         <p class="mt-1 text-sm animate-pulse" :class="mutedTextClass">
           {{ organizationLabel }}
@@ -15,7 +15,7 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FF620C] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rich-orange/20 transition hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rich-orange"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
         @click="openCreateDrawer"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -39,7 +39,7 @@
 
           <div
             class="flex items-center gap-2 rounded-lg border px-3 py-2 transition-all"
-            :class="isDark ? 'border-card-border bg-rich-black/40 focus-within:border-rich-orange' : 'border-gray-200 bg-gray-50 focus-within:border-rich-orange'"
+            :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
           >
             <Icon name="ph:magnifying-glass" class="h-4 w-4" :class="mutedTextClass" />
             <input
@@ -54,7 +54,7 @@
         <!-- Directory Table -->
         <div class="overflow-x-auto">
           <table class="min-w-full text-left text-sm">
-            <thead :class="isDark ? 'bg-rich-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
+            <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
               <tr>
                
                 <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Name</th>
@@ -85,7 +85,7 @@
                   <div class="flex justify-end gap-2">
                     <button
                       type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:text-rich-orange hover:bg-rich-orange/10"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
                       aria-label="Edit Office"
                       title="Edit Office"
                       @click="openEditDrawer(office)"
@@ -123,10 +123,10 @@
               <h2 class="text-base font-semibold">Settings</h2>
               <p class="mt-1 text-xs" :class="mutedTextClass">Workspace appearance</p>
             </div>
-            <Icon name="ph:gear-six" class="h-5 w-5 text-rich-orange" />
+            <Icon name="ph:gear-six" class="h-5 w-5 text-candy-orange" />
           </div>
 
-          <div class="flex items-center justify-between rounded-lg border p-4" :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'">
+          <div class="flex items-center justify-between rounded-lg border p-4" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
             <div>
               <p class="text-sm font-semibold">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</p>
               <p class="mt-1 text-xs" :class="mutedTextClass">Global dashboard theme</p>
@@ -135,8 +135,8 @@
               type="button"
               role="switch"
               :aria-checked="isDark"
-              class="relative h-7 w-12 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#FF620C] focus:ring-offset-2"
-              :class="isDark ? 'bg-rich-orange focus:ring-offset-rich-black' : 'bg-gray-300 focus:ring-offset-white'"
+              class="relative h-7 w-12 rounded-full transition focus:outline-none focus:ring-2 focus:ring-[#F47D2F] focus:ring-offset-2"
+              :class="isDark ? 'bg-candy-orange focus:ring-offset-onyx-black' : 'bg-gray-300 focus:ring-offset-white'"
               @click="toggleTheme"
             >
               <span
@@ -153,7 +153,7 @@
               <h2 class="text-base font-semibold">Organization</h2>
               <p class="mt-1 text-xs" :class="mutedTextClass">Quick config metadata</p>
             </div>
-            <Icon name="ph:buildings" class="h-5 w-5 text-rich-orange" />
+            <Icon name="ph:buildings" class="h-5 w-5 text-candy-orange" />
           </div>
 
           <dl class="space-y-4">
@@ -197,7 +197,7 @@
         >
           <header class="flex items-start justify-between gap-4 border-b px-5 py-5" :class="borderClass">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-rich-orange">
+              <p class="text-xs font-semibold uppercase tracking-wide text-candy-orange">
                 {{ drawerMode === 'create' ? 'Create' : 'Update' }}
               </p>
               <h2 class="mt-1 text-xl font-bold">
@@ -206,7 +206,7 @@
             </div>
             <button
               type="button"
-              class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-rich-orange hover:bg-rich-orange/10"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
               aria-label="Close drawer"
               @click="closeDrawer"
             >
@@ -222,7 +222,7 @@
                 v-model.trim="form.name"
                 type="text"
                 placeholder="e.g. Singapore Operations"
-                class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -233,7 +233,7 @@
               <span class="text-sm font-semibold">Assigned User</span>
               <select
                 v-model="form.assigned_user"
-                class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+                class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               >
@@ -252,9 +252,9 @@
             </label>
 
             <!-- Guard Info -->
-            <div class="rounded-lg border p-4 text-sm" :class="isDark ? 'border-card-border bg-rich-black/40' : 'border-gray-200 bg-gray-50'">
+            <div class="rounded-lg border p-4 text-sm" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
               <div class="flex items-center gap-2 font-semibold">
-                <Icon name="ph:shield-check" class="h-4 w-4 text-rich-orange" />
+                <Icon name="ph:shield-check" class="h-4 w-4 text-candy-orange" />
                 Security & Data Integrity Guard
               </div>
               <p class="mt-2 text-xs leading-5" :class="mutedTextClass">
@@ -267,14 +267,14 @@
             <button
               type="button"
               class="rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
-              :class="isDark ? 'border-card-border' : 'border-gray-200'"
+              :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
               @click="closeDrawer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              class="rounded-lg bg-[#FF620C] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98]"
+              class="rounded-lg bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98]"
             >
               {{ drawerMode === 'create' ? 'Create Office' : 'Save Changes' }}
             </button>
@@ -347,17 +347,17 @@ const filteredOffices = computed(() => {
 // Themes and class configs
 const surfaceClass = computed(() => (
   isDark.value
-    ? 'border-card-border bg-[#1A1A1A] shadow-card-dark'
+    ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card'
     : 'border-gray-200 bg-white'
 ))
 
-const borderClass = computed(() => (isDark.value ? 'border-card-border' : 'border-gray-200'))
+const borderClass = computed(() => (isDark.value ? 'border-onyx-border' : 'border-gray-200'))
 const mutedTextClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
 
 const inputClass = computed(() => (
   isDark.value
-    ? 'border-card-border bg-rich-black text-white placeholder:text-gray-500'
-    : 'border-gray-200 bg-white text-rich-black placeholder:text-gray-400'
+    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
+    : 'border-gray-200 bg-white text-onyx-black placeholder:text-gray-400'
 ))
 
 const getUserName = (userId: string | number) => {

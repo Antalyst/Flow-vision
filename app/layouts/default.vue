@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen w-full font-primary sticky top-0 relative">
-    <nav class="flex justify-between items-center p-4 bg-rich-black text-white m-5 mx-60 rounded-full shadow-md">
+    <nav class="flex justify-between items-center p-4 bg-onyx-black text-white m-5 mx-60 rounded-full shadow-md">
       <div class="flex items-center">
         <img class="w-[40px] h-auto pl-4" src="/logo/new-logo.png" alt="FlowVision Logo">
       </div>
@@ -17,8 +17,8 @@
        
 
         <div class="flex gap-2">
-            <button @click="loginModal = true" class="px-4 py-2 text-md font-medium hover:text-rich-orange transition">Sign in</button>
-            <button @click="registerModal = true" class="px-5 py-2 text-md font-medium bg-white text-rich-black rounded-full hover:bg-rich-orange hover:text-white transition shadow-sm">
+            <button @click="loginModal = true" class="px-4 py-2 text-md font-medium hover:text-candy-orange transition">Sign in</button>
+            <button @click="registerModal = true" class="px-5 py-2 text-md font-medium bg-white text-onyx-black rounded-full hover:bg-candy-orange hover:text-white transition shadow-sm">
               Get started
             </button>
      
@@ -58,7 +58,7 @@
                           'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
                         
                           selectedType === accType.acctype_id
-                          ? 'bg-white text-[#F77934] shadow-sm' 
+                          ? 'bg-white text-[#D96518] shadow-sm' 
                           : 'text-gray-500 hover:text-gray-700'
                         ]"
                       >
@@ -69,19 +69,19 @@
                   <form @submit.prevent="handleRegister" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div class="flex flex-col gap-1 md:col-span-2">
                           <label class="text-xs font-bold text-gray-700 uppercase">Full name</label>
-                          <input v-model="form.full_name" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="text" required placeholder="Juan D. Dela Cruz">
+                          <input v-model="form.full_name" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="text" required placeholder="Juan D. Dela Cruz">
                       </div>
 
                       <div class="flex flex-col gap-1 md:col-span-2">
                           <label class="text-xs font-bold text-gray-700 uppercase">Email</label>
-                          <input v-model="form.email" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="email" required placeholder="example@gmail.com">
+                          <input v-model="form.email" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="email" required placeholder="example@gmail.com">
                       </div>
 
                       <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1 md:col-span-2">
-                        <label class="text-xs font-bold text-[#F77934] uppercase">Organization Code</label>
+                        <label class="text-xs font-bold text-[#D96518] uppercase">Organization Code</label>
                         <input 
                           v-model="form.org_code" 
-                          class="w-full px-4 py-2 rounded-md border border-[#F77934] outline-none bg-orange-50/30" 
+                          class="w-full px-4 py-2 rounded-md border border-[#D96518] outline-none bg-orange-50/30" 
                           type="text" 
                           required 
                           placeholder="Enter provided code"
@@ -90,27 +90,27 @@
 
                       <div class="flex flex-col gap-1 md:col-span-2">
                           <label class="text-xs font-bold text-gray-700 uppercase">Birth Date</label>
-                          <input v-model="form.birth_date" type="date" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors text-gray-700">
+                          <input v-model="form.birth_date" type="date" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors text-gray-700">
                       </div>
 
                       <div class="flex flex-col gap-1">
                           <label class="text-xs font-bold text-gray-700 uppercase">Password</label>
-                          <input v-model="form.password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="password" required>
+                          <input v-model="form.password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="password" required>
                       </div>
 
                       <div class="flex flex-col gap-1">
                           <label class="text-xs font-bold text-gray-700 uppercase">Confirm</label>
-                          <input v-model="form.confirm_password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="password" required>
+                          <input v-model="form.confirm_password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors" type="password" required>
                       </div>
 
-                      <button type="submit" class="md:col-span-2 w-full bg-[#F77934] hover:bg-[#e06b2a] text-white py-3 rounded-md font-bold mt-2 transition-colors">
+                      <button type="submit" class="md:col-span-2 w-full bg-[#D96518] hover:bg-[#e06b2a] text-white py-3 rounded-md font-bold mt-2 transition-colors">
                           Create Account
                       </button>
                   </form>
 
                   <p class="mt-6 text-center text-sm text-gray-500">
                       Already have an account? 
-                      <button @click="registerModal = false; loginModal = true" class="font-bold text-[#F77934] hover:underline ml-1">Sign in</button>
+                      <button @click="registerModal = false; loginModal = true" class="font-bold text-[#D96518] hover:underline ml-1">Sign in</button>
                   </p>
               </div>
           </div>
@@ -147,7 +147,7 @@
                               type="email" 
                               required 
                               placeholder="name@company.com"
-                              class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors"
+                              class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors"
                           >
                       </div>
 
@@ -159,12 +159,12 @@
                                   :type="showPassword ? 'text' : 'password'" 
                                   required 
                                   placeholder="••••••••"
-                                  class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors pr-12"
+                                  class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#D96518] transition-colors pr-12"
                               >
                               <button 
                                   type="button"
                                   @click="showPassword = !showPassword"
-                                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#F77934]"
+                                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#D96518]"
                               >
                                   <span class="text-xs font-bold uppercase">{{ showPassword ? 'Hide' : 'Show' }}</span>
                               </button>
@@ -176,18 +176,18 @@
                               <input 
                                   v-model="login.rememberMe" 
                                   type="checkbox" 
-                                  class="w-4 h-4 rounded-md accent-[#F77934]"
+                                  class="w-4 h-4 rounded-md accent-[#D96518]"
                               >
                               <span class="text-sm text-gray-600">Remember me</span>
                           </label>
-                          <button type="button" class="text-sm font-medium text-[#F77934] hover:underline">
+                          <button type="button" class="text-sm font-medium text-[#D96518] hover:underline">
                               Forgot password?
                           </button>
                       </div>
 
                       <button 
                           type="submit" 
-                          class="w-full bg-[#F77934] hover:bg-[#e06b2a] text-white py-2.5 rounded-md font-bold mt-4 transition-colors"
+                          class="w-full bg-[#D96518] hover:bg-[#e06b2a] text-white py-2.5 rounded-md font-bold mt-4 transition-colors"
                       >
                           Sign in
                       </button>
@@ -195,7 +195,7 @@
 
                   <p class="mt-8 text-center text-sm text-gray-500">
                       Don't have an account? 
-                      <button @click="loginModal = false; registerModal = true" class="font-bold text-[#F77934] hover:underline ml-1">Create account</button>
+                      <button @click="loginModal = false; registerModal = true" class="font-bold text-[#D96518] hover:underline ml-1">Create account</button>
                   </p>
               </div>
             </div>

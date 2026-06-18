@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto'
 
+/** Deep-link payload written to documents.qr_code_data after registration. */
+export function buildDocumentTrackQrPayload(documentId: string): string {
+  return `flowvision://track/doc?id=${documentId}`
+}
+
 type SupabaseReader = {
   from: (table: string) => {
     select: (columns: string) => {

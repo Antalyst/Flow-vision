@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard-card overflow-hidden">
     <!-- Table Header Bar -->
-    <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-card-border">
+    <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-onyx-border">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Document Monitoring</h3>
       <div class="flex items-center gap-3">
         <!-- Search -->
@@ -10,16 +10,16 @@
           <input
             v-model="searchQuery"
             placeholder="Document"
-            class="pl-9 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-rich-black/30 border border-gray-200 dark:border-card-border w-40 outline-none focus:border-rich-orange transition text-gray-700 dark:text-gray-300 placeholder:text-gray-400"
+            class="pl-9 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border w-40 outline-none focus:border-candy-orange transition text-gray-700 dark:text-gray-300 placeholder:text-gray-400"
           />
         </div>
         <!-- Filter Button -->
-        <button class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border border-gray-200 dark:border-card-border text-gray-600 dark:text-gray-400 hover:border-rich-orange transition">
+        <button class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border border-gray-200 dark:border-onyx-border text-gray-600 dark:text-gray-400 hover:border-candy-orange transition">
           <Icon name="ph:funnel" class="w-4 h-4" />
           Filter
         </button>
         <!-- Menu Dots -->
-        <button class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-card-dark transition">
+        <button class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition">
           <Icon name="ph:dots-three-vertical-bold" class="w-4 h-4 text-gray-500" />
         </button>
       </div>
@@ -29,13 +29,13 @@
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
-          <tr class="border-b border-gray-200 dark:border-card-border">
+          <tr class="border-b border-gray-200 dark:border-onyx-border">
             <th class="px-5 py-3 w-12">
               <input
                 type="checkbox"
                 :checked="selectAll"
                 @change="toggleSelectAll"
-                class="w-4 h-4 rounded accent-rich-orange"
+                class="w-4 h-4 rounded accent-candy-orange"
               />
             </th>
             <th class="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -75,14 +75,14 @@
           <tr
             v-for="doc in filteredDocs"
             :key="doc.id"
-            class="border-b border-gray-100 dark:border-card-border/50 hover:bg-gray-50 dark:hover:bg-rich-black/30 transition-colors cursor-pointer group"
+            class="border-b border-gray-100 dark:border-onyx-border/50 hover:bg-gray-50 dark:hover:bg-onyx-black/30 transition-colors cursor-pointer group"
           >
             <!-- Checkbox -->
             <td class="px-5 py-3.5">
               <input
                 type="checkbox"
                 v-model="doc.selected"
-                class="w-4 h-4 rounded accent-rich-orange"
+                class="w-4 h-4 rounded accent-candy-orange"
               />
             </td>
             <!-- Document ID -->
@@ -140,7 +140,7 @@
             </td>
             <!-- Actions -->
             <td class="px-5 py-3.5">
-              <button class="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-card-border transition">
+              <button class="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-onyx-border transition">
                 <Icon name="ph:dots-three-vertical-bold" class="w-4 h-4 text-gray-500" />
               </button>
             </td>
@@ -150,9 +150,9 @@
     </div>
 
     <!-- Pagination -->
-    <div class="flex items-center justify-center gap-2 p-4 border-t border-gray-200 dark:border-card-border">
+    <div class="flex items-center justify-center gap-2 p-4 border-t border-gray-200 dark:border-onyx-border">
       <button
-        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-card-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
+        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
         :disabled="currentPage === 1"
         @click="currentPage--"
       >
@@ -163,10 +163,10 @@
         :key="i"
         @click="currentPage = i"
         class="w-2 h-2 rounded-full transition-colors"
-        :class="currentPage === i ? 'bg-rich-orange' : 'bg-gray-300 dark:bg-gray-600'"
+        :class="currentPage === i ? 'bg-candy-orange' : 'bg-gray-300 dark:bg-gray-600'"
       />
       <button
-        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-card-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
+        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
         :disabled="currentPage === totalPages"
         @click="currentPage++"
       >
@@ -252,7 +252,7 @@ const getPriorityClass = (priority) => {
 
 const getStatusIcon = (type) => {
   const map = {
-    'review': { icon: 'ph:clock-fill', color: 'text-rich-orange' },
+    'review': { icon: 'ph:clock-fill', color: 'text-candy-orange' },
     'delivered': { icon: 'ph:check-circle-fill', color: 'text-emerald-500' },
     'progress': { icon: 'ph:spinner', color: 'text-blue-500' },
   }
@@ -261,7 +261,7 @@ const getStatusIcon = (type) => {
 
 const getAvatarColor = (initials) => {
   const colors = [
-    'bg-rich-orange/20 text-rich-orange',
+    'bg-candy-orange/20 text-candy-orange',
     'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
     'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
     'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',

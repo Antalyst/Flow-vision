@@ -12,8 +12,8 @@
       v-if="isProcessing"
       class="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-white/80"
     >
-      <div class="h-8 w-8 animate-spin rounded-full border-4 border-rich-orange border-t-transparent"></div>
-      <p class="text-xs font-bold uppercase text-rich-orange">Rendering…</p>
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-candy-orange border-t-transparent"></div>
+      <p class="text-xs font-bold uppercase text-candy-orange">Rendering…</p>
     </div>
 
     <!-- DOCX QR overlay badge (embedded strategy only) -->

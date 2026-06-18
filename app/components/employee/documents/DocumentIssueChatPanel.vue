@@ -11,7 +11,7 @@
     >
       <button
         type="button"
-        class="group flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-rich-orange/40 bg-rich-orange/10 px-4 py-3.5 text-sm font-bold text-rich-orange shadow-lg shadow-rich-orange/10 transition-all duration-300 hover:border-rich-orange hover:bg-rich-orange hover:text-white hover:shadow-rich-orange/30 active:scale-[0.98]"
+        class="group flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-candy-orange/40 bg-candy-orange/10 px-4 py-3.5 text-sm font-bold text-candy-orange shadow-lg shadow-candy-orange/10 transition-all duration-300 hover:border-candy-orange hover:bg-candy-orange hover:text-white hover:shadow-candy-orange/30 active:scale-[0.98]"
         @click="showReportForm = true"
       >
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -35,8 +35,8 @@
       >
         <div class="min-w-0">
           <div class="flex items-center gap-2">
-            <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-rich-orange" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-rich-orange">Issue Thread</p>
+            <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-candy-orange" />
+            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Issue Thread</p>
             <span
               class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase"
               :class="activeIssue.status === 'OPEN'
@@ -71,7 +71,7 @@
         class="flex-1 space-y-3 overflow-y-auto px-5 py-4"
       >
         <div v-if="loadingMessages" class="flex items-center justify-center py-8" :class="mutedText">
-          <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-rich-orange" />
+          <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-candy-orange" />
           Loading conversation…
         </div>
 
@@ -86,7 +86,7 @@
             <div
               class="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[11px] font-bold"
               :class="isOwnMessage(msg)
-                ? 'bg-rich-orange text-white shadow-md shadow-rich-orange/30'
+                ? 'bg-candy-orange text-white shadow-md shadow-candy-orange/30'
                 : isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-700'"
             >
               {{ initials(msg.sender_name) }}
@@ -96,7 +96,7 @@
             <div
               class="max-w-[78%] rounded-2xl border px-3.5 py-2.5 shadow-sm backdrop-blur-sm"
               :class="isOwnMessage(msg)
-                ? 'border-rich-orange/30 bg-rich-orange/10'
+                ? 'border-candy-orange/30 bg-candy-orange/10'
                 : isDark ? 'border-white/10 bg-white/[0.06]' : 'border-gray-200 bg-white/80'"
             >
               <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
@@ -127,11 +127,11 @@
         <!-- Typing indicator -->
         <div v-if="isTyping" class="flex items-center gap-2 px-1">
           <span class="flex gap-1">
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-rich-orange [animation-delay:0ms]" />
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-rich-orange [animation-delay:120ms]" />
-            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-rich-orange [animation-delay:240ms]" />
+            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:0ms]" />
+            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:120ms]" />
+            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-candy-orange [animation-delay:240ms]" />
           </span>
-          <span class="text-[11px] font-medium text-rich-orange">Composing…</span>
+          <span class="text-[11px] font-medium text-candy-orange">Composing…</span>
         </div>
       </div>
 
@@ -143,7 +143,7 @@
         @submit.prevent="sendMessage"
       >
         <div
-          class="flex items-end gap-2 rounded-xl border p-2 backdrop-blur-md transition-all focus-within:border-rich-orange/50 focus-within:ring-2 focus-within:ring-rich-orange/20"
+          class="flex items-end gap-2 rounded-xl border p-2 backdrop-blur-md transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
           :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-white/70'"
         >
           <textarea
@@ -155,7 +155,7 @@
           />
           <button
             type="submit"
-            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-rich-orange text-white shadow-lg shadow-rich-orange/25 transition hover:bg-[#e95a0b] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-candy-orange text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!draftMessage.trim() || sending"
             aria-label="Send message"
           >
@@ -175,7 +175,7 @@
       >
         <div class="flex items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-rich-orange">Flag Discrepancy</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
             <h3 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Report Document Issue</h3>
           </div>
           <button
@@ -190,13 +190,13 @@
 
         <form class="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5" @submit.prevent="submitReport">
           <label class="block">
-            <span class="text-sm font-semibold text-rich-orange">Issue Summary <span class="text-red-500">*</span></span>
+            <span class="text-sm font-semibold text-candy-orange">Issue Summary <span class="text-red-500">*</span></span>
             <input
               v-model="reportForm.title"
               type="text"
               maxlength="255"
               placeholder="e.g. Missing signature on page 3"
-              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             />
@@ -206,7 +206,7 @@
             <span class="text-sm font-semibold">Reporting Office <span class="text-red-500">*</span></span>
             <select
               v-model="reportForm.reported_by_office_id"
-              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             >
@@ -221,7 +221,7 @@
               v-model="reportForm.message_text"
               rows="4"
               placeholder="Describe what is wrong with the physical hard copy…"
-              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
             />
           </label>
@@ -241,7 +241,7 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl bg-rich-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rich-orange/25 transition hover:bg-[#e95a0b] disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] disabled:opacity-50"
               :disabled="reporting || !reportForm.title.trim() || !reportForm.reported_by_office_id"
             >
               <Icon v-if="reporting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -329,7 +329,7 @@ const issueId = computed(() => activeIssue.value?.id ?? null)
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const inputClass = computed(() =>
   isDark.value
-    ? 'border-white/10 bg-rich-black text-white placeholder:text-gray-500'
+    ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 
@@ -500,7 +500,7 @@ const tierBadgeClass = (msg: ChatMessage) => {
       : 'border-blue-400/30 bg-blue-50 text-blue-600'
   }
   if (String(msg.sender_id) === String(props.document.user_id)) {
-    return 'border-rich-orange/30 bg-rich-orange/10 text-rich-orange'
+    return 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
   }
   return isDark.value
     ? 'border-teal-400/30 bg-teal-400/10 text-teal-300'

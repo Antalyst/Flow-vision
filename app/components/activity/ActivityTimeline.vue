@@ -3,7 +3,7 @@
     <!-- Filters -->
     <div
       class="flex flex-wrap items-end gap-3 rounded-xl border p-3"
-      :class="isDark ? 'border-card-border bg-card-dark/40' : 'border-gray-200 bg-gray-50/80'"
+      :class="isDark ? 'border-onyx-border bg-onyx-card/40' : 'border-gray-200 bg-gray-50/80'"
     >
       <div class="min-w-[140px]">
         <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider" :class="mutedClass">Date range</label>
@@ -36,7 +36,7 @@
       <button
         type="button"
         class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
-        :class="isDark ? 'border-card-border text-gray-300' : 'border-gray-200 text-gray-600'"
+        :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
         :disabled="loading"
         @click="fetchLogs"
       >
@@ -58,7 +58,7 @@
       >
         <span
           class="absolute -left-[1.65rem] top-1 flex h-3 w-3 rounded-full ring-4"
-          :class="[dotClass(entry.action_type), isDark ? 'ring-rich-black' : 'ring-white']"
+          :class="[dotClass(entry.action_type), isDark ? 'ring-onyx-black' : 'ring-white']"
         />
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <p class="text-sm font-medium" :class="isDark ? 'text-gray-100' : 'text-gray-900'">{{ entry.message }}</p>
@@ -80,7 +80,7 @@ const { logs, loading, error, datePreset, actionType, fetchLogs } = useActivityL
 const mutedClass = computed(() => (isDark.value ? 'text-gray-500' : 'text-gray-400'))
 const inputClass = computed(() =>
   isDark.value
-    ? 'bg-rich-black/50 border-card-border text-gray-200'
+    ? 'bg-onyx-black/50 border-onyx-border text-gray-200'
     : 'bg-white border-gray-200 text-gray-800',
 )
 

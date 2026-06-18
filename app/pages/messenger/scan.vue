@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col" :class="isDark ? 'bg-rich-black' : 'bg-gray-950'">
+  <div class="min-h-screen flex flex-col" :class="isDark ? 'bg-onyx-black' : 'bg-gray-950'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
     <header class="flex items-center justify-between px-4 pt-4 pb-3">
@@ -127,7 +127,7 @@
                   class="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
                   :class="resultData?.is_final_stop
                     ? 'bg-emerald-500/10 text-emerald-400'
-                    : 'bg-rich-orange/10 text-rich-orange'"
+                    : 'bg-candy-orange/10 text-candy-orange'"
                 >
                   <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3 w-3" />
                   {{ resultData?.is_final_stop ? 'COMPLETED' : 'ARRIVED' }}
@@ -229,6 +229,7 @@
 import { computed, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'
+import { parseFlowVisionQr } from '~/utils/parseFlowVisionQr'
 
 definePageMeta({ layout: 'messenger' })
 
@@ -258,22 +259,6 @@ const resultCardClass = computed(() => {
   }
 })
 
-// ── QR type detection ──────────────────────────────────────────────────
-const parseQrPayload = (raw: string): { type: 'document'; qr: string } | { type: 'office'; id: number } | { type: 'unknown' } => {
-  const trimmed = raw.trim()
-
-  // Office QR: flowvision://office/[ID]
-  const officeMatch = trimmed.match(/^flowvision:\/\/office\/(\d+)$/i)
-  if (officeMatch) return { type: 'office', id: Number(officeMatch[1]) }
-
-  // Document QR: QR-XXXXXXXXX  OR legacy alphanumeric codes
-  if (trimmed.startsWith('QR-') || /^[A-Z0-9]{6,}$/.test(trimmed)) {
-    return { type: 'document', qr: trimmed }
-  }
-
-  return { type: 'unknown' }
-}
-
 // ── Scan handler ───────────────────────────────────────────────────────
 const handleScan = async (raw: string) => {
   rawScan.value    = raw
@@ -281,7 +266,7 @@ const handleScan = async (raw: string) => {
   resultData.value = null
   errorMessage.value = ''
 
-  const payload = parseQrPayload(raw)
+  const payload = parseFlowVisionQr(raw)
 
   if (payload.type === 'unknown') {
     scanState.value = 'unknown'

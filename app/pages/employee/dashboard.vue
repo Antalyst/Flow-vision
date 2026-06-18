@@ -6,7 +6,7 @@
       <!-- Greeting -->
       <div>
         <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedText">
-          <Icon name="ph:squares-four-fill" class="h-4 w-4 text-rich-orange" />
+          <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right" class="h-3 w-3" />
           <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Dashboard</span>
@@ -33,7 +33,7 @@
         >
           <!-- Sliding indicator -->
           <div
-            class="absolute inset-y-1.5 rounded-xl bg-rich-orange shadow-lg shadow-rich-orange/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            class="absolute inset-y-1.5 rounded-xl bg-candy-orange shadow-lg shadow-candy-orange/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             :style="indicatorStyle"
           />
 
@@ -59,7 +59,7 @@
           class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm"
           :class="isDark ? 'bg-white/[0.04] border-white/10 text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
         >
-          <Icon name="ph:building-office-fill" class="h-4 w-4 text-rich-orange" />
+          <Icon name="ph:building-office-fill" class="h-4 w-4 text-candy-orange" />
           <span class="font-semibold">{{ auth.currentOrg.name }}</span>
           <span class="font-mono text-xs opacity-50">{{ auth.currentOrg.code }}</span>
         </div>
@@ -72,17 +72,17 @@
         :key="currentScope"
         class="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
         :class="currentScope === 'LOCAL'
-          ? isDark ? 'border-rich-orange/20 bg-rich-orange/5' : 'border-orange-200 bg-orange-50'
+          ? isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'
           : isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
       >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-rich-orange/10">
+        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
           <Icon
             :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'"
-            class="h-4 w-4 text-rich-orange"
+            class="h-4 w-4 text-candy-orange"
           />
         </div>
         <div class="min-w-0 flex-1">
-          <p class="font-semibold text-rich-orange text-[11px] uppercase tracking-widest">
+          <p class="font-semibold text-candy-orange text-[11px] uppercase tracking-widest">
             {{ currentScope === 'LOCAL' ? 'Small Picture — Office View' : 'Big Picture — Organisation View' }}
           </p>
           <p class="mt-0.5 text-xs" :class="mutedText">
@@ -94,9 +94,9 @@
         <div class="flex items-center gap-2">
           <span
             class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-            :class="isDark ? 'border-rich-orange/30 text-rich-orange' : 'border-rich-orange/30 text-rich-orange'"
+            :class="isDark ? 'border-candy-orange/30 text-candy-orange' : 'border-candy-orange/30 text-candy-orange'"
           >
-            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rich-orange" />
+            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-candy-orange" />
             Live
           </span>
           <!-- Quick-launch AI canvas with active scope pre-loaded -->
@@ -104,8 +104,8 @@
             :to="`/employee/ai?scope=${currentScope}`"
             class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition hover:scale-[1.03]"
             :class="isDark
-              ? 'border-white/10 bg-white/5 text-gray-300 hover:border-rich-orange/30 hover:text-rich-orange'
-              : 'border-gray-200 bg-white text-gray-500 hover:border-rich-orange/30 hover:text-rich-orange'"
+              ? 'border-white/10 bg-white/5 text-gray-300 hover:border-candy-orange/30 hover:text-candy-orange'
+              : 'border-gray-200 bg-white text-gray-500 hover:border-candy-orange/30 hover:text-candy-orange'"
           >
             <Icon name="ph:sparkle-fill" class="h-3 w-3" />
             Ask AI
@@ -181,7 +181,7 @@
             <span
               class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
               :class="currentScope === 'LOCAL'
-                ? 'border-rich-orange/30 bg-rich-orange/10 text-rich-orange'
+                ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
                 : isDark ? 'border-white/20 bg-white/5 text-gray-300' : 'border-gray-300 bg-gray-100 text-gray-600'"
             >
               <Icon
@@ -192,7 +192,7 @@
             </span>
             <NuxtLink
               :to="`/employee/documents`"
-              class="text-xs font-semibold text-rich-orange transition-colors hover:text-[#e95a0b]"
+              class="text-xs font-semibold text-candy-orange transition-colors hover:text-[#e95a0b]"
             >
               View all →
             </NuxtLink>
@@ -227,13 +227,13 @@
               <span
                 class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
                 :class="doc.is_own_upload
-                  ? 'bg-rich-orange/10'
+                  ? 'bg-candy-orange/10'
                   : isDark ? 'bg-purple-500/10' : 'bg-purple-50'"
               >
                 <Icon
                   :name="doc.is_own_upload ? 'ph:upload-simple-fill' : 'ph:buildings-fill'"
                   class="h-4 w-4"
-                  :class="doc.is_own_upload ? 'text-rich-orange' : 'text-purple-500'"
+                  :class="doc.is_own_upload ? 'text-candy-orange' : 'text-purple-500'"
                 />
               </span>
 
@@ -250,7 +250,7 @@
                   <span>{{ formatDate(doc.created_at) }}</span>
                   <span
                     class="font-medium"
-                    :class="doc.is_own_upload ? 'text-rich-orange' : 'text-purple-500'"
+                    :class="doc.is_own_upload ? 'text-candy-orange' : 'text-purple-500'"
                   >
                     {{ doc.is_own_upload ? 'You uploaded' : 'Routed in' }}
                   </span>
@@ -281,8 +281,8 @@
             :key="'empty'"
             class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-rich-orange/10">
-              <Icon name="ph:clipboard-text" class="h-7 w-7 text-rich-orange/50" />
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-candy-orange/10">
+              <Icon name="ph:clipboard-text" class="h-7 w-7 text-candy-orange/50" />
             </div>
             <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
               {{ currentScope === 'LOCAL' ? 'No documents in your personal ledger.' : 'No documents in the organisation yet.' }}
@@ -306,7 +306,7 @@
             </div>
             <NuxtLink
               to="/employee/offices"
-              class="text-xs font-semibold text-rich-orange transition-colors hover:text-[#e95a0b]"
+              class="text-xs font-semibold text-candy-orange transition-colors hover:text-[#e95a0b]"
             >
               Manage →
             </NuxtLink>
@@ -323,8 +323,8 @@
               class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
               :class="isDark ? 'border-white/5 hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
             >
-              <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-rich-orange/10">
-                <Icon name="ph:buildings-fill" class="h-3.5 w-3.5 text-rich-orange" />
+              <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-candy-orange/10">
+                <Icon name="ph:buildings-fill" class="h-3.5 w-3.5 text-candy-orange" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
@@ -344,7 +344,7 @@
           <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
             <Icon name="ph:building-office" class="h-8 w-8 text-gray-300" />
             <p class="text-xs" :class="mutedText">No offices assigned yet.</p>
-            <NuxtLink to="/employee/offices" class="text-xs font-semibold text-rich-orange hover:text-[#e95a0b]">
+            <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
               Register one →
             </NuxtLink>
           </div>
@@ -356,7 +356,7 @@
           <div v-if="currentScope === 'LOCAL'" key="tasks" class="dashboard-card flex-1 p-5">
             <div class="mb-4 flex items-center justify-between">
               <h2 class="text-sm font-bold">Assigned Tasks</h2>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-rich-orange hover:text-[#e95a0b]">
+              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
                 View all →
               </NuxtLink>
             </div>
@@ -386,7 +386,7 @@
                 <span
                   class="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                   :class="task.status === 'In Progress'
-                    ? 'bg-rich-orange/10 text-rich-orange'
+                    ? 'bg-candy-orange/10 text-candy-orange'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 >
                   {{ task.status }}
@@ -402,7 +402,7 @@
                 <h2 class="text-sm font-bold">Tracking Queue</h2>
                 <p class="mt-0.5 text-[11px]" :class="mutedText">Live org-wide pipeline</p>
               </div>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-rich-orange hover:text-[#e95a0b]">
+              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
                 Full queue →
               </NuxtLink>
             </div>
@@ -428,8 +428,8 @@
               </div>
 
               <div
-                class="mt-2 rounded-xl border px-3 py-2.5 text-center text-[11px] font-semibold text-rich-orange"
-                :class="isDark ? 'border-rich-orange/20 bg-rich-orange/5' : 'border-orange-200 bg-orange-50'"
+                class="mt-2 rounded-xl border px-3 py-2.5 text-center text-[11px] font-semibold text-candy-orange"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 {{ queueSummary.total }} total in-flight documents
               </div>
@@ -536,8 +536,8 @@ const kpiCards = computed(() => {
     return [
       {
         label: 'Office Docs', value: String(ledger.value.length),
-        trend: 'in your offices', trendColor: 'text-rich-orange',
-        icon: 'ph:files-fill', iconBg: 'bg-rich-orange/10', iconColor: 'text-rich-orange',
+        trend: 'in your offices', trendColor: 'text-candy-orange',
+        icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange',
       },
       {
         label: 'My Uploads', value: String(own),
@@ -562,8 +562,8 @@ const kpiCards = computed(() => {
   return [
     {
       label: 'Total Org Docs', value: String(total),
-      trend: 'across organisation', trendColor: 'text-rich-orange',
-      icon: 'ph:files-fill', iconBg: 'bg-rich-orange/10', iconColor: 'text-rich-orange',
+      trend: 'across organisation', trendColor: 'text-candy-orange',
+      icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange',
     },
     {
       label: 'In Transit', value: String(in_transit),
@@ -585,7 +585,7 @@ const kpiCards = computed(() => {
 
 // Pipeline chips for GLOBAL view
 const pipelineChips = computed(() => [
-  { label: 'Created',   count: queueSummary.value.created,           dot: 'bg-rich-orange' },
+  { label: 'Created',   count: queueSummary.value.created,           dot: 'bg-candy-orange' },
   { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
   { label: 'In Transit',count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
   { label: 'At Office', count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
@@ -594,7 +594,7 @@ const pipelineChips = computed(() => [
 
 // Queue stats list for right panel
 const queueStats = computed(() => [
-  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: 'bg-rich-orange' },
+  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: 'bg-candy-orange' },
   { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
   { label: 'In Transit',                    count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
   { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
@@ -630,7 +630,7 @@ const trackingBadge = (s: string) => {
     case 'IN_TRANSIT':        return 'bg-blue-500/10 text-blue-400'
     case 'ARRIVED_AT_OFFICE': return 'bg-teal-500/10 text-teal-400'
     case 'PICKED_UP':         return 'bg-purple-500/10 text-purple-400'
-    default:                  return 'bg-rich-orange/10 text-rich-orange'
+    default:                  return 'bg-candy-orange/10 text-candy-orange'
   }
 }
 

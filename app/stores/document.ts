@@ -10,16 +10,19 @@ export interface DocumentRecord {
   title: string
   description: string
   status: string
+  tracking_status?: string
   qr_code_data?: string
   mysql_storage_id?: number | null
   uploader_name?: string | null
   created_at?: string
+  priority?: string
 }
 
 interface DocumentState {
   documents: DocumentRecord[]
   loading: boolean
   uploading: boolean
+  registering: boolean
   lastAnalysis: { title: string; description: string } | null
 }
 
@@ -30,6 +33,7 @@ export const useDocumentStore = defineStore('document', {
     documents: [],
     loading: false,
     uploading: false,
+    registering: false,
     lastAnalysis: null,
   }),
 
@@ -68,6 +72,62 @@ export const useDocumentStore = defineStore('document', {
         return []
       } finally {
         this.loading = false
+      }
+    },
+
+    async registerDocument(options: {
+      title: string
+      description?: string
+      priority: 'High' | 'Medium' | 'Low'
+      stageId: string | number
+      originOfficeId?: string | null
+    }) {
+      if (!this.canUploadDocuments) {
+        return { success: false, error: 'You are not permitted to register documents.' }
+      }
+
+      const org_id = this.currentOrgIdRaw
+      if (!org_id) {
+        return { success: false, error: 'Missing organization ID.' }
+      }
+
+      const { title, description = '', priority, stageId, originOfficeId = null } = options
+
+      if (!title?.trim()) {
+        return { success: false, error: 'Title is required.' }
+      }
+      if (!stageId) {
+        return { success: false, error: 'Target route is required.' }
+      }
+
+      this.registering = true
+      try {
+        const res: any = await $fetch('/api/documents/register', {
+          method: 'POST',
+          body: {
+            title: title.trim(),
+            description: description.trim(),
+            priority,
+            stage_id: String(stageId),
+            origin_office_id: originOfficeId ? String(originOfficeId) : null,
+          },
+        })
+
+        if (res?.success && res.metadata) {
+          const record = { ...res.metadata, priority: res.scope?.priority ?? priority }
+          this.documents.unshift(record)
+          return { success: true, data: record }
+        }
+
+        return { success: false, error: res?.message || 'Registration failed' }
+      } catch (error: any) {
+        console.error('Error registering document:', error)
+        return {
+          success: false,
+          error: error?.data?.message || error?.message || 'Registration failed',
+        }
+      } finally {
+        this.registering = false
       }
     },
 

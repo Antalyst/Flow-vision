@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<{
 })
 
 const { currentLayout, setLayout } = useDashboardLayout()
+const { isDark, toggleTheme } = useTheme()
 
 const layoutOptions: { id: DashboardLayoutId, label: string }[] = [
   { id: 'default', label: 'Matrix' },
@@ -28,16 +29,33 @@ function cycleLayout() {
 <template>
   <div>
     <div class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-2 text-sm text-zinc-400">
-        <Icon name="ph:squares-four-fill" class="h-4 w-4 text-amber-500" />
+      <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-white-muted">
+        <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
         <span>Architecture Matrix</span>
         <Icon name="ph:caret-right" class="h-3 w-3" />
-        <span class="font-medium text-white">Dashboard</span>
+        <span class="font-medium text-onyx-black dark:text-white-pure">Dashboard</span>
       </div>
       <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="relative h-8 w-14 rounded-full transition-colors duration-300"
+          :class="isDark ? 'bg-candy-orange' : 'bg-zinc-300'"
+          aria-label="Toggle light and dark mode"
+          @click="toggleTheme"
+        >
+          <span
+            class="absolute top-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white-pure shadow-md transition-transform duration-300"
+            :class="isDark ? 'translate-x-6' : 'translate-x-0.5'"
+          >
+            <Icon
+              :name="isDark ? 'ph:moon-fill' : 'ph:sun-fill'"
+              class="h-3.5 w-3.5 text-candy-orange"
+            />
+          </span>
+        </button>
         <NuxtLink
           to="/client/notifications"
-          class="rounded-xl border border-zinc-800 p-2 text-zinc-400 transition hover:border-amber-500/40 hover:text-amber-400"
+          class="rounded-xl border border-zinc-200 p-2 text-zinc-500 transition hover:border-candy-orange/40 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
         >
           <Icon name="ph:bell" class="h-5 w-5" />
         </NuxtLink>
@@ -46,17 +64,17 @@ function cycleLayout() {
 
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-white">Hello, {{ userName }}!</h1>
-        <p class="mt-1 text-sm text-zinc-400">Live architecture matrix — org-scoped tracking intelligence.</p>
+        <h1 class="text-2xl font-bold text-onyx-black dark:text-white-pure">Hello, {{ userName }}!</h1>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-white-muted">Live architecture matrix — org-scoped tracking intelligence.</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2">
-          <Icon name="ph:layout-fill" class="h-4 w-4 text-amber-500" />
-          <span class="text-xs font-semibold text-zinc-300">Layout</span>
+        <div class="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white-surface px-3 py-2 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card">
+          <Icon name="ph:layout-fill" class="h-4 w-4 text-candy-orange" />
+          <span class="text-xs font-semibold text-onyx-black dark:text-white-pure">Layout</span>
           <button
             type="button"
-            class="ml-1 grid h-7 w-24 grid-cols-3 gap-0.5 rounded-full bg-zinc-800 p-0.5 transition-all duration-500 ease-in-out"
+            class="ml-1 grid h-7 w-24 grid-cols-3 gap-0.5 rounded-full bg-zinc-200 p-0.5 transition-all duration-500 ease-in-out dark:bg-onyx-black"
             @click="cycleLayout"
           >
             <span
@@ -64,19 +82,19 @@ function cycleLayout() {
               :key="opt.id"
               class="flex items-center justify-center rounded-full text-[9px] font-bold uppercase leading-none transition-all duration-500 ease-in-out"
               :class="activeIndex === index
-                ? 'bg-amber-500 text-zinc-950 shadow-[0_0_12px_rgba(245,158,11,0.45)]'
-                : 'text-zinc-400'"
+                ? 'bg-candy-orange text-white-pure shadow-[0_0_12px_rgba(244,125,47,0.45)]'
+                : 'text-zinc-500 dark:text-white-muted'"
             >
               {{ ['M', 'S', 'C'][index] }}
             </span>
           </button>
-          <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-candy-orange">
             {{ layoutOptions.find((o) => o.id === currentLayout)?.label }}
           </span>
         </div>
 
-        <div class="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-400">
-          <span class="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+        <div class="inline-flex items-center gap-2 rounded-xl border border-candy-orange/20 bg-candy-orange/5 px-3 py-2 text-xs text-candy-orange">
+          <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
           Live sync
         </div>
       </div>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center gap-3 px-2 py-2 rounded-xl"
-      :class="isDark ? 'hover:bg-card-dark' : 'hover:bg-gray-50'">
+      :class="isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50'">
       <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-none bg-amber-500/10 text-amber-600 dark:text-amber-400">
         {{ initials }}
       </div>

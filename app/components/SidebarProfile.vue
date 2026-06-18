@@ -1,8 +1,8 @@
 <template>
   <div class="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors group"
-    :class="isDark ? 'hover:bg-card-dark' : 'hover:bg-gray-50'">
+    :class="isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50'">
     <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-none"
-      :class="isDark ? 'bg-rich-orange/[0.15] text-rich-orange' : 'bg-rich-orange/10 text-rich-orange'">
+      :class="isDark ? 'bg-candy-orange/[0.15] text-candy-orange' : 'bg-candy-orange/10 text-candy-orange'">
       {{ userInitials }}
     </div>
     <div class="flex-1 min-w-0">

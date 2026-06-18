@@ -4,7 +4,7 @@
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="isDark ? 'text-white' : 'text-gray-900'">
           Tracking Operations
         </h1>
@@ -22,7 +22,7 @@
           class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all duration-200 hover:scale-[1.02]"
           :class="statusFilter === chip.status
             ? chip.activeClass
-            : (isDark ? 'border-card-border bg-white/5 text-gray-400' : 'border-gray-200 bg-white text-gray-500')"
+            : (isDark ? 'border-onyx-border bg-white/5 text-gray-400' : 'border-gray-200 bg-white text-gray-500')"
           @click="statusFilter = statusFilter === chip.status ? '' : chip.status"
         >
           <Icon :name="chip.icon" class="h-3.5 w-3.5" />
@@ -41,7 +41,7 @@
         v-for="kpi in kpiCards"
         :key="kpi.label"
         class="flex flex-col gap-1 rounded-xl border p-4 transition-all duration-300"
-        :class="isDark ? 'border-card-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <div class="flex items-center gap-2 mb-1">
           <span class="flex h-7 w-7 items-center justify-center rounded-lg" :class="kpi.iconBg">
@@ -63,12 +63,12 @@
       <!-- Document list (2/3 width) -->
       <section
         class="overflow-hidden rounded-xl border transition-all duration-300 lg:col-span-2"
-        :class="isDark ? 'border-card-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <!-- Section header -->
         <div
           class="flex items-center justify-between border-b px-6 py-4"
-          :class="isDark ? 'border-card-border' : 'border-gray-100'"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
           <div>
             <h2 class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
@@ -80,8 +80,8 @@
           </div>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:border-rich-orange hover:text-rich-orange"
-            :class="isDark ? 'border-card-border text-gray-400' : 'border-gray-200 text-gray-500'"
+            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange"
+            :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
             @click="refreshQueue"
           >
             <Icon name="ph:arrows-clockwise" class="h-3.5 w-3.5" :class="queueLoading ? 'animate-spin' : ''" />
@@ -90,7 +90,7 @@
         </div>
 
         <!-- Loading skeleton -->
-        <div v-if="queueLoading" class="divide-y" :class="isDark ? 'divide-card-border' : 'divide-gray-100'">
+        <div v-if="queueLoading" class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
           <div
             v-for="n in 5" :key="n"
             class="flex items-center gap-4 px-6 py-4"
@@ -104,7 +104,7 @@
         </div>
 
         <!-- Queue rows -->
-        <div v-else class="divide-y" :class="isDark ? 'divide-card-border' : 'divide-gray-100'">
+        <div v-else class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
           <button
             v-for="doc in filteredQueue"
             :key="doc.id"
@@ -113,7 +113,7 @@
             :class="[
               isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50',
               selectedDocId === doc.id
-                ? (isDark ? 'bg-rich-orange/5 border-l-2 border-l-rich-orange' : 'bg-rich-orange/[0.03] border-l-2 border-l-rich-orange')
+                ? (isDark ? 'bg-candy-orange/5 border-l-2 border-l-candy-orange' : 'bg-candy-orange/[0.03] border-l-2 border-l-candy-orange')
                 : 'border-l-2 border-l-transparent',
             ]"
             @click="selectDocument(doc)"
@@ -163,7 +163,7 @@
               >
                 <div
                   class="h-full rounded-full transition-all duration-500"
-                  :class="doc.tracking_status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-rich-orange'"
+                  :class="doc.tracking_status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-candy-orange'"
                   :style="{ width: `${doc.progress_pct}%` }"
                 />
               </div>
@@ -184,9 +184,9 @@
       <!-- Detail panel (1/3) -->
       <aside
         class="rounded-xl border transition-all duration-300"
-        :class="isDark ? 'border-card-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
-        <div class="border-b px-5 py-4" :class="isDark ? 'border-card-border' : 'border-gray-100'">
+        <div class="border-b px-5 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
           <h2 class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ selectedDoc ? 'Tracking Timeline' : 'Select a Document' }}
           </h2>
@@ -229,7 +229,7 @@
           <div
             v-if="allowedTransitions.length"
             class="space-y-2 border-t pt-4"
-            :class="isDark ? 'border-card-border' : 'border-gray-100'"
+            :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
           >
             <p class="text-[10px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
               Advance Status
@@ -346,7 +346,7 @@ const filteredQueue = computed(() => {
 })
 
 const kpiCards = computed(() => [
-  { label: 'Total',      value: queueSummary.value.total ?? 0,              icon: 'ph:files-fill',           iconBg: 'bg-rich-orange/10', iconColor: 'text-rich-orange' },
+  { label: 'Total',      value: queueSummary.value.total ?? 0,              icon: 'ph:files-fill',           iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange' },
   { label: 'Registered', value: queueSummary.value.created ?? 0,            icon: 'ph:file-plus-fill',        iconBg: 'bg-gray-500/10',    iconColor: 'text-gray-500' },
   { label: 'In Transit', value: queueSummary.value.in_transit ?? 0,         icon: 'ph:motorcycle-fill',       iconBg: 'bg-amber-500/10',   iconColor: 'text-amber-500' },
   { label: 'Arrived',    value: queueSummary.value.arrived_at_office ?? 0,  icon: 'ph:buildings-fill',        iconBg: 'bg-orange-500/10',  iconColor: 'text-orange-500' },
@@ -365,7 +365,7 @@ const statusIconBg = (status: string) => {
     CREATED:           isDark.value ? 'bg-white/5'          : 'bg-gray-100',
     PICKED_UP:         isDark.value ? 'bg-sky-500/10'       : 'bg-sky-50',
     IN_TRANSIT:        isDark.value ? 'bg-amber-500/10'     : 'bg-amber-50',
-    ARRIVED_AT_OFFICE: isDark.value ? 'bg-rich-orange/10'   : 'bg-orange-50',
+    ARRIVED_AT_OFFICE: isDark.value ? 'bg-candy-orange/10'   : 'bg-orange-50',
     COMPLETED:         isDark.value ? 'bg-emerald-500/10'   : 'bg-emerald-50',
   }
   return map[status] ?? (isDark.value ? 'bg-white/5' : 'bg-gray-100')
@@ -375,7 +375,7 @@ const statusIconColor = (status: string) => ({
   CREATED:           'text-gray-400',
   PICKED_UP:         'text-sky-500',
   IN_TRANSIT:        'text-amber-500',
-  ARRIVED_AT_OFFICE: 'text-rich-orange',
+  ARRIVED_AT_OFFICE: 'text-candy-orange',
   COMPLETED:         'text-emerald-500',
 }[status] ?? 'text-gray-400')
 
@@ -390,7 +390,7 @@ const statusBadgeClass = (status: string) => ({
 const advanceButtonClass = (status: string) => ({
   PICKED_UP:         'bg-sky-500 text-white hover:bg-sky-600',
   IN_TRANSIT:        'bg-amber-500 text-white hover:bg-amber-600',
-  ARRIVED_AT_OFFICE: 'bg-rich-orange text-white hover:bg-orange-600',
+  ARRIVED_AT_OFFICE: 'bg-candy-orange text-white hover:bg-orange-600',
   COMPLETED:         'bg-emerald-500 text-white hover:bg-emerald-600',
 }[status] ?? 'bg-gray-500 text-white')
 

@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-          <Icon name="ph:bell-fill" class="h-4 w-4 text-rich-orange" />
+          <Icon name="ph:bell-fill" class="h-4 w-4 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right" class="h-3 w-3" />
           <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Notifications</span>
@@ -15,7 +15,7 @@
       </div>
       <NuxtLink
         to="/employee/documents"
-        class="inline-flex items-center gap-2 rounded-xl bg-rich-orange px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
       >
         <Icon name="ph:files-fill" class="h-4 w-4" />
         View Documents
@@ -66,7 +66,7 @@
         >
           <div class="min-w-0 flex-1">
             <div class="mb-1 flex items-center gap-2">
-              <span class="h-2 w-2 animate-pulse rounded-full bg-rich-orange" />
+              <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
               <h4 class="truncate text-base font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ notif.title }}
               </h4>
@@ -91,7 +91,7 @@
             <button
               v-if="isUnreadNotification(notif.is_read)"
               type="button"
-              class="rounded-lg bg-rich-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              class="rounded-lg bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               :disabled="markingId === notif.id"
               @click="markAsRead(notif.id)"
             >

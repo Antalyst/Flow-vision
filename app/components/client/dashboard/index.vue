@@ -1,5 +1,5 @@
 <template>
-  <div class="matrix-shell -mx-4 space-y-6 px-4 md:-mx-8 md:px-8">
+  <div class="matrix-shell -mx-4 space-y-6 rounded-2xl bg-white-pure px-4 pb-6 pt-4 transition-colors duration-300 dark:bg-onyx-black md:-mx-8 md:px-8">
     <div class="fv-enter-header" :class="entranceVisibleClass">
       <DashboardHeader :user-name="auth.user?.full_name || 'User'" />
     </div>
@@ -140,14 +140,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.matrix-shell {
-  min-height: 100%;
-  background: rgb(9 9 11);
-  border-radius: 1rem;
-  padding-top: 1rem;
-  padding-bottom: 1.5rem;
-}
-
 .matrix-layout-move,
 .matrix-layout-enter-active,
 .matrix-layout-leave-active {

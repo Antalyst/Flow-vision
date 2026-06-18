@@ -1,12 +1,12 @@
 <template>
   <section
     class="w-full max-w-[1800px] mx-auto space-y-6 pb-24 lg:pb-8 font-dashboard animate-fade-in"
-    :class="isDark ? 'text-white' : 'text-rich-black'"
+    :class="isDark ? 'text-white' : 'text-onyx-black'"
   >
     <!-- A. Header & Core Action Row -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-rich-orange"></div>
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange"></div>
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
         <p class="mt-1 text-sm" :class="mutedTextClass">
           Upload, track, and monitor AI-analyzed organizational documents
@@ -15,7 +15,7 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#FF620C] px-4 py-2 font-medium text-white shadow-sm shadow-rich-orange/20 transition duration-200 hover:bg-[#F77934] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rich-orange"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
         @click="isUploadModalOpen = true"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -30,7 +30,7 @@
     >
       <div
         class="flex flex-1 items-center gap-2 rounded-lg border px-3 py-2 transition-all"
-        :class="isDark ? 'border-card-border bg-rich-black/40 focus-within:border-rich-orange' : 'border-gray-200 bg-gray-50 focus-within:border-rich-orange'"
+        :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
       >
         <Icon name="ph:magnifying-glass" class="h-4 w-4" :class="mutedTextClass" />
         <input
@@ -43,7 +43,7 @@
 
       <select
         v-model="officeFilter"
-        class="rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-rich-orange sm:w-64"
+        class="rounded-lg border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-64"
         :class="inputClass"
       >
         <option value="all">All Departments / Offices</option>
@@ -62,12 +62,12 @@
             {{ filteredDocuments.length }} document{{ filteredDocuments.length === 1 ? '' : 's' }} tracked
           </p>
         </div>
-        <Icon name="ph:files" class="h-5 w-5 text-rich-orange" />
+        <Icon name="ph:files" class="h-5 w-5 text-candy-orange" />
       </div>
 
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
-          <thead :class="isDark ? 'bg-rich-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
+          <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
             <tr>
               <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wide">Document</th>
               <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Target Office</th>
@@ -79,7 +79,7 @@
           <tbody>
             <tr v-if="documentStore.loading">
               <td colspan="5" class="px-5 py-12 text-center" :class="mutedTextClass">
-                <Icon name="ph:spinner-gap" class="mx-auto mb-2 h-6 w-6 animate-spin text-rich-orange" />
+                <Icon name="ph:spinner-gap" class="mx-auto mb-2 h-6 w-6 animate-spin text-candy-orange" />
                 Loading documents…
               </td>
             </tr>
@@ -89,8 +89,12 @@
                 v-for="doc in filteredDocuments"
                 :key="doc.id"
                 class="cursor-pointer border-t transition-colors duration-150"
-                :class="[borderClass, isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-gray-50']"
-                @click="openDetail(doc)"
+                :class="[
+                  borderClass,
+                  isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-gray-50',
+                  activeDocument?.id === doc.id ? 'bg-candy-orange/5 ring-1 ring-inset ring-candy-orange/30' : '',
+                ]"
+                @click="openDocumentPreview(doc)"
               >
                 <td class="min-w-72 px-5 py-4">
                   <div class="font-semibold">{{ doc.title }}</div>
@@ -122,7 +126,7 @@
             <!-- D. Empty state -->
             <tr v-else>
               <td colspan="5" class="px-5 py-16 text-center">
-                <Icon name="ph:file-dashed" class="mx-auto mb-3 h-12 w-12 text-rich-orange" />
+                <Icon name="ph:file-dashed" class="mx-auto mb-3 h-12 w-12 text-candy-orange" />
                 <p class="font-semibold">No documents found.</p>
                 <p class="mt-1 text-xs" :class="mutedTextClass">
                   Click "Upload Document" to get started.
@@ -141,11 +145,11 @@
       @uploaded="handleUploadSuccess"
     />
 
-    <!-- Detail drawer -->
-    <DocumentDetailModal
-      :is-open="isDetailModalOpen"
-      :document="selectedDocument"
-      @close="isDetailModalOpen = false"
+    <!-- Detail preview drawer -->
+    <DocumentPreviewDrawer
+      :is-open="!!activeDocument"
+      :document="activeDocument"
+      @close="closeDocumentPreview"
     />
   </section>
 </template>
@@ -157,7 +161,7 @@ import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { useDocumentStore, type DocumentRecord } from '~/stores/document'
 import DocumentUploadModal from './documentUploadModal.vue'
-import DocumentDetailModal from './documentDetailModal.vue'
+import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
 
 const authStore = useAuthStore()
 const officeStore = useOfficeStore()
@@ -166,20 +170,19 @@ const documentStore = useDocumentStore()
 const { isDark } = useTheme()
 
 const isUploadModalOpen = ref(false)
-const isDetailModalOpen = ref(false)
-const selectedDocument = ref<DocumentRecord | null>(null)
+const activeDocument = ref<DocumentRecord | null>(null)
 const searchQuery = ref('')
 const officeFilter = ref<'all' | string>('all')
 
 const surfaceClass = computed(() =>
-  isDark.value ? 'border-card-border bg-[#1A1A1A] shadow-card-dark' : 'border-gray-200 bg-white'
+  isDark.value ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card' : 'border-gray-200 bg-white'
 )
-const borderClass = computed(() => (isDark.value ? 'border-card-border' : 'border-gray-200'))
+const borderClass = computed(() => (isDark.value ? 'border-onyx-border' : 'border-gray-200'))
 const mutedTextClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
 const inputClass = computed(() =>
   isDark.value
-    ? 'border-card-border bg-rich-black text-white placeholder:text-gray-500'
-    : 'border-gray-200 bg-white text-rich-black placeholder:text-gray-400'
+    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
+    : 'border-gray-200 bg-white text-onyx-black placeholder:text-gray-400'
 )
 
 const filteredDocuments = computed(() => {
@@ -229,13 +232,16 @@ const statusClass = (status: string) => {
       return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
     case 'pending':
     default:
-      return 'text-[#FF620C] border-[#FF620C]/30 bg-[#FF620C]/10'
+      return 'text-[#F47D2F] border-[#F47D2F]/30 bg-[#F47D2F]/10'
   }
 }
 
-const openDetail = (doc: DocumentRecord) => {
-  selectedDocument.value = doc
-  isDetailModalOpen.value = true
+const openDocumentPreview = (doc: DocumentRecord) => {
+  activeDocument.value = doc
+}
+
+const closeDocumentPreview = () => {
+  activeDocument.value = null
 }
 
 const handleUploadSuccess = () => {
