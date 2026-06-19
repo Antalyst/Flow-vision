@@ -5,7 +5,7 @@
   >
     <div
       ref="pinWrapperRef"
-      class="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden"
+      class="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden py-14 "
     >
       <div class="relative h-full w-full overflow-hidden">
         <!-- Video: contained + centered on mobile, immersive cover on lg+ -->
@@ -232,6 +232,7 @@ function applyInitialScale(video: HTMLVideoElement) {
     opacity: 0,
     transformOrigin: 'center center',
     force3D: true,
+    borderRadius: '999px',
   })
 }
 
@@ -329,8 +330,14 @@ function initScrollAnimation() {
 
   masterTimeline.fromTo(
     video,
-    { scale: INITIAL_SCALE, transformOrigin: 'center center' },
-    { scale: 1, ease: 'none', duration: SCALE_DURATION, immediateRender: false },
+    { scale: INITIAL_SCALE, transformOrigin: 'center center', borderRadius: '10rem' },
+    { 
+      scale: 1, 
+      borderRadius: '0rem', // Morphs back into flat 90-degree rectangle 
+      ease: 'none', 
+      duration: SCALE_DURATION, 
+      immediateRender: false 
+    },
     0,
   )
 
