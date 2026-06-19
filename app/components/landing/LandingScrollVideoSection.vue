@@ -7,11 +7,14 @@
       ref="pinWrapperRef"
       class="sticky top-0 flex h-screen w-full flex-col items-center justify-center overflow-hidden"
     >
-      <div class="relative flex h-full w-full items-center justify-center overflow-hidden">
-        <div class="relative inline-block max-w-full overflow-hidden">
+      <div class="relative h-full w-full overflow-hidden">
+        <!-- Video: contained + centered on mobile, immersive cover on lg+ -->
+        <div
+          class="absolute inset-0 z-0 flex items-center justify-center px-4 pb-44 pt-36 sm:px-6 sm:pb-40 sm:pt-32 lg:p-0"
+        >
           <video
             ref="videoRef"
-            class="block h-auto w-[1800px] max-w-none origin-center rounded-lg object-contain opacity-0 transition-opacity duration-300 will-change-transform"
+            class="block max-h-[min(52vh,calc(100dvh-22rem))] w-full max-w-full origin-center rounded-lg object-contain opacity-0 transition-opacity duration-300 will-change-transform lg:absolute lg:inset-0 lg:max-h-none lg:h-full lg:w-full lg:max-w-none lg:rounded-none lg:object-cover"
             src="/bg/Hero/section-tree/output.mp4"
             muted
             playsinline
@@ -22,74 +25,79 @@
         </div>
 
         <div
-          class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#0d0d0d] via-black/50 to-[#0d0d0d]"
+          class="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#0d0d0d] via-black/50 to-[#0d0d0d] lg:from-[#0d0d0d]/95 lg:via-black/40"
           aria-hidden="true"
         />
 
         <div
-          class="pointer-events-none absolute inset-0 z-30 flex flex-col p-6 md:p-12"
+          class="pointer-events-none absolute inset-0 z-30 grid h-full grid-rows-[auto_1fr_auto] gap-3 p-4 sm:gap-4 sm:p-6 lg:flex lg:flex-col lg:justify-between lg:gap-0 lg:p-10 xl:p-12"
         >
-          <!-- Upper-left chapter hero -->
-          <div class="relative min-h-[12rem] w-full md:min-h-[16rem] md:max-w-3xl">
+          <!-- Chapter hero — top on mobile, upper-left on desktop -->
+          <div class="relative w-full min-h-0 lg:min-h-[14rem] lg:max-w-3xl">
             <article
               v-for="(chapter, index) in chapters"
               :key="chapter.title"
               :ref="(el) => setHeroRef(el, index)"
-              class="absolute left-0 top-0 w-full max-w-xl opacity-0 md:max-w-3xl"
+              class="absolute left-0 top-0 w-full max-w-full opacity-0 lg:max-w-2xl xl:max-w-3xl"
             >
-              <p class="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-candy-orange md:mb-4 md:text-sm">
-                Chapter {{ String(chapter.number).padStart(2, '0') }}
-              </p>
-              <h2 class="text-3xl font-bold leading-[1.05] tracking-tight text-white-pure sm:text-4xl md:text-5xl lg:text-6xl">
-                {{ chapter.title }}
-              </h2>
-              <p class="mt-4 max-w-2xl text-base leading-relaxed text-zinc-300 md:mt-6 md:text-lg md:leading-loose">
-                {{ chapter.description }}
-              </p>
+              <div class="rounded-xl border border-white/5 bg-black/40 p-4 shadow-lg backdrop-blur-sm sm:p-5 md:p-6 lg:p-8">
+                <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-candy-orange sm:mb-3 sm:text-xs md:text-sm">
+                  Chapter {{ String(chapter.number).padStart(2, '0') }}
+                </p>
+                <h2 class="text-xl font-bold leading-tight tracking-tight text-white-pure sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
+                  {{ chapter.title }}
+                </h2>
+                <p class="mt-2 text-xs leading-relaxed text-zinc-200 sm:mt-3 sm:text-sm md:mt-4 md:text-base lg:text-lg lg:leading-loose">
+                  {{ chapter.description }}
+                </p>
+              </div>
             </article>
           </div>
 
-          <!-- Bottom card row -->
-          <div class="mt-auto w-full">
+          <!-- Spacer row — keeps video visible between overlays on mobile -->
+          <div class="min-h-0 lg:hidden" aria-hidden="true" />
+
+          <!-- Bottom cards -->
+          <div class="w-full lg:mt-auto lg:pt-0">
             <div
-              class="flex flex-col items-stretch gap-4 md:flex-row md:items-end md:justify-between md:gap-8"
+              class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:flex lg:flex-row lg:items-end lg:justify-between lg:gap-6 xl:gap-8"
             >
-              <div class="relative min-h-[7.5rem] w-full md:min-h-[8.5rem] md:max-w-sm md:flex-1">
+              <div class="relative min-h-[5.5rem] w-full sm:min-h-[6.5rem] lg:min-h-[8rem] lg:max-w-xs lg:flex-1 xl:max-w-sm">
                 <article
                   v-for="(chapter, index) in chapters"
                   :key="`${chapter.title}-left`"
                   :ref="(el) => setBottomLeftRef(el, index)"
-                  class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 md:inset-x-auto md:left-0 md:w-full"
+                  class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 lg:inset-x-auto lg:left-0 lg:w-full"
                 >
-                  <div class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 shadow-2xl backdrop-blur-md md:p-6">
-                    <p class="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                  <div class="rounded-xl border border-white/5 bg-black/40 p-3 shadow-lg backdrop-blur-sm sm:p-4 md:p-5 lg:p-6">
+                    <p class="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
                       {{ chapter.bottomLeft.label }}
                     </p>
-                    <h3 class="text-base font-bold leading-snug text-white-pure md:text-lg">
+                    <h3 class="text-xs font-bold leading-snug text-white-pure sm:text-sm md:text-base lg:text-lg">
                       {{ chapter.bottomLeft.title }}
                     </h3>
-                    <p class="mt-2 text-sm leading-relaxed text-zinc-400">
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
                       {{ chapter.bottomLeft.body }}
                     </p>
                   </div>
                 </article>
               </div>
 
-              <div class="relative min-h-[7.5rem] w-full md:min-h-[8.5rem] md:max-w-sm md:flex-1">
+              <div class="relative min-h-[5.5rem] w-full sm:min-h-[6.5rem] lg:min-h-[8rem] lg:max-w-xs lg:flex-1 xl:max-w-sm">
                 <article
                   v-for="(chapter, index) in chapters"
                   :key="`${chapter.title}-right`"
                   :ref="(el) => setBottomRightRef(el, index)"
-                  class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 md:inset-x-auto md:right-0 md:w-full"
+                  class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 lg:inset-x-auto lg:right-0 lg:w-full"
                 >
-                  <div class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 shadow-2xl backdrop-blur-md md:p-6">
-                    <p class="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                  <div class="rounded-xl border border-white/5 bg-black/40 p-3 shadow-lg backdrop-blur-sm sm:p-4 md:p-5 lg:p-6">
+                    <p class="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
                       {{ chapter.bottomRight.label }}
                     </p>
-                    <h3 class="text-base font-bold leading-snug text-white-pure md:text-lg">
+                    <h3 class="text-xs font-bold leading-snug text-white-pure sm:text-sm md:text-base lg:text-lg">
                       {{ chapter.bottomRight.title }}
                     </h3>
-                    <p class="mt-2 text-sm leading-relaxed text-zinc-400">
+                    <p class="mt-1.5 text-[11px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
                       {{ chapter.bottomRight.body }}
                     </p>
                   </div>

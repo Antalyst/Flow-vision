@@ -3,6 +3,7 @@
     <LandingHeroSection />
     <LandingAiFeaturesSection />
     <LandingScrollVideoSection />
+    <LandingBrandRevealSection />
   </div>
 </template>
 
@@ -10,6 +11,7 @@
 import LandingHeroSection from '~/components/landing/LandingHeroSection.vue'
 import LandingAiFeaturesSection from '~/components/landing/LandingAiFeaturesSection.vue'
 import LandingScrollVideoSection from '~/components/landing/LandingScrollVideoSection.vue'
+import LandingBrandRevealSection from '~/components/landing/LandingBrandRevealSection.vue'
 
 definePageMeta({ layout: 'default' })
 </script>

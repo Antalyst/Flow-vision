@@ -26,29 +26,29 @@
     <!-- Sticky navigation (landing) — top-locked, solid capsule -->
     <div
       v-if="isHomePage"
-      class="sticky top-0 left-0 right-0 z-50 w-full px-4 pt-4 md:px-8"
+      class="sticky top-0 left-0 right-0 z-50 w-full px-3 pt-3 sm:px-4 sm:pt-4 md:px-8"
     >
-      <div class="container relative mx-auto flex max-w-[1800px] items-center justify-between">
+      <div class="container relative mx-auto flex max-w-[1800px] items-center justify-between pr-10 sm:pr-11 md:pr-0">
         <nav
-          class="pointer-events-auto mx-auto flex h-14 w-full max-w-[960px] items-center justify-between gap-4 rounded-full px-5 transition-colors duration-300 sm:gap-8 sm:px-8"
+          class="pointer-events-auto flex h-12 w-full max-w-[960px] items-center justify-between gap-2 rounded-full px-3 transition-colors duration-300 sm:mx-auto sm:h-14 sm:gap-4 sm:px-5 md:gap-6 md:px-8"
           :class="navCapsuleClass"
         >
           <NuxtLink to="/" class="flex shrink-0 items-center">
             <img
               src="/logo/new-logo-dark.png"
               alt="FlowVision"
-              class="h-8 w-auto"
+              class="h-7 w-auto sm:h-8"
               :class="isLandingDark ? 'hidden' : 'block'"
             >
             <img
               src="/logo/new-logo.png"
               alt="FlowVision"
-              class="h-8 w-auto"
+              class="h-7 w-auto sm:h-8"
               :class="isLandingDark ? 'block' : 'hidden'"
             >
           </NuxtLink>
 
-          <div class="hidden items-center gap-6 sm:flex">
+          <div class="hidden items-center gap-6 md:flex">
             <NuxtLink
               v-for="link in landingNavLinks"
               :key="link.label"
@@ -57,17 +57,17 @@
             >{{ link.label }}</NuxtLink>
           </div>
 
-          <div class="flex shrink-0 items-center gap-4">
+          <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0 md:gap-4">
             <button
               type="button"
-              class="font-dashboard text-[11px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange"
+              class="font-dashboard text-[10px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange sm:text-[11px]"
               @click="openLogin"
             >
               Sign in
             </button>
             <button
               type="button"
-              class="rounded-full bg-candy-orange px-4 py-1.5 font-dashboard text-[11px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover"
+              class="rounded-full bg-candy-orange px-3 py-1 font-dashboard text-[10px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover sm:px-4 sm:py-1.5 sm:text-[11px]"
               @click="openRegister"
             >
               Get started!
@@ -77,7 +77,7 @@
 
         <button
           type="button"
-          class="pointer-events-auto absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition-all duration-300 md:right-2"
+          class="pointer-events-auto absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition-all duration-300 sm:h-10 sm:w-10 md:right-2"
           :class="isLandingDark
             ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black'
             : 'border-zinc-200 bg-white hover:bg-zinc-50'"
