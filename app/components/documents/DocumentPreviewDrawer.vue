@@ -193,6 +193,45 @@
               :active="isOpen"
             />
 
+            <!-- Office checkpoint review (intermediate + final) -->
+            <section
+              v-if="showCompletionActions && canMarkCheckpointDone"
+              class="rounded-2xl border p-4"
+              :class="isFinalCheckpoint
+                ? 'border-emerald-500/30 bg-emerald-500/5'
+                : 'border-candy-orange/30 bg-candy-orange/5'"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p
+                    class="text-[10px] font-bold uppercase tracking-widest"
+                    :class="isFinalCheckpoint ? 'text-emerald-500' : 'text-candy-orange'"
+                  >
+                    {{ isFinalCheckpoint ? 'Final Checkpoint' : 'Office Desk Review' }}
+                  </p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    <template v-if="isFinalCheckpoint">
+                      Verify the hard copy at this final stop, then mark done to complete delivery and notify the document owner.
+                    </template>
+                    <template v-else>
+                      After checking the folder, mark done to notify the document owner and release a new messenger pickup for the next route leg.
+                    </template>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
+                  :class="isFinalCheckpoint ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-candy-orange hover:bg-candy-hover'"
+                  :disabled="completingCheckpoint"
+                  @click="handleApproveCheckpoint"
+                >
+                  <Icon v-if="completingCheckpoint" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+                  <Icon v-else name="ph:check-circle-fill" class="h-4 w-4" />
+                  {{ isFinalCheckpoint ? 'Approve & Complete' : 'Mark Reviewed & Release Pickup' }}
+                </button>
+              </div>
+            </section>
+
             <!-- Compliance flag action -->
             <section
               v-if="showComplianceActions"
@@ -305,9 +344,11 @@ export interface PreviewDocument {
   description?: string | null
   status?: string
   tracking_status?: string
+  checkpoint_cleared_step?: number | null
   qr_code_data?: string | null
   created_at?: string
   stage_id?: string | number | null
+  current_step?: number | null
   office_id?: string | number | null
   origin_office_id?: string | number | null
   current_office_id?: string | number | null
@@ -338,11 +379,13 @@ const props = withDefaults(defineProps<{
   widthClass?: string
   officeResolver?: (officeId: string | number | null | undefined) => string
   showComplianceActions?: boolean
+  showCompletionActions?: boolean
   pipelineMessagingEnabled?: boolean
   messagingOffices?: MessagingOffice[]
 }>(), {
   widthClass: 'lg:max-w-2xl lg:w-[42rem]',
   showComplianceActions: false,
+  showCompletionActions: false,
   pipelineMessagingEnabled: false,
   messagingOffices: () => [],
 })
@@ -350,7 +393,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'flag-issue'): void
-  (e: 'compliance-updated', payload: { tracking_status: string }): void
+  (e: 'compliance-updated', payload: { tracking_status: string; status?: string; checkpoint_cleared_step?: number | null }): void
 }>()
 
 const officeStore = useOfficeStore()
@@ -359,6 +402,7 @@ const { isDark } = useTheme()
 
 const qrCanvas = ref<HTMLCanvasElement | null>(null)
 const downloading = ref(false)
+const completingCheckpoint = ref(false)
 const selectedPipelineOffice = ref<SelectedPipelineOffice | null>(null)
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
@@ -441,6 +485,52 @@ const pipelineProgressPct = computed(() => {
   const done = steps.value.filter((s) => isStepDone(s)).length
   return Math.round((done / total) * 100)
 })
+
+const canMarkCheckpointDone = computed(() => {
+  const doc = props.document
+  if (!doc || doc.tracking_status === 'COMPLETED') return false
+  if (doc.tracking_status !== 'ARRIVED_AT_OFFICE') return false
+  const step = doc.current_step ?? 0
+  return (doc.checkpoint_cleared_step ?? null) !== step
+})
+
+const isFinalCheckpoint = computed(() => {
+  const doc = props.document
+  if (!doc || !steps.value.length) return false
+  const maxStep = Math.max(...steps.value.map((s) => s.step_number))
+  const cursor = doc.current_step ?? 0
+  const officeId = doc.current_office_id ?? doc.office_id
+  const finalStep = steps.value.find((s) => s.step_number === maxStep)
+  return cursor >= maxStep && finalStep && String(finalStep.office_id) === String(officeId ?? '')
+})
+
+async function handleApproveCheckpoint() {
+  if (!props.document?.id || completingCheckpoint.value) return
+  completingCheckpoint.value = true
+  try {
+    const res = await $fetch<{
+      success: boolean
+      is_final?: boolean
+      message?: string
+      data: { document: { tracking_status: string; status?: string; checkpoint_cleared_step?: number } }
+    }>('/api/documents/complete-checkpoint', {
+      method: 'POST',
+      body: { document_id: props.document.id },
+    })
+    emit('compliance-updated', {
+      tracking_status: res.data.document.tracking_status,
+      status: res.data.document.status,
+      checkpoint_cleared_step: res.data.document.checkpoint_cleared_step,
+    })
+    if (import.meta.client && res.message) {
+      window.alert(res.message)
+    }
+  } catch (err: any) {
+    alert(err?.data?.message || 'Failed to mark checkpoint done')
+  } finally {
+    completingCheckpoint.value = false
+  }
+}
 
 const isStepDone = (step: StageStep) => step.step_number < currentStepNumber.value
 const isStepCurrent = (step: StageStep) => step.step_number === currentStepNumber.value

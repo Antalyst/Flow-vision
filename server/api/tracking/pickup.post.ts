@@ -15,10 +15,21 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
-  const { qr_code_data } = body
+  const { qr_code_data, document_id } = body
 
-  if (!qr_code_data?.trim()) {
-    throw createError({ statusCode: 400, message: 'qr_code_data is required' })
+  let qrLookup = qr_code_data?.trim() ?? ''
+
+  if (!qrLookup && document_id) {
+    const { data: idDoc } = await client
+      .from('documents')
+      .select('qr_code_data')
+      .eq('id', document_id)
+      .maybeSingle()
+    qrLookup = idDoc?.qr_code_data?.trim() ?? ''
+  }
+
+  if (!qrLookup) {
+    throw createError({ statusCode: 400, message: 'qr_code_data or document_id is required' })
   }
 
   const actorId   = getCookie(event, 'user_session')
@@ -43,8 +54,8 @@ export default defineEventHandler(async (event) => {
 
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id')
-    .eq('qr_code_data', qr_code_data.trim())
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, checkpoint_cleared_step')
+    .eq('qr_code_data', qrLookup)
     .maybeSingle()
 
   if (docErr) throw createError({ statusCode: 500, message: docErr.message })
@@ -78,6 +89,16 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       message: `Cannot pick up a document in "${doc.tracking_status}" status. Document must be CREATED, ARRIVED_AT_OFFICE, or PICKED_UP.`,
+    })
+  }
+
+  if (
+    doc.tracking_status === 'ARRIVED_AT_OFFICE' &&
+    (doc.checkpoint_cleared_step ?? null) !== (doc.current_step ?? 0)
+  ) {
+    throw createError({
+      statusCode: 422,
+      message: 'This document is awaiting office desk review. An employee must mark the checkpoint done before messenger pickup.',
     })
   }
 

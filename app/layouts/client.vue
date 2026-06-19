@@ -161,7 +161,9 @@ onMounted(() => {
     auth.fetchMyOrg()
   }
   const { refresh } = useClientNotificationBadge()
+  const { refresh: refreshReports } = useClientReportBadge()
   refresh()
+  refreshReports()
 })
 </script>
 

@@ -50,6 +50,7 @@ const workspaceItems = [
   { to: '/employee/documents',     label: 'Documents',       icon: 'ph:files-fill' },
   { to: '/employee/flagged',       label: 'Compliance Logs', icon: 'ph:shield-warning-fill' },
   { to: '/employee/activity',      label: 'Activity',        icon: 'ph:clock-counter-clockwise-fill' },
+  { to: '/employee/reports',       label: 'Reports',         icon: 'ph:chart-bar-fill' },
   { to: '/employee/ai',            label: 'AI Intelligence', icon: 'ph:sparkle-fill' },
 ]
 

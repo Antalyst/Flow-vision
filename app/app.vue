@@ -1,5 +1,8 @@
 <template>
-  <div class="h-screen max-h-screen w-full max-w-[1800px] mx-auto overflow-hidden bg-white-pure transition-colors duration-300 dark:bg-onyx-black">
+  <div
+    class="w-full transition-colors duration-300"
+    :class="{ 'overflow-x-hidden': !isHomePage }"
+  >
     <GlobalLoading />
     <NuxtLayout>
       <NuxtPage />
@@ -9,6 +12,8 @@
 
 <script setup>
 const { initTheme } = useTheme()
+const route = useRoute()
+const isHomePage = computed(() => route.path === '/')
 
 onMounted(() => {
   initTheme()

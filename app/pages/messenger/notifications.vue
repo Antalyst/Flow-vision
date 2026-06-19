@@ -72,6 +72,29 @@
             <p class="text-sm leading-relaxed" :class="isDark ? 'text-zinc-400' : 'text-gray-500'">
               {{ notif.message }}
             </p>
+            <div
+              v-if="notif.metadata?.pickup_source_name || notif.metadata?.destination_office_name"
+              class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2"
+            >
+              <div
+                class="rounded-lg border px-3 py-2"
+                :class="isDark ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50'"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
+                <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
+                  {{ notif.metadata?.pickup_source_name || '—' }}
+                </p>
+              </div>
+              <div
+                class="rounded-lg border px-3 py-2"
+                :class="isDark ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50'"
+              >
+                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
+                <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
+                  {{ notif.metadata?.destination_office_name || '—' }}
+                </p>
+              </div>
+            </div>
             <span class="mt-2 block text-xs" :class="isDark ? 'text-zinc-500' : 'text-gray-400'">
               Received: {{ formatReceived(notif.created_at) }}
             </span>

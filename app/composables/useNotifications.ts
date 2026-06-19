@@ -11,6 +11,12 @@ export interface NotificationRow {
   is_read: boolean
   claimed_by_user_id: string | null
   created_at: string
+  metadata?: {
+    pickup_source_name?: string | null
+    pickup_source_office_id?: string | null
+    destination_office_name?: string | null
+    destination_office_id?: string | null
+  } | null
 }
 
 export function isUnclaimedNotification(value: unknown): boolean {
@@ -19,6 +25,25 @@ export function isUnclaimedNotification(value: unknown): boolean {
 
 export function isUnreadNotification(value: unknown): boolean {
   return value === false || value === 'false' || value === 0 || value == null
+}
+
+function notifyOnFreshEmployeeAlerts(previous: NotificationRow[], next: NotificationRow[]) {
+  if (!import.meta.client || !previous.length) return
+
+  const known = new Set(previous.map((n) => n.id))
+  const fresh = next.filter((n) => !known.has(n.id))
+  if (!fresh.length) return
+
+  const { playFlaggedAlertSound, playHandoffAlertSound } = useEmployeeSettings()
+
+  for (const row of fresh) {
+    const title = (row.title || '').toLowerCase()
+    if (title.includes('compliance') || title.includes('flagged') || title.includes('issue')) {
+      playFlaggedAlertSound()
+    } else if (title.includes('inbound') || title.includes('review required') || title.includes('hand-off')) {
+      playHandoffAlertSound()
+    }
+  }
 }
 
 async function resolveMessengerScope(): Promise<{ userId: string, orgId: string }> {
@@ -109,10 +134,20 @@ export function useMessengerNotifications() {
 
     loading.value = true
     error.value = null
+    const previousCount = notifications.value.filter((n) => isUnclaimedNotification(n.is_claimed)).length
+
     try {
       const rows = await loadMessengerNotificationsFromApi()
       notifications.value = Array.isArray(rows) ? [...rows] : []
       lastFetchedAt.value = Date.now()
+
+      if (import.meta.client) {
+        const { playPickupSound, soundAlertsOnPickup } = useMessengerSettings()
+        const newCount = notifications.value.filter((n) => isUnclaimedNotification(n.is_claimed)).length
+        if (soundAlertsOnPickup.value && newCount > previousCount && previousCount > 0) {
+          playPickupSound()
+        }
+      }
     } catch (err: unknown) {
       const e = err as { data?: { message?: string }, message?: string }
       error.value = e?.data?.message ?? e?.message ?? 'Failed to load notifications.'
@@ -146,6 +181,8 @@ export function useMessengerNotifications() {
 
   function startAutoRefresh(intervalMs = 15000) {
     if (!import.meta.client) return
+    const { pushBroadcastNotifications } = useMessengerSettings()
+    if (!pushBroadcastNotifications.value) return
     stopAutoRefresh()
     refreshTimer = setInterval(() => {
       fetchNotifications()
@@ -192,11 +229,14 @@ export function useEmployeeNotifications() {
   async function fetchNotifications(force = false) {
     if (loading.value && !force) return
 
+    const previous = notifications.value
     loading.value = true
     error.value = null
     try {
       const rows = await loadEmployeeNotificationsFromApi()
-      notifications.value = Array.isArray(rows) ? [...rows] : []
+      const next = Array.isArray(rows) ? [...rows] : []
+      notifyOnFreshEmployeeAlerts(previous, next)
+      notifications.value = next
       lastFetchedAt.value = Date.now()
     } catch (err: unknown) {
       const e = err as { data?: { message?: string }, message?: string }
@@ -373,4 +413,21 @@ export function useClientNotificationBadge() {
   }
 
   return { count: unreadCount, refresh }
+}
+
+export function useClientReportBadge() {
+  const count = useState('client:reports-unread-count', () => 0)
+
+  async function refresh() {
+    try {
+      const res = await $fetch<{ success: boolean; count: number }>('/api/reports/unread-count', {
+        credentials: 'include',
+      })
+      count.value = res.count ?? 0
+    } catch {
+      count.value = 0
+    }
+  }
+
+  return { count, refresh }
 }

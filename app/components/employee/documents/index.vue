@@ -370,6 +370,7 @@
       :is-open="!!activeDocument"
       :document="activeDocument"
       show-compliance-actions
+      show-completion-actions
       pipeline-messaging-enabled
       :messaging-offices="myOffices"
       width-class="lg:w-[60%] lg:max-w-4xl"
@@ -670,11 +671,13 @@ const handleUploadSuccess = () => {
   fetchDocs()
 }
 
-const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: boolean }) => {
+const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: boolean; status?: string; checkpoint_cleared_step?: number | null }) => {
   if (activeDocument.value) {
     activeDocument.value = {
       ...activeDocument.value,
       tracking_status: payload.tracking_status,
+      ...(payload.status ? { status: payload.status } : {}),
+      ...(payload.checkpoint_cleared_step != null ? { checkpoint_cleared_step: payload.checkpoint_cleared_step } : {}),
     }
   }
   const idx = docs.value.findIndex((d) => d.id === activeDocument.value?.id)
@@ -682,6 +685,8 @@ const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: bo
     docs.value[idx] = {
       ...docs.value[idx],
       tracking_status: payload.tracking_status,
+      ...(payload.status ? { status: payload.status } : {}),
+      ...(payload.checkpoint_cleared_step != null ? { checkpoint_cleared_step: payload.checkpoint_cleared_step } : {}),
     }
   }
 }

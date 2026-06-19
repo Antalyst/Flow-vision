@@ -47,6 +47,7 @@ const deliveryItems = [
   { to: '/messenger/scan',           label: 'QR Scanner',     icon: 'ph:scan-fill' },
   { to: '/messenger/deliveries',     label: 'Deliveries',     icon: 'ph:package-fill' },
   { to: '/messenger/activity',       label: 'My Activity',    icon: 'ph:clock-counter-clockwise-fill' },
+  { to: '/messenger/reports',        label: 'Reports',        icon: 'ph:chart-bar-fill' },
   { to: '/messenger/history',        label: 'History',        icon: 'ph:archive-fill' },
 ]
 

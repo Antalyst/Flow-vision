@@ -128,14 +128,14 @@
                   class="text-xs font-bold uppercase tracking-widest"
                   :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-amber-400'"
                 >
-                  {{ resultData?.is_final_stop ? '🎉 Delivery Complete' : 'Arrived at Office' }}
+                  {{ resultData?.is_final_stop ? 'Arrived at Final Stop' : 'Arrived at Office' }}
                 </p>
                 <p class="mt-1 text-sm font-bold text-white truncate">{{ resultData?.data?.office?.name }}</p>
                 <p class="mt-1 text-xs text-white/60">
-                  <span v-if="resultData?.is_final_stop">All stages completed. Document delivered.</span>
+                  <span v-if="resultData?.is_final_stop">Arrived at final stop. Awaiting employee desk review.</span>
                   <span v-else>
-                    Step {{ resultData?.data?.step }} / {{ resultData?.data?.total_steps }} complete.
-                    Ready for next leg.
+                    Step {{ resultData?.data?.step }} / {{ resultData?.data?.total_steps }} checked in.
+                    Awaiting employee desk review before next pickup.
                   </span>
                 </p>
                 <div
@@ -145,7 +145,7 @@
                     : 'bg-candy-orange/10 text-candy-orange'"
                 >
                   <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3 w-3" />
-                  {{ resultData?.is_final_stop ? 'COMPLETED' : 'ARRIVED' }}
+                  {{ resultData?.is_final_stop ? 'AWAITING REVIEW' : 'ARRIVED' }}
                 </div>
               </div>
             </div>
@@ -255,12 +255,13 @@ definePageMeta({ layout: 'messenger' })
 
 const auth    = useAuthStore()
 const { isDark } = useTheme()
+const route = useRoute()
 
 // ── State ──────────────────────────────────────────────────────────────
 type ScanMode  = 'pickup' | 'dropoff'
 type ScanState = 'idle' | 'processing' | 'success' | 'error' | 'security-error' | 'route-error' | 'unknown'
 
-const mode       = ref<ScanMode>('pickup')
+const mode       = ref<ScanMode>((route.query.mode === 'dropoff' ? 'dropoff' : 'pickup') as ScanMode)
 const scanState  = ref<ScanState>('idle')
 const rawScan    = ref<string | null>(null)
 const resultData = ref<any>(null)

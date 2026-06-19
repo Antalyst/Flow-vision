@@ -53,9 +53,9 @@ export default defineEventHandler(async (event) => {
   let dbQuery = client
     .from('documents')
     .select(
-      'id, title, description, tracking_status, current_step, stage_id, ' +
+      'id, title, description, status, tracking_status, current_step, stage_id, ' +
       'office_id, origin_office_id, current_office_id, qr_code_data, ' +
-      'assigned_messenger_id, created_at, user_id, creator_role',
+      'checkpoint_cleared_step, assigned_messenger_id, created_at, user_id, creator_role, priority',
     )
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })

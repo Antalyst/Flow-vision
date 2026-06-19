@@ -1,6 +1,7 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe, trackingStatusToActionType } from '~~/server/utils/activityLog'
 import { notifyClientStatusUpdate } from '~~/server/utils/notifications'
+import { isDocumentAtFinalRouteStop } from '~~/server/utils/routeCompletion'
 
 // ── Valid status pipeline ──────────────────────────────────────────────
 const VALID_STATUSES = ['CREATED', 'PICKED_UP', 'IN_TRANSIT', 'ARRIVED_AT_OFFICE', 'DISCREPANCY_REPORTED', 'COMPLETED'] as const
@@ -59,7 +60,7 @@ export default defineEventHandler(async (event) => {
   // ── Fetch the document (with org isolation check) ────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id')
+    .select('id, org_id, user_id, title, status, tracking_status, current_step, stage_id, assigned_messenger_id, current_office_id, office_id')
     .eq('id', document_id)
     .single()
 
@@ -87,6 +88,16 @@ export default defineEventHandler(async (event) => {
       statusCode: 422,
       message: `Invalid transition: "${currentStatus}" → "${nextStatus}". Allowed next states: [${allowed.join(', ') || 'none — document is completed'}]`,
     })
+  }
+
+  if (nextStatus === 'COMPLETED') {
+    const atFinal = await isDocumentAtFinalRouteStop(client, doc)
+    if (!atFinal) {
+      throw createError({
+        statusCode: 422,
+        message: 'Document can only be marked Completed when it has arrived at the final route office checkpoint.',
+      })
+    }
   }
 
   // ── Resolve route step and office for this transition ─────────────────
@@ -166,12 +177,16 @@ export default defineEventHandler(async (event) => {
   }
 
   // 2. Update document's denormalized state
+  const statusUpdate = nextStatus === 'COMPLETED' ? { status: 'Approved' } : {}
+
   const { data: updatedDoc, error: updateErr } = await client
     .from('documents')
     .update({
       tracking_status: nextStatus,
       current_step:    nextStep,
       ...messengerUpdate,
+      ...statusUpdate,
+      ...(nextStatus === 'COMPLETED' ? { current_office_id: null } : {}),
     })
     .eq('id', document_id)
     .select('id, title, tracking_status, current_step, assigned_messenger_id')

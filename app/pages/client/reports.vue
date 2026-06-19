@@ -1,9 +1,9 @@
 <template>
-  <WorkspacePlaceholder title="Reports" />
+  <OperationalReportsPanel role="client" />
 </template>
 
 <script setup lang="ts">
-import WorkspacePlaceholder from '~/components/client/WorkspacePlaceholder.vue'
+import OperationalReportsPanel from '~/components/reports/OperationalReportsPanel.vue'
 
 definePageMeta({ layout: 'client' })
 </script>

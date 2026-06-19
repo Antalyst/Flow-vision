@@ -1,6 +1,100 @@
 <template>
-  <div class="min-h-screen w-full font-primary sticky top-0 relative">
-    <nav class="flex justify-between items-center p-4 bg-onyx-black text-white m-5 mx-60 rounded-full shadow-md">
+  <div
+    class="w-full min-h-screen transition-colors duration-300"
+    :class="isHomePage
+      ? [
+        isLandingDark ? 'dark bg-onyx-black text-white-pure font-dashboard' : 'bg-white-surface text-zinc-900 font-dashboard',
+        'relative',
+      ]
+      : 'overflow-x-hidden font-primary bg-white-pure dark:bg-onyx-black'"
+  >
+    <!-- Landing atmosphere vignette -->
+    <div
+      v-if="isHomePage && isLandingDark"
+      class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-zinc-800/20 via-transparent to-[#09090b]"
+      aria-hidden="true"
+    />
+
+    <!-- Ghost grid texture (landing) -->
+    <div
+      v-if="isHomePage"
+      class="pointer-events-none absolute inset-0 z-0"
+      :class="isLandingDark ? 'grid-bg-lines-dark opacity-[0.03]' : 'grid-bg-lines opacity-[0.35]'"
+      aria-hidden="true"
+    />
+
+    <!-- Sticky navigation (landing) — top-locked, solid capsule -->
+    <div
+      v-if="isHomePage"
+      class="sticky top-0 left-0 right-0 z-50 w-full px-4 pt-4 md:px-8"
+    >
+      <div class="container relative mx-auto flex max-w-[1800px] items-center justify-between">
+        <nav
+          class="pointer-events-auto mx-auto flex h-14 w-full max-w-[960px] items-center justify-between gap-4 rounded-full px-5 transition-colors duration-300 sm:gap-8 sm:px-8"
+          :class="navCapsuleClass"
+        >
+          <NuxtLink to="/" class="flex shrink-0 items-center">
+            <img
+              src="/logo/new-logo-dark.png"
+              alt="FlowVision"
+              class="h-8 w-auto"
+              :class="isLandingDark ? 'hidden' : 'block'"
+            >
+            <img
+              src="/logo/new-logo.png"
+              alt="FlowVision"
+              class="h-8 w-auto"
+              :class="isLandingDark ? 'block' : 'hidden'"
+            >
+          </NuxtLink>
+
+          <div class="hidden items-center gap-6 sm:flex">
+            <NuxtLink
+              v-for="link in landingNavLinks"
+              :key="link.label"
+              :to="link.to"
+              class="font-dashboard text-[11px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange"
+            >{{ link.label }}</NuxtLink>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-4">
+            <button
+              type="button"
+              class="font-dashboard text-[11px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange"
+              @click="openLogin"
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              class="rounded-full bg-candy-orange px-4 py-1.5 font-dashboard text-[11px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover"
+              @click="openRegister"
+            >
+              Get started!
+            </button>
+          </div>
+        </nav>
+
+        <button
+          type="button"
+          class="pointer-events-auto absolute right-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition-all duration-300 md:right-2"
+          :class="isLandingDark
+            ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black'
+            : 'border-zinc-200 bg-white hover:bg-zinc-50'"
+          :aria-label="isLandingDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          :aria-pressed="isLandingDark"
+          @click="toggleLandingTheme"
+        >
+          <Icon
+            :name="isLandingDark ? 'ph:sun-fill' : 'ph:moon-fill'"
+            class="h-4 w-4"
+            :class="isLandingDark ? 'text-candy-orange' : 'text-zinc-700'"
+          />
+        </button>
+      </div>
+    </div>
+
+    <nav v-else class="flex justify-between items-center p-4 bg-onyx-black text-white m-5 mx-60 rounded-full shadow-md">
       <div class="flex items-center">
         <img class="w-[40px] h-auto pl-4" src="/logo/new-logo.png" alt="FlowVision Logo">
       </div>
@@ -249,7 +343,11 @@
         </div>
       </div>
     </Transition>
-    <main class="w-full p-2">
+    <main
+      :class="isHomePage
+        ? 'container relative z-10 mx-auto max-w-[1800px] px-8 pt-6 2xl:px-0'
+        : 'w-full p-2'"
+    >
       <slot />
     </main>
   </div>
@@ -258,8 +356,19 @@
 <script setup>
 
 import { useAuthStore } from '~/stores/auth'
+const route = useRoute()
+const isHomePage = computed(() => route.path === '/')
+const { isLandingDark, toggleLandingTheme, navCapsuleClass } = useLandingTheme()
+const { loginModal, registerModal, openLogin, openRegister } = useAuthModals()
 const { startLoading, stopLoading } = useLoading()
 const employeeAuth = useEmployeeAuthStore()
+
+const landingNavLinks = [
+  { label: 'Home', to: '/' },
+  { label: 'Tracking', to: '/tracking' },
+  { label: 'About', to: '/about' },
+  { label: 'Contact', to: '/#contact' },
+]
 
 const inputClass = computed(() =>
   'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-onyx-black outline-none transition placeholder:text-white-muted focus:border-candy-orange focus:ring-2 focus:ring-candy-orange/25 dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure'
@@ -272,9 +381,7 @@ const showPassword = ref(false)
 const auth = useAuthStore() 
 const accTypeData = ref([])
 const selectedType = ref(null)
-const registerModal = ref(false)
 const userRole = ref("")
-const loginModal = ref(false)
 const verifyCode = ref(false)
 const selectedTypeObj = ref(null)
 const selectedTypeName = ref('')
@@ -489,5 +596,19 @@ watch(selectedType, (newVal)=>{
 .modal-fade-leave-to > div {
   opacity: 0;
   transform: translateY(10px) scale(0.98);
+}
+
+.grid-bg-lines {
+  background-image:
+    linear-gradient(to right, rgb(228 228 231 / 0.55) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(228 228 231 / 0.55) 1px, transparent 1px);
+  background-size: 100px 100px;
+}
+
+.grid-bg-lines-dark {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.35) 1px, transparent 1px);
+  background-size: 100px 100px;
 }
 </style>

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext, resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { logActivitySafe, type ActivitySupabaseClient } from '~~/server/utils/activityLog'
+import { resolveOfficeName, resolveRouteOfficeAtStep } from '~~/server/utils/routeCompletion'
 
 export interface BroadcastPickupInput {
   orgId: string
@@ -11,7 +12,52 @@ export interface BroadcastPickupInput {
 }
 
 const NOTIFICATION_COLUMNS =
-  'id, org_id, office_id, document_id, target_role, title, message, user_id, is_claimed, is_read, claimed_by_user_id, created_at'
+  'id, org_id, office_id, document_id, target_role, title, message, user_id, is_claimed, is_read, claimed_by_user_id, created_at, metadata'
+
+export interface MessengerPickupRouteMetadata {
+  pickup_source_name?: string | null
+  pickup_source_office_id?: string | null
+  destination_office_name?: string | null
+  destination_office_id?: string | null
+}
+
+async function resolveMessengerPickupRouteContext(
+  db: ReturnType<typeof getServiceSupabase>,
+  documentId: string,
+): Promise<MessengerPickupRouteMetadata> {
+  const { data: doc } = await db
+    .from('documents')
+    .select('tracking_status, current_step, stage_id, origin_office_id, current_office_id, office_id')
+    .eq('id', documentId)
+    .maybeSingle()
+
+  if (!doc) return {}
+
+  const trackingStatus = doc.tracking_status ?? 'CREATED'
+  const currentStep = doc.current_step ?? 0
+
+  let pickupOfficeId =
+    doc.current_office_id ?? doc.origin_office_id ?? doc.office_id ?? null
+  let destinationStep = currentStep + 1
+
+  if (trackingStatus === 'CREATED') {
+    pickupOfficeId = doc.origin_office_id ?? doc.office_id ?? pickupOfficeId
+    destinationStep = 1
+  } else if (trackingStatus === 'ARRIVED_AT_OFFICE') {
+    pickupOfficeId = doc.current_office_id ?? pickupOfficeId
+    destinationStep = currentStep + 1
+  }
+
+  const destination = await resolveRouteOfficeAtStep(db, doc.stage_id, destinationStep)
+  const pickupSourceName = await resolveOfficeName(db, pickupOfficeId ? String(pickupOfficeId) : null)
+
+  return {
+    pickup_source_name: pickupSourceName,
+    pickup_source_office_id: pickupOfficeId ? String(pickupOfficeId) : null,
+    destination_office_name: destination.officeName,
+    destination_office_id: destination.officeId,
+  }
+}
 
 export interface InboundOfficeNotificationInput {
   orgId: string
@@ -28,6 +74,7 @@ export interface ClientStatusNotificationInput {
   documentTitle: string
   trackingStatus: string
   clientUserId?: string | null
+  message?: string | null
 }
 
 type InboundDocumentOfficeFields = {
@@ -245,7 +292,9 @@ export async function notifyClientStatusUpdate(
     user_id: input.clientUserId,
     target_role: 'client',
     title: `Document Update: ${input.trackingStatus}`,
-    message: `Your document "${input.documentTitle}" status has been updated to "${input.trackingStatus}".`,
+    message:
+      input.message ??
+      `Your document "${input.documentTitle}" status has been updated to "${input.trackingStatus}".`,
     is_read: false,
     is_claimed: false,
     claimed_by_user_id: null,
@@ -260,6 +309,48 @@ export async function notifyClientStatusUpdate(
 
   if (error || !data) {
     console.error('[notifications] Client update alert failed:', error?.message, row)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
+/** Alert destination office employees that a messenger dropped off a folder awaiting desk review. */
+export async function broadcastOfficeReviewNotification(input: {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  officeId: string
+  officeName?: string | null
+  messengerName?: string | null
+}): Promise<string | null> {
+  if (!input.officeId) return null
+
+  const deskLabel = input.officeName || 'your office'
+  const row = {
+    org_id: input.orgId,
+    office_id: input.officeId,
+    document_id: input.documentId,
+    target_role: 'employee',
+    user_id: null,
+    title: 'Inbound Document — Review Required',
+    message:
+      `${input.messengerName || 'A messenger'} delivered "${input.documentTitle}" to ${deskLabel}. ` +
+      'Open the document preview, verify the hard copy, and mark the checkpoint done to release the next pickup.',
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Office review alert failed:', error?.message, row)
     return null
   }
 
@@ -287,8 +378,15 @@ export async function broadcastPickupNotification(
   _client: ActivitySupabaseClient,
   input: BroadcastPickupInput,
 ): Promise<string> {
+  const db = getServiceSupabase()
+  const routeContext = await resolveMessengerPickupRouteContext(db, input.documentId)
+
+  const pickupLabel = routeContext.pickup_source_name ?? 'Origin desk'
+  const destinationLabel = routeContext.destination_office_name ?? 'Next route office'
+
   const message =
-    `A new document "${input.documentTitle}" has been registered and is ready for hard-copy collection.`
+    `A new document "${input.documentTitle}" is ready for collection at ${pickupLabel}. ` +
+    `Deliver next to ${destinationLabel}.`
 
   const row = {
     org_id: input.orgId,
@@ -300,9 +398,9 @@ export async function broadcastPickupNotification(
     is_read: false,
     is_claimed: false,
     claimed_by_user_id: null,
+    metadata: routeContext,
   }
 
-  const db = getServiceSupabase()
   const { data, error } = await db
     .from('notifications')
     .insert(row)
@@ -618,7 +716,7 @@ export async function claimPickupNotification(
 
   const { data: doc, error: docErr } = await db
     .from('documents')
-    .select('id, title, tracking_status, current_step, stage_id, origin_office_id, current_office_id, office_id, org_id, user_id')
+    .select('id, title, tracking_status, current_step, stage_id, origin_office_id, current_office_id, office_id, org_id, user_id, checkpoint_cleared_step')
     .eq('id', notif.document_id)
     .single()
 
@@ -635,6 +733,17 @@ export async function claimPickupNotification(
       success: false,
       code: 'INVALID_STATUS',
       message: `Document is in "${doc.tracking_status}" status and cannot be claimed for pickup.`,
+    }
+  }
+
+  if (
+    doc.tracking_status === 'ARRIVED_AT_OFFICE' &&
+    (doc.checkpoint_cleared_step ?? null) !== (doc.current_step ?? 0)
+  ) {
+    return {
+      success: false,
+      code: 'NOT_CLEARED',
+      message: 'This document is still awaiting office desk review. An employee must mark the checkpoint done before pickup.',
     }
   }
 

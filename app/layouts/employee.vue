@@ -177,7 +177,10 @@ onMounted(() => {
     auth.fetchMyOrg()
   }
   const { fetchNotifications } = useEmployeeNotifications()
+  const { hydrate, applyHandoffPolling } = useEmployeeSettings()
+  hydrate()
   fetchNotifications(true)
+  applyHandoffPolling()
 })
 </script>
 

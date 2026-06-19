@@ -82,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
 
 const props = defineProps<{
   /** Unique DOM id — allows multiple scanners on one page without collision */
@@ -102,9 +103,14 @@ const isScanning  = ref(false)
 const permissionDenied = ref(false)
 const result      = ref<string | null>(null)
 const torchOn     = ref(false)
+const { defaultCameraDeviceId } = useMessengerSettings()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let scannerInstance: any = null
+
+function getCameraConfig() {
+  return resolveCameraConstraint(defaultCameraDeviceId.value)
+}
 
 const onDecodeSuccess = (rawValue: string) => {
   if (result.value === rawValue) return  // debounce same code
@@ -126,7 +132,7 @@ const startScanner = async () => {
     scannerInstance = new Html5Qrcode(id)
 
     await scannerInstance.start(
-      { facingMode: 'environment' },
+      getCameraConfig(),
       {
         fps:    props.fps ?? 12,
         qrbox:  { width: props.qrboxSize ?? 220, height: props.qrboxSize ?? 220 },
@@ -171,6 +177,13 @@ const toggleTorch = async () => {
 
 onMounted(startScanner)
 onBeforeUnmount(stopScanner)
+
+watch(defaultCameraDeviceId, async () => {
+  if (!scannerInstance?.isScanning) return
+  await stopScanner()
+  result.value = null
+  await startScanner()
+})
 
 // Expose for parent control
 defineExpose({ rescan, stopScanner })

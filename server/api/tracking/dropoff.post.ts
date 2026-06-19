@@ -1,6 +1,9 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { broadcastPickupNotification, notifyClientStatusUpdate } from '~~/server/utils/notifications'
+import {
+  broadcastOfficeReviewNotification,
+  notifyClientStatusUpdate,
+} from '~~/server/utils/notifications'
 
 /**
  * POST /api/tracking/dropoff
@@ -8,7 +11,7 @@ import { broadcastPickupNotification, notifyClientStatusUpdate } from '~~/server
  * Handshake Part 2 – Messenger scans the QR code posted on an office wall.
  *
  * Flow:
- *   IN_TRANSIT  →  ARRIVED_AT_OFFICE  (→ COMPLETED if this was the final step)
+ *   IN_TRANSIT  →  ARRIVED_AT_OFFICE  (employee desk review required before pickup / completion)
  *
  * Validation chain:
  *   1. Messenger is authenticated and belongs to the same org as the office.
@@ -136,9 +139,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // ── Determine if this is the final stop ───────────────────────────────
+  // ── Determine if this is the final route stop (employee still must verify) ─
   const isFinalStop = totalSteps > 0 && targetDoc.current_step >= totalSteps
-  const finalStatus = isFinalStop ? 'COMPLETED' : 'ARRIVED_AT_OFFICE'
+  const finalStatus = 'ARRIVED_AT_OFFICE'
 
   // ── Write ARRIVED_AT_OFFICE event ─────────────────────────────────────
   await client.from('document_tracking_events').insert({
@@ -146,43 +149,21 @@ export default defineEventHandler(async (event) => {
     org_id:       messengerOrgId,
     status:       'ARRIVED_AT_OFFICE',
     step_index:   targetDoc.current_step,
-    // document_tracking_events.office_id is INTEGER (existing column — no FK);
-    // store the numeric portion if the UUID is purely numeric, else store null.
-    // The office name is denormalised so queries don't need to join back.
     office_id:    null,
     office_name:  office.name,
     actor_id:     actorId,
     actor_role:   'messenger',
     actor_name:   actorRow.full_name,
-    notes:        `Arrived and checked in at ${office.name}${office.code ? ` (${office.code})` : ''}.`,
+    notes:        `Arrived and checked in at ${office.name}${office.code ? ` (${office.code})` : ''}` +
+      (isFinalStop ? ' — awaiting final desk review.' : '.'),
   })
-
-  // ── If final stop, also write COMPLETED event ─────────────────────────
-  if (isFinalStop) {
-    await client.from('document_tracking_events').insert({
-      document_id:  targetDoc.id,
-      org_id:       messengerOrgId,
-      status:       'COMPLETED',
-      step_index:   targetDoc.current_step,
-      office_id:    null,
-      office_name:  office.name,
-      actor_id:     actorId,
-      actor_role:   'messenger',
-      actor_name:   actorRow.full_name,
-      notes:        `All route stages completed. Final delivery confirmed at ${office.name}.`,
-    })
-  }
 
   // ── Update document state ─────────────────────────────────────────────
   const docUpdate: Record<string, any> = {
-    tracking_status:   finalStatus,
-    // Keep current_office_id in sync with the document's physical location.
-    // Cleared on COMPLETED (no longer at a specific office in transit sense).
-    // current_office_id is UUID FK → offices(id); pass as raw UUID string
-    current_office_id: isFinalStop ? null : String(office_id),
-  }
-  if (isFinalStop) {
-    docUpdate.assigned_messenger_id = null  // release messenger
+    tracking_status: finalStatus,
+    current_office_id: String(office_id),
+    checkpoint_cleared_step: null,
+    assigned_messenger_id: null,
   }
 
   const { data: updatedDoc, error: updateErr } = await client
@@ -195,7 +176,7 @@ export default defineEventHandler(async (event) => {
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
 
   const dropoffMessage = isFinalStop
-    ? `${actorRow.full_name} completed delivery of "${targetDoc.title}" at ${office.name}`
+    ? `${actorRow.full_name} delivered "${targetDoc.title}" to final stop ${office.name} — awaiting desk review`
     : `${actorRow.full_name} checked in "${targetDoc.title}" at ${office.name}`
 
   await logActivitySafe({
@@ -204,11 +185,11 @@ export default defineEventHandler(async (event) => {
     userId: actorId,
     userName: actorRow.full_name,
     actorName: actorRow.full_name,
-    actionType: isFinalStop ? 'system' : 'dropoff',
+    actionType: 'dropoff',
     details: dropoffMessage,
     message: dropoffMessage,
     documentId: targetDoc.id,
-    metadata: { tracking_status: finalStatus, office_name: office.name },
+    metadata: { tracking_status: finalStatus, office_name: office.name, is_final_stop: isFinalStop },
   }, client)
 
   await notifyClientStatusUpdate({
@@ -217,26 +198,30 @@ export default defineEventHandler(async (event) => {
     documentTitle: targetDoc.title,
     trackingStatus: finalStatus,
     clientUserId: targetDoc.user_id ? String(targetDoc.user_id) : null,
+    message: isFinalStop
+      ? `Your document "${targetDoc.title}" has arrived at its final destination (${office.name}). The office will verify it shortly.`
+      : `Your document "${targetDoc.title}" has arrived at ${office.name}. The office desk will review it before the next pickup leg.`,
   })
 
-  if (!isFinalStop) {
-    try {
-      await broadcastPickupNotification(client, {
-        orgId: messengerOrgId,
-        documentId: targetDoc.id,
-        documentTitle: targetDoc.title,
-      })
-    } catch (hookErr) {
-      console.warn('[Dropoff] Pickup notification broadcast failed:', hookErr)
-    }
+  try {
+    await broadcastOfficeReviewNotification({
+      orgId: messengerOrgId,
+      documentId: targetDoc.id,
+      documentTitle: targetDoc.title,
+      officeId: String(office_id),
+      officeName: office.name,
+      messengerName: actorRow.full_name,
+    })
+  } catch (hookErr) {
+    console.warn('[Dropoff] Office review notification failed:', hookErr)
   }
 
   return {
     success:        true,
     is_final_stop:  isFinalStop,
     message:        isFinalStop
-      ? `Delivery COMPLETED. "${targetDoc.title}" has reached its final destination at ${office.name}.`
-      : `Checked in at ${office.name}. Document is now ARRIVED_AT_OFFICE. Ready for next leg.`,
+      ? `Checked in at final stop ${office.name}. Awaiting employee verification to complete delivery.`
+      : `Checked in at ${office.name}. Document is now ARRIVED_AT_OFFICE. Awaiting desk review.`,
     data: {
       document: updatedDoc,
       office:   { id: office.id, name: office.name, code: office.code },

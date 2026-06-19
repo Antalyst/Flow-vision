@@ -27,10 +27,16 @@
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">Analytics & Insights</p>
       <div class="space-y-0.5">
         <NuxtLink v-for="item in analyticsNavItems" :key="item.to" :to="item.to"
-          class="nav-item w-full"
+          class="nav-item w-full relative"
           :class="{ 'nav-item-active': isActive(item.to) }">
           <Icon :name="item.icon" class="w-5 h-5 flex-none" />
           <span class="truncate">{{ item.label }}</span>
+          <span
+            v-if="item.to === '/client/reports' && reportUnreadCount > 0"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[10px] font-bold text-white"
+          >
+            {{ reportUnreadCount > 9 ? '9+' : reportUnreadCount }}
+          </span>
         </NuxtLink>
       </div>
     </div>
@@ -55,6 +61,7 @@
 const { isDark } = useTheme()
 const route = useRoute()
 const { count: unreadCount, refresh: refreshUnreadCount } = useClientNotificationBadge()
+const { count: reportUnreadCount, refresh: refreshReportBadge } = useClientReportBadge()
 
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
@@ -85,9 +92,11 @@ const supportNavItems = [
 
 onMounted(() => {
   refreshUnreadCount()
+  refreshReportBadge()
 })
 
 watch(() => route.path, () => {
   refreshUnreadCount()
+  refreshReportBadge()
 })
 </script>
