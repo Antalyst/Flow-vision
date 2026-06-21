@@ -1,7 +1,7 @@
 <template>
   <section
     ref="sectionRef"
-    class="relative h-[1200vh] w-full overflow-visible bg-[#0d0d0d] font-dashboard"
+    class="relative h-[1200vh] bg-transparent xs:bg-transparent sm:bg-transparent w-full overflow-visible font-dashboard"
   >
     <div
       ref="pinWrapperRef"

@@ -1,7 +1,7 @@
 <template>
   <section
     ref="rootRef"
-    class="relative flex  min-h-screen bg-transparent  w-full flex-col justify-between overflow-hidden font-dashboard mb-10"
+    class="relative flex  min-h-screen bg-transparent sm:bg-transparent xs:bg-transparent w-full flex-col justify-between overflow-hidden font-dashboard mb-10"
     :class="atmosphereBaseClass"
   >
     <!-- Background visual layer -->

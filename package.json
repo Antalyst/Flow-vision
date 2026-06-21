@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-   "deploy:android": "npx cap sync android && npx cap run android"
+    "deploy:android": "npx cap sync android && npx cap run android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -45,5 +45,8 @@
     "vue-chartjs": "^5.3.3",
     "vue-router": "^4.6.4",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
   }
 }

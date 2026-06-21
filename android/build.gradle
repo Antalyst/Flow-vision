@@ -9,6 +9,10 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
         classpath 'com.google.gms:google-services:4.4.4'
+        
+        // FIX: Force a newer version of R8 that correctly handles Java 21 bytecode
+        // This resolves the java.lang.ClassFormatError during dexing.
+        classpath 'com.android.tools:r8:8.3.37'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
