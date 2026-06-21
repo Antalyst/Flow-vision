@@ -2,8 +2,8 @@
   "appId": "com.antalyst.flowvision",
   "appName": "FlowVision",
   "webDir": ".output/public",
-   "server": {
-    "url": "flow-vision-beryl.vercel.app",
+  "server": {
+    "url": "https://flow-vision-beryl.vercel.app",
     "cleartext": true
   }
 }
