@@ -1,7 +1,7 @@
 <template>
   <div
     class="w-full transition-colors duration-300"
-    :class="{ 'overflow-x-hidden': !isHomePage }"
+    :class="{ 'overflow-x-hidden': !isMarketingPage }"
   >
     <GlobalLoading />
     <NuxtLayout>
@@ -13,7 +13,7 @@
 <script setup>
 const { initTheme } = useTheme()
 const route = useRoute()
-const isHomePage = computed(() => route.path === '/')
+const { isMarketingPage } = useMarketingPage()
 
 onMounted(() => {
   initTheme()

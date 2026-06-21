@@ -1,20 +1,32 @@
 <template>
   <section
     ref="rootRef"
-    class="relative w-full pb-8 pt-4 font-dashboard md:pb-12 md:pt-6"
+    class="relative flex  min-h-screen bg-transparent  w-full flex-col justify-between overflow-hidden font-dashboard mb-10"
     :class="atmosphereBaseClass"
   >
-    <!-- Subtle background grid -->
+    <!-- Background visual layer -->
+    <div class="absolute inset-0 z-0 h-full w-full z-10">
+      <img
+        src="/bg/Hero/section-one/herobg.png"
+        alt="FlowVision abstract routing visual"
+        class="hero-center-image h-full w-full origin-center object-contain object-bottom lg:object-cover"
+        width="1440"
+        height="1440"
+      >
+    </div>
+
+    <!-- Bottom ambient glow -->
     <div
-      ref="gridRef"
-      class="pointer-events-none absolute inset-0 z-0 opacity-[0.04]"
-   
+      class="pointer-events-none absolute bottom-0 left-1/2 z-[1] h-[1000px] w-[1500px] -translate-x-1/2 translate-y-1/2 rounded-t-full bg-orange-500/20 blur-[50px] -z-10"
       aria-hidden="true"
     />
 
-    <div class="relative z-10 mx-auto w-full max-w-[1800px]">
-      <!-- Hero typography -->
-      <div class="mb-8 text-center md:mb-10">
+    <!-- Overlay: title + metric panels -->
+    <div
+      class="relative z-10 flex h-full min-h-screen w-full flex-col justify-between pointer-events-none px-4 pb-12 pt-28 sm:px-6 md:pb-24 md:pt-32 lg:px-8"
+    >
+      <!-- Top: hero typography -->
+      <div class="mx-auto w-full max-w-[1800px] shrink-0 text-center">
         <h1
           ref="titleRef"
           class="font-primary text-5xl font-extrabold uppercase tracking-tight text-white-pure md:text-7xl lg:text-8xl"
@@ -31,71 +43,64 @@
         </p>
       </div>
 
-      <!-- 12-column metrics + center visual -->
-      <div class="grid grid-cols-12 items-center gap-4 md:gap-6">
-        <!-- Left metrics -->
-        <div class="col-span-3 hidden flex-col gap-3 lg:flex">
+      <!-- Bottom: metric card grids -->
+      <div class="mx-auto w-full max-w-[1800px] shrink-0">
+        <!-- Desktop side panels -->
+        <div class="hidden grid-cols-12 items-end gap-4 lg:grid md:gap-6">
+          <div class="col-span-3 flex flex-col gap-3">
+            <div
+              v-for="(metric, idx) in leftMetrics"
+              :key="`left-${idx}`"
+              class="metric-card-left pointer-events-auto origin-center p-5"
+              :class="metricCardClass"
+            >
+              <p
+                class="font-primary text-3xl font-extrabold leading-none tracking-tight text-white-pure xl:text-4xl"
+                :class="!isLandingDark && '!text-zinc-900'"
+              >
+                {{ metric.value }}
+              </p>
+              <p class="mt-2 text-xs leading-snug text-white-muted">{{ metric.label }}</p>
+            </div>
+          </div>
+
+          <!-- Center spacer — visual shows through from background layer -->
+          <div class="col-span-6" aria-hidden="true" />
+
+          <div class="col-span-3 flex flex-col gap-3">
+            <div
+              v-for="(metric, idx) in rightMetrics"
+              :key="`right-${idx}`"
+              class="metric-card-right pointer-events-auto origin-center p-5"
+              :class="metricCardClass"
+            >
+              <p
+                class="font-primary text-3xl font-extrabold leading-none tracking-tight text-white-pure xl:text-4xl"
+                :class="!isLandingDark && '!text-zinc-900'"
+              >
+                {{ metric.value }}
+              </p>
+              <p class="mt-2 text-xs leading-snug text-white-muted">{{ metric.label }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile / tablet metrics -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:hidden">
           <div
-            v-for="(metric, idx) in leftMetrics"
-            :key="`left-${idx}`"
-            class="metric-card-left p-5"
+            v-for="(metric, idx) in allMetrics"
+            :key="`mobile-${idx}`"
+            class="metric-card-mobile pointer-events-auto origin-center p-4"
             :class="metricCardClass"
           >
             <p
-              class="font-primary text-3xl font-extrabold leading-none tracking-tight text-white-pure xl:text-4xl"
+              class="font-primary text-2xl font-extrabold text-white-pure"
               :class="!isLandingDark && '!text-zinc-900'"
             >
               {{ metric.value }}
             </p>
-            <p class="mt-2 text-xs leading-snug text-white-muted">{{ metric.label }}</p>
+            <p class="mt-1.5 text-[10px] leading-snug text-white-muted">{{ metric.label }}</p>
           </div>
-        </div>
-
-        <!-- Center 3D visual -->
-        <div class="col-span-12 flex justify-center lg:col-span-6">
-          <img
-            src="/bg/Hero/section-one/herobg.png"
-            alt="FlowVision abstract routing visual"
-            class="hero-center-image h-auto w-full max-w-[560px] object-contain lg:max-w-[640px]"
-            width="750"
-            height="750"
-          >
-        </div>
-
-        <!-- Right metrics -->
-        <div class="col-span-3 hidden flex-col gap-3 lg:flex">
-          <div
-            v-for="(metric, idx) in rightMetrics"
-            :key="`right-${idx}`"
-            class="metric-card-right p-5"
-            :class="metricCardClass"
-          >
-            <p
-              class="font-primary text-3xl font-extrabold leading-none tracking-tight text-white-pure xl:text-4xl"
-              :class="!isLandingDark && '!text-zinc-900'"
-            >
-              {{ metric.value }}
-            </p>
-            <p class="mt-2 text-xs leading-snug text-white-muted">{{ metric.label }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile / tablet metrics -->
-      <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:hidden">
-        <div
-          v-for="(metric, idx) in allMetrics"
-          :key="`mobile-${idx}`"
-          class="metric-card-mobile p-4"
-          :class="metricCardClass"
-        >
-          <p
-            class="font-primary text-2xl font-extrabold text-white-pure"
-            :class="!isLandingDark && '!text-zinc-900'"
-          >
-            {{ metric.value }}
-          </p>
-          <p class="mt-1.5 text-[10px] leading-snug text-white-muted">{{ metric.label }}</p>
         </div>
       </div>
     </div>
@@ -155,7 +160,8 @@ onMounted(() => {
     }),
     gsap.from('.hero-center-image', {
       opacity: 0,
-      scale: 0.92,
+      scale: 0.96,
+      transformOrigin: 'center center',
       duration: 1.2,
       ease: 'power3.out',
       delay: 0.25,
@@ -185,19 +191,3 @@ onUnmounted(() => {
   gsap.killTweensOf('.metric-card-left, .metric-card-right, .metric-card-mobile, .hero-center-image')
 })
 </script>
-
-<style scoped>
-.landing-grid-light {
-  background-image:
-    linear-gradient(to right, rgb(228 228 231 / 0.55) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(228 228 231 / 0.55) 1px, transparent 1px);
-  background-size: 100px 100px;
-}
-
-.landing-grid-dark {
-  background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
-  background-size: 100px 100px;
-}
-</style>

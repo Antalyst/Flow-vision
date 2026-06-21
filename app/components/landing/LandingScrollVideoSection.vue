@@ -330,10 +330,10 @@ function initScrollAnimation() {
 
   masterTimeline.fromTo(
     video,
-    { scale: INITIAL_SCALE, transformOrigin: 'center center', borderRadius: '10rem' },
+    { scale: INITIAL_SCALE, transformOrigin: 'center center', borderRadius: '50rem' },
     { 
       scale: 1, 
-      borderRadius: '0rem', // Morphs back into flat 90-degree rectangle 
+      borderRadius: '0rem', 
       ease: 'none', 
       duration: SCALE_DURATION, 
       immediateRender: false 
