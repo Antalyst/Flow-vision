@@ -1,0 +1,9 @@
+{
+  "appId": "com.antalyst.flowvision",
+  "appName": "FlowVision",
+  "webDir": ".output/public",
+   "server": {
+    "url": "https://repla-theta.vercel.app",
+    "cleartext": true
+  }
+}

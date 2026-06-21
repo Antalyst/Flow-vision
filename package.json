@@ -7,9 +7,14 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+     "deploy:android": "npx nuxi generate && npx cap sync android && npx cap run android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@ionic/core": "^8.8.11",
     "@nuxt/icon": "^2.2.1",
     "@nuxtjs/supabase": "^2.0.6",
     "@nuxtjs/tailwindcss": "^6.14.0",
