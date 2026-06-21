@@ -83,6 +83,8 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { Camera } from '@capacitor/camera'
+import { Capacitor } from '@capacitor/core'
 import { resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
 
 const props = defineProps<{
@@ -126,6 +128,24 @@ const onDecodeError = (_err: unknown) => {
 
 const startScanner = async () => {
   if (!import.meta.client) return
+
+  // ---- NEW: Capacitor Native Permission Request ----
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // Prompt the Android OS permission dialog
+      const permissionStatus = await Camera.requestPermissions()
+      if (permissionStatus.camera !== 'granted' && permissionStatus.camera !== 'limited') {
+        permissionDenied.value = true
+        emit('error', 'Native camera permission was denied.')
+        return
+      }
+    } catch (err: any) {
+      permissionDenied.value = true
+      emit('error', 'Failed to request native camera permissions.')
+      return
+    }
+  }
+  // --------------------------------------------------
 
   try {
     const { Html5Qrcode } = await import('html5-qrcode')
