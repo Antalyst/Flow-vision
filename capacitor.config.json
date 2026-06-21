@@ -4,6 +4,9 @@
   "webDir": ".output/public",
   "server": {
     "url": "https://flow-vision-beryl.vercel.app",
-    "cleartext": true
+    "cleartext": true,
+    "allowNavigation": [
+      "flow-vision-beryl.vercel.app"
+    ]
   }
 }

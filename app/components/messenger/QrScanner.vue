@@ -5,50 +5,57 @@
       class="relative overflow-hidden rounded-2xl bg-black"
       :style="{ aspectRatio: '1 / 1', maxWidth: '360px', margin: '0 auto' }"
     >
-      <!-- html5-qrcode target -->
-      <div :id="scannerId" class="absolute inset-0 w-full h-full" />
+      <!-- html5-qrcode target (Web Viewport) -->
+      <div v-show="!isNativeCapacitor" :id="scannerId" class="absolute inset-0 w-full h-full" />
 
-      <!-- Overlay: scanning frame + corner brackets -->
+      <!-- Native Capacitor Camera Interface (Bypasses WebView 'getUserMedia' limitations) -->
       <div
-        v-if="isScanning && !result"
+        v-if="isNativeCapacitor && !result"
+        class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-900 px-6 text-center"
+      >
+        <Icon name="ph:camera-fill" class="h-12 w-12 text-amber-500" />
+        <p class="text-sm font-semibold text-white">Native Camera Ready</p>
+        <p class="text-xs text-gray-400">Tap below to securely launch the native camera and scan a QR code.</p>
+        <button
+          type="button"
+          class="mt-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white transition shadow-lg shadow-amber-500/20 hover:bg-amber-600 active:scale-[0.98]"
+          @click="startNativeCamera"
+        >
+          Open Native Camera
+        </button>
+      </div>
+
+      <!-- Overlay: scanning frame + corner brackets (Only Web) -->
+      <div
+        v-if="isScanning && !result && !isNativeCapacitor"
         class="pointer-events-none absolute inset-0 flex items-center justify-center"
       >
-        <!-- Dark corners -->
         <div class="absolute inset-0 bg-black/30" />
-
-        <!-- Scanning window cutout (just corners) -->
         <div class="relative z-10 h-52 w-52">
-          <!-- Top-left -->
           <span class="absolute top-0 left-0 h-10 w-10 border-t-4 border-l-4 rounded-tl-xl border-amber-400" />
-          <!-- Top-right -->
           <span class="absolute top-0 right-0 h-10 w-10 border-t-4 border-r-4 rounded-tr-xl border-amber-400" />
-          <!-- Bottom-left -->
           <span class="absolute bottom-0 left-0 h-10 w-10 border-b-4 border-l-4 rounded-bl-xl border-amber-400" />
-          <!-- Bottom-right -->
           <span class="absolute bottom-0 right-0 h-10 w-10 border-b-4 border-r-4 rounded-br-xl border-amber-400" />
-
-          <!-- Animated laser line -->
           <div class="absolute inset-x-2 h-0.5 bg-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.8)] scan-laser" />
         </div>
-
         <p class="absolute bottom-4 left-0 right-0 text-center text-xs font-semibold text-white/80">
           Align QR code within the frame
         </p>
       </div>
 
-      <!-- Camera permission denied overlay -->
+      <!-- Camera permission denied overlay (Web Fallback) -->
       <div
         v-if="permissionDenied"
         class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/90 px-6 text-center"
       >
         <Icon name="ph:camera-slash-fill" class="h-10 w-10 text-amber-500/70" />
         <p class="text-sm font-semibold text-white">Camera access denied</p>
-        <p class="text-xs text-gray-400">Enable camera permissions in your browser settings, then reload the page.</p>
+        <p class="text-xs text-gray-400">Enable camera permissions, then reload.</p>
       </div>
 
       <!-- Initialising overlay -->
       <div
-        v-if="!isScanning && !permissionDenied && !result"
+        v-if="!isScanning && !permissionDenied && !result && !isNativeCapacitor"
         class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80"
       >
         <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-amber-400" />
@@ -59,7 +66,7 @@
     <!-- Controls below viewport -->
     <div class="mt-4 flex items-center justify-center gap-3">
       <button
-        v-if="isScanning && !result"
+        v-if="isScanning && !result && !isNativeCapacitor"
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
         @click="toggleTorch"
@@ -83,12 +90,10 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Camera } from '@capacitor/camera'
-import { Capacitor } from '@capacitor/core'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
 
 const props = defineProps<{
-  /** Unique DOM id — allows multiple scanners on one page without collision */
   scannerId?: string
   fps?: number
   qrboxSize?: number
@@ -100,12 +105,20 @@ const emit = defineEmits<{
 }>()
 
 const id          = props.scannerId ?? `qr-scanner-${Math.random().toString(36).slice(2, 7)}`
-const scannerId   = id  // expose to template (same value)
+const scannerId   = id
 const isScanning  = ref(false)
 const permissionDenied = ref(false)
 const result      = ref<string | null>(null)
 const torchOn     = ref(false)
 const { defaultCameraDeviceId } = useMessengerSettings()
+
+// 1. Detect if running inside a Capacitor wrapper environment
+const isNativeCapacitor = ref(false)
+
+if (import.meta.client) {
+  // @ts-ignore - Safely check the window object for Capacitor runtime injections
+  isNativeCapacitor.value = !!window.Capacitor?.isNativePlatform()
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let scannerInstance: any = null
@@ -115,37 +128,60 @@ function getCameraConfig() {
 }
 
 const onDecodeSuccess = (rawValue: string) => {
-  if (result.value === rawValue) return  // debounce same code
+  if (result.value === rawValue) return
   result.value = rawValue
   emit('scan', rawValue)
-  // Briefly pause scanning after a successful read (UX: avoid repeat fires)
   scannerInstance?.pause(true)
 }
 
 const onDecodeError = (_err: unknown) => {
-  // Continuous decode errors are normal (no QR in frame) — suppress noise
+  // Continuous decode errors are normal
 }
 
+// 2. Bypass browser-level validation and directly initialize the Native Camera
+const startNativeCamera = async () => {
+  try {
+    // Launch the actual OS-level native camera app
+    const image = await Camera.getPhoto({
+      quality: 100,
+      allowEditing: false,
+      resultType: CameraResultType.Uri,
+      source: CameraSource.Camera,
+    })
+
+    if (image.webPath) {
+      // Decode the captured native photo using html5-qrcode's static file decoder
+      const response = await fetch(image.webPath)
+      const blob = await response.blob()
+      const file = new File([blob], 'qr_snapshot.jpg', { type: 'image/jpeg' })
+
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const staticDecoder = new Html5Qrcode(id)
+      
+      try {
+        const decodedResult = await staticDecoder.scanFile(file, false)
+        result.value = decodedResult
+        emit('scan', decodedResult)
+      } catch (decodeErr) {
+        emit('error', 'No QR code found in the captured image. Please try again.')
+      }
+    }
+  } catch (err: any) {
+    if (err.message && !err.message.includes('User cancelled')) {
+      emit('error', 'Native Camera Failed: ' + err.message)
+    }
+  }
+}
+
+// Standard Web Initialization
 const startScanner = async () => {
   if (!import.meta.client) return
 
-  // ---- NEW: Capacitor Native Permission Request ----
-  if (Capacitor.isNativePlatform()) {
-    try {
-      // Prompt the Android OS permission dialog
-      const permissionStatus = await Camera.requestPermissions()
-      if (permissionStatus.camera !== 'granted' && permissionStatus.camera !== 'limited') {
-        permissionDenied.value = true
-        emit('error', 'Native camera permission was denied.')
-        return
-      }
-    } catch (err: any) {
-      permissionDenied.value = true
-      emit('error', 'Failed to request native camera permissions.')
-      return
-    }
+  // Prevent web browser getUserMedia trigger if running natively
+  if (isNativeCapacitor.value) {
+    // Native users will tap the button to call startNativeCamera()
+    return
   }
-  // --------------------------------------------------
 
   try {
     const { Html5Qrcode } = await import('html5-qrcode')
@@ -165,7 +201,7 @@ const startScanner = async () => {
     isScanning.value = true
   } catch (err: any) {
     const msg = String(err?.message ?? err ?? 'Camera error')
-    if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied')) {
+    if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('notallowed')) {
       permissionDenied.value = true
     }
     emit('error', msg)
@@ -177,14 +213,18 @@ const stopScanner = async () => {
   try {
     if (scannerInstance.isScanning) await scannerInstance.stop()
     scannerInstance.clear()
-  } catch { /* ignore cleanup errors */ }
+  } catch { /* ignore */ }
   isScanning.value = false
   scannerInstance  = null
 }
 
 const rescan = () => {
   result.value = null
-  scannerInstance?.resume()
+  if (isNativeCapacitor.value) {
+    startNativeCamera()
+  } else {
+    scannerInstance?.resume()
+  }
 }
 
 const toggleTorch = async () => {
@@ -192,20 +232,24 @@ const toggleTorch = async () => {
   try {
     torchOn.value = !torchOn.value
     await scannerInstance.applyVideoConstraints({ advanced: [{ torch: torchOn.value }] })
-  } catch { /* torch not supported on this device */ }
+  } catch { /* torch not supported */ }
 }
 
-onMounted(startScanner)
+onMounted(() => {
+  if (!isNativeCapacitor.value) {
+    startScanner()
+  }
+})
+
 onBeforeUnmount(stopScanner)
 
 watch(defaultCameraDeviceId, async () => {
-  if (!scannerInstance?.isScanning) return
+  if (isNativeCapacitor.value || !scannerInstance?.isScanning) return
   await stopScanner()
   result.value = null
   await startScanner()
 })
 
-// Expose for parent control
 defineExpose({ rescan, stopScanner })
 </script>
 
