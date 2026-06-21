@@ -3,7 +3,7 @@
   "appName": "FlowVision",
   "webDir": ".output/public",
    "server": {
-    "url": "https://repla-theta.vercel.app",
+    "url": "flow-vision-beryl.vercel.app",
     "cleartext": true
   }
 }

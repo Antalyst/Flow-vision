@@ -8,7 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-     "deploy:android": "npx nuxi generate && npx cap sync android && npx cap run android"
+   "deploy:android": "npx cap sync android && npx cap run android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
