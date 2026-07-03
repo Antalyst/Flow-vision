@@ -2,6 +2,7 @@
 const ROLE_HOME: Record<string, string> = {
   client: '/client/dashboard',
   employee: '/employee/dashboard',
+  employee_sub_user: '/employee/dashboard',
   messenger: '/messenger/dashboard',
 }
 
@@ -9,6 +10,7 @@ const ROLE_HOME: Record<string, string> = {
 const ROLE_ZONE: Record<string, string> = {
   client: '/client',
   employee: '/employee',
+  employee_sub_user: '/employee',
   messenger: '/messenger',
 }
 

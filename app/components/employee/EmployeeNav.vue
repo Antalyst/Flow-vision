@@ -45,6 +45,7 @@ const workspaceItems = [
   { to: '/employee/dashboard',     label: 'Dashboard',       icon: 'ph:squares-four-fill' },
   { to: '/employee/notifications', label: 'Notifications',   icon: 'ph:bell-fill' },
   { to: '/employee/offices',       label: 'My Offices',      icon: 'ph:buildings-fill' },
+  { to: '/employee/users',         label: 'Internal Staff',  icon: 'ph:users-fill' },
   { to: '/employee/working',       label: 'Current Working', icon: 'ph:briefcase-fill' },
   { to: '/employee/stages',        label: 'Stages',          icon: 'ph:steps-fill' },
   { to: '/employee/documents',     label: 'Documents',       icon: 'ph:files-fill' },

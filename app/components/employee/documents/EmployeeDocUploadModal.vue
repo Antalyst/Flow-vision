@@ -55,37 +55,7 @@
           <!-- ── RIGHT: form fields ────────────────────────────────────── -->
           <div class="w-full space-y-5 overflow-y-auto lg:w-5/12">
 
-            <!-- 1. Origin Office (mandatory) -->
-            <div>
-              <label class="block">
-                <span class="text-sm font-semibold text-candy-orange">
-                  Origin Office <span class="text-red-500">*</span>
-                </span>
-                <p class="mt-0.5 text-[11px]" :class="mutedClass">
-                  The physical branch where this hard-copy originates.
-                </p>
-                <select
-                  v-model="selectedOriginOfficeId"
-                  class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
-                  :class="inputClass"
-                  required
-                  @change="onOriginOfficeChange"
-                >
-                  <option value="" :style="optionStyle">Select your office…</option>
-                  <option
-                    v-for="office in offices"
-                    :key="office.id"
-                    :value="String(office.id)"
-                    :style="optionStyle"
-                  >
-                    {{ office.name }}
-                  </option>
-                </select>
-                <p v-if="!offices.length" class="mt-1.5 text-xs text-amber-500">
-                  No offices assigned. Register a sub-office first in My Offices.
-                </p>
-              </label>
-            </div>
+            <!-- 1. Auto-detected Origin Office (hidden from user, handled by system) -->
 
             <!-- 2. Drop zone -->
             <label
@@ -114,24 +84,41 @@
             <!-- Selected file chip -->
             <div
               v-if="selectedFile"
-              class="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"
+              class="flex flex-col gap-3 rounded-xl border p-3 text-sm"
               :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
-              <div class="flex min-w-0 items-center gap-3">
-                <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
-                <div class="min-w-0">
-                  <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
-                  <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
+              <div class="flex min-w-0 items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
+                  <div class="min-w-0">
+                    <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
+                    <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-xl text-red-500 transition hover:bg-red-500/10"
+                  aria-label="Remove file"
+                  @click="clearFile"
+                >
+                  <Icon name="ph:trash" class="h-4 w-4" />
+                </button>
+              </div>
+              
+              <!-- Excel options -->
+              <div v-if="isExcelFile" class="mt-2 rounded-lg bg-candy-orange/10 p-3 border border-candy-orange/20">
+                <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
+                <div class="flex items-center gap-2">
+                  <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
+                    <Icon name="ph:table" class="h-3.5 w-3.5" />
+                    Preview Metadata
+                  </button>
+                  <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-[#e95a0b] transition">
+                    <Icon name="ph:printer" class="h-3.5 w-3.5" />
+                    Print Summary
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl text-red-500 transition hover:bg-red-500/10"
-                aria-label="Remove file"
-                @click="clearFile"
-              >
-                <Icon name="ph:trash" class="h-4 w-4" />
-              </button>
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
@@ -437,18 +424,41 @@
             </div>
 
             <!-- 5. Standalone QR size -->
-            <label v-if="selectedStrategy === 'standalone'" class="block">
+            <div v-if="selectedStrategy === 'standalone'" class="block">
               <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
-              <select
-                v-model.number="selectedQrSize"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
-                :class="inputClass"
-              >
-                <option :value="50"  :style="optionStyle">Small (50px × 50px)</option>
-                <option :value="120" :style="optionStyle">Medium (120px × 120px)</option>
-                <option :value="200" :style="optionStyle">Large (200px × 200px)</option>
-              </select>
-            </label>
+              <div class="mt-2 grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 50"
+                >
+                  <Icon name="ph:qr-code" class="h-6 w-6 mb-1" />
+                  <span class="text-xs font-semibold">Small</span>
+                  <span class="text-[10px] opacity-70">1x1 in</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 120"
+                >
+                  <Icon name="ph:qr-code" class="h-7 w-7 mb-1" />
+                  <span class="text-xs font-semibold">Medium</span>
+                  <span class="text-[10px] opacity-70">2x2 in</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 200"
+                >
+                  <Icon name="ph:qr-code" class="h-8 w-8 mb-1" />
+                  <span class="text-xs font-semibold">Large</span>
+                  <span class="text-[10px] opacity-70">4x4 in</span>
+                </button>
+              </div>
+            </div>
 
             <!-- 6. Error -->
             <p
@@ -576,7 +586,11 @@ const routeTabs = [
 // ── Form state ────────────────────────────────────────────────────────
 const fileInput              = ref<HTMLInputElement | null>(null)
 const selectedFile           = ref<File | null>(null)
-const selectedOriginOfficeId = ref<string>('')
+const selectedOriginOfficeId = computed(() => {
+  if (auth.user?.office_id) return String(auth.user.office_id)
+  if (props.offices && props.offices.length > 0) return String(props.offices[0].id)
+  return ''
+})
 const selectedStageId        = ref<string>('')
 const selectedStrategy       = ref<'embedded' | 'standalone'>('embedded')
 const selectedQrSize         = ref<50 | 120 | 200>(120)
@@ -586,6 +600,13 @@ const errorMessage           = ref('')
 const uploading              = ref(false)
 const aiAnalysis             = ref<AiAnalysis | null>(null)
 const printQrDataUrl         = ref('')
+
+const isExcelFile = computed(() => {
+  if (!selectedFile.value) return false
+  const name = selectedFile.value.name.toLowerCase()
+  return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')
+})
+const previewExcel = ref(false)
 
 const generateTrackingId = () => `FLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
@@ -737,7 +758,7 @@ const clearFile = () => {
 const handleClose = () => {
   if (uploading.value) return
   clearFile()
-  selectedOriginOfficeId.value = ''
+  // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
@@ -863,7 +884,7 @@ const handlePrintAndSubmit = async () => {
       }
       emit('uploaded')
       clearFile()
-      selectedOriginOfficeId.value = ''
+      // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''

@@ -113,8 +113,18 @@ export async function resolveActorContextWithOffices(
   const base = await resolveActorContext(event, client)
 
   // Client admins have no assigned offices — LOCAL scope is not applicable
-  if (base.userRole !== 'employee') {
+  if (base.userRole !== 'employee' && base.userRole !== 'employee_sub_user') {
     return { ...base, officeIds: [] }
+  }
+
+  if (base.userRole === 'employee_sub_user') {
+    const { data: userRow } = await client
+      .from('users')
+      .select('office_id')
+      .eq('user_id', base.userId)
+      .single()
+    const officeIds = userRow?.office_id ? [String(userRow.office_id)] : []
+    return { ...base, officeIds }
   }
 
   const { data: officeRows, error: officeErr } = await client

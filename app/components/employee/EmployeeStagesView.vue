@@ -212,14 +212,26 @@
       <p class="mt-1 text-sm" :class="mutedText">
         {{ scopeMode === 'local' ? 'Create a local route for one of your sub-offices.' : 'No routes exist yet.' }}
       </p>
-      <button
-        type="button"
-        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
-        @click="openDrawer"
-      >
-        <Icon name="ph:plus-bold" class="h-4 w-4" />
-        Create Route
-      </button>
+      <div class="mt-5 flex items-center gap-3">
+        <button
+          v-if="scopeMode === 'local' && !myOffices.length"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange/10 px-4 py-2 text-sm font-semibold text-candy-orange transition hover:bg-candy-orange/20"
+          @click="openTableDrawer"
+        >
+          <Icon name="ph:desk-bold" class="h-4 w-4" />
+          Create Office Desk
+        </button>
+        <button
+          v-if="myOffices.length || scopeMode !== 'local'"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
+          @click="openDrawer"
+        >
+          <Icon name="ph:plus-bold" class="h-4 w-4" />
+          Create Route
+        </button>
+      </div>
     </div>
 
     <!-- ── Create Route Drawer ───────────────────────────────────────── -->
@@ -240,8 +252,12 @@
             <div>
               <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
               <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Route Template</p>
-              <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create Local Route</h2>
-              <p class="mt-0.5 text-xs" :class="mutedText">Scoped to your selected office branch</p>
+              <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                {{ scopeMode === 'local' ? 'Create Local Route' : 'Create Route' }}
+              </h2>
+              <p class="mt-0.5 text-xs" :class="mutedText">
+                {{ scopeMode === 'local' ? 'Scoped to your selected office branch' : 'Organisation-wide routing' }}
+              </p>
             </div>
             <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
               <Icon name="ph:x-bold" class="h-4 w-4" />
@@ -407,6 +423,50 @@
       </Transition>
     </Teleport>
 
+    <!-- Table Drawer -->
+    <Teleport to="body">
+      <Transition name="drawer-fade">
+        <div v-if="tableDrawerOpen" class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" @click="closeTableDrawer" />
+      </Transition>
+
+      <Transition name="drawer-slide">
+        <form
+          v-if="tableDrawerOpen"
+          class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-sm flex-col border-l shadow-2xl"
+          :class="isDark ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'bg-white border-gray-200'"
+          @submit.prevent="handleCreateTable"
+        >
+          <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+            <div>
+              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+              <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create Desk</h2>
+            </div>
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeTableDrawer">
+              <Icon name="ph:x-bold" class="h-4 w-4" />
+            </button>
+          </header>
+
+          <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+            <label class="block">
+              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Desk/Table Name <span class="text-red-500">*</span></span>
+              <input v-model.trim="tableForm.name" type="text" placeholder="e.g. Reception Desk" class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange" :class="inputClass" required />
+            </label>
+          </div>
+
+          <footer class="border-t px-6 py-5" :class="isDark ? 'border-white/10 bg-[#111111]' : 'border-gray-200 bg-gray-50'">
+            <div class="flex items-center justify-end gap-3">
+              <button type="button" class="rounded-xl px-5 py-2.5 text-sm font-semibold transition" :class="isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'" @click="closeTableDrawer">Cancel</button>
+              <button type="submit" :disabled="creatingTable" class="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] focus:outline-none focus:ring-2 focus:ring-candy-orange/50 disabled:opacity-50">
+                <Icon v-if="creatingTable" name="ph:spinner-gap-bold" class="h-4 w-4 animate-spin" />
+                <Icon v-else name="ph:check-bold" class="h-4 w-4" />
+                Create
+              </button>
+            </div>
+          </footer>
+        </form>
+      </Transition>
+    </Teleport>
+
   </section>
 </template>
 
@@ -471,7 +531,14 @@ const stageForm = reactive({
 const selectedCheckpoints = ref<OfficeRecord[]>([])
 
 // ── Computed ───────────────────────────────────────────────────────────
-const allOffices = computed(() => officeStore.offices as unknown as OfficeRecord[])
+const allOffices = computed(() => {
+  const storeOffices = officeStore.offices as unknown as OfficeRecord[]
+  if (scopeMode.value === 'local') {
+    // Hide global organization offices (only show offices that have a parent, i.e., sub-offices)
+    return storeOffices.filter(o => o.parent_office_id)
+  }
+  return storeOffices
+})
 
 const filteredStages = computed(() => {
   let list = [...stages.value]
