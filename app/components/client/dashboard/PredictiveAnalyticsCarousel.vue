@@ -187,7 +187,7 @@ function goToSlide(index: number) {
 </script>
 
 <template>
-  <div class="matrix-card-glass p-6 transition-all duration-300 hover:scale-[1.005]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-6 flex items-start justify-between gap-4">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">

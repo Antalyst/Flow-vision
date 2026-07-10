@@ -44,16 +44,14 @@
         >
           <canvas
             ref="qrCanvas"
-            class="h-full w-full"
+            class="h-full w-full pt-4"
             aria-label="Client dispatch station QR code"
           />
         </div>
 
-        <p class="break-all text-center font-mono text-[11px]" :class="mutedClass">
-          {{ qrPayload }}
-        </p>
+        
 
-        <p class="max-w-md text-center text-sm leading-relaxed" :class="mutedClass">
+        <p class="max-w-md text-center text-sm leading-relaxed pt-10" :class="mutedClass">
           Affix this badge to your physical dispatch desk. Messengers scan it in <strong class="text-candy-orange">Pickup</strong> mode to register origin collection.
         </p>
       </div>
@@ -132,12 +130,12 @@ const fetchStation = async () => {
 
     station.value = res.data.station
     qrPayload.value = res.data.qr_payload || buildCheckpointQrPayload(res.data.station.id)
-    await nextTick()
-    await renderQr()
   } catch (err: any) {
     error.value = err?.data?.message || 'Could not load your dispatch station.'
   } finally {
     loading.value = false
+    await nextTick()
+    await renderQr()
   }
 }
 

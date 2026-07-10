@@ -16,14 +16,14 @@ export function useChartTheme() {
     borderColor: isDark.value ? '#2A2A2A' : '#E4E4E7',
   }))
 
-  const donutBorderColor = computed(() => (isDark.value ? '#1A1A1A' : '#FFFFFF'))
+  const donutBorderColor = computed(() => (isDark.value ? '#111113' : '#FFFFFF'))
 
   const candy = {
-    primary: '#F47D2F',
-    soft: 'rgba(244, 125, 47, 0.12)',
-    medium: 'rgba(244, 125, 47, 0.22)',
-    strong: 'rgba(244, 125, 47, 0.65)',
-    forecast: '#D96518',
+    primary: '#6366F1', // Indigo 500
+    soft: 'rgba(99, 102, 241, 0.1)',
+    medium: 'rgba(99, 102, 241, 0.2)',
+    strong: 'rgba(99, 102, 241, 0.8)',
+    forecast: '#A8A29E', // Stone 400 for neutral projection
   }
 
   function buildCartesianScales() {

@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen flex flex-col" :class="isDark ? 'bg-onyx-black' : 'bg-gray-950'">
+  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-3xl overflow-hidden border shadow-xl relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
     <header class="flex items-center justify-between px-4 pt-4 pb-3">
       <NuxtLink
-        to="/messenger/dashboard"
+        to="/client/documents"
         class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
       >
         <Icon name="ph:arrow-left-bold" class="h-4 w-4" />
         Back
       </NuxtLink>
 
-      <h1 class="text-sm font-bold text-white">Document Handshake</h1>
+      <h1 class="text-sm font-bold text-white">Client Document Scanner</h1>
 
       <!-- Mode toggle pill -->
       <div class="flex rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-inner">
@@ -19,7 +19,7 @@
           type="button"
           class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'pickup'
-            ? 'bg-amber-500 text-white shadow'
+            ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
           @click="switchMode('pickup')"
         >
@@ -29,7 +29,7 @@
           type="button"
           class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'dropoff'
-            ? 'bg-amber-500 text-white shadow'
+            ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
           @click="switchMode('dropoff')"
         >
@@ -42,20 +42,20 @@
     <div class="px-4 pb-3 text-center">
       <p class="text-xs text-white/50">
         <span v-if="mode === 'pickup'">
-          Scan a <strong class="text-amber-400">document QR</strong> or the client's <strong class="text-amber-400">dispatch station badge</strong>
+          Scan a <strong class="text-candy-orange">document QR</strong> or the client's <strong class="text-candy-orange">dispatch station badge</strong>
         </span>
-        <span v-else>Scan the QR code <strong class="text-amber-400">posted on the office wall</strong></span>
+        <span v-else>Scan the QR code <strong class="text-candy-orange">posted on the office wall</strong></span>
       </p>
     </div>
 
     <!-- ── Camera scanner ───────────────────────────────────────────────── -->
-    <div class="flex-1 flex flex-col items-center justify-start px-4 pt-2 pb-4">
+    <div class="flex-1 flex flex-col items-center justify-center px-4 pt-2 pb-4 overflow-hidden relative">
       <QrScanner
         :key="scannerKey"
         :scanner-id="`fv-scanner-${scannerKey}`"
         :fps="12"
         :qrbox-size="220"
-        theme-color="amber"
+        theme-color="orange"
         @scan="handleScan"
         @error="handleCameraError"
       />
@@ -69,7 +69,7 @@
         >
           <!-- Processing -->
           <div v-if="scanState === 'processing'" class="flex items-center gap-3 p-5">
-            <Icon name="ph:spinner-gap" class="h-6 w-6 animate-spin text-amber-400 flex-shrink-0" />
+            <Icon name="ph:spinner-gap" class="h-6 w-6 animate-spin text-candy-orange flex-shrink-0" />
             <div>
               <p class="text-sm font-bold text-white">Processing scan…</p>
               <p class="text-xs text-white/60 mt-0.5">Contacting server</p>
@@ -96,13 +96,13 @@
                   Checked in — no documents waiting at this station.
                 </p>
                 <p v-if="resultData?.destination?.office_name" class="mt-1 text-xs text-white/60">
-                  <Icon name="ph:map-pin-fill" class="inline h-3 w-3 text-amber-400 mr-1" />
+                  <Icon name="ph:map-pin-fill" class="inline h-3 w-3 text-candy-orange mr-1" />
                   Heading to <strong class="text-white/80">{{ resultData.destination.office_name }}</strong>
-                  <span class="ml-1 text-amber-400">(Step {{ resultData.destination.step }})</span>
+                  <span class="ml-1 text-candy-orange">(Step {{ resultData.destination.step }})</span>
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-candy-orange"
                 >
                   <Icon name="ph:motorcycle-fill" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -116,18 +116,18 @@
             <div class="flex items-start gap-3">
               <span
                 class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
-                :class="resultData?.is_final_stop ? 'bg-emerald-500/20' : 'bg-amber-500/20'"
+                :class="resultData?.is_final_stop ? 'bg-emerald-500/20' : 'bg-candy-orange/20'"
               >
                 <Icon
                   :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'"
                   class="h-6 w-6"
-                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-amber-400'"
+                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-candy-orange'"
                 />
               </span>
               <div class="min-w-0 flex-1">
                 <p
                   class="text-xs font-bold uppercase tracking-widest"
-                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-amber-400'"
+                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-candy-orange'"
                 >
                   {{ resultData?.is_final_stop ? 'Arrived at Final Stop' : 'Arrived at Office' }}
                 </p>
@@ -143,7 +143,7 @@
                   class="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
                     ? 'bg-emerald-500/15 border-emerald-500/20 text-emerald-400'
-                    : 'bg-amber-500/15 border-amber-500/20 text-amber-400'"
+                    : 'bg-candy-orange/15 border-candy-orange/20 text-candy-orange'"
                 >
                   <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3.5 w-3.5" />
                   {{ resultData?.is_final_stop ? 'AWAITING REVIEW' : 'ARRIVED' }}
@@ -174,11 +174,11 @@
           <!-- ROUTE MISMATCH ERROR -->
           <div v-else-if="scanState === 'route-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
-                <Icon name="ph:warning-fill" class="h-6 w-6 text-amber-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/20">
+                <Icon name="ph:warning-fill" class="h-6 w-6 text-candy-orange" />
               </span>
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold uppercase tracking-widest text-amber-400">Wrong Checkpoint</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Wrong Checkpoint</p>
                 <p class="mt-1 text-sm font-bold text-white">Route Mismatch</p>
                 <p class="mt-1 text-xs leading-relaxed text-white/60">{{ errorMessage }}</p>
               </div>
@@ -219,7 +219,7 @@
               class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
               @click="resetScan"
             >
-              <Icon name="ph:scan" class="h-4 w-4 text-amber-400" />
+              <Icon name="ph:scan" class="h-4 w-4 text-candy-orange" />
               Scan Next
             </button>
           </div>
@@ -229,9 +229,9 @@
       <!-- ── Instruction chip when idle ──────────────────────────────────── -->
       <div
         v-if="scanState === 'idle'"
-        class="mt-4 flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-300/80"
+        class="mt-4 flex items-center gap-2 rounded-2xl border border-candy-orange/20 bg-candy-orange/5 px-4 py-2.5 text-xs text-candy-orange/80"
       >
-        <Icon name="ph:qr-code" class="h-4 w-4 text-amber-400 flex-shrink-0" />
+        <Icon name="ph:qr-code" class="h-4 w-4 text-candy-orange flex-shrink-0" />
         <span>
           <strong v-if="mode === 'pickup'">Point camera at document QR</strong>
           <strong v-else>Point camera at office wall QR</strong>
@@ -252,7 +252,7 @@ import {
   parseFlowVisionQr,
 } from '~/utils/parseFlowVisionQr'
 
-definePageMeta({ layout: 'messenger' })
+definePageMeta({ layout: 'client' })
 
 const auth    = useAuthStore()
 const { isDark } = useTheme()

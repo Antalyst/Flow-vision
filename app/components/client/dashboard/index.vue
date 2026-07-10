@@ -1,5 +1,5 @@
 <template>
-  <div class="matrix-shell -mx-4 space-y-6 rounded-2xl bg-white-pure px-4 pb-6 pt-4 transition-colors duration-300 dark:bg-onyx-black md:-mx-8 md:px-8">
+  <div class="space-y-8 pb-10 transition-colors duration-300">
     <div class="fv-enter-header" :class="entranceVisibleClass">
       <DashboardHeader :user-name="auth.user?.full_name || 'User'" />
     </div>

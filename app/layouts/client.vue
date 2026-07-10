@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
+  <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
     :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 
     <!-- Mobile Top Bar -->
@@ -122,6 +122,9 @@
         </NuxtLink>
       </div>
     </nav>
+
+    <!-- Contextual AI Assistant Overlay -->
+    <AiOverlay />
   </div>
 </template>
 
@@ -129,6 +132,7 @@
 import { ref, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import ClientOrgSetup from '~/components/client/org.vue'
+import AiOverlay from '~/components/ai/AiOverlay.vue'
 
 const auth = useAuthStore()
 const { isDark } = useTheme()

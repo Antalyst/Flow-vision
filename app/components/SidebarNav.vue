@@ -69,6 +69,7 @@ const mainNavItems = [
   { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-fill' },
   { to: '/client/user-management', label: 'User Management', icon: 'ph:users-three-fill' },
   { to: '/client/documents', label: 'Documents', icon: 'ph:files-fill', badge: true },
+  { to: '/client/scan', label: 'Scan QR', icon: 'ph:scan-fill' },
   { to: '/client/station', label: 'Office QR', icon: 'ph:qr-code-fill' },
   { to: '/client/activity', label: 'Activity', icon: 'ph:clock-counter-clockwise-fill' },
   { to: '/client/notifications', label: 'Notifications', icon: 'ph:bell-fill' },

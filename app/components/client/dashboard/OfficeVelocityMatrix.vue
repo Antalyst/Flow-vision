@@ -16,7 +16,7 @@ const filteredOffices = computed(() => {
 </script>
 
 <template>
-  <div class="matrix-card overflow-hidden transition-all duration-300 hover:scale-[1.005]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-onyx-border">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Velocity Matrix</p>

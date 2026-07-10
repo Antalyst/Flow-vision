@@ -237,31 +237,33 @@
                   <p class="whitespace-pre-line">{{ msg.content }}</p>
                 </div>
 
-                <!-- Document canvas call-to-action -->
+                <!-- Document canvas call-to-action (Professional & Minimalist) -->
                 <button
                   v-if="msg.documentPayload"
                   type="button"
-                  class="fv-ai-interactive group flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                  class="fv-ai-interactive group flex w-full items-center gap-3.5 rounded-xl border p-3 text-left transition-all duration-300 active:scale-[0.99]"
                   :class="activeDoc === msg.documentPayload && isCanvasOpen
-                    ? 'border-orange-500/60 bg-orange-500/10 shadow-[0_8px_24px_rgba(249,115,22,0.12)]'
-                    : 'border-orange-500/30 bg-orange-500/[0.06] hover:border-orange-500/60 hover:bg-orange-500/10 hover:shadow-[0_8px_24px_rgba(249,115,22,0.1)]'"
+                    ? 'border-neutral-400 bg-neutral-50 shadow-sm dark:border-neutral-600 dark:bg-white/5'
+                    : 'border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 dark:border-white/10 dark:bg-black/20 dark:hover:border-white/20 dark:hover:bg-white/5'"
                   @click="openCanvas(msg.documentPayload)"
                 >
-                  <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow">
-                    <Icon name="ph:file-text" class="h-4 w-4" />
+                  <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-100/50 text-neutral-600 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300">
+                    <Icon :name="msg.documentPayload.type === 'spreadsheet' ? 'ph:grid-nine' : 'ph:file-text'" class="h-5 w-5" />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                    <span class="block truncate text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
                       {{ msg.documentPayload.title }}
                     </span>
-                    <span class="block text-[11px] text-neutral-500 dark:text-neutral-400">
-                      Open document canvas
+                    <span class="block text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      View document
                     </span>
                   </span>
-                  <Icon
-                    name="ph:arrow-right"
-                    class="h-4 w-4 flex-shrink-0 text-orange-500 transition-transform group-hover:translate-x-0.5"
-                  />
+                  <div class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 transition-colors group-hover:bg-neutral-200 group-hover:text-neutral-700 dark:bg-white/10 dark:text-neutral-500 dark:group-hover:bg-white/20 dark:group-hover:text-white">
+                    <Icon
+                      name="ph:arrow-right"
+                      class="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+                    />
+                  </div>
                 </button>
 
                 <span class="block px-1 font-mono text-[11px] text-neutral-400 dark:text-neutral-600">{{ msg.timestamp }}</span>
@@ -328,126 +330,102 @@
           :class="isCanvasOpen ? 'translate-x-0' : 'pointer-events-none translate-x-full'"
           aria-label="Document canvas"
         >
-          <div class="fv-canvas-glass-panel flex h-full w-full flex-col border-l border-white/20 bg-white/70 shadow-2xl backdrop-blur-lg dark:border-slate-800/40 dark:bg-slate-900/60">
-            <!-- Canvas header -->
-            <div class="fv-canvas-header flex flex-shrink-0 items-center gap-3 border-b border-white/30 px-4 py-3 backdrop-blur-md sm:px-5 dark:border-white/[0.06]">
-              <span
-                class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 shadow-[0_0_12px_rgba(249,115,22,0.15)]"
-              >
+          <div class="fv-canvas-glass-panel flex h-full w-full flex-col border-l border-neutral-200/50 bg-white/70 shadow-2xl backdrop-blur-3xl dark:border-white/10 dark:bg-[#0a0a0c]/70">
+            
+            <!-- Minimalist Canvas Header -->
+            <div class="flex flex-shrink-0 items-center justify-between px-6 py-4">
+              <!-- Left: Document Context -->
+              <div class="flex items-center gap-3 min-w-0">
                 <Icon
                   :name="isSpreadsheetCanvas ? 'ph:grid-nine' : 'ph:file-text'"
-                  class="h-4 w-4 text-orange-500 dark:text-orange-400"
+                  class="h-5 w-5 flex-shrink-0 text-neutral-500 dark:text-neutral-400"
                 />
-              </span>
-              <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-600/80 dark:text-orange-400/80">
-                  {{ isSpreadsheetCanvas ? 'Data Matrix' : 'Document Canvas' }}
-                </p>
-                <span class="block truncate text-sm font-semibold text-neutral-900 dark:text-neutral-50">
-                  {{ documentPayload?.title || 'Awaiting document' }}
+                <div class="min-w-0 flex-1">
+                  <span class="block truncate text-sm font-semibold tracking-tight text-neutral-900 dark:text-white">
+                    {{ documentPayload?.title || 'No Document' }}
+                  </span>
+                </div>
+                <!-- Scope Badge -->
+                <span
+                  class="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  :class="props.scope === 'LOCAL'
+                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+                    : 'bg-neutral-100 text-neutral-600 dark:bg-white/10 dark:text-neutral-400'"
+                >
+                  {{ scopeLabel }}
                 </span>
               </div>
 
-              <!-- Scope context micro-tag on the canvas -->
-              <span
-                class="hidden items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider sm:inline-flex"
-                :class="props.scope === 'LOCAL'
-                  ? 'border-orange-500/20 bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                  : 'border-white/20 bg-white/10 text-neutral-500 dark:border-white/10 dark:text-neutral-500'"
-              >
-                <Icon :name="scopeIcon" class="h-2.5 w-2.5" />
-                {{ scopeLabel }}
-              </span>
+              <!-- Right: Actions -->
+              <div class="flex items-center gap-3 flex-shrink-0 ml-4">
+                <div v-if="documentPayload" class="flex items-center">
+                  <button
+                    v-if="isSpreadsheetCanvas"
+                    type="button"
+                    :disabled="isExporting"
+                    class="group inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 active:scale-95 disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    @click="downloadAsExcel"
+                  >
+                    <Icon v-if="isExporting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+                    <Icon v-else name="ph:download-simple" class="h-4 w-4" />
+                    <span class="hidden sm:inline">Export</span>
+                  </button>
 
-              <!-- Export action group -->
-              <div
-                v-if="documentPayload"
-                class="fv-canvas-actions flex flex-shrink-0 items-center gap-2 rounded-xl border border-orange-500/20 bg-white/40 p-1 backdrop-blur-sm dark:border-orange-500/25 dark:bg-white/[0.04]"
-              >
-                <button
-                  v-if="isSpreadsheetCanvas"
-                  type="button"
-                  :disabled="isExporting"
-                  class="fv-canvas-export-btn group inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-white/60 px-3 py-2 text-xs font-semibold text-neutral-800 shadow-[0_0_20px_rgba(249,115,22,0.12)] transition-all duration-300 hover:scale-105 hover:border-orange-500/50 hover:bg-orange-500/10 hover:shadow-[0_0_24px_rgba(249,115,22,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.06] dark:text-neutral-100 dark:hover:bg-orange-500/15"
-                  @click="downloadAsExcel"
-                >
-                  <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/25">
-                    <svg
-                      v-if="!isExporting"
-                      class="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" class="stroke-emerald-600 dark:stroke-emerald-400" stroke-width="1.5" />
-                      <path d="M3 9h18M3 15h18M9 3v18M15 3v18" class="stroke-emerald-600/70 dark:stroke-emerald-400/70" stroke-width="1.25" />
-                    </svg>
-                    <Icon v-else name="ph:spinner-gap" class="h-3.5 w-3.5 animate-spin text-orange-500" />
-                  </span>
-                  <span class="hidden sm:inline">Export Spreadsheet</span>
-                  <span class="sm:hidden">Export</span>
-                </button>
+                  <button
+                    v-else
+                    type="button"
+                    :disabled="isExporting"
+                    class="group inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 active:scale-95 disabled:opacity-50 dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    @click="downloadAsDocx"
+                  >
+                    <Icon v-if="isExporting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+                    <Icon v-else name="ph:download-simple" class="h-4 w-4" />
+                    <span class="hidden sm:inline">Download</span>
+                  </button>
+                </div>
+
+                <div class="h-4 w-px bg-neutral-300 dark:bg-neutral-700"></div>
 
                 <button
-                  v-else
                   type="button"
-                  :disabled="isExporting"
-                  class="fv-canvas-export-btn group inline-flex items-center gap-2 rounded-lg border border-orange-500/30 bg-white/60 px-3 py-2 text-xs font-semibold text-neutral-800 shadow-[0_0_20px_rgba(249,115,22,0.12)] transition-all duration-300 hover:scale-105 hover:border-orange-500/50 hover:bg-orange-500/10 hover:shadow-[0_0_24px_rgba(249,115,22,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.06] dark:text-neutral-100 dark:hover:bg-orange-500/15"
-                  @click="downloadAsDocx"
+                  class="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-white/10 dark:hover:text-white"
+                  aria-label="Close canvas"
+                  @click="closeCanvas"
                 >
-                  <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-blue-500/15 ring-1 ring-blue-500/25">
-                    <svg
-                      v-if="!isExporting"
-                      class="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z" class="stroke-blue-600 dark:stroke-blue-400" stroke-width="1.5" stroke-linejoin="round" />
-                      <path d="M14 3v5h5M8 13h8M8 17h5" class="stroke-blue-600/80 dark:stroke-blue-400/80" stroke-width="1.5" stroke-linecap="round" />
-                    </svg>
-                    <Icon v-else name="ph:spinner-gap" class="h-3.5 w-3.5 animate-spin text-orange-500" />
-                  </span>
-                  <span class="hidden sm:inline">Download Document</span>
-                  <span class="sm:hidden">Download</span>
+                  <Icon name="ph:x" class="h-5 w-5" />
                 </button>
               </div>
-
-              <button
-                type="button"
-                class="rounded-xl border border-white/40 bg-white/50 p-2 text-neutral-600 shadow-sm transition-all duration-300 hover:scale-105 hover:border-orange-500/30 hover:bg-orange-500/10 hover:text-orange-600 active:scale-95 dark:border-white/10 dark:bg-white/[0.05] dark:text-neutral-300 dark:hover:text-orange-400"
-                aria-label="Close canvas"
-                @click="closeCanvas"
-              >
-                <Icon name="ph:x" class="h-4 w-4" />
-              </button>
             </div>
 
-            <!-- Paper scroll surface (vertical page movement) -->
-            <div class="fv-canvas-scroll custom-scrollbar relative min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+            <!-- Paper scroll surface -->
+            <div class="fv-canvas-scroll custom-scrollbar relative min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-10 lg:px-12 bg-neutral-100/50 dark:bg-black/20">
+              
+              <!-- High-Contrast Pristine White Document -->
               <article
                 v-if="documentPayload"
-                class="fv-canvas-paper fv-canvas-article mx-auto w-full min-w-0 rounded-2xl bg-white text-neutral-800 shadow-2xl ring-1 ring-black/[0.04] transition-all duration-500 dark:bg-[#141416] dark:text-neutral-200 dark:ring-white/10"
+                class="fv-canvas-paper fv-canvas-article mx-auto w-full min-w-0 bg-white text-neutral-900 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] ring-1 ring-neutral-200 transition-all duration-500"
                 :class="isSpreadsheetCanvas
-                  ? 'max-w-none px-4 py-5 sm:px-6 sm:py-6'
-                  : 'max-w-3xl px-7 py-9 sm:px-12 sm:py-14'"
+                  ? 'max-w-none rounded-xl px-4 py-5 sm:px-6 sm:py-6'
+                  : 'max-w-[850px] rounded-sm px-8 py-12 sm:px-16 sm:py-16'"
               >
+                <!-- Document Header -->
                 <header
-                  class="border-b border-neutral-200/80 pb-6 dark:border-neutral-700/80"
+                  class="border-b border-neutral-200 pb-6"
                   :class="isSpreadsheetCanvas ? 'mb-4' : 'mb-8'"
                 >
-                  <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-600 dark:text-orange-400">
-                    {{ isSpreadsheetCanvas ? 'FlowVision Data Matrix' : 'FlowVision Report' }}
+                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">
+                    {{ isSpreadsheetCanvas ? 'FlowVision Data Matrix' : 'FlowVision Document' }}
                   </p>
                   <h1
-                    class="mt-2 font-bold leading-tight tracking-tight text-neutral-900 dark:text-neutral-50"
+                    class="font-bold leading-tight tracking-tight text-neutral-900"
                     :class="isSpreadsheetCanvas ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'"
                   >
                     {{ documentPayload.title }}
                   </h1>
                 </header>
 
-                <!-- Horizontal scroll lane for wide matrix / table columns -->
+                <!-- Document Body -->
+                <!-- By keeping this entirely out of dark mode, injected inline styles (like dark text) remain perfectly readable -->
                 <div
                   class="fv-doc-viewport min-w-0"
                   :class="needsHorizontalScroll ? 'custom-scrollbar overflow-x-auto' : ''"
@@ -455,24 +433,23 @@
                   <!-- eslint-disable-next-line vue/no-v-html -->
                   <div
                     ref="canvasBodyRef"
-                    class="fv-doc-body leading-relaxed text-neutral-700 dark:text-neutral-300"
+                    class="fv-doc-body leading-relaxed text-neutral-800"
                     :class="[
-                      isSpreadsheetCanvas ? 'fv-doc-body--matrix text-sm' : 'text-sm',
+                      isSpreadsheetCanvas ? 'fv-doc-body--matrix text-sm' : 'text-[15px]',
                     ]"
                     v-html="documentPayload.content"
                   ></div>
                 </div>
               </article>
 
+              <!-- Empty State -->
               <div
                 v-else
-                class="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/40 bg-white/30 px-6 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]"
+                class="flex h-full min-h-[300px] flex-col items-center justify-center rounded-xl border border-dashed border-neutral-300 bg-white/50 px-6 text-center dark:border-neutral-800 dark:bg-[#111113]/50"
               >
-                <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 shadow-[0_0_20px_rgba(249,115,22,0.12)]">
-                  <Icon name="ph:file-dashed" class="h-7 w-7 text-orange-500/70 dark:text-orange-400/70" />
-                </span>
-                <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300">No document is open yet.</p>
-                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-500">Ask FlowVision to generate a report or matrix.</p>
+                <Icon name="ph:file-dashed" class="h-8 w-8 text-neutral-300 dark:text-neutral-600 mb-3" />
+                <p class="text-sm font-medium text-neutral-900 dark:text-neutral-300">No document is open</p>
+                <p class="mt-1 text-xs text-neutral-500">Ask FlowVision to generate a report or matrix.</p>
               </div>
             </div>
           </div>

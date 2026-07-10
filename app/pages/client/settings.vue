@@ -100,6 +100,9 @@ import { useClientToast } from '~/composables/useClientToast'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
+
+definePageMeta({ layout: 'client' })
+
 const { isDark, toggleTheme } = useTheme()
 const {
   ready: settingsReady,

@@ -11,18 +11,18 @@
     <Transition name="preview-slide">
       <aside
         v-if="isOpen && document"
-        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl transition-transform duration-300"
+        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl transition-transform duration-300 backdrop-blur-2xl"
         :class="[
           isDark
-            ? 'border-onyx-border bg-onyx-black text-white-pure'
-            : 'border-gray-200 bg-white-pure text-onyx-black',
+            ? 'border-white/10 bg-[#111113]/90 text-white'
+            : 'border-gray-200 bg-white/95 text-gray-900',
           widthClass,
         ]"
       >
         <!-- §1 Header & metadata overview -->
         <header
           class="shrink-0 border-b px-6 py-5"
-          :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
+          :class="isDark ? 'border-white/10' : 'border-gray-200'"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
@@ -64,7 +64,7 @@
             <span
               v-if="creatorName"
               class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
-              :class="isDark ? 'border-onyx-border bg-onyx-card text-white-muted' : 'border-gray-200 bg-white-surface text-gray-600'"
+              :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
             >
               <Icon name="ph:user-circle-fill" class="h-3.5 w-3.5 text-candy-orange" />
               {{ creatorName }}
@@ -261,8 +261,8 @@
 
             <!-- §3 Official routing slip view (bottom) -->
             <section
-              class="overflow-hidden rounded-2xl border-2 border-candy-orange shadow-lg shadow-candy-orange/10"
-              :class="isDark ? 'bg-onyx-card' : 'bg-white-surface'"
+              class="overflow-hidden rounded-2xl border shadow-lg shadow-candy-orange/10"
+              :class="isDark ? 'border-candy-orange/30 bg-onyx-black/50' : 'border-candy-orange/40 bg-white/50'"
             >
               <div class="border-b border-candy-orange/30 bg-candy-orange px-5 py-3">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-white-pure">
@@ -317,7 +317,7 @@
           <footer
             v-if="$slots.footer"
             class="shrink-0 border-t"
-            :class="isDark ? 'border-onyx-border bg-onyx-sidebar' : 'border-gray-200 bg-white-surface'"
+            :class="isDark ? 'border-white/10 bg-black/20' : 'border-gray-200 bg-gray-50/50'"
           >
             <slot name="footer" />
           </footer>

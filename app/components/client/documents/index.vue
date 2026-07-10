@@ -13,14 +13,24 @@
         </p>
       </div>
 
-      <button
-        type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
-        @click="isUploadModalOpen = true"
-      >
-        <Icon name="ph:plus-bold" class="h-4 w-4" />
-        Upload Document
-      </button>
+      <div class="flex items-center gap-3">
+        <NuxtLink
+          to="/client/scan"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white dark:bg-onyx-card border px-4 py-2 font-medium transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
+        >
+          <Icon name="ph:qr-code-bold" class="h-4 w-4 text-candy-orange" />
+          Scan QR
+        </NuxtLink>
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          @click="isUploadModalOpen = true"
+        >
+          <Icon name="ph:plus-bold" class="h-4 w-4" />
+          Upload Document
+        </button>
+      </div>
     </div>
 
     <!-- B. Filter & Search Utility Bar -->
@@ -28,18 +38,17 @@
       class="flex flex-col gap-3 rounded-lg border p-4 shadow-card sm:flex-row sm:items-center"
       :class="surfaceClass"
     >
-      <div
-        class="flex flex-1 items-center gap-2 rounded-lg border px-3 py-2 transition-all"
-        :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
+      <button
+        @click="isSemanticSearchOpen = true"
+        class="flex flex-1 items-center justify-between gap-2 rounded-lg border px-4 py-2 transition-all text-left"
+        :class="isDark ? 'border-onyx-border bg-onyx-black/40 hover:border-candy-orange hover:bg-white/5' : 'border-gray-200 bg-gray-50 hover:border-candy-orange hover:bg-white'"
       >
-        <Icon name="ph:magnifying-glass" class="h-4 w-4" :class="mutedTextClass" />
-        <input
-          v-model="searchQuery"
-          type="search"
-          placeholder="Search by title or description"
-          class="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
-        />
-      </div>
+        <span class="flex items-center gap-2" :class="mutedTextClass">
+          <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
+          Describe your intent...
+        </span>
+        <span class="rounded bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+      </button>
 
       <select
         v-model="officeFilter"
@@ -51,6 +60,17 @@
           {{ office.name }}
         </option>
       </select>
+    </div>
+
+    <!-- Active Semantic Search Indicator -->
+    <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-lg p-3 text-sm animate-fade-in shadow-sm">
+      <Icon name="ph:sparkle-fill" class="h-5 w-5 text-candy-orange" />
+      <span :class="isDark ? 'text-amber-200' : 'text-amber-800'">
+        Showing <strong>{{ filteredDocuments.length }}</strong> results for "<span class="italic">{{ semanticQuery }}</span>"
+      </span>
+      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-[#D96518] font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded border border-amber-200 dark:border-candy-orange/30 transition-colors">
+        Clear Filter
+      </button>
     </div>
 
     <!-- C. Documents Datatable -->
@@ -100,6 +120,10 @@
                   <div class="font-semibold">{{ doc.title }}</div>
                   <div class="mt-1 line-clamp-2 max-w-md text-xs" :class="mutedTextClass">
                     {{ doc.description }}
+                  </div>
+                  <div v-if="getSemanticExplanation(doc.id)" class="mt-3 text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-candy-orange/10 p-2.5 rounded-md flex gap-2 items-start border border-amber-100 dark:border-candy-orange/20">
+                    <Icon name="ph:sparkle-fill" class="h-4 w-4 shrink-0 mt-0.5 text-candy-orange" />
+                    <span class="leading-relaxed">{{ getSemanticExplanation(doc.id) }}</span>
                   </div>
                 </td>
                 <td class="whitespace-nowrap px-5 py-4">
@@ -151,6 +175,14 @@
       :document="activeDocument"
       @close="closeDocumentPreview"
     />
+
+    <!-- Semantic Search Modal -->
+    <SemanticSearchModal
+      :is-open="isSemanticSearchOpen"
+      :documents="documentStore.documents"
+      @close="isSemanticSearchOpen = false"
+      @results="handleSemanticResults"
+    />
   </section>
 </template>
 
@@ -162,6 +194,7 @@ import { useStageStore } from '~/stores/stage'
 import { useDocumentStore, type DocumentRecord } from '~/stores/document'
 import DocumentUploadModal from './documentUploadModal.vue'
 import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
+import SemanticSearchModal from './SemanticSearchModal.vue'
 
 const authStore = useAuthStore()
 const officeStore = useOfficeStore()
@@ -171,8 +204,22 @@ const { isDark } = useTheme()
 
 const isUploadModalOpen = ref(false)
 const activeDocument = ref<DocumentRecord | null>(null)
-const searchQuery = ref('')
 const officeFilter = ref<'all' | string>('all')
+
+const isSemanticSearchOpen = ref(false)
+const semanticResults = ref<{ id: string, explanation: string }[] | null>(null)
+const semanticQuery = ref('')
+
+function handleSemanticResults(results: any[], query: string) {
+  semanticResults.value = results
+  semanticQuery.value = query
+}
+
+function getSemanticExplanation(docId: string | number) {
+  if (!semanticResults.value) return null
+  const match = semanticResults.value.find(r => String(r.id) === String(docId))
+  return match ? match.explanation : null
+}
 
 const surfaceClass = computed(() =>
   isDark.value ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card' : 'border-gray-200 bg-white'
@@ -186,16 +233,16 @@ const inputClass = computed(() =>
 )
 
 const filteredDocuments = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
   return documentStore.documents.filter((doc) => {
     const matchesOffice =
       officeFilter.value === 'all' || String(doc.office_id) === officeFilter.value
-    const matchesQuery =
-      !query ||
-      [doc.title, doc.description].some((value) =>
-        String(value || '').toLowerCase().includes(query)
-      )
-    return matchesOffice && matchesQuery
+    
+    let matchesSemantic = true
+    if (semanticResults.value) {
+      matchesSemantic = semanticResults.value.some(r => String(r.id) === String(doc.id))
+    }
+    
+    return matchesOffice && matchesSemantic
   })
 })
 

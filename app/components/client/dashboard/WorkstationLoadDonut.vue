@@ -37,10 +37,10 @@ const chartData = computed(() => {
       {
         data: [l.busy, l.available, l.inTransit, l.idle],
         backgroundColor: [
-          'rgba(244, 125, 47, 0.9)',
-          'rgba(244, 125, 47, 0.35)',
-          'rgba(217, 101, 24, 0.85)',
-          'rgba(160, 160, 160, 0.45)',
+          '#6366F1', // Busy (Indigo)
+          'rgba(99, 102, 241, 0.4)', // Available (Soft Indigo)
+          '#A8A29E', // In Transit (Stone)
+          'rgba(168, 162, 158, 0.3)', // Idle (Light Stone)
         ],
         borderColor: donutBorderColor.value,
         borderWidth: 3,
@@ -82,7 +82,7 @@ const toneDot: Record<string, string> = {
 </script>
 
 <template>
-  <div class="matrix-card flex h-full flex-col p-5 transition-all duration-300 hover:scale-[1.01]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-4">
       <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Office Status</p>
       <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">Workstation Load Distribution</h3>

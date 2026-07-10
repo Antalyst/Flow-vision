@@ -29,7 +29,7 @@ const displayAlerts = computed(() => {
 </script>
 
 <template>
-  <div class="matrix-card flex h-full max-h-[420px] flex-col overflow-hidden p-5 transition-all duration-300 hover:scale-[1.01]">
+  <div class="relative flex h-full max-h-[420px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-4 flex items-center justify-between">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Live Stream</p>
