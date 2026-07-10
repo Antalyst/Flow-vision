@@ -146,15 +146,29 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   }
 
   // 1. Resolve multi-tenant context from trusted session cookies (fails closed).
-  const { orgId, userId } = await resolveTenant(event);
+  const { orgId, userId, role } = await resolveTenant(event);
 
   // 1b. Read scope context from the request body.
   //     org_id is always from the session (trusted); officeIds are client-supplied
   //     but can only *narrow* the dataset — never expand it beyond the org.
-  const scope: AiScope = body.scope === 'LOCAL' ? 'LOCAL' : 'GLOBAL';
-  const rawOfficeIds: string[] = Array.isArray(body.officeIds)
+  let scope: AiScope = body.scope === 'LOCAL' ? 'LOCAL' : 'GLOBAL';
+  let rawOfficeIds: string[] = Array.isArray(body.officeIds)
     ? body.officeIds.map(String).filter(Boolean)
     : [];
+
+  // SECURITY ENFORCEMENT: Employees are strictly hard-scoped to their assigned offices.
+  // They cannot view GLOBAL data, and they cannot spoof officeIds via the request body.
+  if (role === 'employee') {
+    scope = 'LOCAL';
+    const supabase = await serverSupabaseClient(event);
+    const { data: employeeOffices } = await supabase
+      .from('offices')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('assigned_user', userId);
+      
+    rawOfficeIds = (employeeOffices ?? []).map(o => String(o.id));
+  }
 
   // 2. Validate or provision the active chat session.
   const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);

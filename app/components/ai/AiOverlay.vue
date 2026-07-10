@@ -3,7 +3,8 @@
     <!-- Floating Action Button -->
     <button
       @click="isOpen = true"
-      class="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_35px_rgba(249,115,22,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 group"
+      class="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-white hover:scale-105 active:scale-95 transition-all duration-300 group"
+      :class="fabClass"
       aria-label="Open FlowVision Intelligence"
     >
       <Icon name="ph:sparkle-fill" class="h-6 w-6 transition-transform duration-500 group-hover:rotate-12" />
@@ -24,9 +25,9 @@
             
             <!-- Moving Circular Glows (Fluid Blobs - Balanced) -->
             <div class="absolute -inset-10 -z-10 pointer-events-none opacity-50 dark:opacity-30 mix-blend-screen dark:mix-blend-lighten overflow-visible">
-              <div class="absolute top-[10%] left-[20%] w-[40%] h-[50%] bg-orange-500/30 blur-[100px] md:blur-[140px] fluid-blob"></div>
-              <div class="absolute bottom-[10%] right-[20%] w-[50%] h-[40%] bg-amber-400/20 blur-[100px] md:blur-[140px] fluid-blob-reverse"></div>
-              <div class="absolute top-[20%] left-[40%] w-[35%] h-[35%] bg-rose-500/20 blur-[120px] md:blur-[160px] fluid-blob" style="animation-delay: -5s;"></div>
+              <div class="absolute top-[10%] left-[20%] w-[40%] h-[50%] blur-[100px] md:blur-[140px] fluid-blob" :class="blobClass[0]"></div>
+              <div class="absolute bottom-[10%] right-[20%] w-[50%] h-[40%] blur-[100px] md:blur-[140px] fluid-blob-reverse" :class="blobClass[1]"></div>
+              <div class="absolute top-[20%] left-[40%] w-[35%] h-[35%] blur-[120px] md:blur-[160px] fluid-blob" :class="blobClass[2]" style="animation-delay: -5s;"></div>
             </div>
 
             <!-- The Glassmorphic Window (No borders, ultra smooth) -->
@@ -35,7 +36,7 @@
               <!-- System-like Header -->
               <div class="flex-none flex items-center justify-between px-6 py-4 bg-transparent">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500/20 text-orange-600 dark:text-orange-400">
+                  <div class="flex h-8 w-8 items-center justify-center rounded-xl text-white" :class="props.theme === 'blue' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-orange-500/20 text-orange-600 dark:text-orange-400'">
                     <Icon name="ph:sparkle-fill" class="h-4 w-4" />
                   </div>
                   <span class="font-bold text-gray-900 dark:text-white tracking-tight text-sm uppercase tracking-wide">FlowVision Assistant</span>
@@ -47,7 +48,7 @@
               
               <!-- Workspace Integration (Overriding internal backgrounds for full glass effect) -->
               <div class="flex-1 min-h-0 relative ai-workspace-glass-overrides">
-                <AiCanvasWorkspace role-context="client" scope="GLOBAL" />
+                <AiCanvasWorkspace :role-context="role" :scope="scope" />
               </div>
 
             </div>
@@ -63,11 +64,41 @@ import { ref, computed } from 'vue'
 import { useRoute } from '#imports'
 import AiCanvasWorkspace from '~/components/ai/AiCanvasWorkspace.vue'
 
+const props = defineProps({
+  role: {
+    type: String,
+    default: 'client'
+  },
+  scope: {
+    type: String,
+    default: 'GLOBAL'
+  },
+  theme: {
+    type: String,
+    default: 'orange' // 'orange' or 'blue'
+  }
+})
+
 const route = useRoute()
 const isOpen = ref(false)
 
 const showOverlayButton = computed(() => {
-  return route.path !== '/client/ai' && !route.path.startsWith('/client/ai/')
+  const aiPath = `/${props.role}/ai`
+  return route.path !== aiPath && !route.path.startsWith(`${aiPath}/`)
+})
+
+const fabClass = computed(() => {
+  if (props.theme === 'blue') {
+    return 'from-blue-500 to-cyan-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_35px_rgba(59,130,246,0.6)]'
+  }
+  return 'from-orange-500 to-amber-500 shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_35px_rgba(249,115,22,0.6)]'
+})
+
+const blobClass = computed(() => {
+  if (props.theme === 'blue') {
+    return ['bg-blue-500/30', 'bg-cyan-400/20', 'bg-indigo-500/20']
+  }
+  return ['bg-orange-500/30', 'bg-amber-400/20', 'bg-rose-500/20']
 })
 </script>
 

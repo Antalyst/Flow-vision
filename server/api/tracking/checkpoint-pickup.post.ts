@@ -21,10 +21,10 @@ export default defineEventHandler(async (event) => {
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required.' })
-  if (!['messenger', 'client'].includes(actorRole)) {
+  if (!['messenger', 'client', 'employee'].includes(actorRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only messenger or client accounts can perform checkpoint pickups',
+      message: 'Forbidden: only messenger, client, or employee accounts can perform checkpoint pickups',
     })
   }
 

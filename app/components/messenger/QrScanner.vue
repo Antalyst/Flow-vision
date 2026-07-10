@@ -112,7 +112,7 @@ const props = defineProps<{
   scannerId?: string
   fps?: number
   qrboxSize?: number
-  themeColor?: 'amber' | 'orange'
+  themeColor?: 'amber' | 'orange' | 'blue'
 }>()
 
 const emit = defineEmits<{
@@ -128,11 +128,11 @@ const result      = ref<string | null>(null)
 const torchOn     = ref(false)
 const { defaultCameraDeviceId } = useMessengerSettings()
 
-const primaryBgClass = computed(() => props.themeColor === 'orange' ? 'bg-candy-orange' : 'bg-amber-500')
-const primaryTextClass = computed(() => props.themeColor === 'orange' ? 'text-candy-orange' : 'text-amber-500')
-const primaryBorderClass = computed(() => props.themeColor === 'orange' ? 'border-candy-orange' : 'border-amber-400')
-const primaryShadowClass = computed(() => props.themeColor === 'orange' ? 'shadow-candy-orange/20' : 'shadow-[0_4px_14px_rgba(245,158,11,0.2)]')
-const hoverPrimaryBgClass = computed(() => props.themeColor === 'orange' ? 'hover:bg-[#D96518]' : 'hover:bg-amber-600')
+const primaryBgClass = computed(() => props.themeColor === 'orange' ? 'bg-candy-orange' : props.themeColor === 'blue' ? 'bg-blue-500' : 'bg-amber-500')
+const primaryTextClass = computed(() => props.themeColor === 'orange' ? 'text-candy-orange' : props.themeColor === 'blue' ? 'text-blue-500' : 'text-amber-500')
+const primaryBorderClass = computed(() => props.themeColor === 'orange' ? 'border-candy-orange' : props.themeColor === 'blue' ? 'border-blue-400' : 'border-amber-400')
+const primaryShadowClass = computed(() => props.themeColor === 'orange' ? 'shadow-candy-orange/20' : props.themeColor === 'blue' ? 'shadow-blue-500/20' : 'shadow-[0_4px_14px_rgba(245,158,11,0.2)]')
+const hoverPrimaryBgClass = computed(() => props.themeColor === 'orange' ? 'hover:bg-[#D96518]' : props.themeColor === 'blue' ? 'hover:bg-blue-600' : 'hover:bg-amber-600')
 
 // 1. Detect if running inside a Capacitor wrapper environment
 const isNativeCapacitor = ref(false)

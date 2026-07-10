@@ -51,6 +51,15 @@
           </button>
         </div>
 
+        <!-- Scan QR Button -->
+        <NuxtLink
+          to="/employee/scan"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+        >
+          <Icon name="ph:qr-code-bold" class="h-4 w-4" />
+          Scan QR
+        </NuxtLink>
+
         <!-- Upload -->
         <button
           type="button"

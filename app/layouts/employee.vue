@@ -147,12 +147,17 @@
         </NuxtLink>
       </div>
     </nav>
+
+    <!-- AI Overlay Chat -->
+    <AiOverlay role="employee" scope="LOCAL" theme="orange" />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { useRoute } from '#imports'
+import AiOverlay from '~/components/ai/AiOverlay.vue'
 
 const auth = useAuthStore()
 const { isDark } = useTheme()
