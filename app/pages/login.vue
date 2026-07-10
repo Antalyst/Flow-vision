@@ -11,14 +11,14 @@
 
       <NuxtLink
         to="/"
-        class="relative z-30 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white-pure transition hover:border-candy-orange hover:text-candy-orange"
+        class="relative z-50 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white-pure transition hover:border-candy-orange hover:text-candy-orange"
         aria-label="Back to home"
       >
         <Icon name="ph:arrow-left-bold" class="h-4 w-4" />
       </NuxtLink>
 
-      <div class="absolute inset-0 z-30 flex flex-col items-center justify-center px-10 text-center">
-        <img src="/logo/new-logo.png" alt="FlowVision" class="mb-5 h-20 w-auto">
+      <div class="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center px-10 text-center">
+        <img src="/logo/new-logo.png" alt="FlowVision" class="mb-5 h-20 w-auto pointer-events-auto">
         <h1 class="font-primary font-extrabold text-white text-3xl tracking-wide">FLOW VISION</h1>
         <p class="mt-2 font-dashboard text-[11px] font-semibold text-candy-orange">
           AI-Powered Document Monitoring Framework
