@@ -2,7 +2,7 @@
   <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-3xl overflow-hidden border shadow-xl relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
-    <header class="flex items-center justify-between px-4 pt-4 pb-3">
+    <header ref="scanHeaderEl" class="flex items-center justify-between px-4 pt-4 pb-3">
       <NuxtLink
         to="/employee/documents"
         class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
@@ -39,7 +39,7 @@
     </header>
 
     <!-- ── Mode label ───────────────────────────────────────────────────── -->
-    <div class="px-4 pb-3 text-center">
+    <div ref="scanSubtitleEl" class="px-4 pb-3 text-center">
       <p class="text-xs text-white/50">
         <span v-if="mode === 'pickup'">
           Scan a <strong class="text-candy-orange">document QR</strong> or the client's <strong class="text-candy-orange">dispatch station badge</strong>
@@ -242,7 +242,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { gsap } from 'gsap'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'
 import {
@@ -257,6 +258,20 @@ definePageMeta({ layout: 'employee' })
 const auth    = useAuthStore()
 const { isDark } = useTheme()
 const route = useRoute()
+
+// GSAP refs
+const scanHeaderEl   = ref<HTMLElement | null>(null)
+const scanSubtitleEl = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+  if (scanHeaderEl.value) {
+    tl.fromTo(scanHeaderEl.value, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4 }, 0)
+  }
+  if (scanSubtitleEl.value) {
+    tl.fromTo(scanSubtitleEl.value, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35 }, 0.18)
+  }
+})
 
 // ── State ──────────────────────────────────────────────────────────────
 type ScanMode  = 'pickup' | 'dropoff'

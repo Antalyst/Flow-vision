@@ -1,143 +1,177 @@
 <template>
-  <div class="space-y-6 pb-24 lg:pb-8">
-    <header>
-      <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-        <Icon name="ph:gear-six-fill" class="h-4 w-4 text-candy-orange" />
+  <div ref="pageRoot" class="space-y-6 pb-24 lg:pb-8">
+
+    <!-- ── Page Header ───────────────────────────────────────────────── -->
+    <header ref="headerEl">
+      <div class="mb-2 flex items-center gap-2 text-xs font-medium" :class="mutedClass">
+        <Icon name="ph:gear-six-fill" class="h-3.5 w-3.5 text-candy-orange" />
         <span>Employee Portal</span>
-        <Icon name="ph:caret-right" class="h-3 w-3" />
-        <span class="font-medium" :class="headingClass">Settings</span>
+        <Icon name="ph:caret-right" class="h-3 w-3 opacity-50" />
+        <span :class="headingClass">Settings</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">
-        Office Settings
+      <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="headingClass">
+        Employee Settings
       </h1>
-      <p class="mt-1 text-sm" :class="mutedClass">
-        Station profile, compliance alerts, and working board preferences for your desk.
+      <p class="mt-1.5 text-sm" :class="mutedClass">
+        Station profile, compliance alerts, and workspace preferences for your account.
       </p>
     </header>
 
-    <!-- Station profile -->
+    <!-- ── Station Profile ────────────────────────────────────────────── -->
     <section
-      class="rounded-lg border p-6"
-      :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white'"
+      ref="section1El"
+      class="rounded-2xl border overflow-hidden"
+      :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
-      <div class="mb-5 flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-lg border" :class="sectionIconWrap">
-          <Icon name="ph:buildings-fill" class="h-5 w-5 text-candy-orange" />
+      <!-- Section header -->
+      <div
+        class="flex items-center gap-3 border-b px-6 py-4"
+        :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
+      >
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
+          <Icon name="ph:buildings-fill" class="h-4.5 w-4.5 text-candy-orange" />
         </span>
         <div>
-          <h2 class="text-sm font-bold" :class="headingClass">Office Station Profile</h2>
-          <p class="text-xs" :class="mutedClass">Assigned workstation metadata from your organisation.</p>
+          <h2 class="text-sm font-bold" :class="headingClass">Station Profile</h2>
+          <p class="text-[11px]" :class="mutedClass">Workstation metadata assigned by your organisation.</p>
         </div>
       </div>
 
-      <div v-if="profileLoading" class="space-y-3">
-        <div v-for="n in 2" :key="n" class="h-20 animate-pulse rounded-lg border" :class="skeletonClass" />
-      </div>
+      <div class="p-6">
+        <div v-if="profileLoading" class="space-y-3">
+          <div v-for="n in 2" :key="n" class="h-20 animate-pulse rounded-xl" :class="skeletonClass" />
+        </div>
 
-      <div
-        v-else-if="profileError"
-        class="rounded-lg border border-red-500/30 px-4 py-3 text-sm text-red-600 dark:text-red-400"
-      >
-        {{ profileError }}
-      </div>
-
-      <div v-else-if="!stationCards.length" class="text-sm" :class="mutedClass">
-        No office station is assigned to your account yet. Contact your organisation administrator.
-      </div>
-
-      <div v-else class="space-y-3">
-        <article
-          v-for="station in stationCards"
-          :key="station.id"
-          class="rounded-lg border px-4 py-4"
-          :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-surface'"
+        <div
+          v-else-if="profileError"
+          class="rounded-xl border border-red-500/30 bg-red-500/5 px-5 py-4 text-sm text-red-500"
         >
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Station Name</p>
-              <p class="mt-1 text-sm font-semibold" :class="headingClass">{{ station.displayName }}</p>
+          {{ profileError }}
+        </div>
+
+        <div v-else-if="!stationCards.length" class="text-sm" :class="mutedClass">
+          No office station is assigned to your account yet. Contact your organisation administrator.
+        </div>
+
+        <div v-else class="space-y-3">
+          <article
+            v-for="station in stationCards"
+            :key="station.id"
+            class="rounded-xl border px-5 py-4 transition-colors"
+            :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-surface'"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Station Name</p>
+                <p class="mt-1 text-sm font-semibold" :class="headingClass">{{ station.displayName }}</p>
+              </div>
+              <span
+                v-if="privilegeLabel"
+                class="inline-flex items-center rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+              >
+                {{ privilegeLabel }}
+              </span>
             </div>
-            <span
-              v-if="privilegeLabel"
-              class="inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-              :class="isDark ? 'border-onyx-border text-gray-300' : 'border-zinc-200 text-gray-600'"
-            >
-              {{ privilegeLabel }}
-            </span>
-          </div>
-          <div class="mt-4">
-            <p class="text-[10px] font-bold uppercase tracking-widest" :class="mutedClass">
-              Station ID / Checkpoint Token
-            </p>
-            <p class="mt-1 break-all font-mono text-xs" :class="headingClass">{{ station.id }}</p>
-          </div>
-        </article>
+            <div class="mt-4 pt-4 border-t" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
+              <p class="text-[10px] font-bold uppercase tracking-widest" :class="mutedClass">
+                Station ID / Checkpoint Token
+              </p>
+              <p class="mt-1 break-all font-mono text-xs" :class="headingClass">{{ station.id }}</p>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
-    <div v-if="!settingsReady" class="rounded-lg border p-8 text-center text-sm" :class="[panelClass, mutedClass]">
+    <!-- Loading preferences -->
+    <div
+      v-if="!settingsReady"
+      class="rounded-2xl border px-6 py-10 text-center text-sm"
+      :class="[panelClass, mutedClass]"
+    >
+      <Icon name="ph:spinner-gap-bold" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
       Loading your saved preferences…
     </div>
 
     <template v-else>
-      <!-- Compliance alerts -->
-      <section class="rounded-lg border p-6" :class="panelClass">
-        <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-lg border" :class="sectionIconWrap">
-            <Icon name="ph:bell-ringing-fill" class="h-5 w-5 text-candy-orange" />
+      <!-- ── Compliance & Dispatch Alerts ──────────────────────────────── -->
+      <section
+        ref="section2El"
+        class="rounded-2xl border overflow-hidden"
+        :class="panelClass"
+      >
+        <div
+          class="flex items-center gap-3 border-b px-6 py-4"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
+        >
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
+            <Icon name="ph:bell-ringing-fill" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
-            <h2 class="text-sm font-bold" :class="headingClass">Compliance &amp; Dispatch Alerts</h2>
-            <p class="text-xs" :class="mutedClass">Device-level alert behaviour for this employee session.</p>
+            <h2 class="text-sm font-bold" :class="headingClass">Compliance & Dispatch Alerts</h2>
+            <p class="text-[11px]" :class="mutedClass">Device-level alert behaviour for this employee session.</p>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <SettingToggleRow
-            label="Flagged Document Alerts"
-            description="Play a system tone when a compliance issue is reported on a document tied to your station."
-            :checked="flaggedDocumentAlerts"
-            :disabled="savingFlagged"
-            @update:checked="onFlaggedToggle"
-          />
-          <SettingToggleRow
-            label="Incoming Hand-off Broadcasts"
-            description="Poll for inbound messenger drop-offs and play an alert when a folder arrives at your desk."
-            :checked="incomingHandoffBroadcasts"
-            :disabled="savingHandoff"
-            @update:checked="onHandoffToggle"
-          />
+        <div class="divide-y p-0" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
+          <div class="px-6 py-5">
+            <SettingToggleRow
+              label="Flagged Document Alerts"
+              description="Play a system tone when a compliance issue is reported on a document tied to your station."
+              :checked="flaggedDocumentAlerts"
+              :disabled="savingFlagged"
+              @update:checked="onFlaggedToggle"
+            />
+          </div>
+          <div class="px-6 py-5">
+            <SettingToggleRow
+              label="Incoming Hand-off Broadcasts"
+              description="Poll for inbound messenger drop-offs and play an alert when a folder arrives at your desk."
+              :checked="incomingHandoffBroadcasts"
+              :disabled="savingHandoff"
+              @update:checked="onHandoffToggle"
+            />
+          </div>
         </div>
       </section>
 
-      <!-- Working board -->
-      <section class="rounded-lg border p-6" :class="panelClass">
-        <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-lg border" :class="sectionIconWrap">
-            <Icon name="ph:kanban-fill" class="h-5 w-5 text-candy-orange" />
+      <!-- ── Workspace Canvas Preferences ──────────────────────────────── -->
+      <section
+        ref="section3El"
+        class="rounded-2xl border overflow-hidden"
+        :class="panelClass"
+      >
+        <div
+          class="flex items-center gap-3 border-b px-6 py-4"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
+        >
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
+            <Icon name="ph:kanban-fill" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Workspace Canvas Preferences</h2>
-            <p class="text-xs" :class="mutedClass">Controls the live board at /employee/working.</p>
+            <p class="text-[11px]" :class="mutedClass">Controls the live kanban board at /employee/working.</p>
           </div>
         </div>
 
-        <div class="space-y-5">
+        <div class="space-y-6 px-6 py-6">
+          <!-- Default pipeline view -->
           <div>
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wide" :class="mutedClass">
+            <p class="mb-3 text-xs font-bold uppercase tracking-widest" :class="mutedClass">
               Default Pipeline View
             </p>
             <div
-              class="inline-flex items-center gap-0.5 rounded-lg border p-0.5"
-              :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white'"
+              class="inline-flex items-center gap-0.5 rounded-xl border p-1"
+              :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-surface'"
             >
               <button
                 v-for="opt in pipelineViewOptions"
                 :key="opt.value"
                 type="button"
-                class="rounded-md px-3 py-2 text-xs font-semibold transition-colors duration-200 disabled:opacity-50"
+                class="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50"
                 :class="defaultPipelineView === opt.value
-                  ? 'bg-candy-orange text-white'
+                  ? 'bg-candy-orange text-white shadow-sm shadow-candy-orange/30'
                   : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800')"
                 :disabled="savingPipelineView"
                 @click="onPipelineViewChange(opt.value)"
@@ -147,13 +181,14 @@
             </div>
           </div>
 
+          <!-- Auto-refresh frequency -->
           <label class="block max-w-md">
-            <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">
+            <span class="mb-2 block text-xs font-bold uppercase tracking-widest" :class="mutedClass">
               Auto-Refresh Frequency
             </span>
             <select
               :value="autoRefreshMode"
-              class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange"
+              class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
               :class="inputClass"
               :disabled="savingRefresh"
               @change="onRefreshModeChange(($event.target as HTMLSelectElement).value as AutoRefreshMode)"
@@ -166,19 +201,20 @@
                 {{ opt.label }}
               </option>
             </select>
-            <p class="mt-1.5 text-[11px] leading-relaxed" :class="mutedClass">
-              Applies to the working board sync loop and inbound hand-off polling while the portal is open.
+            <p class="mt-2 text-[11px] leading-relaxed" :class="mutedClass">
+              Applies to the live working board sync loop and inbound hand-off polling while the portal is open.
             </p>
           </label>
         </div>
       </section>
     </template>
 
+    <!-- ── Toast Notification ─────────────────────────────────────────── -->
     <Teleport to="body">
       <Transition name="toast-fade">
         <div
           v-if="toast.visible"
-          class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold md:bottom-8"
+          class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2.5 rounded-xl border px-5 py-3.5 text-sm font-semibold shadow-lg md:bottom-8"
           :class="toastClass"
           role="status"
         >
@@ -191,6 +227,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { gsap } from 'gsap'
 import SettingToggleRow from '~/components/messenger/SettingToggleRow.vue'
 import {
   AUTO_REFRESH_OPTIONS,
@@ -245,15 +283,21 @@ const pipelineViewOptions: Array<{ value: PipelineView; label: string }> = [
   { value: 'GLOBAL', label: 'Global View' },
 ]
 
+// GSAP refs
+const pageRoot  = ref<HTMLElement | null>(null)
+const headerEl  = ref<HTMLElement | null>(null)
+const section1El = ref<HTMLElement | null>(null)
+const section2El = ref<HTMLElement | null>(null)
+const section3El = ref<HTMLElement | null>(null)
+
 const headingClass = computed(() => (isDark.value ? 'text-white-pure' : 'text-onyx-black'))
 const mutedClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
-const panelClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white'))
-const sectionIconWrap = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-surface'))
-const skeletonClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-gray-100'))
+const panelClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'))
+const skeletonClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-100'))
 const inputClass = computed(() =>
   isDark.value
-    ? 'border-onyx-border bg-onyx-card text-white-pure'
-    : 'border-zinc-200 bg-white text-onyx-black',
+    ? 'border-onyx-border bg-onyx-black text-white-pure'
+    : 'border-gray-200 bg-white text-onyx-black',
 )
 
 const stationCards = computed(() =>
@@ -371,8 +415,18 @@ async function onRefreshModeChange(mode: AutoRefreshMode) {
   }
 }
 
+// ── GSAP Entrance ──────────────────────────────────────────────────────
+const runEntranceAnimation = () => {
+  const els = [headerEl.value, section1El.value, section2El.value, section3El.value].filter(Boolean)
+  gsap.fromTo(els,
+    { opacity: 0, y: 22 },
+    { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: 'power3.out' }
+  )
+}
+
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
+  runEntranceAnimation()
   hydrate()
   applyHandoffPolling()
   await loadStationProfile()

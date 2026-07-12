@@ -1,42 +1,39 @@
 <template>
-  <div class="space-y-6 pb-24 lg:pb-8" :class="isDark ? 'text-white' : 'text-gray-900'">
+  <div ref="pageRoot" class="space-y-6 pb-24 lg:pb-8" :class="isDark ? 'text-white' : 'text-gray-900'">
 
-    <!-- ── Header ────────────────────────────────────────────────────── -->
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <!-- Greeting -->
+    <!-- ── Page Header ───────────────────────────────────────────────── -->
+    <div ref="headerEl" class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <!-- Breadcrumb + Greeting -->
       <div>
-        <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedText">
-          <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
+        <div class="mb-3 flex items-center gap-2 text-xs font-medium" :class="mutedText">
+          <Icon name="ph:squares-four-fill" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
-          <Icon name="ph:caret-right" class="h-3 w-3" />
-          <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Dashboard</span>
+          <Icon name="ph:caret-right" class="h-3 w-3 opacity-50" />
+          <span :class="isDark ? 'text-white' : 'text-gray-800'">Dashboard</span>
         </div>
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
-          Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Employee' }}!
+        <h1 class="text-3xl font-bold tracking-tight leading-tight">
+          Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Employee' }} 👋
         </h1>
-        <p class="mt-1 text-sm" :class="mutedText">
+        <p class="mt-1.5 text-sm" :class="mutedText">
           {{ currentScope === 'LOCAL'
-            ? 'Your personal office workspace overview.'
-            : 'Organisation-wide document stream and analytics.' }}
+            ? 'Here\'s your personal office workspace at a glance.'
+            : 'Organisation-wide document stream and live analytics.' }}
         </p>
       </div>
 
-      <!-- Right side: toggle + org badge -->
+      <!-- Right side: scope toggle + org badge -->
       <div class="flex flex-wrap items-center gap-3">
-
-        <!-- ── Premium Perspective Toggle ──────────────────────────── -->
+        <!-- Animated scope toggle pill -->
         <div
           class="relative flex items-center gap-1 rounded-2xl border p-1.5"
           :class="isDark
             ? 'bg-white/[0.04] border-white/10 backdrop-blur-md'
             : 'bg-white border-gray-200 shadow-sm'"
         >
-          <!-- Sliding indicator -->
           <div
             class="absolute inset-y-1.5 rounded-xl bg-candy-orange shadow-lg shadow-candy-orange/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             :style="indicatorStyle"
           />
-
           <button
             v-for="opt in scopeOptions"
             :key="opt.value"
@@ -67,78 +64,83 @@
     </div>
 
     <!-- ── Scope Context Banner ───────────────────────────────────────── -->
-    <Transition name="scope-fade" mode="out-in">
-      <div
-        :key="currentScope"
-        class="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
-        :class="currentScope === 'LOCAL'
-          ? isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'
-          : isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
-      >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
-          <Icon
-            :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'"
-            class="h-4 w-4 text-candy-orange"
-          />
+    <div ref="bannerEl">
+      <Transition name="scope-fade" mode="out-in">
+        <div
+          :key="currentScope"
+          class="flex items-center gap-4 rounded-2xl border px-5 py-4 text-sm"
+          :class="currentScope === 'LOCAL'
+            ? isDark ? 'border-candy-orange/25 bg-candy-orange/[0.06]' : 'border-orange-200 bg-orange-50'
+            : isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
+        >
+          <div class="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-candy-orange/15 ring-1 ring-candy-orange/20">
+            <Icon
+              :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'"
+              class="h-4.5 w-4.5 text-candy-orange"
+            />
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="font-bold text-candy-orange text-[10px] uppercase tracking-[0.12em]">
+              {{ currentScope === 'LOCAL' ? 'Office View — Your Station' : 'Org View — Global Pipeline' }}
+            </p>
+            <p class="mt-0.5 text-xs" :class="mutedText">
+              {{ currentScope === 'LOCAL'
+                ? `Showing data scoped to your ${myOffices.length} sub-office${myOffices.length === 1 ? '' : 's'} within ${auth.currentOrg?.name || 'your organisation'}.`
+                : `Showing all ${queueSummary.total} in-flight documents across the entire organisation.` }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange">
+              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-candy-orange" />
+              Live
+            </span>
+            <NuxtLink
+              :to="`/employee/ai?scope=${currentScope}`"
+              class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition hover:scale-[1.03]"
+              :class="isDark
+                ? 'border-white/10 bg-white/5 text-gray-300 hover:border-candy-orange/30 hover:text-candy-orange'
+                : 'border-gray-200 bg-white text-gray-500 hover:border-candy-orange/30 hover:text-candy-orange'"
+            >
+              <Icon name="ph:sparkle-fill" class="h-3 w-3" />
+              Ask AI
+            </NuxtLink>
+          </div>
         </div>
-        <div class="min-w-0 flex-1">
-          <p class="font-semibold text-candy-orange text-[11px] uppercase tracking-widest">
-            {{ currentScope === 'LOCAL' ? 'Small Picture — Office View' : 'Big Picture — Organisation View' }}
-          </p>
-          <p class="mt-0.5 text-xs" :class="mutedText">
-            {{ currentScope === 'LOCAL'
-              ? `Showing data scoped to your ${myOffices.length} sub-office${myOffices.length === 1 ? '' : 's'} within ${auth.currentOrg?.name || 'your organisation'}.`
-              : `Showing all ${queueSummary.total} in-flight documents across the entire organisation.` }}
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span
-            class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-            :class="isDark ? 'border-candy-orange/30 text-candy-orange' : 'border-candy-orange/30 text-candy-orange'"
-          >
-            <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-candy-orange" />
-            Live
-          </span>
-          <!-- Quick-launch AI canvas with active scope pre-loaded -->
-          <NuxtLink
-            :to="`/employee/ai?scope=${currentScope}`"
-            class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition hover:scale-[1.03]"
-            :class="isDark
-              ? 'border-white/10 bg-white/5 text-gray-300 hover:border-candy-orange/30 hover:text-candy-orange'
-              : 'border-gray-200 bg-white text-gray-500 hover:border-candy-orange/30 hover:text-candy-orange'"
-          >
-            <Icon name="ph:sparkle-fill" class="h-3 w-3" />
-            Ask AI
-          </NuxtLink>
-        </div>
-      </div>
-    </Transition>
+      </Transition>
+    </div>
 
     <!-- ── KPI Cards ─────────────────────────────────────────────────── -->
     <Transition name="scope-fade" mode="out-in">
-      <div :key="`kpi-${currentScope}`" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div ref="kpiEl" :key="`kpi-${currentScope}`" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="dashboard-card flex items-start gap-4 p-5 transition-all"
+          class="group relative overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:shadow-lg"
+          :class="isDark
+            ? 'bg-onyx-card border-onyx-border hover:border-candy-orange/30 hover:shadow-candy-orange/10'
+            : 'bg-white border-gray-200 hover:border-candy-orange/30 hover:shadow-candy-orange/10'"
           :style="{ transitionDelay: `${i * 40}ms` }"
         >
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" :class="card.iconBg">
-            <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
-            <p class="mt-1 text-2xl font-bold">
-              <span v-if="ledgerLoading" class="inline-block h-6 w-12 animate-pulse rounded-lg bg-white/10" />
-              <span v-else>{{ card.value }}</span>
-            </p>
-            <p class="mt-0.5 text-[10px]" :class="card.trendColor">{{ card.trend }}</p>
+          <!-- Subtle accent glow on hover -->
+          <div class="pointer-events-none absolute inset-0 rounded-2xl bg-candy-orange/[0.04] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <div class="flex items-start gap-4">
+            <span class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1" :class="card.iconBg">
+              <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
+            </span>
+            <div class="min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-widest" :class="mutedText">{{ card.label }}</p>
+              <p class="mt-1 text-2xl font-bold tracking-tight">
+                <span v-if="ledgerLoading" class="inline-block h-6 w-12 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                <span v-else>{{ card.value }}</span>
+              </p>
+              <p class="mt-0.5 text-[10px] font-medium" :class="card.trendColor">{{ card.trend }}</p>
+            </div>
           </div>
         </div>
       </div>
     </Transition>
 
-    <!-- ── GLOBAL-only: Pipeline Status Bar ──────────────────────────── -->
+    <!-- ── GLOBAL only: Pipeline Status Bar ──────────────────────────── -->
     <Transition name="scope-slide">
       <div
         v-if="currentScope === 'GLOBAL'"
@@ -147,25 +149,28 @@
         <div
           v-for="chip in pipelineChips"
           :key="chip.label"
-          class="flex flex-col items-center justify-center gap-1 rounded-xl border py-3 text-center transition-all"
-          :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-white'"
+          class="flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-4 text-center transition-all duration-200"
+          :class="isDark ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/20' : 'border-gray-200 bg-white hover:border-candy-orange/20'"
         >
           <span class="h-2 w-2 rounded-full" :class="chip.dot" />
-          <p class="text-xl font-bold">{{ chip.count }}</p>
-          <p class="text-[10px] font-semibold uppercase tracking-wider" :class="mutedText">{{ chip.label }}</p>
+          <p class="text-2xl font-bold tracking-tight">{{ chip.count }}</p>
+          <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ chip.label }}</p>
         </div>
       </div>
     </Transition>
 
     <!-- ── Main Two-Column Layout ─────────────────────────────────────── -->
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-5">
+    <div ref="mainGridEl" class="grid grid-cols-1 gap-5 lg:grid-cols-5">
 
       <!-- ── Left Column: Document Ledger (3/5) ───────────────────────── -->
-      <section class="dashboard-card lg:col-span-3 flex flex-col overflow-hidden">
+      <section
+        class="rounded-2xl border lg:col-span-3 flex flex-col overflow-hidden transition-all duration-200"
+        :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+      >
         <!-- Section header -->
         <div
           class="flex items-center justify-between border-b px-6 py-4"
-          :class="isDark ? 'border-white/5' : 'border-gray-100'"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
           <div>
             <h2 class="text-sm font-bold">
@@ -177,7 +182,7 @@
                 : 'All document transactions across the organisation' }}
             </p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5">
             <span
               class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-all duration-300"
               :class="currentScope === 'LOCAL'
@@ -191,8 +196,8 @@
               {{ currentScope === 'LOCAL' ? 'Isolated' : 'Org-Wide' }}
             </span>
             <NuxtLink
-              :to="`/employee/documents`"
-              class="text-xs font-semibold text-candy-orange transition-colors hover:text-[#e95a0b]"
+              to="/employee/documents"
+              class="text-xs font-semibold text-candy-orange transition-colors hover:text-candy-hover"
             >
               View all →
             </NuxtLink>
@@ -215,15 +220,14 @@
             v-else-if="ledger.length"
             :key="`rows-${currentScope}`"
             class="flex-1 overflow-y-auto divide-y"
-            :class="isDark ? 'divide-white/5' : 'divide-gray-100'"
+            :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'"
           >
             <div
               v-for="doc in ledger.slice(0, 12)"
               :key="doc.id"
               class="flex items-start gap-4 px-6 py-4 transition-colors"
-              :class="isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50'"
+              :class="isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50/80'"
             >
-              <!-- Icon -->
               <span
                 class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
                 :class="doc.is_own_upload
@@ -236,8 +240,6 @@
                   :class="doc.is_own_upload ? 'text-candy-orange' : 'text-purple-500'"
                 />
               </span>
-
-              <!-- Content -->
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
                   {{ doc.title || 'Untitled Document' }}
@@ -254,7 +256,6 @@
                   >
                     {{ doc.is_own_upload ? 'You uploaded' : 'Routed in' }}
                   </span>
-                  <!-- Tracking status (global view) -->
                   <span
                     v-if="doc.tracking_status && doc.tracking_status !== 'CREATED'"
                     class="rounded-full px-1.5 py-0.5 font-semibold"
@@ -264,8 +265,6 @@
                   </span>
                 </div>
               </div>
-
-              <!-- Status badge -->
               <span
                 class="flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
                 :class="statusClass(doc.status)"
@@ -279,15 +278,15 @@
           <div
             v-else
             :key="'empty'"
-            class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
+            class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-candy-orange/10">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
               <Icon name="ph:clipboard-text" class="h-7 w-7 text-candy-orange/50" />
             </div>
             <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
               {{ currentScope === 'LOCAL' ? 'No documents in your personal ledger.' : 'No documents in the organisation yet.' }}
             </p>
-            <p class="text-xs" :class="mutedText">
+            <p class="text-xs max-w-[220px]" :class="mutedText">
               {{ currentScope === 'LOCAL' ? 'Upload a document from one of your offices to get started.' : 'Documents will appear here once uploaded.' }}
             </p>
           </div>
@@ -298,15 +297,18 @@
       <div class="lg:col-span-2 flex flex-col gap-5">
 
         <!-- My Sub-Offices -->
-        <div class="dashboard-card p-5">
+        <div
+          class="rounded-2xl border p-5 transition-all duration-200"
+          :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+        >
           <div class="mb-4 flex items-center justify-between">
             <div>
               <h2 class="text-sm font-bold">My Sub-Offices</h2>
-              <p class="mt-0.5 text-[11px]" :class="mutedText">Registered branches</p>
+              <p class="mt-0.5 text-[11px]" :class="mutedText">Registered branch nodes</p>
             </div>
             <NuxtLink
               to="/employee/offices"
-              class="text-xs font-semibold text-candy-orange transition-colors hover:text-[#e95a0b]"
+              class="text-xs font-semibold text-candy-orange transition-colors hover:text-candy-hover"
             >
               Manage →
             </NuxtLink>
@@ -321,7 +323,7 @@
               v-for="office in myOffices.slice(0, 4)"
               :key="office.id"
               class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
-              :class="isDark ? 'border-white/5 hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
+              :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
             >
               <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-candy-orange/10">
                 <Icon name="ph:buildings-fill" class="h-3.5 w-3.5 text-candy-orange" />
@@ -334,7 +336,7 @@
                   {{ office.code || `OFF-${String(office.id).padStart(6, '0')}` }}
                 </p>
               </div>
-              <Icon name="ph:qr-code" class="h-4 w-4 text-gray-300" />
+              <Icon name="ph:qr-code" class="h-4 w-4 opacity-30" />
             </div>
             <p v-if="myOffices.length > 4" class="text-center text-[11px]" :class="mutedText">
               +{{ myOffices.length - 4 }} more
@@ -342,21 +344,28 @@
           </div>
 
           <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
-            <Icon name="ph:building-office" class="h-8 w-8 text-gray-300" />
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5">
+              <Icon name="ph:building-office" class="h-5 w-5" :class="mutedText" />
+            </div>
             <p class="text-xs" :class="mutedText">No offices assigned yet.</p>
-            <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
+            <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:text-candy-hover">
               Register one →
             </NuxtLink>
           </div>
         </div>
 
-        <!-- LOCAL: Assigned Tasks  /  GLOBAL: Route Stage Summary -->
+        <!-- LOCAL: Tasks / GLOBAL: Queue Stats -->
         <Transition name="scope-fade" mode="out-in">
           <!-- LOCAL view: Tasks -->
-          <div v-if="currentScope === 'LOCAL'" key="tasks" class="dashboard-card flex-1 p-5">
+          <div
+            v-if="currentScope === 'LOCAL'"
+            key="tasks"
+            class="flex-1 rounded-2xl border p-5 transition-all duration-200"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+          >
             <div class="mb-4 flex items-center justify-between">
               <h2 class="text-sm font-bold">Assigned Tasks</h2>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
+              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-candy-hover">
                 View all →
               </NuxtLink>
             </div>
@@ -365,7 +374,7 @@
                 v-for="task in tasks"
                 :key="task.id"
                 class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
-                :class="isDark ? 'border-white/5 hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
+                :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
               >
                 <span
                   class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-[10px] font-bold"
@@ -395,14 +404,19 @@
             </div>
           </div>
 
-          <!-- GLOBAL view: Tracking queue quick stats -->
-          <div v-else key="queue-stats" class="dashboard-card flex-1 p-5">
+          <!-- GLOBAL view: Tracking queue stats -->
+          <div
+            v-else
+            key="queue-stats"
+            class="flex-1 rounded-2xl border p-5 transition-all duration-200"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+          >
             <div class="mb-4 flex items-center justify-between">
               <div>
                 <h2 class="text-sm font-bold">Tracking Queue</h2>
                 <p class="mt-0.5 text-[11px]" :class="mutedText">Live org-wide pipeline</p>
               </div>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-[#e95a0b]">
+              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:text-candy-hover">
                 Full queue →
               </NuxtLink>
             </div>
@@ -416,7 +430,7 @@
                 v-for="stat in queueStats"
                 :key="stat.label"
                 class="flex items-center gap-3 rounded-xl border p-3"
-                :class="isDark ? 'border-white/5 bg-white/[0.02]' : 'border-gray-100 bg-gray-50'"
+                :class="isDark ? 'border-onyx-border bg-white/[0.02]' : 'border-gray-100 bg-gray-50'"
               >
                 <span class="h-2.5 w-2.5 flex-none rounded-full" :class="stat.dot" />
                 <span class="flex-1 text-xs font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
@@ -446,6 +460,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { gsap } from 'gsap'
 
 definePageMeta({ layout: 'employee' })
 
@@ -492,7 +507,6 @@ const scopeOptions: { value: Scope; label: string; icon: string }[] = [
 ]
 
 // ── Sliding indicator geometry ─────────────────────────────────────────
-// We measure the active tab button's offsetLeft/width to drive the pill.
 const tabRefs = ref<Record<string, HTMLElement>>({})
 const indicatorStyle = ref({ left: '6px', width: '120px' })
 
@@ -524,6 +538,13 @@ const officesLoading = ref(false)
 const queueSummary   = ref<QueueSummary>({ total: 0, created: 0, picked_up: 0, in_transit: 0, arrived_at_office: 0, completed: 0 })
 const queueLoading   = ref(false)
 
+// ── GSAP refs ──────────────────────────────────────────────────────────
+const pageRoot  = ref<HTMLElement | null>(null)
+const headerEl  = ref<HTMLElement | null>(null)
+const bannerEl  = ref<HTMLElement | null>(null)
+const kpiEl     = ref<HTMLElement | null>(null)
+const mainGridEl = ref<HTMLElement | null>(null)
+
 // ── Theming ────────────────────────────────────────────────────────────
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 
@@ -537,22 +558,22 @@ const kpiCards = computed(() => {
       {
         label: 'Office Docs', value: String(ledger.value.length),
         trend: 'in your offices', trendColor: 'text-candy-orange',
-        icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange',
+        icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10 ring-candy-orange/20', iconColor: 'text-candy-orange',
       },
       {
         label: 'My Uploads', value: String(own),
         trend: 'uploaded by you', trendColor: mutedText.value,
-        icon: 'ph:upload-simple-fill', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-500',
+        icon: 'ph:upload-simple-fill', iconBg: 'bg-emerald-500/10 ring-emerald-500/20', iconColor: 'text-emerald-500',
       },
       {
         label: 'Pending', value: String(pending),
         trend: 'awaiting action', trendColor: pending > 0 ? 'text-amber-500' : mutedText.value,
-        icon: 'ph:clock-countdown-fill', iconBg: 'bg-amber-500/10', iconColor: 'text-amber-500',
+        icon: 'ph:clock-countdown-fill', iconBg: 'bg-amber-500/10 ring-amber-500/20', iconColor: 'text-amber-500',
       },
       {
         label: 'In Transit', value: String(transit),
         trend: 'currently moving', trendColor: transit > 0 ? 'text-blue-400' : mutedText.value,
-        icon: 'ph:package-fill', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400',
+        icon: 'ph:package-fill', iconBg: 'bg-blue-500/10 ring-blue-500/20', iconColor: 'text-blue-400',
       },
     ]
   }
@@ -563,22 +584,22 @@ const kpiCards = computed(() => {
     {
       label: 'Total Org Docs', value: String(total),
       trend: 'across organisation', trendColor: 'text-candy-orange',
-      icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange',
+      icon: 'ph:files-fill', iconBg: 'bg-candy-orange/10 ring-candy-orange/20', iconColor: 'text-candy-orange',
     },
     {
       label: 'In Transit', value: String(in_transit),
       trend: 'with messengers', trendColor: in_transit > 0 ? 'text-blue-400' : mutedText.value,
-      icon: 'ph:truck-fill', iconBg: 'bg-blue-500/10', iconColor: 'text-blue-400',
+      icon: 'ph:truck-fill', iconBg: 'bg-blue-500/10 ring-blue-500/20', iconColor: 'text-blue-400',
     },
     {
       label: 'At Office', value: String(arrived_at_office),
       trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-teal-500' : mutedText.value,
-      icon: 'ph:buildings-fill', iconBg: 'bg-teal-500/10', iconColor: 'text-teal-500',
+      icon: 'ph:buildings-fill', iconBg: 'bg-teal-500/10 ring-teal-500/20', iconColor: 'text-teal-500',
     },
     {
       label: 'Completed', value: String(completed),
       trend: 'fully delivered', trendColor: completed > 0 ? 'text-emerald-500' : mutedText.value,
-      icon: 'ph:check-circle-fill', iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-500',
+      icon: 'ph:check-circle-fill', iconBg: 'bg-emerald-500/10 ring-emerald-500/20', iconColor: 'text-emerald-500',
     },
   ]
 })
@@ -682,7 +703,6 @@ const fetchQueue = async () => {
   }
 }
 
-// Reload all scope-dependent data when toggle changes
 const reloadScopedData = async () => {
   await Promise.all([
     fetchLedger(),
@@ -691,15 +711,51 @@ const reloadScopedData = async () => {
   updateIndicator()
 }
 
+// ── GSAP Entrance Animation ────────────────────────────────────────────
+const runEntranceAnimation = () => {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+  if (headerEl.value) {
+    tl.fromTo(headerEl.value,
+      { opacity: 0, y: -18 },
+      { opacity: 1, y: 0, duration: 0.5 },
+      0
+    )
+  }
+  if (bannerEl.value) {
+    tl.fromTo(bannerEl.value,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.45 },
+      0.12
+    )
+  }
+  if (kpiEl.value) {
+    const cards = kpiEl.value.querySelectorAll(':scope > div')
+    tl.fromTo(cards,
+      { opacity: 0, y: 20, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.07 },
+      0.22
+    )
+  }
+  if (mainGridEl.value) {
+    const sections = mainGridEl.value.querySelectorAll(':scope > *')
+    tl.fromTo(sections,
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 },
+      0.38
+    )
+  }
+}
+
 // ── Watchers ───────────────────────────────────────────────────────────
 watch(currentScope, () => reloadScopedData())
 
 // ── Lifecycle ──────────────────────────────────────────────────────────
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
+  runEntranceAnimation()
   await Promise.all([fetchLedger(), fetchOffices()])
   updateIndicator()
-  // Re-measure after fonts / layout settle
   setTimeout(updateIndicator, 150)
 })
 </script>
@@ -711,7 +767,7 @@ onMounted(async () => {
 .scope-fade-enter-from   { opacity: 0; transform: translateY(6px); }
 .scope-fade-leave-to     { opacity: 0; transform: translateY(-4px); }
 
-/* Scope slide — used for pipeline bar (slides down when GLOBAL) */
+/* Scope slide — used for pipeline bar */
 .scope-slide-enter-active { transition: all 0.28s cubic-bezier(0.16,1,0.3,1); }
 .scope-slide-leave-active { transition: all 0.18s ease; }
 .scope-slide-enter-from   { opacity: 0; transform: translateY(-8px); max-height: 0; }
