@@ -2,7 +2,7 @@
   <section class="w-full space-y-6 pb-24 lg:pb-8" :class="isDark ? 'text-white' : 'text-onyx-black'">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange"></div>
+        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange"></div>
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Sequential Stage Builder</h1>
         <p class="mt-1 text-sm" :class="mutedTextClass">
           {{ organizationLabel }} / asynchronous office milestones
@@ -11,7 +11,7 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
         @click="openStageDrawer"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -21,7 +21,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
       <aside class="w-full">
-        <article class="rounded-lg border p-5 shadow-card" :class="surfaceClass">
+        <article class="rounded-none border p-5 shadow-card" :class="surfaceClass">
           <div class="mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 class="text-base font-semibold">Available Offices</h2>
@@ -36,7 +36,7 @@
             <div
               v-for="office in officeStore.offices"
               :key="office.id"
-              class="w-full rounded-lg border p-3 transition hover:border-candy-orange/70"
+              class="w-full rounded-none border p-3 transition hover:border-candy-orange/70"
               :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
               draggable="true"
               @dragstart="draggedOfficeId = office.id"
@@ -57,7 +57,7 @@
                   v-for="stage in sortedStages"
                   :key="stage.stage_id"
                   type="button"
-                  class="rounded-md border px-2.5 py-2 text-left text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange"
+                  class="rounded-none border px-2.5 py-2 text-left text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
                   @click="stageStore.addOfficeToStage(stage.stage_id, office.id)"
                 >
@@ -66,7 +66,7 @@
               </div>
             </div>
 
-            <div v-if="!officeStore.offices.length" class="rounded-lg border border-dashed p-6 text-center text-sm" :class="[borderClass, mutedTextClass]">
+            <div v-if="!officeStore.offices.length" class="rounded-none border border-dashed p-6 text-center text-sm" :class="[borderClass, mutedTextClass]">
               Create offices first, then map them into stage timelines.
             </div>
           </div>
@@ -77,7 +77,7 @@
         <article
           v-for="stage in sortedStages"
           :key="stage.stage_id"
-          class="rounded-lg border shadow-card transition"
+          class="rounded-none border shadow-card transition"
           :class="[surfaceClass, dropTargetStageId === stage.stage_id ? 'border-candy-orange ring-2 ring-candy-orange/30' : '']"
           @dragover.prevent="dropTargetStageId = stage.stage_id"
           @dragleave="dropTargetStageId = null"
@@ -85,7 +85,7 @@
         >
           <header class="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" :class="borderClass">
             <div class="flex items-center gap-3">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange text-sm font-bold text-white">
+              <div class="flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange text-sm font-bold text-white">
                 {{ stage.step_number }}
               </div>
               <div>
@@ -99,7 +99,7 @@
             <div class="flex items-center gap-2">
               <button
                 type="button"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                 title="Move stage up"
                 @click="moveStage(stage.stage_id, -1)"
               >
@@ -107,7 +107,7 @@
               </button>
               <button
                 type="button"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                 title="Move stage down"
                 @click="moveStage(stage.stage_id, 1)"
               >
@@ -115,7 +115,7 @@
               </button>
               <button
                 type="button"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
                 title="Delete stage"
                 @click="handleDeleteStage(stage.stage_id)"
               >
@@ -135,11 +135,11 @@
               <div
                 v-for="(item, index) in getStageSequence(stage.stage_id)"
                 :key="`${item.office_id}-${index}`"
-                class="w-full flex flex-col gap-3 rounded-lg border p-3 transition sm:flex-row sm:items-center sm:justify-between"
+                class="w-full flex flex-col gap-3 rounded-none border p-3 transition sm:flex-row sm:items-center sm:justify-between"
                 :class="isDark ? 'border-onyx-border bg-onyx-black/50' : 'border-gray-200 bg-gray-50'"
               >
                 <div class="flex min-w-0 flex-1 items-center gap-3">
-                  <div class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-candy-orange text-xs font-bold text-white">
+                  <div class="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-candy-orange text-xs font-bold text-white">
                     {{ item.step_number }}
                   </div>
                   <div class="min-w-0">
@@ -153,7 +153,7 @@
                 <div class="flex items-center justify-end gap-1">
                   <button
                     type="button"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                     :disabled="index === 0"
                     @click="stageStore.moveOfficeInStage(stage.stage_id, index, index - 1)"
                   >
@@ -161,7 +161,7 @@
                   </button>
                   <button
                     type="button"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                     :disabled="index === getStageSequence(stage.stage_id).length - 1"
                     @click="stageStore.moveOfficeInStage(stage.stage_id, index, index + 1)"
                   >
@@ -169,7 +169,7 @@
                   </button>
                   <button
                     type="button"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
                     @click="stageStore.removeOfficeFromStage(stage.stage_id, item.office_id, getOccurrenceIndex(stage.stage_id, item.office_id, index))"
                   >
                     <Icon name="ph:x-bold" class="h-4 w-4" />
@@ -179,7 +179,7 @@
 
               <div
                 v-if="!getStageSequence(stage.stage_id).length"
-                class="rounded-lg border border-dashed p-8 text-center text-sm transition"
+                class="rounded-none border border-dashed p-8 text-center text-sm transition"
                 :class="dropTargetStageId === stage.stage_id ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : [borderClass, mutedTextClass]"
               >
                 Drag an office here or use an Add button from the office pool.
@@ -188,7 +188,7 @@
           </div>
         </article>
 
-        <div v-if="!sortedStages.length" class="rounded-lg border border-dashed p-10 text-center" :class="[surfaceClass, borderClass]">
+        <div v-if="!sortedStages.length" class="rounded-none border border-dashed p-10 text-center" :class="[surfaceClass, borderClass]">
           <Icon name="ph:path-bold" class="mx-auto mb-3 h-12 w-12 text-candy-orange" />
           <h2 class="text-lg font-bold">No stages yet</h2>
           <p class="mt-1 text-sm" :class="mutedTextClass">
@@ -225,7 +225,7 @@
                 v-model.trim="stageForm.name"
                 type="text"
                 placeholder="e.g. Quality Review"
-                class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -248,7 +248,7 @@
                   :key="office.id"
                   type="button"
                   draggable="true"
-                  class="flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition hover:border-candy-orange/70 hover:bg-candy-orange/5"
+                  class="flex w-full items-center justify-between gap-3 rounded-none border px-3 py-2.5 text-left text-sm transition hover:border-candy-orange/70 hover:bg-candy-orange/5"
                   :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
                   @click="addOfficeToWorkflow(office)"
                   @dragstart="handleDrawerPoolDragStart(office)"
@@ -260,7 +260,7 @@
 
                 <div
                   v-if="!officeStore.offices.length"
-                  class="rounded-lg border border-dashed p-4 text-center text-xs"
+                  class="rounded-none border border-dashed p-4 text-center text-xs"
                   :class="[borderClass, mutedTextClass]"
                 >
                   No offices available. Create offices first.
@@ -280,7 +280,7 @@
               </div>
 
               <div
-                class="min-h-32 space-y-2 rounded-lg border p-3 transition"
+                class="min-h-32 space-y-2 rounded-none border p-3 transition"
                 :class="[
                   isDark ? 'border-onyx-border bg-onyx-black/30' : 'border-gray-200 bg-gray-50',
                   isWorkflowDropTarget ? 'border-candy-orange ring-2 ring-candy-orange/30' : '',
@@ -293,7 +293,7 @@
                   v-for="(item, index) in selectedWorkflowOffices"
                   :key="`${item.id}-${index}`"
                   draggable="true"
-                  class="flex items-center gap-3 rounded-lg border p-3 transition"
+                  class="flex items-center gap-3 rounded-none border p-3 transition"
                   :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
                   @dragstart="workflowDragIndex = index"
                   @dragend="clearDrawerDragState"
@@ -302,7 +302,7 @@
                 >
                   <Icon name="ph:dots-six-vertical-bold" class="h-4 w-4 flex-none cursor-grab text-candy-orange" />
 
-                  <div class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-candy-orange text-xs font-bold text-white">
+                  <div class="flex h-8 w-8 flex-none items-center justify-center rounded-none bg-candy-orange text-xs font-bold text-white">
                     {{ item.step_number }}
                   </div>
 
@@ -314,7 +314,7 @@
                   <div class="flex items-center gap-1">
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                       :disabled="index === 0"
                       title="Move up"
                       @click="moveOfficeInWorkflow(index, index - 1)"
@@ -323,7 +323,7 @@
                     </button>
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
                       :disabled="index === selectedWorkflowOffices.length - 1"
                       title="Move down"
                       @click="moveOfficeInWorkflow(index, index + 1)"
@@ -332,7 +332,7 @@
                     </button>
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
                       title="Remove"
                       @click="removeOfficeFromWorkflow(index)"
                     >
@@ -343,7 +343,7 @@
 
                 <div
                   v-if="!selectedWorkflowOffices.length"
-                  class="rounded-lg border border-dashed p-6 text-center text-xs"
+                  class="rounded-none border border-dashed p-6 text-center text-xs"
                   :class="[borderClass, mutedTextClass]"
                 >
                   Drop or click offices above to build the route sequence.
@@ -355,13 +355,13 @@
           <footer class="flex justify-end gap-3 border-t px-5 py-4" :class="borderClass">
             <button
               type="button"
-              class="rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
+              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
               :class="borderClass"
               @click="closeStageDrawer"
             >
               Cancel
             </button>
-            <button type="submit" class="rounded-lg bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b]">
+            <button type="submit" class="rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b]">
               Create Stage
             </button>
           </footer>

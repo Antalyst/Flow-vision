@@ -1,11 +1,11 @@
 <template>
-  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-3xl overflow-hidden border shadow-xl relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
+  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-none overflow-hidden border shadow-sm relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
     <header class="flex items-center justify-between px-4 pt-4 pb-3">
       <NuxtLink
         to="/client/documents"
-        class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+        class="inline-flex items-center gap-1.5 rounded-none px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
       >
         <Icon name="ph:arrow-left-bold" class="h-4 w-4" />
         Back
@@ -14,12 +14,12 @@
       <h1 class="text-sm font-bold text-white">Client Document Scanner</h1>
 
       <!-- Mode toggle pill -->
-      <div class="flex rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-inner">
+      <div class="flex rounded-none border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-sm">
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'pickup'
-            ? 'bg-candy-orange text-white shadow'
+            ? 'bg-candy-orange text-white shadow-sm'
             : 'text-white/50 hover:text-white/80'"
           @click="switchMode('pickup')"
         >
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -64,7 +64,7 @@
       <Transition name="result-pop">
         <div
           v-if="scanState !== 'idle'"
-          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-2xl border bg-black/40 backdrop-blur-xl shadow-2xl"
+          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-none border bg-black/40 backdrop-blur-xl shadow-sm"
           :class="resultCardClass"
         >
           <!-- Processing -->
@@ -79,7 +79,7 @@
           <!-- SUCCESS ── Pickup -->
           <div v-else-if="scanState === 'success' && mode === 'pickup'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-emerald-500/20">
                 <Icon name="ph:check-circle-fill" class="h-6 w-6 text-emerald-400" />
               </span>
               <div class="min-w-0 flex-1">
@@ -102,7 +102,7 @@
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-candy-orange"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-candy-orange"
                 >
                   <Icon name="ph:motorcycle-fill" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -115,7 +115,7 @@
           <div v-else-if="scanState === 'success' && mode === 'dropoff'" class="p-5">
             <div class="flex items-start gap-3">
               <span
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none"
                 :class="resultData?.is_final_stop ? 'bg-emerald-500/20' : 'bg-candy-orange/20'"
               >
                 <Icon
@@ -140,7 +140,7 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
                     ? 'bg-emerald-500/15 border-emerald-500/20 text-emerald-400'
                     : 'bg-candy-orange/15 border-candy-orange/20 text-candy-orange'"
@@ -155,7 +155,7 @@
           <!-- SECURITY ERROR -->
           <div v-else-if="scanState === 'security-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/20">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-red-500/20">
                 <Icon name="ph:shield-warning-fill" class="h-6 w-6 text-red-400" />
               </span>
               <div class="min-w-0 flex-1">
@@ -166,7 +166,7 @@
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-xl bg-red-500/5 border border-red-500/20 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
+            <div class="mt-3 rounded-none bg-red-500/5 border border-red-500/20 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -174,7 +174,7 @@
           <!-- ROUTE MISMATCH ERROR -->
           <div v-else-if="scanState === 'route-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/20">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-candy-orange/20">
                 <Icon name="ph:warning-fill" class="h-6 w-6 text-candy-orange" />
               </span>
               <div class="min-w-0 flex-1">
@@ -188,7 +188,7 @@
           <!-- GENERIC ERROR -->
           <div v-else-if="scanState === 'error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/10">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-red-500/10">
                 <Icon name="ph:x-circle-fill" class="h-6 w-6 text-red-400" />
               </span>
               <div class="min-w-0">
@@ -201,7 +201,7 @@
           <!-- UNKNOWN QR -->
           <div v-else-if="scanState === 'unknown'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-500/10">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-gray-500/10">
                 <Icon name="ph:question-fill" class="h-6 w-6 text-gray-400" />
               </span>
               <div class="min-w-0">
@@ -216,7 +216,7 @@
           <div v-if="scanState !== 'processing'" class="border-t border-white/5 px-5 py-3">
             <button
               type="button"
-              class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+              class="w-full flex items-center justify-center gap-2 rounded-none bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
               @click="resetScan"
             >
               <Icon name="ph:scan" class="h-4 w-4 text-candy-orange" />
@@ -229,7 +229,7 @@
       <!-- ── Instruction chip when idle ──────────────────────────────────── -->
       <div
         v-if="scanState === 'idle'"
-        class="mt-4 flex items-center gap-2 rounded-2xl border border-candy-orange/20 bg-candy-orange/5 px-4 py-2.5 text-xs text-candy-orange/80"
+        class="mt-4 flex items-center gap-2 rounded-none border border-candy-orange/20 bg-candy-orange/5 px-4 py-2.5 text-xs text-candy-orange/80"
       >
         <Icon name="ph:qr-code" class="h-4 w-4 text-candy-orange flex-shrink-0" />
         <span>

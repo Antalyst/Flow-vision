@@ -29,7 +29,7 @@ const displayAlerts = computed(() => {
 </script>
 
 <template>
-  <div class="relative flex h-full max-h-[420px] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
+  <div class="relative flex h-full max-h-[420px] flex-col overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-4 flex items-center justify-between">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Live Stream</p>
@@ -55,7 +55,7 @@ const displayAlerts = computed(() => {
         <div
           v-for="(alert, index) in displayAlerts"
           :key="`${alert.id}-${index}`"
-          class="flex gap-3 rounded-xl border bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:bg-onyx-black/50"
+          class="flex gap-3 rounded-none border bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:bg-onyx-black/50"
           :class="toneBorder[alert.tone]"
         >
           <span class="mt-1 h-2 w-2 flex-none rounded-full" :class="toneDot[alert.tone]" />

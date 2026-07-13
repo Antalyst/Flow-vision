@@ -45,12 +45,12 @@ function cycleLayout() {
     <!-- Right: Controls -->
     <div class="flex flex-wrap items-center gap-3">
       <!-- Layout Switcher -->
-      <div class="flex items-center rounded-lg border border-neutral-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#111113]">
+      <div class="flex items-center rounded-none border border-neutral-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#111113]">
         <button
           v-for="(opt, index) in layoutOptions"
           :key="opt.id"
           type="button"
-          class="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all duration-200"
+          class="flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-semibold transition-all duration-200"
           :class="activeIndex === index
             ? 'bg-neutral-100 text-neutral-900 shadow-sm dark:bg-white/10 dark:text-white'
             : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'"
@@ -65,7 +65,7 @@ function cycleLayout() {
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+          class="flex h-9 w-9 items-center justify-center rounded-none border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
           aria-label="Toggle theme"
           @click="toggleTheme"
         >
@@ -74,7 +74,7 @@ function cycleLayout() {
 
         <NuxtLink
           to="/client/notifications"
-          class="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+          class="flex h-9 w-9 items-center justify-center rounded-none border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
         >
           <Icon name="ph:bell" class="h-4 w-4" />
         </NuxtLink>

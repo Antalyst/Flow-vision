@@ -6,9 +6,9 @@
           v-if="qrDataUrl"
           :src="qrDataUrl"
           alt="Tracking QR code"
-          class="h-56 w-56"
+          :style="{ width: `${qrSize || 224}px`, height: `${qrSize || 224}px` }"
         />
-        <div v-else class="flex h-56 w-56 items-center justify-center border border-black text-xs">
+        <div v-else class="flex items-center justify-center border border-black text-xs" :style="{ width: `${qrSize || 224}px`, height: `${qrSize || 224}px` }">
           QR UNAVAILABLE
         </div>
       </div>
@@ -19,6 +19,7 @@
 <script setup lang="ts">
 defineProps<{
   qrDataUrl: string
+  qrSize?: number
 }>()
 </script>
 
@@ -29,6 +30,10 @@ defineProps<{
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
+
   body * {
     visibility: hidden !important;
   }

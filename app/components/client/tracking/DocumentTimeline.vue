@@ -10,9 +10,9 @@
           {{ summary.current_step }} / {{ summary.total_steps }} offices
         </span>
       </div>
-      <div class="h-2 w-full overflow-hidden rounded-full" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
+      <div class="h-2 w-full overflow-hidden rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
         <div
-          class="h-full rounded-full bg-gradient-to-r from-candy-orange to-amber-400 transition-all duration-700"
+          class="h-full rounded-none bg-gradient-to-r from-candy-orange to-amber-400 transition-all duration-700"
           :style="{ width: `${summary.progress_pct}%` }"
         />
       </div>
@@ -21,10 +21,10 @@
     <!-- Status badge -->
     <div class="flex items-center gap-2">
       <span
-        class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest"
+        class="inline-flex items-center gap-1.5 rounded-none px-3 py-1 text-xs font-bold uppercase tracking-widest"
         :class="statusStyle(summary.tracking_status).badge"
       >
-        <span class="h-1.5 w-1.5 rounded-full" :class="statusStyle(summary.tracking_status).dot" />
+        <span class="h-1.5 w-1.5 rounded-none" :class="statusStyle(summary.tracking_status).dot" />
         {{ STATUS_LABELS[summary.tracking_status] ?? summary.tracking_status }}
       </span>
       <span v-if="summary.is_complete" class="text-xs font-semibold text-emerald-500">
@@ -43,7 +43,7 @@
 
         <template v-for="(step, idx) in routeSteps" :key="step.step_number">
           <span
-            class="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-xs font-semibold transition"
+            class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-xs font-semibold transition"
             :class="routeStepClass(idx + 1)"
           >
             <Icon
@@ -84,7 +84,7 @@
       >
         <!-- Status icon node -->
         <div
-          class="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white dark:bg-[#1A1A1A]"
+          class="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none border-2 bg-white dark:bg-[#1A1A1A]"
           :class="statusStyle(ev.status).iconBorder"
         >
           <Icon :name="STATUS_ICONS[ev.status] ?? 'ph:circle'" class="h-3.5 w-3.5" :class="statusStyle(ev.status).iconColor" />
@@ -103,7 +103,7 @@
 
           <p class="mt-0.5 text-[11px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
             <span v-if="ev.actor_name">by {{ ev.actor_name }}</span>
-            <span v-if="ev.actor_role" class="ml-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase"
+            <span v-if="ev.actor_role" class="ml-1 rounded-none px-1.5 py-0.5 text-[9px] font-bold uppercase"
               :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'">
               {{ ev.actor_role }}
             </span>

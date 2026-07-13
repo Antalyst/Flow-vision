@@ -7,7 +7,7 @@
         @click.self="$emit('close')"
       >
         <div 
-          class="w-full max-w-2xl overflow-hidden rounded-2xl border shadow-2xl transition-all"
+          class="w-full max-w-2xl overflow-hidden rounded-none border shadow-2xl transition-all"
           :class="isDark ? 'bg-onyx-black/80 border-white/10' : 'bg-white/80 border-gray-200'"
         >
           <!-- Search Input -->
@@ -33,7 +33,7 @@
             <button v-else-if="query" @click="query = ''" class="ml-3 text-gray-400 hover:text-gray-600 transition">
               <Icon name="ph:x-circle-fill" class="h-5 w-5" />
             </button>
-            <div class="ml-3 rounded px-2 py-0.5 text-xs font-semibold hidden sm:block"
+            <div class="ml-3 rounded-none px-2 py-0.5 text-xs font-semibold hidden sm:block"
                  :class="isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'">
               ENTER
             </div>
@@ -41,7 +41,7 @@
 
           <!-- Quick instructions / Loading state -->
           <div v-if="isSearching" class="p-8 text-center">
-            <div class="w-12 h-12 rounded-full bg-candy-orange/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <div class="w-12 h-12 rounded-none bg-candy-orange/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <Icon name="ph:brain-fill" class="h-6 w-6 text-candy-orange" />
             </div>
             <h3 class="text-lg font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Analyzing Intent</h3>
@@ -58,7 +58,7 @@
               <div 
                 v-for="suggestion in suggestions" 
                 :key="suggestion"
-                class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                class="flex items-center gap-3 p-3 rounded-none cursor-pointer transition-colors"
                 :class="isDark ? 'hover:bg-white/5 text-gray-300' : 'hover:bg-gray-50 text-gray-700'"
                 @click="query = suggestion; handleSearch()"
               >

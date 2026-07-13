@@ -1,33 +1,42 @@
 <template>
-  <div class="space-y-6">
-    <div>
-      <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+  <div>
+    <!-- Workspace -->
+    <div class="mb-4">
+      <p v-if="!minimized" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">Workspace</p>
-      <div class="space-y-0.5">
+      <div v-else class="h-4 border-t border-gray-200 dark:border-onyx-border mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
+      
+      <div class="space-y-0">
         <NuxtLink v-for="item in workspaceItems" :key="item.to" :to="item.to"
           class="nav-item w-full relative"
-          :class="{ 'nav-item-employee-active': isActive(item.to) }">
+          :class="[isActive(item.to) ? 'nav-item-employee-active' : '', minimized ? 'justify-center px-0' : '']"
+          :title="minimized ? item.label : undefined">
           <Icon :name="item.icon" class="w-5 h-5 flex-none" />
-          <span class="truncate">{{ item.label }}</span>
+          <span v-if="!minimized" class="truncate">{{ item.label }}</span>
           <span
-            v-if="item.to === '/employee/notifications' && badgeCount > 0"
-            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-candy-orange px-1.5 text-[10px] font-bold text-white"
+            v-if="!minimized && item.to === '/employee/notifications' && badgeCount > 0"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-none bg-candy-orange px-1.5 text-[10px] font-bold text-white"
           >
             {{ badgeCount > 9 ? '9+' : badgeCount }}
           </span>
+          <div v-if="minimized && item.to === '/employee/notifications' && badgeCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-none"></div>
         </NuxtLink>
       </div>
     </div>
 
+    <!-- Account -->
     <div>
-      <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+      <p v-if="!minimized" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">Account</p>
-      <div class="space-y-0.5">
+      <div v-else class="h-0 border-t mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
+
+      <div class="space-y-0">
         <NuxtLink v-for="item in accountItems" :key="item.to" :to="item.to"
-          class="nav-item w-full"
-          :class="{ 'nav-item-employee-active': isActive(item.to) }">
+          class="nav-item w-full relative"
+          :class="[isActive(item.to) ? 'nav-item-employee-active' : '', minimized ? 'justify-center px-0' : '']"
+          :title="minimized ? item.label : undefined">
           <Icon :name="item.icon" class="w-5 h-5 flex-none" />
-          <span class="truncate">{{ item.label }}</span>
+          <span v-if="!minimized" class="truncate">{{ item.label }}</span>
         </NuxtLink>
       </div>
     </div>
@@ -35,6 +44,10 @@
 </template>
 
 <script setup>
+const props = defineProps({
+  minimized: { type: Boolean, default: false }
+})
+
 const { isDark } = useTheme()
 const route = useRoute()
 const { count: badgeCount, refresh: refreshBadge } = useEmployeeNotificationBadge()
@@ -42,23 +55,24 @@ const { count: badgeCount, refresh: refreshBadge } = useEmployeeNotificationBadg
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
 const workspaceItems = [
-  { to: '/employee/dashboard',     label: 'Dashboard',       icon: 'ph:squares-four-fill' },
-  { to: '/employee/notifications', label: 'Notifications',   icon: 'ph:bell-fill' },
-  { to: '/employee/offices',       label: 'My Offices',      icon: 'ph:buildings-fill' },
-  { to: '/employee/users',         label: 'Internal Staff',  icon: 'ph:users-fill' },
-  { to: '/employee/working',       label: 'Current Working', icon: 'ph:briefcase-fill' },
-  { to: '/employee/stages',        label: 'Stages',          icon: 'ph:steps-fill' },
-  { to: '/employee/documents',     label: 'Documents',       icon: 'ph:files-fill' },
-  { to: '/employee/scan',          label: 'Scan QR',         icon: 'ph:scan-fill' },
-  { to: '/employee/flagged',       label: 'Compliance Logs', icon: 'ph:shield-warning-fill' },
-  { to: '/employee/activity',      label: 'Activity',        icon: 'ph:clock-counter-clockwise-fill' },
-  { to: '/employee/reports',       label: 'Reports',         icon: 'ph:chart-bar-fill' },
-  { to: '/employee/ai',            label: 'AI Intelligence', icon: 'ph:sparkle-fill' },
+  { to: '/employee/dashboard',     label: 'Dashboard',       icon: 'ph:squares-four-light' },
+  { to: '/employee/messages',      label: 'Messages',        icon: 'ph:chat-teardrop-text-light' },
+  { to: '/employee/notifications', label: 'Notifications',   icon: 'ph:bell-light' },
+  { to: '/employee/offices',       label: 'My Offices',      icon: 'ph:buildings-light' },
+  { to: '/employee/users',         label: 'Internal Staff',  icon: 'ph:users-light' },
+  { to: '/employee/working',       label: 'Current Working', icon: 'ph:briefcase-light' },
+  { to: '/employee/stages',        label: 'Stages',          icon: 'ph:steps-light' },
+  { to: '/employee/documents',     label: 'Documents',       icon: 'ph:files-light' },
+  { to: '/employee/scan',          label: 'Scan QR',         icon: 'ph:scan-light' },
+  { to: '/employee/flagged',       label: 'Compliance Logs', icon: 'ph:shield-warning-light' },
+  { to: '/employee/activity',      label: 'Activity',        icon: 'ph:clock-counter-clockwise-light' },
+  { to: '/employee/reports',       label: 'Reports',         icon: 'ph:chart-bar-light' },
+  { to: '/employee/ai',            label: 'AI Intelligence', icon: 'ph:sparkle-light' },
 ]
 
 const accountItems = [
-  { to: '/employee/settings', label: 'Settings', icon: 'ph:gear-six-fill' },
-  { to: '/employee/help',     label: 'Help',     icon: 'ph:question-fill' },
+  { to: '/employee/settings', label: 'Settings', icon: 'ph:gear-six-light' },
+  { to: '/employee/help',     label: 'Help',     icon: 'ph:question-light' },
 ]
 
 onMounted(() => {
@@ -76,6 +90,6 @@ watch(() => route.path, () => {
 }
 .nav-item-employee-active::before {
   content: '';
-  @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
+  @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-none;
 }
 </style>

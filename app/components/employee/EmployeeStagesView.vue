@@ -4,7 +4,7 @@
     <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Local Route Builder</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           Build custom routing sequences scoped to your sub-office branches
@@ -13,14 +13,14 @@
 
       <div class="flex items-center gap-2">
         <!-- Scope toggle -->
-        <div class="flex items-center rounded-xl border p-1 text-xs font-semibold" :class="glassSurface">
+        <div class="flex items-center rounded-none border p-1 text-xs font-semibold" :class="glassSurface">
           <button
             v-for="opt in scopeOptions"
             :key="opt.value"
             type="button"
-            class="rounded-lg px-3 py-1.5 transition-all"
+            class="rounded-none px-3 py-1.5 transition-colors"
             :class="scopeMode === opt.value
-              ? 'bg-candy-orange text-white shadow-sm'
+              ? 'bg-candy-orange text-white'
               : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800'"
             @click="scopeMode = opt.value"
           >
@@ -30,10 +30,10 @@
 
         <button
           type="button"
-          class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          class="inline-flex min-h-11 items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none"
           @click="openDrawer"
         >
-          <Icon name="ph:plus-bold" class="h-4 w-4" />
+          <Icon name="ph:plus-light" class="h-4 w-4" />
           Create Route
         </button>
       </div>
@@ -42,10 +42,10 @@
     <!-- ── Scope Info Bar ────────────────────────────────────────────── -->
     <div class="flex flex-wrap items-center gap-3">
       <div
-        class="inline-flex items-center gap-2.5 rounded-xl border px-4 py-2 text-sm backdrop-blur-sm"
+        class="inline-flex items-center gap-2.5 rounded-none border px-4 py-2 text-sm"
         :class="glassSurface"
       >
-        <Icon name="ph:shield-check-fill" class="h-4 w-4 text-candy-orange" />
+        <Icon name="ph:shield-check-light" class="h-4 w-4 text-candy-orange" />
         <span :class="mutedText">
           Showing
           <span class="font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
@@ -60,13 +60,13 @@
           v-for="office in myOffices"
           :key="office.id"
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition"
+          class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold transition-colors"
           :class="activeOfficeFilter === String(office.id)
-            ? 'border-candy-orange/50 bg-candy-orange/10 text-candy-orange'
-            : isDark ? 'border-white/10 text-gray-400 hover:border-candy-orange/30 hover:text-candy-orange' : 'border-gray-200 text-gray-500 hover:border-candy-orange/40 hover:text-candy-orange'"
+            ? 'border-candy-orange text-candy-orange'
+            : isDark ? 'border-white/10 text-gray-400 hover:border-candy-orange hover:text-candy-orange' : 'border-gray-200 text-gray-500 hover:border-candy-orange hover:text-candy-orange'"
           @click="toggleOfficeFilter(String(office.id))"
         >
-          <Icon name="ph:buildings-fill" class="h-3 w-3" />
+          <Icon name="ph:buildings-light" class="h-3 w-3" />
           {{ office.name }}
         </button>
       </div>
@@ -77,7 +77,7 @@
       <div
         v-for="n in 3"
         :key="n"
-        class="h-32 animate-pulse rounded-2xl border"
+        class="h-32 animate-pulse rounded-none border"
         :class="isDark ? 'bg-white/5 border-white/5' : 'bg-gray-100 border-gray-200'"
       />
     </div>
@@ -87,8 +87,8 @@
       <article
         v-for="stage in filteredStages"
         :key="stage.stage_id"
-        class="overflow-hidden rounded-2xl border shadow-card backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
-        :class="[cardSurface, isDropTarget === stage.stage_id ? 'ring-2 ring-candy-orange/50 border-candy-orange' : '']"
+        class="overflow-hidden rounded-none border transition-colors duration-200"
+        :class="[cardSurface, isDropTarget === stage.stage_id ? 'border-candy-orange' : '']"
         @dragover.prevent="isDropTarget = stage.stage_id"
         @dragleave="isDropTarget = null"
         @drop.prevent="handleDrop(stage.stage_id)"
@@ -96,16 +96,16 @@
         <!-- Stage header -->
         <header class="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" :class="borderClass">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-candy-orange text-sm font-bold text-white shadow-sm shadow-candy-orange/30">
+            <div class="flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange text-sm font-bold text-white">
               {{ stage.step_number }}
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-bold">{{ stage.name }}</h2>
                 <span
-                  class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  class="rounded-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                   :class="stage.scope === 'local'
-                    ? 'bg-candy-orange/15 text-candy-orange'
+                    ? isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-200 text-gray-800'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 >
                   {{ stage.scope === 'local' ? stage.office_name || 'Local' : 'Global' }}
@@ -122,31 +122,32 @@
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-candy-orange/10 hover:text-candy-orange"
-              :class="mutedText"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors"
+              :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'"
               title="Move up"
               @click="moveStage(stage.stage_id, -1)"
             >
-              <Icon name="ph:arrow-up-bold" class="h-4 w-4" />
+              <Icon name="ph:arrow-up-light" class="h-4 w-4" />
             </button>
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-candy-orange/10 hover:text-candy-orange"
-              :class="mutedText"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors"
+              :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'"
               title="Move down"
               @click="moveStage(stage.stage_id, 1)"
             >
-              <Icon name="ph:arrow-down-bold" class="h-4 w-4" />
+              <Icon name="ph:arrow-down-light" class="h-4 w-4" />
             </button>
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-red-500 transition hover:bg-red-500/10"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600"
+              :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'"
               title="Delete route"
               @click="handleDeleteStage(stage.stage_id)"
             >
-              <Icon name="ph:trash-bold" class="h-4 w-4" />
+              <Icon name="ph:trash-light" class="h-4 w-4" />
             </button>
           </div>
         </header>
@@ -154,18 +155,18 @@
         <!-- Route flow -->
         <div class="p-5">
           <div class="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-candy-orange">
-            <span class="h-px flex-1 bg-candy-orange/20" />
+            <span class="h-px flex-1" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
             Flow Path
-            <span class="h-px flex-1 bg-candy-orange/20" />
+            <span class="h-px flex-1" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
             <template v-for="(step, i) in getSteps(stage.stage_id)" :key="`${step.office_id}-${i}`">
               <div
-                class="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition"
+                class="flex items-center gap-2 rounded-none border px-3 py-2 text-sm transition-colors"
                 :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-50'"
               >
-                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-lg bg-candy-orange text-[10px] font-bold text-white">
+                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-none bg-candy-orange text-[10px] font-bold text-white">
                   {{ step.step_number }}
                 </div>
                 <span class="font-semibold">{{ getOfficeName(step.office_id) }}</span>
@@ -173,23 +174,25 @@
                 <button
                   v-if="stage.scope === 'local'"
                   type="button"
-                  class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-red-500 transition hover:bg-red-500/10"
+                  class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600"
+                  :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-200'"
                   @click="removeStepFromStage(stage.stage_id, step.office_id, i)"
                 >
-                  <Icon name="ph:x-bold" class="h-3 w-3" />
+                  <Icon name="ph:x-light" class="h-3 w-3" />
                 </button>
               </div>
 
               <Icon
                 v-if="i < getSteps(stage.stage_id).length - 1"
-                name="ph:arrow-right-bold"
-                class="h-3.5 w-3.5 flex-none text-candy-orange/50"
+                name="ph:arrow-right-light"
+                class="h-3.5 w-3.5 flex-none"
+                :class="isDark ? 'text-gray-600' : 'text-gray-300'"
               />
             </template>
 
             <div
               v-if="!getSteps(stage.stage_id).length"
-              class="rounded-xl border border-dashed p-4 text-center text-sm w-full"
+              class="rounded-none border border-dashed p-4 text-center text-sm w-full"
               :class="[isDark ? 'border-white/10' : 'border-gray-200', mutedText]"
             >
               Drag an office here or use "Add to Route" from the sidebar.
@@ -202,11 +205,11 @@
     <!-- ── Empty State ────────────────────────────────────────────────── -->
     <div
       v-else
-      class="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center"
+      class="flex min-h-[280px] flex-col items-center justify-center rounded-none border border-dashed px-6 text-center"
       :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50'"
     >
-      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-candy-orange/10">
-        <Icon name="ph:path-bold" class="h-8 w-8 text-candy-orange/60" />
+      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-none border" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
+        <Icon name="ph:path-light" class="h-8 w-8" :class="mutedText" />
       </div>
       <p class="font-bold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">No route templates</p>
       <p class="mt-1 text-sm" :class="mutedText">
@@ -216,19 +219,19 @@
         <button
           v-if="scopeMode === 'local' && !myOffices.length"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange/10 px-4 py-2 text-sm font-semibold text-candy-orange transition hover:bg-candy-orange/20"
+          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
           @click="openTableDrawer"
         >
-          <Icon name="ph:desk-bold" class="h-4 w-4" />
+          <Icon name="ph:desk-light" class="h-4 w-4" />
           Create Office Desk
         </button>
         <button
           v-if="myOffices.length || scopeMode !== 'local'"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
+          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
           @click="openDrawer"
         >
-          <Icon name="ph:plus-bold" class="h-4 w-4" />
+          <Icon name="ph:plus-light" class="h-4 w-4" />
           Create Route
         </button>
       </div>
@@ -243,14 +246,14 @@
       <Transition name="drawer-slide">
         <form
           v-if="drawerOpen"
-          class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-xl flex-col border-l shadow-2xl"
-          :class="isDark ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'bg-white border-gray-200'"
+          class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-xl flex-col border-l"
+          :class="isDark ? 'bg-onyx-background border-onyx-border' : 'bg-white border-gray-200'"
           @submit.prevent="handleCreateStage"
         >
           <!-- Drawer header -->
-          <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+          <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <div>
-              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+              <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
               <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Route Template</p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ scopeMode === 'local' ? 'Create Local Route' : 'Create Route' }}
@@ -259,8 +262,8 @@
                 {{ scopeMode === 'local' ? 'Scoped to your selected office branch' : 'Organisation-wide routing' }}
               </p>
             </div>
-            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
-              <Icon name="ph:x-bold" class="h-4 w-4" />
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
+              <Icon name="ph:x-light" class="h-4 w-4" />
             </button>
           </header>
 
@@ -276,7 +279,7 @@
                 v-model.trim="stageForm.name"
                 type="text"
                 placeholder="e.g. HR Document Review"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -290,7 +293,7 @@
               <p class="mt-0.5 text-xs" :class="mutedText">This route will be scoped to the selected sub-branch</p>
               <select
                 v-model="stageForm.office_id"
-                class="mt-2 w-full rounded-xl border px-3 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                class="mt-2 w-full rounded-none border px-3 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
                 :class="inputClass"
                 required
               >
@@ -306,7 +309,7 @@
                   <h3 class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Available Checkpoints</h3>
                   <p class="mt-0.5 text-xs" :class="mutedText">Click or drag offices to build the sequence</p>
                 </div>
-                <Icon name="ph:buildings" class="h-4 w-4 text-candy-orange" />
+                <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
               </div>
 
               <div class="space-y-2">
@@ -315,23 +318,23 @@
                   :key="office.id"
                   type="button"
                   draggable="true"
-                  class="flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition hover:border-candy-orange/50 hover:bg-candy-orange/5"
-                  :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
+                  class="flex w-full items-center justify-between gap-3 rounded-none border px-3 py-2.5 text-left text-sm transition-colors hover:border-candy-orange"
+                  :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50'"
                   @click="addCheckpoint(office)"
                   @dragstart="drawerDragOffice = office"
                   @dragend="drawerDragOffice = null"
                 >
                   <div class="min-w-0">
                     <span class="truncate font-semibold">{{ office.name }}</span>
-                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-full bg-candy-orange/10 px-1.5 py-0.5 text-[10px] font-bold text-candy-orange">Mine</span>
+                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-none border px-1.5 py-0.5 text-[10px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
                   </div>
-                  <Icon name="ph:plus-circle" class="h-4 w-4 flex-none text-candy-orange" />
+                  <Icon name="ph:plus-circle-light" class="h-4 w-4 flex-none text-candy-orange" />
                 </button>
 
                 <div
                   v-if="!allOffices.length"
-                  class="rounded-xl border border-dashed p-4 text-center text-xs"
-                  :class="[isDark ? 'border-white/10' : 'border-gray-200', mutedText]"
+                  class="rounded-none border border-dashed p-4 text-center text-xs"
+                  :class="[isDark ? 'border-onyx-border' : 'border-gray-200', mutedText]"
                 >
                   No offices found in your organisation.
                 </div>
@@ -347,14 +350,14 @@
                     {{ selectedCheckpoints.length }} checkpoint{{ selectedCheckpoints.length === 1 ? '' : 's' }} in order
                   </p>
                 </div>
-                <Icon name="ph:path-bold" class="h-4 w-4 text-candy-orange" />
+                <Icon name="ph:path-light" class="h-4 w-4 text-candy-orange" />
               </div>
 
               <div
-                class="min-h-32 space-y-2 rounded-xl border p-3 transition-all"
+                class="min-h-32 space-y-2 rounded-none border p-3 transition-colors"
                 :class="[
-                  isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50',
-                  isDropZoneActive ? 'border-candy-orange ring-2 ring-candy-orange/30 bg-candy-orange/5' : '',
+                  isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50',
+                  isDropZoneActive ? 'border-candy-orange' : '',
                 ]"
                 @dragover.prevent="isDropZoneActive = true"
                 @dragleave="isDropZoneActive = false"
@@ -364,35 +367,35 @@
                   v-for="(cp, i) in selectedCheckpoints"
                   :key="`${cp.id}-${i}`"
                   draggable="true"
-                  class="flex items-center gap-3 rounded-xl border p-3 transition"
-                  :class="isDark ? 'border-white/10 bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
+                  class="flex items-center gap-3 rounded-none border p-3 transition-colors"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
                   @dragstart="dragIndex = i"
                   @dragend="dragIndex = null"
                   @dragover.prevent
                   @drop.prevent="handleSeqItemDrop(i)"
                 >
-                  <Icon name="ph:dots-six-vertical-bold" class="h-4 w-4 flex-none cursor-grab text-candy-orange" />
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-lg bg-candy-orange text-[11px] font-bold text-white">
+                  <Icon name="ph:dots-six-vertical-light" class="h-4 w-4 flex-none cursor-grab text-candy-orange" />
+                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-none bg-candy-orange text-[11px] font-bold text-white">
                     {{ i + 1 }}
                   </div>
                   <span class="flex-1 truncate text-sm font-semibold">{{ cp.name }}</span>
                   <div class="flex items-center gap-1">
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange" :disabled="i === 0" @click="moveCheckpoint(i, i - 1)">
-                      <Icon name="ph:caret-up-bold" class="h-3.5 w-3.5" />
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === 0" @click="moveCheckpoint(i, i - 1)">
+                      <Icon name="ph:caret-up-light" class="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange" :disabled="i === selectedCheckpoints.length - 1" @click="moveCheckpoint(i, i + 1)">
-                      <Icon name="ph:caret-down-bold" class="h-3.5 w-3.5" />
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === selectedCheckpoints.length - 1" @click="moveCheckpoint(i, i + 1)">
+                      <Icon name="ph:caret-down-light" class="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10" @click="removeCheckpoint(i)">
-                      <Icon name="ph:x-bold" class="h-3.5 w-3.5" />
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600" :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'" @click="removeCheckpoint(i)">
+                      <Icon name="ph:x-light" class="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
 
                 <div
                   v-if="!selectedCheckpoints.length"
-                  class="rounded-xl border border-dashed p-6 text-center text-xs"
-                  :class="[isDark ? 'border-white/10' : 'border-gray-200', mutedText]"
+                  class="rounded-none border border-dashed p-6 text-center text-xs"
+                  :class="[isDark ? 'border-onyx-border' : 'border-gray-200', mutedText]"
                 >
                   Drop or click offices above to build the route.
                 </div>
@@ -401,11 +404,11 @@
           </div>
 
           <!-- Drawer footer -->
-          <footer class="flex justify-end gap-3 border-t px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+          <footer class="flex justify-end gap-3 border-t px-6 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <button
               type="button"
-              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition"
-              :class="isDark ? 'border-white/10 text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
+              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition-colors"
+              :class="isDark ? 'border-onyx-border text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
               @click="closeDrawer"
             >
               Cancel
@@ -413,9 +416,9 @@
             <button
               type="submit"
               :disabled="!stageForm.name || !stageForm.office_id || creating"
-              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Icon v-if="creating" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+              <Icon v-if="creating" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
               {{ creating ? 'Creating…' : 'Create Route' }}
             </button>
           </footer>
@@ -432,33 +435,33 @@
       <Transition name="drawer-slide">
         <form
           v-if="tableDrawerOpen"
-          class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-sm flex-col border-l shadow-2xl"
-          :class="isDark ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'bg-white border-gray-200'"
+          class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-sm flex-col border-l"
+          :class="isDark ? 'bg-onyx-background border-onyx-border' : 'bg-white border-gray-200'"
           @submit.prevent="handleCreateTable"
         >
-          <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+          <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <div>
-              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+              <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create Desk</h2>
             </div>
-            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeTableDrawer">
-              <Icon name="ph:x-bold" class="h-4 w-4" />
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeTableDrawer">
+              <Icon name="ph:x-light" class="h-4 w-4" />
             </button>
           </header>
 
           <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6">
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Desk/Table Name <span class="text-red-500">*</span></span>
-              <input v-model.trim="tableForm.name" type="text" placeholder="e.g. Reception Desk" class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange" :class="inputClass" required />
+              <input v-model.trim="tableForm.name" type="text" placeholder="e.g. Reception Desk" class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange" :class="inputClass" required />
             </label>
           </div>
 
-          <footer class="border-t px-6 py-5" :class="isDark ? 'border-white/10 bg-[#111111]' : 'border-gray-200 bg-gray-50'">
+          <footer class="border-t px-6 py-5" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50'">
             <div class="flex items-center justify-end gap-3">
-              <button type="button" class="rounded-xl px-5 py-2.5 text-sm font-semibold transition" :class="isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'" @click="closeTableDrawer">Cancel</button>
-              <button type="submit" :disabled="creatingTable" class="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] focus:outline-none focus:ring-2 focus:ring-candy-orange/50 disabled:opacity-50">
-                <Icon v-if="creatingTable" name="ph:spinner-gap-bold" class="h-4 w-4 animate-spin" />
-                <Icon v-else name="ph:check-bold" class="h-4 w-4" />
+              <button type="button" class="rounded-none px-5 py-2.5 text-sm font-semibold transition-colors border border-transparent" :class="isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'" @click="closeTableDrawer">Cancel</button>
+              <button type="submit" :disabled="creatingTable" class="inline-flex min-h-[44px] items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none disabled:opacity-50">
+                <Icon v-if="creatingTable" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+                <Icon v-else name="ph:check-light" class="h-4 w-4" />
                 Create
               </button>
             </div>
@@ -517,6 +520,10 @@ const dragIndex      = ref<number | null>(null)
 const activeOfficeFilter = ref<string | null>(null)
 const scopeMode      = ref<'all' | 'global' | 'local'>('all')
 
+const tableDrawerOpen = ref(false)
+const creatingTable = ref(false)
+const tableForm = reactive({ name: '' })
+
 const scopeOptions = [
   { label: 'All',    value: 'all' },
   { label: 'Global', value: 'global' },
@@ -535,7 +542,7 @@ const allOffices = computed(() => {
   const storeOffices = officeStore.offices as unknown as OfficeRecord[]
   if (scopeMode.value === 'local') {
     // Hide global organization offices (only show offices that have a parent, i.e., sub-offices)
-    return storeOffices.filter(o => o.parent_office_id)
+    return storeOffices.filter(o => (o as any).parent_office_id)
   }
   return storeOffices
 })
@@ -552,16 +559,16 @@ const filteredStages = computed(() => {
 
 // ── Theming ────────────────────────────────────────────────────────────
 const glassSurface = computed(() =>
-  isDark.value ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-white'
+  isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'
 )
 const cardSurface = computed(() =>
-  isDark.value ? 'border-white/10 bg-[#1A1A1A] shadow-xl shadow-black/30' : 'border-gray-200 bg-white shadow-card'
+  isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'
 )
-const borderClass = computed(() => isDark.value ? 'border-white/5' : 'border-gray-100')
+const borderClass = computed(() => isDark.value ? 'border-onyx-border' : 'border-gray-100')
 const mutedText   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const inputClass  = computed(() =>
   isDark.value
-    ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
+    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 
@@ -631,6 +638,20 @@ const openDrawer = () => {
 
 const closeDrawer = () => {
   drawerOpen.value = false
+}
+
+const openTableDrawer = () => {
+  tableForm.name = ''
+  tableDrawerOpen.value = true
+}
+
+const closeTableDrawer = () => {
+  tableDrawerOpen.value = false
+}
+
+const handleCreateTable = async () => {
+  // Mocked out to prevent errors if this was implemented elsewhere
+  closeTableDrawer()
 }
 
 // ── Checkpoint management ──────────────────────────────────────────────

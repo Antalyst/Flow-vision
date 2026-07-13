@@ -14,13 +14,13 @@
     </header>
 
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div v-for="kpi in kpiCards" :key="kpi.label" class="rounded-lg border p-4" :class="panelClass">
+      <div v-for="kpi in kpiCards" :key="kpi.label" class="rounded-none border p-4" :class="panelClass">
         <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedClass">{{ kpi.label }}</p>
         <p class="mt-1 text-xl font-bold" :class="headingClass">{{ kpi.value }}</p>
       </div>
     </div>
 
-    <section class="overflow-hidden rounded-lg border" :class="panelClass">
+    <section class="overflow-hidden rounded-none border" :class="panelClass">
       <div class="border-b px-4 py-3" :class="borderClass">
         <h2 class="text-sm font-bold" :class="headingClass">Station Workload Matrix</h2>
         <p v-if="data?.summary.bottleneck_office" class="mt-1 text-xs text-candy-orange">
@@ -52,7 +52,7 @@
               <td class="px-4 py-3">
                 <span
                   v-if="station.is_bottleneck"
-                  class="inline-flex rounded border border-candy-orange/40 px-2 py-0.5 text-[10px] font-bold uppercase text-candy-orange"
+                  class="inline-flex rounded-none border border-candy-orange/40 px-2 py-0.5 text-[10px] font-bold uppercase text-candy-orange"
                 >
                   High Load
                 </span>

@@ -1,7 +1,7 @@
 <template>
   <section class="mx-auto w-full max-w-2xl space-y-6 pb-24 lg:pb-8">
     <header>
-      <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+      <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
       <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Origin Checkpoint</p>
       <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
         My Station QR
@@ -16,14 +16,14 @@
       Loading station checkpoint…
     </div>
 
-    <div v-else-if="error" class="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-500">
+    <div v-else-if="error" class="rounded-none border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-500">
       {{ error }}
     </div>
 
   <article
     v-else
     id="station-print-area"
-    class="overflow-hidden rounded-2xl border shadow-card"
+    class="overflow-hidden rounded-none border shadow-card"
     :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-surface'"
   >
       <div class="border-b px-6 py-4" :class="isDark ? 'border-onyx-border bg-onyx-sidebar/50' : 'border-gray-200 bg-white-muted'">
@@ -40,7 +40,7 @@
 
       <div class="flex flex-col items-center gap-6 px-6 py-10">
         <div
-          class="flex h-72 w-72 max-w-full items-center justify-center rounded-3xl border-2 border-candy-orange/30 bg-white-pure p-4 shadow-lg shadow-candy-orange/10"
+          class="flex h-72 w-72 max-w-full items-center justify-center rounded-none border-2 border-candy-orange/30 bg-white-pure p-4 shadow-lg shadow-candy-orange/10"
         >
           <canvas
             ref="qrCanvas"
@@ -59,7 +59,7 @@
       <div class="flex flex-col gap-3 border-t px-6 py-5 sm:flex-row sm:justify-center print:hidden" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-xl bg-candy-orange px-6 py-3 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-[0.98]"
+          class="inline-flex items-center justify-center gap-2 rounded-none bg-candy-orange px-6 py-3 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-[0.98]"
           @click="printBadge"
         >
           <Icon name="ph:printer-fill" class="h-4 w-4" />
@@ -67,7 +67,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-xl border px-6 py-3 text-sm font-semibold transition"
+          class="inline-flex items-center justify-center gap-2 rounded-none border px-6 py-3 text-sm font-semibold transition"
           :class="isDark ? 'border-onyx-border text-white-muted hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
           :disabled="!qrDataUrl"
           @click="downloadQr"

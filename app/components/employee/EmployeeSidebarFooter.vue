@@ -1,28 +1,34 @@
 <template>
   <div>
-    <div class="flex items-center gap-3 px-2 py-2 rounded-xl"
-      :class="isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50'">
-      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-none bg-sky-500/10 text-sky-600 dark:text-sky-400">
+    <div class="flex items-center gap-3 px-2 py-2 rounded-none transition"
+      :class="[isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50', minimized ? 'justify-center px-0' : '']">
+      <div class="w-9 h-9 rounded-none flex items-center justify-center text-xs font-bold flex-none bg-sky-500/10 text-sky-600 dark:text-sky-400"
+           :title="minimized ? displayName : undefined">
         {{ initials }}
       </div>
-      <div class="flex-1 min-w-0">
+      <div v-if="!minimized" class="flex-1 min-w-0">
         <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ displayName }}</p>
         <p class="text-[11px] truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
       </div>
     </div>
     <button
       type="button"
-      class="mt-2 w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors text-red-500 hover:bg-red-500/10"
+      class="mt-2 flex items-center rounded-none text-sm font-medium transition-colors text-red-500 hover:bg-red-500/10"
+      :class="minimized ? 'w-full justify-center p-2' : 'w-full gap-2 px-3 py-2'"
+      :title="minimized ? 'Log out' : undefined"
       @click="emit('logout')"
     >
-      <Icon name="ph:sign-out" class="w-4 h-4" />
-      Log out
+      <Icon name="ph:sign-out-light" class="w-5 h-5 flex-none" />
+      <span v-if="!minimized">Log out</span>
     </button>
   </div>
 </template>
 
 <script setup>
-const props = defineProps({ user: { type: Object, default: null } })
+const props = defineProps({ 
+  user: { type: Object, default: null },
+  minimized: { type: Boolean, default: false }
+})
 const emit = defineEmits(['logout'])
 const { isDark } = useTheme()
 

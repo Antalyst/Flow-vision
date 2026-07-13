@@ -2,9 +2,9 @@
   <div class="space-y-6 pb-24 md:pb-8">
     <div>
       <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-        <Icon name="ph:gear-six-fill" class="h-4 w-4 text-candy-orange" />
+        <Icon name="ph:gear-six-light" class="h-4 w-4 text-candy-orange" />
         <span>Messenger Portal</span>
-        <Icon name="ph:caret-right" class="h-3 w-3" />
+        <Icon name="ph:caret-right-light" class="h-3 w-3" />
         <span class="font-medium" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">Settings</span>
       </div>
       <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
@@ -21,10 +21,10 @@
 
     <template v-else>
       <!-- Notifications -->
-      <section class="dashboard-card p-6" :class="surfaceClass">
+      <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-candy-orange/10">
-            <Icon name="ph:bell-ringing-fill" class="h-5 w-5 text-candy-orange" />
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+            <Icon name="ph:bell-ringing-light" class="h-5 w-5 text-candy-orange" />
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Notification Preferences</h2>
@@ -51,10 +51,10 @@
       </section>
 
       <!-- Camera -->
-      <section class="dashboard-card p-6" :class="surfaceClass">
+      <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-candy-orange/10">
-            <Icon name="ph:camera-fill" class="h-5 w-5 text-candy-orange" />
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+            <Icon name="ph:camera-light" class="h-5 w-5 text-candy-orange" />
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Camera &amp; Scanner Hardware</h2>
@@ -64,7 +64,7 @@
 
         <div
           v-if="cameraError"
-          class="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-600 dark:text-amber-400"
+          class="mb-4 rounded-none border border-amber-500 bg-transparent px-4 py-3 text-sm text-amber-600 dark:text-amber-400"
         >
           {{ cameraError }}
         </div>
@@ -76,7 +76,7 @@
             </span>
             <select
               v-model="selectedCameraId"
-              class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-2 focus:ring-candy-orange/25"
+              class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-0"
               :class="inputClass"
               :disabled="loadingCameras || savingCamera"
               @change="onCameraChange"
@@ -97,22 +97,22 @@
 
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
-            :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+            class="inline-flex items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+            :class="isDark ? 'border-onyx-border bg-onyx-card text-gray-300' : 'border-gray-200 bg-white text-gray-600'"
             :disabled="loadingCameras"
             @click="loadCameras"
           >
-            <Icon name="ph:arrows-clockwise" class="h-4 w-4" :class="loadingCameras ? 'animate-spin' : ''" />
+            <Icon name="ph:arrows-clockwise-light" class="h-4 w-4" :class="loadingCameras ? 'animate-spin' : ''" />
             Refresh Devices
           </button>
         </div>
       </section>
 
       <!-- Cache -->
-      <section class="dashboard-card p-6" :class="surfaceClass">
+      <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-candy-orange/10">
-            <Icon name="ph:database-fill" class="h-5 w-5 text-candy-orange" />
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+            <Icon name="ph:database-light" class="h-5 w-5 text-candy-orange" />
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Local Cache &amp; Data Storage</h2>
@@ -124,12 +124,12 @@
 
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure transition hover:bg-opacity-90 disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure transition hover:bg-opacity-90 disabled:opacity-50"
           :disabled="clearingCache"
           @click="onClearCache"
         >
-          <Icon v-if="clearingCache" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-          <Icon v-else name="ph:broom-fill" class="h-4 w-4" />
+          <Icon v-if="clearingCache" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+          <Icon v-else name="ph:broom-light" class="h-4 w-4" />
           Clear Synchronized Cache
         </button>
       </section>
@@ -141,7 +141,7 @@
     <Transition name="toast-fade">
       <div
         v-if="toast.visible"
-        class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl md:bottom-8"
+        class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2 rounded-none border px-4 py-3 text-sm font-semibold shadow-none md:bottom-8"
         :class="toastClass"
         role="status"
       >
@@ -175,7 +175,6 @@ const { toast, show: showToast } = useMessengerToast()
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
 const headingClass = computed(() => (isDark.value ? 'text-white-pure' : 'text-onyx-black'))
-const surfaceClass = computed(() => (isDark.value ? 'bg-onyx-black' : 'bg-white-pure'))
 const inputClass = computed(() =>
   isDark.value
     ? 'border-onyx-border bg-onyx-card text-white-pure'
@@ -206,9 +205,9 @@ const toastClass = computed(() => {
 
 const toastIcon = computed(() => {
   switch (toast.type) {
-    case 'warning': return 'ph:warning-fill'
-    case 'error': return 'ph:x-circle-fill'
-    default: return 'ph:check-circle-fill'
+    case 'warning': return 'ph:warning-light'
+    case 'error': return 'ph:x-circle-light'
+    default: return 'ph:check-circle-light'
   }
 })
 

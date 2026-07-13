@@ -6,7 +6,7 @@
 
     <div
       v-if="error"
-      class="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-400"
+      class="rounded-none border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-400"
     >
       {{ error }}
     </div>

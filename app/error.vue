@@ -5,7 +5,7 @@
         {{ error.statusCode }}
       </h1>
       <div class="absolute inset-0 flex items-center justify-center ">
-        <img src="/404/404.png" class="w-20 h-auto opacity-80 " alt="Logo" />
+        <img src="/logo/new-logo.png" class="w-20 h-auto opacity-80 " alt="Logo" />
       </div>
     </div>
 

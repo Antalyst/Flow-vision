@@ -5,9 +5,9 @@
     <header ref="headerEl" class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <div class="mb-2 flex items-center gap-2 text-xs font-medium" :class="mutedClass">
-          <Icon name="ph:briefcase-fill" class="h-3.5 w-3.5 text-candy-orange" />
+          <Icon name="ph:briefcase-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
-          <Icon name="ph:caret-right" class="h-3 w-3 opacity-50" />
+          <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
           <span :class="headingClass">Live Workspace</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="headingClass">
@@ -23,16 +23,16 @@
       <div class="flex flex-wrap items-center gap-3">
         <!-- Scope toggle -->
         <div
-          class="flex items-center gap-0.5 rounded-xl border p-1"
+          class="flex items-center gap-0.5 rounded-none border p-1"
           :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
         >
           <button
             v-for="opt in scopeOptions"
             :key="opt.value"
             type="button"
-            class="flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all duration-200"
+            class="flex items-center gap-1.5 rounded-none px-3.5 py-2 text-xs font-semibold transition-colors duration-200"
             :class="viewScope === opt.value
-              ? 'bg-candy-orange text-white shadow-sm shadow-candy-orange/30'
+              ? 'bg-candy-orange text-white'
               : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800')"
             @click="viewScope = opt.value"
           >
@@ -43,12 +43,12 @@
 
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
           :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
           :disabled="loading"
           @click="refreshQueue(true)"
         >
-          <Icon name="ph:arrows-clockwise" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
+          <Icon name="ph:arrows-clockwise-light" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
           Sync
         </button>
 
@@ -65,11 +65,11 @@
     <!-- ── Pipeline Summary Strip ─────────────────────────────────────── -->
     <div
       ref="stripEl"
-      class="flex flex-wrap items-center gap-4 rounded-2xl border px-5 py-3.5 text-xs"
+      class="flex flex-wrap items-center gap-4 rounded-none border px-5 py-3.5 text-xs"
       :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
       <div class="flex items-center gap-2">
-        <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
+        <span class="h-2 w-2 animate-pulse rounded-none bg-candy-orange" />
         <span class="font-bold uppercase tracking-widest text-candy-orange text-[10px]">Active Pipeline</span>
       </div>
       <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
@@ -94,7 +94,7 @@
       <div
         v-for="n in 4"
         :key="n"
-        class="min-h-[320px] animate-pulse rounded-2xl border"
+        class="min-h-[320px] animate-pulse rounded-none border"
         :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       />
     </div>
@@ -107,7 +107,7 @@
       <section
         v-for="(col, colIdx) in pipelineColumns"
         :key="col.id"
-        class="flex min-h-[280px] flex-col rounded-2xl border overflow-hidden transition-all duration-200"
+        class="flex min-h-[280px] flex-col rounded-none border overflow-hidden transition-all duration-200"
         :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
       >
         <!-- Column accent strip -->
@@ -131,8 +131,8 @@
             </h2>
           </div>
           <span
-            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1.5 text-[10px] font-bold tabular-nums"
-            :class="isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'"
+            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-none px-1.5 text-[10px] font-bold tabular-nums border"
+            :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
           >
             {{ columnDocs(col.id).length }}
           </span>
@@ -145,12 +145,12 @@
               v-for="doc in columnDocs(col.id)"
               :key="doc.id"
               type="button"
-              class="group w-full rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0"
+              class="group w-full rounded-none border px-3 py-2.5 text-left transition-colors duration-200"
               :class="[
                 isDark
-                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/40 hover:shadow-candy-orange/10'
-                  : 'border-gray-200 bg-white-surface hover:border-candy-orange/30 hover:shadow-candy-orange/5',
-                activeDocument?.id === doc.id ? 'ring-1 ring-candy-orange border-candy-orange/60' : '',
+                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange'
+                  : 'border-gray-200 bg-white hover:border-candy-orange',
+                activeDocument?.id === doc.id ? 'border-candy-orange' : '',
               ]"
               @click="openDocument(doc)"
             >
@@ -162,7 +162,7 @@
                 </span>
                 <span
                   v-if="doc.total_steps"
-                  class="flex-none rounded-md border px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
+                  class="flex-none rounded-none border px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
                   :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
                 >
                   Step {{ doc.current_step }}/{{ doc.total_steps }}
@@ -176,14 +176,14 @@
                 class="mt-1.5 truncate text-[10px] flex items-center gap-1"
                 :class="mutedClass"
               >
-                <Icon name="ph:map-pin-fill" class="inline h-2.5 w-2.5 flex-none" />
+                <Icon name="ph:map-pin-light" class="inline h-2.5 w-2.5 flex-none" />
                 {{ doc.current_label }}
               </p>
               <p
                 v-else-if="doc.messenger_name"
                 class="mt-1.5 truncate text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
               >
-                <Icon name="ph:motorcycle-fill" class="inline h-2.5 w-2.5 flex-none" />
+                <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
                 {{ doc.messenger_name }}
               </p>
             </button>
@@ -271,15 +271,15 @@ const {
 } = useEmployeeSettings()
 
 const scopeOptions = [
-  { value: 'LOCAL' as ViewScope, label: 'Local Workspace', icon: 'ph:buildings-fill' },
-  { value: 'GLOBAL' as ViewScope, label: 'Global Pipeline', icon: 'ph:globe-hemisphere-west-fill' },
+  { value: 'LOCAL' as ViewScope, label: 'Local Workspace', icon: 'ph:buildings-light' },
+  { value: 'GLOBAL' as ViewScope, label: 'Global Pipeline', icon: 'ph:globe-hemisphere-west-light' },
 ]
 
 const pipelineColumns = [
-  { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-fill' },
-  { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-fill' },
-  { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-fill' },
-  { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-fill' },
+  { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-light' },
+  { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-light' },
+  { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-light' },
+  { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-light' },
 ]
 
 const viewScope = ref<ViewScope>('LOCAL')

@@ -11,15 +11,15 @@
       <p class="mt-1 text-sm" :class="mutedClass">Display layers, notification controls, and session management.</p>
     </header>
 
-    <div v-if="!settingsReady" class="rounded-lg border p-8 text-center text-sm" :class="[panelClass, mutedClass]">
+    <div v-if="!settingsReady" class="rounded-none border p-8 text-center text-sm" :class="[panelClass, mutedClass]">
       Loading preferences…
     </div>
 
     <template v-else>
-      <section class="rounded-lg border p-6" :class="panelClass">
+      <section class="rounded-none border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Display Layer</h2>
         <p class="mt-1 text-xs" :class="mutedClass">Switch between light and dark interface surfaces.</p>
-        <div class="mt-4 flex items-center justify-between gap-4 rounded-lg border px-4 py-4" :class="innerPanelClass">
+        <div class="mt-4 flex items-center justify-between gap-4 rounded-none border px-4 py-4" :class="innerPanelClass">
           <div>
             <p class="text-sm font-semibold" :class="headingClass">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</p>
             <p class="text-xs" :class="mutedClass">Flat onyx and white surfaces — no ambient effects.</p>
@@ -28,16 +28,16 @@
             type="button"
             role="switch"
             :aria-checked="isDark"
-            class="relative h-8 w-14 rounded-full transition"
+            class="relative h-8 w-14 rounded-none transition"
             :class="isDark ? 'bg-candy-orange' : 'bg-gray-300'"
             @click="toggleTheme"
           >
-            <span class="absolute top-1 h-6 w-6 rounded-full bg-white-pure transition" :class="isDark ? 'left-7' : 'left-1'" />
+            <span class="absolute top-1 h-6 w-6 rounded-none bg-white-pure transition" :class="isDark ? 'left-7' : 'left-1'" />
           </button>
         </div>
       </section>
 
-      <section class="rounded-lg border p-6" :class="panelClass">
+      <section class="rounded-none border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Notification Preferences</h2>
         <div class="mt-4 space-y-3">
           <SettingToggleRow
@@ -64,14 +64,35 @@
         </div>
       </section>
 
-      <section class="rounded-lg border p-6" :class="panelClass">
+      <section class="rounded-none border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Organisation</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Your current organisation ID and details.</p>
+        
+        <div class="mt-4 flex items-center justify-between gap-4 rounded-none border px-4 py-4" :class="innerPanelClass">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold truncate" :class="headingClass">{{ auth.currentOrg?.name || 'Loading...' }}</p>
+            <p class="text-xs font-mono truncate mt-0.5" :class="mutedClass">Code: {{ auth.currentOrg?.code }}</p>
+          </div>
+          <button
+            type="button"
+            class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-none border px-3 py-1.5 text-xs font-semibold transition hover:bg-candy-orange/10 hover:text-candy-orange hover:border-candy-orange/50 active:scale-[0.98]"
+            :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+            @click="copyOrgCode"
+          >
+            <Icon :name="copiedOrg ? 'ph:check-bold' : 'ph:copy'" class="h-3.5 w-3.5" :class="copiedOrg ? 'text-emerald-500' : ''" />
+            {{ copiedOrg ? 'Copied!' : 'Copy Code' }}
+          </button>
+        </div>
+      </section>
+
+      <section class="rounded-none border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Account</h2>
         <p class="mt-1 text-xs" :class="mutedClass">
           Signed in as <span class="font-medium" :class="headingClass">{{ auth.user?.email }}</span>
         </p>
         <button
           type="button"
-          class="mt-4 inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-500/5 dark:text-red-400"
+          class="mt-4 inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-500/5 dark:text-red-400"
           :class="innerPanelClass"
           :disabled="isLoggingOut"
           @click="handleLogout"
@@ -85,7 +106,7 @@
 
     <Teleport to="body">
       <Transition name="toast-fade">
-        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-lg border px-4 py-3 text-sm font-semibold md:bottom-8" :class="toastClass">
+        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-none border px-4 py-3 text-sm font-semibold md:bottom-8" :class="toastClass">
           {{ toast.message }}
         </div>
       </Transition>
@@ -120,6 +141,7 @@ const savingDoc = ref(false)
 const savingReport = ref(false)
 const savingSound = ref(false)
 const isLoggingOut = ref(false)
+const copiedOrg = ref(false)
 
 const headingClass = computed(() => (isDark.value ? 'text-white-pure' : 'text-onyx-black'))
 const mutedClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
@@ -164,7 +186,24 @@ async function handleLogout() {
   try { await auth.logout() } finally { isLoggingOut.value = false }
 }
 
-onMounted(() => hydrate())
+async function copyOrgCode() {
+  if (!auth.currentOrg?.code) return
+  try {
+    await navigator.clipboard.writeText(auth.currentOrg.code)
+    copiedOrg.value = true
+    showToast('Organisation Code copied to clipboard!')
+    setTimeout(() => { copiedOrg.value = false }, 2000)
+  } catch (err) {
+    showToast('Failed to copy code', 'error')
+  }
+}
+
+onMounted(async () => {
+  hydrate()
+  if (auth.isLoggedIn && !auth.currentOrg) {
+    await auth.fetchMyOrg()
+  }
+})
 </script>
 
 <style scoped>

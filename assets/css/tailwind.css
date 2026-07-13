@@ -41,7 +41,7 @@
 
 @layer components {
   .dashboard-card {
-    @apply bg-white-pure dark:bg-onyx-card rounded-card border border-onyx-border/20 dark:border-onyx-border shadow-card;
+    @apply bg-white-pure dark:bg-onyx-card rounded-none border border-onyx-border/20 dark:border-onyx-border shadow-card;
   }
 
   .dashboard-card-hover {
@@ -49,15 +49,15 @@
   }
 
   .matrix-card {
-    @apply rounded-2xl border border-zinc-200 bg-white-surface shadow-card transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card;
+    @apply rounded-none border border-zinc-200 bg-white-surface shadow-card transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card;
   }
 
   .matrix-card-glass {
-    @apply rounded-2xl border border-zinc-200 bg-white-surface/90 shadow-card backdrop-blur-xl transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-card/70;
+    @apply rounded-none border border-zinc-200 bg-white-surface/90 shadow-card backdrop-blur-xl transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-card/70;
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-3 text-sm font-medium cursor-pointer transition-all duration-200;
     @apply text-white-muted hover:text-candy-orange hover:bg-candy-orange/5 dark:hover:bg-candy-orange/10;
   }
 
@@ -67,11 +67,11 @@
 
   .nav-item-active::before {
     content: '';
-    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
+    @apply absolute left-0 top-0 bottom-0 w-[3px] bg-candy-orange;
   }
 
   .badge {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-xs font-semibold;
   }
 
   .badge-high {

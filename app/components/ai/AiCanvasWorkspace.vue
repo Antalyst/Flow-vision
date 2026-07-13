@@ -1,5 +1,19 @@
 <template>
   <div class="relative flex h-screen max-h-screen w-full overflow-hidden bg-[#F9F9FB] text-slate-800 dark:bg-[#0E0E10] dark:text-slate-100">
+    <!-- ── Ambient background orbs for glassmorphism ─────────────────── -->
+    <div 
+      class="pointer-events-none absolute left-1/4 top-1/4 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px] transition-all duration-1000"
+      :class="isLoading ? 'bg-blue-500/40 dark:bg-blue-500/20 scale-125' : 'bg-blue-400/20 dark:bg-blue-600/10 scale-100'"
+    ></div>
+    <div 
+      class="pointer-events-none absolute bottom-1/4 right-1/4 h-[400px] w-[400px] translate-x-1/3 translate-y-1/3 rounded-full blur-[120px] transition-all duration-1000"
+      :class="isLoading ? 'bg-red-500/40 dark:bg-red-500/20 scale-125' : 'bg-red-400/20 dark:bg-red-600/10 scale-100'"
+    ></div>
+    <div 
+      class="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[150px] transition-all duration-1000"
+      :class="isLoading ? 'bg-yellow-500/30 dark:bg-yellow-500/15 scale-125' : 'bg-yellow-400/10 dark:bg-yellow-600/5 scale-100'"
+    ></div>
+
     <!-- ── Mobile backdrop ───────────────────────────────────────────── -->
     <Transition name="fade">
       <div
@@ -30,11 +44,10 @@
           </button>
         </div>
 
-        <!-- New chat -->
         <div class="px-3">
           <button
             type="button"
-            class="fv-ai-enter-stagger fv-ai-interactive flex w-full items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-all duration-300 hover:scale-[1.02] hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-600 hover:shadow-[0_8px_24px_rgba(249,115,22,0.12)] active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.03] dark:text-neutral-200 dark:hover:text-orange-400"
+            class="fv-ai-enter-stagger fv-ai-interactive flex w-full items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-medium text-neutral-700 transition-all duration-300 hover:scale-[1.02] hover:border-neutral-300 hover:bg-neutral-100 hover:shadow-sm active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.03] dark:text-neutral-300 dark:hover:border-white/20 dark:hover:bg-white/5 dark:hover:text-white"
             :class="enterClass"
             :style="staggerDelay(0, 320)"
             @click="newChat"
@@ -61,8 +74,8 @@
             :class="[
               enterClass,
               session.id === activeSessionId
-                ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                : 'text-neutral-600 hover:bg-orange-500/10 hover:text-orange-600 dark:text-neutral-300 dark:hover:text-orange-400',
+                ? 'bg-blue-50/50 text-blue-700 dark:bg-white/10 dark:text-white font-medium'
+                : 'text-neutral-600 hover:bg-neutral-100/70 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-neutral-200',
             ]"
             :style="staggerDelay(index, 390, 55)"
             @click="selectSession(session.id)"
@@ -152,11 +165,20 @@
           class="flex flex-1 flex-col items-center justify-center px-4 text-center"
         >
           <div
-            class="fv-ai-enter-hero fv-ai-logo-glow mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/5 shadow-[0_0_32px_rgba(249,115,22,0.12)]"
+            class="fv-ai-enter-hero mb-6 flex h-16 w-16 items-center justify-center"
             :class="enterClass"
             :style="staggerDelay(0, 420)"
           >
-            <img :src="brandLogo" alt="FlowVision" class="h-9 w-9" />
+            <svg viewBox="0 0 24 24" fill="none" class="h-10 w-10">
+              <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="url(#splash-gemini-gradient)" />
+              <defs>
+                <linearGradient id="splash-gemini-gradient" x1="0" y1="0" x2="24" y2="24">
+                  <stop stop-color="#4285F4" />
+                  <stop offset="0.5" stop-color="#EA4335" />
+                  <stop offset="1" stop-color="#FBBC05" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
           <h1
             class="fv-ai-enter-hero text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl dark:text-white"
@@ -180,21 +202,6 @@
             </template>
           </p>
 
-          <div class="mt-8 flex w-full max-w-md flex-col gap-2.5">
-            <button
-              v-for="(chip, index) in suggestionChips"
-              :key="chip.label"
-              type="button"
-              class="fv-ai-enter-hero fv-ai-interactive group flex items-center gap-3 rounded-xl border border-gray-200 bg-black/[0.02] px-4 py-3 text-left text-sm text-neutral-600 transition-all duration-300 hover:scale-[1.02] hover:border-orange-500/35 hover:bg-orange-500/10 hover:text-orange-600 hover:shadow-[0_10px_28px_rgba(249,115,22,0.1)] active:scale-[0.98] dark:border-white/5 dark:bg-white/[0.02] dark:text-neutral-300 dark:hover:text-white"
-              :class="enterClass"
-              :style="staggerDelay(index, 520, 80)"
-              @click="useSuggestion(chip.label)"
-            >
-              <Icon :name="chip.icon" class="h-4 w-4 flex-shrink-0 text-orange-400/80 transition-transform duration-300 group-hover:scale-110" />
-              <span class="flex-1 truncate">{{ chip.label }}</span>
-              <Icon name="ph:arrow-up-right" class="h-3.5 w-3.5 text-neutral-400 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-orange-500 dark:text-neutral-600" />
-            </button>
-          </div>
         </div>
 
         <!-- Fluid chat stream -->
@@ -209,15 +216,24 @@
               <!-- Assistant / error avatar -->
               <div
                 v-if="msg.role !== 'user'"
-                class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-xs font-bold text-white shadow-md"
+                class="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center"
               >
-                FV
+                <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+                  <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="url(#avatar-gemini-gradient)" />
+                  <defs>
+                    <linearGradient id="avatar-gemini-gradient" x1="0" y1="0" x2="24" y2="24">
+                      <stop stop-color="#4285F4" />
+                      <stop offset="0.5" stop-color="#EA4335" />
+                      <stop offset="1" stop-color="#FBBC05" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
 
               <!-- User bubble -->
               <div
                 v-if="msg.role === 'user'"
-                class="max-w-[80%] rounded-2xl rounded-br-md bg-orange-600 px-4 py-2.5 text-sm text-white shadow-md"
+                class="max-w-[80%] rounded-3xl bg-neutral-100 px-5 py-3 text-[15px] text-neutral-800 dark:bg-white/10 dark:text-neutral-200"
               >
                 <p class="whitespace-pre-line">{{ msg.content }}</p>
               </div>
@@ -233,8 +249,14 @@
 
               <!-- Assistant bubble -->
               <div v-else class="min-w-0 max-w-[85%] space-y-3">
-                <div class="rounded-2xl rounded-tl-md border border-gray-200 bg-white px-4 py-3 text-sm leading-relaxed text-neutral-700 shadow-sm dark:border-white/5 dark:bg-neutral-900/60 dark:text-neutral-200 dark:shadow-none">
-                  <p class="whitespace-pre-line">{{ msg.content }}</p>
+                <div class="px-1 py-2 text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200">
+                  <p class="whitespace-pre-line">
+                    <AiTypewriter
+                      :text="msg.content"
+                      :animate="msg.isNew"
+                      @done="msg.isNew = false"
+                    />
+                  </p>
                 </div>
 
                 <!-- Document canvas call-to-action (Professional & Minimalist) -->
@@ -272,17 +294,10 @@
 
             <!-- Typing / hydration loader -->
             <div v-if="isLoading || isHydrating" class="flex animate-fadeIn gap-3">
-              <div class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 text-xs font-bold text-white shadow-md">
-                FV
-              </div>
-              <div class="flex items-center gap-3 rounded-2xl rounded-tl-md border border-gray-200 bg-white px-4 py-3 dark:border-white/5 dark:bg-neutral-900/60">
-                <div class="flex items-center gap-1">
-                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.3s]"></span>
-                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400 [animation-delay:-0.15s]"></span>
-                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-orange-400"></span>
-                </div>
+              <AiGeminiLoader class="mt-1 flex-shrink-0" />
+              <div class="flex items-center px-1 py-1">
                 <Transition name="think" mode="out-in">
-                  <span :key="thinkingStageText" class="text-xs italic text-neutral-500 dark:text-neutral-400">{{ thinkingStageText }}</span>
+                  <span :key="thinkingStageText" class="text-[14px] bg-gradient-to-r from-blue-500 via-red-400 to-yellow-500 bg-clip-text text-transparent italic">{{ thinkingStageText }}</span>
                 </Transition>
               </div>
             </div>
@@ -291,12 +306,12 @@
 
         <!-- Input console -->
         <div
-          class="fv-ai-enter-input flex-shrink-0 px-4 pb-5 pt-2"
+          class="fv-ai-enter-input flex-shrink-0 px-4 pb-5 pt-2 relative z-10"
           :class="enterClass"
         >
-          <div class="mx-auto w-full max-w-3xl">
+          <div class="mx-auto w-full max-w-3xl relative">
             <form
-              class="fv-ai-interactive flex items-end gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg transition-all duration-300 focus-within:scale-[1.01] focus-within:border-orange-500/50 focus-within:ring-1 focus-within:ring-orange-500/20 focus-within:shadow-[0_12px_40px_rgba(249,115,22,0.12)] dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-2xl dark:backdrop-blur-xl"
+              class="relative fv-ai-interactive flex items-end gap-2 rounded-[32px] border border-white/40 bg-white/40 p-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-3xl transition-all duration-300 focus-within:bg-white/60 focus-within:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:border-white/10 dark:bg-neutral-900/50 dark:focus-within:bg-neutral-900/80"
               @submit.prevent="submitQuery"
             >
               <textarea
@@ -304,20 +319,20 @@
                 :disabled="isLoading"
                 rows="1"
                 placeholder="Ask FlowVision anything about your documents…"
-                class="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm text-slate-800 placeholder-neutral-400 focus:outline-none disabled:opacity-50 dark:text-slate-200 dark:placeholder-neutral-600"
+                class="max-h-40 flex-1 resize-none bg-transparent px-4 py-3 text-[15px] text-slate-800 placeholder-neutral-500 focus:outline-none disabled:opacity-50 dark:text-slate-200 dark:placeholder-neutral-400"
                 @keydown.enter.exact.prevent="submitQuery"
               ></textarea>
               <button
                 type="submit"
                 :disabled="isLoading || !inputPrompt.trim()"
-                class="fv-ai-interactive flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-orange-600 text-white shadow transition-all duration-300 hover:scale-105 hover:bg-orange-500 hover:shadow-[0_8px_20px_rgba(249,115,22,0.35)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100"
+                class="fv-ai-interactive flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white transition-all duration-300 hover:scale-105 hover:bg-neutral-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
               >
-                <Icon v-if="isLoading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-                <Icon v-else name="ph:arrow-up" class="h-4 w-4" />
+                <Icon v-if="isLoading" name="ph:spinner-gap" class="h-5 w-5 animate-spin" />
+                <Icon v-else name="ph:arrow-up" class="h-5 w-5" />
               </button>
             </form>
-            <p class="mt-2 text-center text-[11px] text-neutral-400 dark:text-neutral-600">
-              FlowVision Intelligence can make mistakes. Verify important records.
+            <p class="mt-2 text-center text-[11px] text-neutral-500 dark:text-neutral-500">
+              FlowVision Intelligence can make mistakes. Verify important facts.
             </p>
           </div>
         </div>
@@ -461,6 +476,8 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, computed } from 'vue'
+import AiGeminiLoader from './AiGeminiLoader.vue'
+import AiTypewriter from './AiTypewriter.vue'
 
 // ── Scope props ────────────────────────────────────────────────────────
 // AiCanvasWorkspace is role-agnostic; the caller (client/ai.vue or
@@ -502,6 +519,7 @@ interface ChatMessage {
   content: string
   timestamp: string
   documentPayload?: DocumentPayload | null
+  isNew?: boolean
 }
 interface ChatSession {
   id: string
@@ -1001,9 +1019,15 @@ const selectSession = async (id: string) => {
       documentPayload: m.role === 'assistant' ? extractDocumentPayload(m.metadata) : null,
     }))
 
-    // Force-break the splash regardless of payload shape so the chat log renders.
-    showSplash.value = false
-    await scrollToBottom()
+    // If the database returns 0 messages for this session, revert to the splash screen
+    // so the user doesn't see a completely blank void. They can still send a message
+    // which will be routed to the bound activeSessionId.
+    if (chatHistory.value.length === 0) {
+      showSplash.value = true
+    } else {
+      showSplash.value = false
+      await scrollToBottom()
+    }
   } catch (err) {
     console.error('❌ selectSession failed to hydrate thread:', err)
     chatHistory.value = [
@@ -1065,6 +1089,7 @@ const submitQuery = async () => {
       content: reply,
       timestamp: nowLabel(),
       documentPayload: doc,
+      isNew: true,
     })
 
     // A document payload was received — slide the canvas open automatically.

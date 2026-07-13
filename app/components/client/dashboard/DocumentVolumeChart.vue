@@ -106,7 +106,7 @@ const gridLines = ['0%', '25%', '50%', '75%']
           <!-- Tooltip -->
           <div
             v-if="hoveredIndex === index"
-            class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap z-10 animate-fade-in"
+            class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-none shadow-lg whitespace-nowrap z-10 animate-fade-in"
           >
             {{ item.day }}: {{ item.value }}
           </div>

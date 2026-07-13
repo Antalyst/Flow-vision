@@ -57,39 +57,47 @@
     <div class="flex min-h-0 w-full flex-1 overflow-hidden">
       <!-- ── Desktop sidebar ──────────────────────────────────────────── -->
       <aside
-        class="hidden md:flex md:w-64 h-full flex-shrink-0 flex-col border-r"
-        :class="isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200'"
+        class="hidden md:flex h-full flex-shrink-0 flex-col overflow-hidden border-r transition-all duration-300"
+        :class="[isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200', isSidebarMinimized ? 'w-[72px]' : 'w-64']"
       >
         <!-- Brand -->
-        <div class="px-5 pt-5 pb-2 flex-none">
-          <div class="flex items-center gap-2.5 mb-5">
-            <img :src="brandLogo" alt="FlowVision" class="w-9 h-9" />
-            <div class="flex-1 min-w-0">
-              <span class="block text-base font-bold tracking-tight text-gray-900 dark:text-white">FlowVision</span>
+        <div class="px-4 pt-5 pb-2 flex-none">
+          <div class="flex items-center mb-6" :class="isSidebarMinimized ? 'justify-center flex-col gap-4' : 'gap-2'">
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 flex items-center justify-center">
+                <img :src="brandLogo" alt="FlowVision Logo" class="w-8 h-8" />
+              </div>
+              <span v-if="!isSidebarMinimized" class="text-base font-bold tracking-tight text-gray-900 dark:text-white truncate">FlowVision</span>
             </div>
+            <button @click="isSidebarMinimized = !isSidebarMinimized" class="p-1.5 hover:bg-gray-100 dark:hover:bg-onyx-card transition"
+              :class="isSidebarMinimized ? '' : 'ml-auto'">
+              <Icon :name="isSidebarMinimized ? 'ph:list-light' : 'ph:caret-left-light'" class="w-4 h-4 text-gray-400" />
+            </button>
           </div>
 
           <!-- Role badge + org scope pill -->
-          <div class="flex items-center gap-2 mb-5">
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-              Employee
-            </span>
-            <span
-              v-if="auth.user?.org_id"
-              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold truncate max-w-[100px]"
-              :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
-              :title="`Org ID: ${auth.user.org_id}`"
-            >
-              <Icon name="ph:building-office" class="w-3 h-3 flex-shrink-0" />
-              Org {{ auth.user.org_id }}
-            </span>
+          <div v-if="!isSidebarMinimized" class="flex flex-col gap-2 mb-5">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                <span class="w-1.5 h-1.5 rounded-none bg-sky-500"></span>
+                Employee
+              </span>
+              <span
+                v-if="auth.user?.org_id"
+                class="inline-flex items-center gap-1 rounded-none px-2 py-0.5 text-[10px] font-semibold truncate max-w-[100px]"
+                :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
+                :title="`Org ID: ${auth.user.org_id}`"
+              >
+                <Icon name="ph:building-office" class="w-3 h-3 flex-shrink-0" />
+                Org {{ auth.user.org_id }}
+              </span>
+            </div>
           </div>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-1 px-3 overflow-y-auto">
-          <EmployeeNav />
+        <nav class="flex-1 px-0 overflow-y-auto">
+          <EmployeeNav :minimized="isSidebarMinimized" />
         </nav>
 
         <!-- Bottom profile -->
@@ -97,7 +105,7 @@
           class="flex-none border-t px-3 py-3"
           :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
         >
-          <EmployeeSidebarFooter :user="auth.user" @logout="auth.logout()" />
+          <EmployeeSidebarFooter :user="auth.user" :minimized="isSidebarMinimized" @logout="auth.logout()" />
         </div>
       </aside>
 
@@ -165,6 +173,7 @@ const route = useRoute()
 
 const brandLogo = computed(() => isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png')
 const mobileMenuOpen = ref(false)
+const isSidebarMinimized = ref(false)
 
 const mobileNavItems = [
   { to: '/employee/dashboard', label: 'Dashboard', icon: 'ph:squares-four-fill' },

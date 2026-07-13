@@ -75,31 +75,31 @@ const filteredActivities = computed(() => {
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Latest Updates</h3>
-      <button class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-black/40 transition-colors">
+      <button class="p-1 rounded-none hover:bg-gray-100 dark:hover:bg-onyx-black/40 transition-colors">
         <Icon name="ph:dots-three-bold" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
       </button>
     </div>
 
     <!-- Tab pills -->
-    <div class="flex bg-gray-100 dark:bg-onyx-black/50 p-1 rounded-xl mb-4">
+    <div class="flex bg-gray-100 dark:bg-onyx-black/50 p-1 rounded-none mb-4">
       <button
         @click="activeTab = 'today'"
         :class="activeTab === 'today' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
       >
         Today
       </button>
       <button
         @click="activeTab = 'yesterday'"
         :class="activeTab === 'yesterday' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
       >
         Yesterday
       </button>
       <button
         @click="activeTab = 'week'"
         :class="activeTab === 'week' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
       >
         This week
       </button>
@@ -111,7 +111,7 @@ const filteredActivities = computed(() => {
       <input
         v-model="searchQuery"
         placeholder="Search activities"
-        class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-candy-orange transition"
+        class="w-full pl-9 pr-3 py-2 text-xs rounded-none bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-candy-orange transition"
       />
     </div>
 
@@ -125,7 +125,7 @@ const filteredActivities = computed(() => {
       <div
         v-for="(activity, index) in filteredActivities"
         :key="activity.id"
-        class="flex gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-onyx-black/30 transition-colors cursor-pointer group"
+        class="flex gap-3 p-2.5 rounded-none hover:bg-gray-50 dark:hover:bg-onyx-black/30 transition-colors cursor-pointer group"
       >
         <!-- Timeline dot -->
         <div class="flex flex-col items-center pt-1">

@@ -5,9 +5,9 @@
     <div ref="headerEl" class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <div class="mb-2 flex items-center gap-2 text-xs font-medium" :class="mutedText">
-          <Icon name="ph:buildings-fill" class="h-3.5 w-3.5 text-candy-orange" />
+          <Icon name="ph:buildings-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
-          <Icon name="ph:caret-right" class="h-3 w-3 opacity-50" />
+          <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
           <span :class="isDark ? 'text-white' : 'text-gray-800'">Office Ledger</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight">Office & Desk Ledger</h1>
@@ -18,10 +18,10 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-candy-hover active:scale-[0.97]"
+        class="inline-flex min-h-11 items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 active:scale-[0.97]"
         @click="openCreateModal"
       >
-        <Icon name="ph:plus-bold" class="h-4 w-4" />
+        <Icon name="ph:plus-light" class="h-4 w-4" />
         Register New Desk
       </button>
     </div>
@@ -29,11 +29,11 @@
     <!-- ── Stats Summary ─────────────────────────────────────────────── -->
     <div ref="statsEl" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div
-        class="flex items-center gap-4 rounded-2xl border p-5 transition-all duration-200 hover:border-candy-orange/30"
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
         :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       >
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
-          <Icon name="ph:desktop-fill" class="h-6 w-6 text-candy-orange" />
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-candy-orange/10 border border-candy-orange/20">
+          <Icon name="ph:desktop-light" class="h-6 w-6 text-candy-orange" />
         </div>
         <div>
           <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
@@ -41,11 +41,11 @@
         </div>
       </div>
       <div
-        class="flex items-center gap-4 rounded-2xl border p-5 transition-all duration-200 hover:border-emerald-500/30"
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
         :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       >
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
-          <Icon name="ph:user-check-fill" class="h-6 w-6 text-emerald-500" />
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-emerald-500/10 border border-emerald-500/20">
+          <Icon name="ph:user-check-light" class="h-6 w-6 text-emerald-500" />
         </div>
         <div>
           <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Assigned</p>
@@ -53,11 +53,11 @@
         </div>
       </div>
       <div
-        class="flex items-center gap-4 rounded-2xl border p-5 transition-all duration-200 hover:border-amber-500/30"
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
         :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       >
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 ring-1 ring-amber-500/20">
-          <Icon name="ph:user-minus-fill" class="h-6 w-6 text-amber-500" />
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-amber-500/10 border border-amber-500/20">
+          <Icon name="ph:user-minus-light" class="h-6 w-6 text-amber-500" />
         </div>
         <div>
           <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Unassigned</p>
@@ -69,7 +69,7 @@
     <!-- ── Ledger Table ───────────────────────────────────────────────── -->
     <div
       ref="tableEl"
-      class="overflow-x-auto rounded-2xl border shadow-sm"
+      class="overflow-x-auto rounded-none border"
       :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
       <table class="min-w-full divide-y text-sm text-left" :class="isDark ? 'divide-onyx-border' : 'divide-gray-200'">
@@ -84,15 +84,15 @@
         <tbody class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
           <tr v-if="loading">
             <td colspan="4" class="px-6 py-12 text-center" :class="mutedText">
-              <Icon name="ph:spinner-gap-bold" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
+              <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
               <p class="text-xs font-medium">Loading office desks…</p>
             </td>
           </tr>
           <tr v-else-if="!tables.length">
             <td colspan="4" class="px-6 py-16 text-center">
               <div class="flex flex-col items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-candy-orange/10 ring-1 ring-candy-orange/20">
-                  <Icon name="ph:buildings-fill" class="h-7 w-7 text-candy-orange/60" />
+                <div class="flex h-14 w-14 items-center justify-center rounded-none bg-candy-orange/10 border border-candy-orange/20">
+                  <Icon name="ph:buildings-light" class="h-7 w-7 text-candy-orange/60" />
                 </div>
                 <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No desks registered</p>
                 <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk node to begin assigning internal staff.</p>
@@ -107,21 +107,21 @@
           >
             <td class="px-6 py-4 font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
               <div class="flex items-center gap-3">
-                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-candy-orange/10 flex-shrink-0">
-                  <Icon name="ph:desktop-fill" class="h-3.5 w-3.5 text-candy-orange" />
+                <span class="flex h-7 w-7 items-center justify-center rounded-none bg-candy-orange/10 flex-shrink-0 border border-candy-orange/20">
+                  <Icon name="ph:desktop-light" class="h-3.5 w-3.5 text-candy-orange" />
                 </span>
                 {{ table.name }}
               </div>
             </td>
             <td class="px-6 py-4">
-              <span class="inline-flex items-center rounded-lg border px-2.5 py-1 font-mono text-xs font-semibold"
+              <span class="inline-flex items-center rounded-none border px-2.5 py-1 font-mono text-xs font-semibold"
                 :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-700'">
                 {{ table.code }}
               </span>
             </td>
             <td class="px-6 py-4">
               <div v-if="table.assigned_user_profile" class="flex items-center gap-2.5">
-                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-candy-orange text-white text-[10px] font-bold flex-shrink-0">
+                <span class="flex h-7 w-7 items-center justify-center rounded-none border border-candy-orange/40 bg-candy-orange/10 text-candy-orange text-[10px] font-bold flex-shrink-0">
                   {{ table.assigned_user_profile.full_name?.charAt(0) || '?' }}
                 </span>
                 <div>
@@ -129,9 +129,9 @@
                   <p class="text-[10px]" :class="mutedText">{{ table.assigned_user_profile.email }}</p>
                 </div>
               </div>
-              <span v-else class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+              <span v-else class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-semibold"
                 :class="isDark ? 'border-onyx-border text-gray-500' : 'border-gray-200 text-gray-400'">
-                <span class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                <span class="h-1.5 w-1.5 rounded-none bg-gray-300 dark:bg-gray-600" />
                 Unassigned
               </span>
             </td>
@@ -148,24 +148,24 @@
       <Transition name="modal-fade">
         <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
           <form
-            class="w-full max-w-md rounded-2xl shadow-2xl border"
+            class="w-full max-w-md rounded-none border"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
             @submit.prevent="registerOffice"
           >
             <!-- Modal header -->
             <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
               <div class="flex items-center gap-3">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-candy-orange/10">
-                  <Icon name="ph:desktop-fill" class="h-4.5 w-4.5 text-candy-orange" />
+                <span class="flex h-9 w-9 items-center justify-center rounded-none border border-candy-orange/20 bg-candy-orange/10">
+                  <Icon name="ph:desktop-light" class="h-4.5 w-4.5 text-candy-orange" />
                 </span>
                 <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Register New Desk</h2>
               </div>
               <button
                 type="button"
-                class="rounded-lg p-1.5 transition hover:bg-gray-100 dark:hover:bg-white/10"
+                class="rounded-none p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-white/10"
                 @click="isModalOpen = false"
               >
-                <Icon name="ph:x" class="h-4 w-4" :class="mutedText" />
+                <Icon name="ph:x-light" class="h-4 w-4" :class="mutedText" />
               </button>
             </div>
 
@@ -179,7 +179,7 @@
                   type="text"
                   required
                   placeholder="e.g. Table A — Public Intake"
-                  class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                   @input="generateCode"
                 />
@@ -194,7 +194,7 @@
                   type="text"
                   required
                   placeholder="e.g. TABLE-A"
-                  class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange font-mono uppercase tracking-wider"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange font-mono uppercase tracking-wider"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                 />
               </div>
@@ -205,7 +205,7 @@
                 </label>
                 <select
                   v-model="form.assigned_user"
-                  class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
                 >
                   <option value="">Unassigned</option>
@@ -216,14 +216,14 @@
               </div>
             </div>
 
-            <div v-if="errorMsg" class="mx-6 mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
+            <div v-if="errorMsg" class="mx-6 mb-4 rounded-none border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
               {{ errorMsg }}
             </div>
 
             <div class="flex justify-end gap-3 px-6 pb-6">
               <button
                 type="button"
-                class="rounded-xl px-4 py-2.5 text-sm font-semibold transition"
+                class="rounded-none px-4 py-2.5 text-sm font-semibold transition-colors border border-transparent"
                 :class="isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'"
                 @click="isModalOpen = false"
               >
@@ -232,9 +232,9 @@
               <button
                 type="submit"
                 :disabled="submitting"
-                class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-candy-hover disabled:opacity-50 transition"
+                class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
               >
-                <Icon v-if="submitting" name="ph:spinner-gap-bold" class="h-4 w-4 animate-spin" />
+                <Icon v-if="submitting" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
                 {{ submitting ? 'Registering…' : 'Register Desk' }}
               </button>
             </div>

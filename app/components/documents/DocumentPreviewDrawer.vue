@@ -21,8 +21,8 @@
       >
         <!-- §1 Header & metadata overview -->
         <header
-          class="shrink-0 border-b px-6 py-5"
-          :class="isDark ? 'border-white/10' : 'border-gray-200'"
+          class="stagger-block shrink-0 border-b px-8 py-6"
+          :class="isDark ? 'border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent' : 'border-gray-100 bg-gradient-to-b from-gray-50/50 to-transparent'"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
@@ -77,9 +77,9 @@
         </header>
 
         <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+          <div class="flex-1 space-y-8 overflow-y-auto px-8 py-8">
             <!-- Compact metadata -->
-            <div class="grid grid-cols-2 gap-3">
+            <div class="stagger-block grid grid-cols-2 gap-4">
               <div class="col-span-2 rounded-xl border p-4" :class="cellClass">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Description</p>
                 <p class="mt-2 text-sm leading-relaxed" :class="mutedClass">
@@ -101,69 +101,74 @@
             </div>
 
             <!-- §2 Fulfillment pipeline timeline -->
-            <section>
+            <section class="stagger-block">
               <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-candy-orange">
                 <Icon name="ph:path" class="h-4 w-4" />
                 Fulfillment Pipeline
               </div>
 
-              <div v-if="steps.length" class="mb-4">
-                <div class="mb-1.5 flex items-center justify-between text-[10px] font-semibold" :class="mutedClass">
+              <div v-if="steps.length" class="mb-6">
+                <div class="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-candy-orange/90">
                   <span>Route progress</span>
                   <span>{{ pipelineProgressPct }}%</span>
                 </div>
                 <div
-                  class="h-1.5 w-full overflow-hidden rounded-full"
-                  :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'"
+                  class="h-2 w-full overflow-hidden rounded-full shadow-inner"
+                  :class="isDark ? 'bg-black/50' : 'bg-gray-100'"
                 >
                   <div
-                    class="h-full rounded-full bg-candy-orange transition-all duration-700"
+                    class="h-full rounded-full bg-gradient-to-r from-candy-orange to-[#ff6b00] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(244,125,47,0.5)]"
                     :style="{ width: `${pipelineProgressPct}%` }"
                   />
                 </div>
               </div>
 
-              <div v-if="steps.length" class="relative space-y-1">
+              <div v-if="steps.length" class="relative space-y-3">
                 <button
                   v-for="(step, index) in steps"
                   :key="`${step.office_id}-${index}`"
                   type="button"
-                  class="group relative flex w-full cursor-pointer select-none gap-4 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-zinc-800/50 dark:hover:bg-onyx-border/40"
-                  :class="isPipelineOfficeSelected(step)
-                    ? 'bg-candy-orange/10 ring-1 ring-candy-orange/40'
-                    : ''"
+                  class="group relative flex w-full cursor-pointer select-none items-center gap-4 rounded-2xl border p-3.5 text-left transition-all duration-300"
+                  :class="[
+                    isPipelineOfficeSelected(step) ? 'border-candy-orange bg-candy-orange/10 shadow-[0_0_20px_rgba(244,125,47,0.15)]' : (isDark ? 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10' : 'border-gray-100 bg-gray-50 hover:bg-gray-100'),
+                    isStepDone(step) ? 'opacity-80' : ''
+                  ]"
                   :disabled="!pipelineMessagingEnabled"
                   @click="selectPipelineOffice(step)"
                 >
                   <div
                     v-if="index < steps.length - 1"
-                    class="pointer-events-none absolute left-[23px] top-10 h-[calc(100%-8px)] w-0.5"
-                    :class="isStepDone(step) ? 'bg-candy-orange' : isDark ? 'bg-onyx-border' : 'bg-gray-200'"
+                    class="pointer-events-none absolute left-[33px] top-14 h-full w-[2px]"
+                    :class="isStepDone(step) ? 'bg-gradient-to-b from-candy-orange to-candy-orange/30' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
                   />
+                  
                   <div
-                    class="relative z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full border text-xs font-bold transition group-hover:border-candy-orange"
-                    :class="pipelineStepNodeClass(step)"
+                    class="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-bold shadow-lg transition-all duration-300"
+                    :class="[
+                      isStepDone(step) ? 'bg-candy-orange text-white shadow-candy-orange/30' : 
+                      isStepCurrent(step) ? 'border-2 border-candy-orange bg-onyx-black text-candy-orange shadow-[0_0_15px_rgba(244,125,47,0.4)]' : 
+                      (isDark ? 'bg-white/5 text-gray-500' : 'bg-white text-gray-400 border border-gray-200'),
+                      isPipelineOfficeSelected(step) ? 'scale-110' : ''
+                    ]"
                   >
                     <Icon v-if="isStepDone(step)" name="ph:check-bold" class="h-4 w-4" />
                     <span v-else>{{ step.step_number }}</span>
                   </div>
-                  <div class="min-w-0 flex-1 pt-0.5">
-                    <div class="flex items-center gap-2">
-                      <p class="text-sm font-semibold" :class="isStepUpcoming(step) ? mutedClass : ''">
-                        Step {{ step.step_number }}: {{ step.office_name }}
+                  
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <p class="text-sm font-bold truncate" :class="isStepUpcoming(step) ? mutedClass : (isDark ? 'text-white' : 'text-gray-900')">
+                        {{ step.office_name }}
                       </p>
                       <Icon
                         v-if="pipelineMessagingEnabled"
-                        name="ph:chat-teardrop-dots"
-                        class="h-3.5 w-3.5 text-candy-orange opacity-0 transition group-hover:opacity-100"
+                        name="ph:chat-teardrop-dots-fill"
+                        class="h-4 w-4 text-candy-orange opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                         :class="isPipelineOfficeSelected(step) ? 'opacity-100' : ''"
                       />
                     </div>
-                    <p class="mt-0.5 text-xs" :class="stepLabelClass(step)">
+                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-widest" :class="stepLabelClass(step)">
                       {{ stepStateLabel(step) }}
-                      <span v-if="pipelineMessagingEnabled" class="ml-1 hidden sm:inline" :class="mutedClass">
-                        · Click to message this desk
-                      </span>
                     </p>
                   </div>
                 </button>
@@ -179,16 +184,18 @@
               />
 
               <div
-                v-else
-                class="rounded-xl border border-dashed p-6 text-center text-sm"
+                v-if="!steps.length"
+                class="rounded-2xl border border-dashed p-8 text-center text-sm"
                 :class="isDark ? 'border-onyx-border text-white-muted' : 'border-gray-200 text-gray-400'"
               >
+                <Icon name="ph:route" class="h-8 w-8 mx-auto mb-3 opacity-50" />
                 No workflow stages mapped to this document's route.
               </div>
             </section>
 
             <!-- §2b Live file preview (MySQL BLOB) -->
             <DocumentLiveFilePreview
+              class="stagger-block"
               :document-id="document.id"
               :active="isOpen"
             />
@@ -196,7 +203,7 @@
             <!-- Office checkpoint review (intermediate + final) -->
             <section
               v-if="showCompletionActions && canMarkCheckpointDone"
-              class="rounded-2xl border p-4"
+              class="stagger-block rounded-2xl border p-5 shadow-lg backdrop-blur-md transition-all hover:shadow-xl"
               :class="isFinalCheckpoint
                 ? 'border-emerald-500/30 bg-emerald-500/5'
                 : 'border-candy-orange/30 bg-candy-orange/5'"
@@ -220,8 +227,8 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition disabled:opacity-50"
-                  :class="isFinalCheckpoint ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-candy-orange hover:bg-candy-hover'"
+                  class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
+                  :class="isFinalCheckpoint ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 hover:shadow-emerald-500/25' : 'bg-gradient-to-r from-candy-orange to-[#ff6b00] hover:shadow-candy-orange/25'"
                   :disabled="completingCheckpoint"
                   @click="handleApproveCheckpoint"
                 >
@@ -235,7 +242,7 @@
             <!-- Compliance flag action -->
             <section
               v-if="showComplianceActions"
-              class="rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-4"
+              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5 shadow-lg shadow-candy-orange/5"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -248,7 +255,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-[0.98]"
+                  class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-candy-orange to-[#ff6b00] px-5 py-3 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/40 active:translate-y-0"
                   @click="emit('flag-issue')"
                 >
                   <Icon name="ph:warning-fill" class="h-4 w-4" />
@@ -261,7 +268,7 @@
 
             <!-- §3 Official routing slip view (bottom) -->
             <section
-              class="overflow-hidden rounded-2xl border shadow-lg shadow-candy-orange/10"
+              class="stagger-block overflow-hidden rounded-2xl border shadow-2xl transition-all hover:shadow-candy-orange/10"
               :class="isDark ? 'border-candy-orange/30 bg-onyx-black/50' : 'border-candy-orange/40 bg-white/50'"
             >
               <div class="border-b border-candy-orange/30 bg-candy-orange px-5 py-3">
@@ -302,7 +309,7 @@
 
                 <button
                   type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-3 text-sm font-semibold text-white-pure shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-candy-orange to-[#ff6b00] px-4 py-3.5 text-sm font-semibold text-white-pure shadow-lg shadow-candy-orange/25 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                   :disabled="downloading || !document.qr_code_data"
                   @click="handleDownloadPdf"
                 >
@@ -330,6 +337,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import QRCode from 'qrcode'
+import gsap from 'gsap'
 import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
@@ -686,8 +694,17 @@ watch(
 watch(
   () => props.isOpen,
   (open) => {
-    if (open && !stageStore.stages.length) {
-      stageStore.fetchStages()
+    if (open) {
+      if (!stageStore.stages.length) {
+        stageStore.fetchStages()
+      }
+      nextTick(() => {
+        gsap.fromTo(
+          '.stagger-block',
+          { y: 25, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: 'power3.out' }
+        )
+      })
     }
   },
 )

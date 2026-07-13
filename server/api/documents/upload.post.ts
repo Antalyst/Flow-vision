@@ -121,6 +121,8 @@ export default defineEventHandler(async (event) => {
   const stageIdRaw     = get('stage_id')
   const originOfficeId = get('origin_office_id')   // UUID string | null
   const officeIdLegacy = get('office_id')           // legacy field — kept for compatibility
+  const manualTitle       = get('manual_title')
+  const manualDescription = get('manual_description')
 
   if (!fileItem?.data) {
     throw createError({ statusCode: 400, message: 'Missing document file payload.' })
@@ -352,10 +354,18 @@ export default defineEventHandler(async (event) => {
   }
 
   // ─────────────────────────────────────────────────────────────────────
-  // Step 6 — AI Document Analysis
+  // Step 6 — AI Document Analysis (or Manual Override)
   // ─────────────────────────────────────────────────────────────────────
 
-  const aiAnalysis = await analyzeDocumentBuffer(fileItem.data, mimeType)
+  let aiAnalysis = { title: '', description: '' }
+  if (manualTitle || manualDescription) {
+    aiAnalysis = {
+      title: manualTitle || fileName,
+      description: manualDescription || 'Manually uploaded document.'
+    }
+  } else {
+    aiAnalysis = await analyzeDocumentBuffer(fileItem.data, mimeType)
+  }
 
   // ─────────────────────────────────────────────────────────────────────
   // Step 7 — Supabase Document Insert

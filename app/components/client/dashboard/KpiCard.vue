@@ -65,7 +65,7 @@ const areaPoints = computed(() => {
 
 <template>
   <div
-    class="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#111113]"
+    class="group relative flex flex-col justify-between overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#111113]"
   >
     <div class="relative flex items-center justify-between">
       <h3 class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">

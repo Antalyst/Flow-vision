@@ -82,7 +82,7 @@ const toneDot: Record<string, string> = {
 </script>
 
 <template>
-  <div class="relative flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-4">
       <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Office Status</p>
       <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">Workstation Load Distribution</h3>
@@ -115,7 +115,7 @@ const toneDot: Record<string, string> = {
         <div
           v-for="item in load?.legend ?? []"
           :key="item.label"
-          class="rounded-xl border border-zinc-200 bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-black/60"
+          class="rounded-none border border-zinc-200 bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-black/60"
         >
           <div class="mb-1 flex items-center gap-2">
             <span class="h-2 w-2 rounded-full" :class="toneDot[item.tone]" />

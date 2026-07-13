@@ -3,9 +3,9 @@
     <Transition name="drawer-fade">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-[80] bg-black/55 backdrop-blur-sm"
+        class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm"
         @click="handleClose"
-      ></div>
+      />
     </Transition>
 
     <Transition name="drawer-slide">
@@ -15,17 +15,24 @@
         :class="surfaceClass"
         @submit.prevent="handlePrintAndSubmit"
       >
-        <header class="flex items-start justify-between gap-4 border-b px-5 py-5" :class="borderClass">
+        <!-- ── Header ──────────────────────────────────────────────────── -->
+        <header
+          class="flex items-start justify-between gap-4 border-b px-6 py-5"
+          :class="borderClass"
+        >
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-candy-orange">Documents</p>
+            <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
+            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
+              {{ officeId ? 'Office Document' : 'Organisation Document' }}
+            </p>
             <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
-            <p class="mt-1 text-xs" :class="mutedTextClass">
-              The file is AI-analyzed, then split-stored across Supabase and blob storage.
+            <p class="mt-0.5 text-xs" :class="mutedClass">
+              AI-analyzed, then split-stored across Supabase and blob storage.
             </p>
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
             aria-label="Close"
             @click="handleClose"
           >
@@ -33,8 +40,10 @@
           </button>
         </header>
 
-        <div class="flex flex-1 flex-col gap-5 overflow-hidden px-5 py-5 lg:flex-row">
-          <!-- Left: Live document preview -->
+        <!-- ── Body ───────────────────────────────────────────────────── -->
+        <div class="flex flex-1 flex-col gap-5 overflow-hidden px-6 py-5 lg:flex-row">
+
+          <!-- ── LEFT: live document preview ──────────────────────────── -->
           <div class="w-full overflow-y-auto lg:w-7/12">
             <DocumentLivePreview
               :file="selectedFile"
@@ -43,189 +52,519 @@
             />
           </div>
 
-          <!-- Right: Inputs -->
+          <!-- ── RIGHT: form fields ────────────────────────────────────── -->
           <div class="w-full space-y-5 overflow-y-auto lg:w-5/12">
-          <!-- RBAC notice -->
-          <div
-            v-if="!documentStore.canUploadDocuments"
-            class="rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-500"
-          >
-            Your account role is not permitted to upload documents.
-          </div>
 
-          <!-- Drop zone -->
-          <label
-            class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition"
-            :class="[
-              isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass,
-              documentStore.canUploadDocuments ? '' : 'pointer-events-none opacity-50',
-            ]"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleDrop"
-          >
-            <Icon name="ph:cloud-arrow-up" class="h-10 w-10 text-candy-orange" />
-            <div>
-              <p class="text-sm font-semibold" :class="headingClass">
-                {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
-              </p>
-              <p class="mt-1 text-xs" :class="mutedTextClass">
-                PDF, DOCX, XLSX, TXT, CSV supported
-              </p>
-            </div>
-            <input
-              ref="fileInput"
-              type="file"
-              class="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
-              @change="handleFileChange"
-            />
-          </label>
+            <!-- 1. Auto-detected Origin Office (hidden from user, handled by system) -->
 
-          <!-- Target Workflow Stage -->
-          <label class="block">
-            <span class="text-sm font-semibold" :class="headingClass">Target Workflow Stage</span>
-            <select
-              v-model="selectedStageId"
-              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
-              :class="inputClass"
-              required
+            <!-- 2. Drop zone -->
+            <label
+              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-none border-2 border-dashed p-7 text-center transition"
+              :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleDrop"
             >
-              <option value="" disabled :style="optionStyle">Select a workflow stage</option>
-              <option
-                v-for="stage in stageStore.stages"
-                :key="stage.stage_id"
-                :value="String(stage.stage_id)"
-                :style="optionStyle"
-              >
-                {{ stage.name }}
-              </option>
-            </select>
-            <p v-if="!stageStore.stages.length" class="mt-2 text-xs" :class="mutedTextClass">
-              No stages available. Create a stage first in the Stages workspace.
-            </p>
-          </label>
+              <Icon name="ph:cloud-arrow-up" class="h-9 w-9 text-candy-orange" />
+              <div>
+                <p class="text-sm font-semibold" :class="headingClass">
+                  {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
+                </p>
+                <p class="mt-1 text-xs" :class="mutedClass">PDF, DOCX, XLSX, TXT, CSV supported</p>
+              </div>
+              <input
+                ref="fileInput"
+                type="file"
+                class="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
+                @change="handleFileChange"
+              />
+            </label>
 
-          <!-- Selected file meta -->
-          <div
-            v-if="selectedFile"
-            class="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"
-            :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
-          >
-            <div class="flex min-w-0 items-center gap-3">
-              <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
-              <div class="min-w-0">
-                <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
-                <p class="text-xs" :class="mutedTextClass">{{ formatSize(selectedFile.size) }}</p>
+            <!-- Selected file chip -->
+            <div
+              v-if="selectedFile"
+              class="flex flex-col gap-3 rounded-none border p-3 text-sm"
+              :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
+            >
+              <div class="flex min-w-0 items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
+                  <div class="min-w-0">
+                    <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
+                    <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
+                  aria-label="Remove file"
+                  @click="clearFile"
+                >
+                  <Icon name="ph:trash" class="h-4 w-4" />
+                </button>
+              </div>
+              
+              <!-- Excel options -->
+              <div v-if="isExcelFile" class="mt-2 rounded-none bg-candy-orange/10 p-4 border border-candy-orange/20 space-y-4">
+                <div>
+                  <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
+                      <Icon name="ph:table" class="h-3.5 w-3.5" />
+                      Preview Metadata
+                    </button>
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-[#e95a0b] transition">
+                      <Icon name="ph:printer" class="h-3.5 w-3.5" />
+                      Print Summary
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Manual override for AI analysis -->
+                <div class="space-y-3 pt-3 border-t border-candy-orange/20">
+                  <p class="text-[11px] font-medium text-candy-orange/80">Manual Document Details</p>
+                  <div>
+                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
+                    <input
+                      v-model="manualTitle"
+                      type="text"
+                      placeholder="Enter document title..."
+                      class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      :class="inputClass"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Description</label>
+                    <textarea
+                      v-model="manualDescription"
+                      rows="2"
+                      placeholder="Briefly describe the contents..."
+                      class="w-full resize-none rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      :class="inputClass"
+                    ></textarea>
+                  </div>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
-              aria-label="Remove file"
-              @click="clearFile"
-            >
-              <Icon name="ph:trash" class="h-4 w-4" />
-            </button>
-          </div>
 
-          <!-- QR Code Placement Strategy -->
-          <div>
-            <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
-            <div class="mt-2 space-y-2">
-              <label
-                class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition"
-                :class="selectedStrategy === 'embedded'
-                  ? 'border-candy-orange bg-candy-orange/5'
-                  : (isDark ? 'border-onyx-border' : 'border-gray-200')"
-              >
-                <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" />
-                <span>
-                  <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
-                  <span class="block text-xs" :class="mutedTextClass">
-                    Prints tracking metadata directly alongside the document payload.
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 3. ROUTING PATHWAY PICKER                                 -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div>
+              <!-- Section label + scope tab toggle -->
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <span class="text-sm font-semibold" :class="headingClass">
+                    Routing Pathway <span class="text-red-500">*</span>
                   </span>
-                </span>
-              </label>
+                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                    Where the messenger must physically carry this document.
+                  </p>
+                </div>
 
-              <label
-                class="flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition"
-                :class="selectedStrategy === 'standalone'
-                  ? 'border-candy-orange bg-candy-orange/5'
-                  : (isDark ? 'border-onyx-border' : 'border-gray-200')"
+                <!-- Dual-scope tab toggle -->
+                <div
+                  class="flex flex-none items-center rounded-none border p-0.5 text-xs"
+                  :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
+                >
+                  <button
+                    v-for="tab in routeTabs"
+                    :key="tab.value"
+                    type="button"
+                    class="flex items-center gap-1.5 rounded-none px-3 py-1.5 font-semibold transition-all duration-200 select-none"
+                    :class="routeTab === tab.value
+                      ? 'bg-candy-orange text-white shadow'
+                      : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
+                    @click="routeTab = tab.value"
+                  >
+                    <Icon :name="tab.icon" class="h-3 w-3" />
+                    {{ tab.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Route description line -->
+              <p class="mt-2 text-[11px]" :class="mutedClass">
+                <span v-if="routeTab === 'global'">
+                  <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-candy-orange" />
+                  Organisation-wide routes created by your Client Admin — available to all offices.
+                </span>
+                <span v-else>
+                  <Icon name="ph:buildings-fill" class="inline h-3 w-3 text-candy-orange" />
+                  Custom routes built specifically for
+                  <span class="font-semibold text-candy-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
+                </span>
+              </p>
+
+              <!-- Route cards list -->
+              <div
+                class="mt-3 max-h-52 space-y-2 overflow-y-auto pr-0.5"
+                :class="{ 'opacity-50 pointer-events-none': !selectedOriginOfficeId && routeTab === 'local' }"
               >
-                <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
-                <span>
-                  <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
-                  <span class="block text-xs" :class="mutedTextClass">
-                    Keeps document pages clean and appends a dedicated tracking sheet to the end.
+                <!-- No origin warning for local tab -->
+                <div
+                  v-if="routeTab === 'local' && !selectedOriginOfficeId"
+                  class="flex items-center gap-2 rounded-none border border-dashed px-4 py-3 text-xs"
+                  :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
+                >
+                  <Icon name="ph:warning" class="h-4 w-4 text-amber-500" />
+                  Select your origin office first to see local routes.
+                </div>
+
+                <!-- Empty state -->
+                <div
+                  v-else-if="!visibleRoutes.length"
+                  class="flex flex-col items-center gap-2 rounded-none border border-dashed px-4 py-5 text-center text-xs"
+                  :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
+                >
+                  <Icon name="ph:path" class="h-6 w-6" :class="mutedClass" />
+                  <span>
+                    No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
+                    <template v-if="routeTab === 'local'">
+                      <NuxtLink to="/employee/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Stages.
+                    </template>
                   </span>
-                </span>
-              </label>
-            </div>
-          </div>
+                </div>
 
-          <!-- Standalone Trailer QR Size -->
-          <label v-if="selectedStrategy === 'standalone'" class="block">
-            <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
-            <select
-              v-model.number="selectedQrSize"
-              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
-              :class="inputClass"
+                <!-- Route card -->
+                <button
+                  v-for="stage in visibleRoutes"
+                  :key="stage.stage_id"
+                  type="button"
+                  class="group w-full rounded-none border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange/40"
+                  :class="selectedStageId === String(stage.stage_id)
+                    ? isDark
+                      ? 'border-candy-orange bg-candy-orange/10 shadow-md shadow-candy-orange/10'
+                      : 'border-candy-orange bg-orange-50 shadow-md shadow-candy-orange/10'
+                    : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
+                  @click="selectRoute(stage)"
+                >
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <!-- Selected checkmark -->
+                        <div
+                          class="flex h-4 w-4 flex-none items-center justify-center rounded-none transition-all"
+                          :class="selectedStageId === String(stage.stage_id)
+                            ? 'bg-candy-orange'
+                            : isDark ? 'border border-white/20' : 'border border-gray-300'"
+                        >
+                          <Icon
+                            v-if="selectedStageId === String(stage.stage_id)"
+                            name="ph:check-bold"
+                            class="h-2.5 w-2.5 text-white"
+                          />
+                        </div>
+                        <span class="text-sm font-semibold" :class="headingClass">{{ stage.name }}</span>
+                      </div>
+
+                      <!-- Mini stop-name pills -->
+                      <div v-if="getRouteSteps(stage.stage_id).length" class="mt-2 flex flex-wrap gap-1">
+                        <span
+                          v-for="(stop, idx) in getRouteStops(stage.stage_id)"
+                          :key="idx"
+                          class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-medium"
+                          :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
+                        >
+                          <span class="h-1 w-1 rounded-none bg-candy-orange/60" />
+                          {{ stop }}
+                        </span>
+                        <span
+                          v-if="getRouteSteps(stage.stage_id).length > 3"
+                          class="inline-flex items-center rounded-none px-2 py-0.5 text-[10px] font-medium text-candy-orange"
+                        >
+                          +{{ getRouteSteps(stage.stage_id).length - 3 }} more
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Right: stop count badge + scope tag -->
+                    <div class="flex flex-none flex-col items-end gap-1.5">
+                      <span
+                        class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-bold"
+                        :class="routeTab === 'global'
+                          ? 'border-blue-400/30 bg-blue-400/10 text-blue-400'
+                          : 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'"
+                      >
+                        <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
+                        {{ routeTab === 'global' ? 'Global' : 'Local' }}
+                      </span>
+                      <span class="text-[10px]" :class="mutedClass">
+                        {{ getRouteSteps(stage.stage_id).length }} stop{{ getRouteSteps(stage.stage_id).length !== 1 ? 's' : '' }}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <!-- ── VISUAL TIMELINE PREVIEW ─────────────────────────── -->
+              <Transition name="route-expand">
+                <div
+                  v-if="selectedStageId && selectedTimelineSteps.length"
+                  class="mt-4 overflow-hidden rounded-none border"
+                  :class="isDark
+                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
+                    : 'border-orange-200 bg-orange-50/60'"
+                >
+                  <!-- Preview header -->
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                    <div class="flex items-center gap-2">
+                      <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
+                    </div>
+                    <span class="text-[10px]" :class="mutedClass">
+                      {{ selectedTimelineSteps.length + 1 }} stops &middot; Messenger run
+                    </span>
+                  </div>
+
+                  <!-- Horizontal scroll timeline -->
+                  <div class="overflow-x-auto px-4 py-4">
+                    <div class="flex min-w-max items-start gap-0">
+
+                      <!-- ── Origin node (always first) ─────────────── -->
+                      <div class="flex flex-col items-center" style="min-width: 80px">
+                        <div class="relative flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange shadow-lg shadow-candy-orange/40">
+                          <Icon name="ph:map-pin-fill" class="h-5 w-5 text-white" />
+                          <!-- Pulse ring -->
+                          <span class="absolute inset-0 animate-ping rounded-none bg-candy-orange opacity-20" />
+                        </div>
+                        <p
+                          class="mt-2 max-w-[76px] text-center text-[10px] font-bold leading-tight text-candy-orange"
+                          style="word-break: break-word"
+                        >
+                          {{ selectedOriginOfficeName || 'Origin' }}
+                        </p>
+                        <span class="mt-0.5 rounded-none bg-candy-orange/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-candy-orange">
+                          Origin
+                        </span>
+                      </div>
+
+                      <!-- ── Route steps ─────────────────────────────── -->
+                      <template
+                        v-for="(step, idx) in selectedTimelineSteps"
+                        :key="`step-${idx}`"
+                      >
+                        <!-- Connector arrow -->
+                        <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
+                          <div
+                            class="h-px flex-1"
+                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
+                          />
+                          <Icon name="ph:caret-right-fill" class="h-3 w-3 flex-none text-candy-orange/50" />
+                        </div>
+
+                        <!-- Step node -->
+                        <div class="flex flex-col items-center" style="min-width: 80px">
+                          <!-- Circle: final stop gets filled, others get ring -->
+                          <div
+                            class="flex h-10 w-10 items-center justify-center rounded-none border-2 transition-all"
+                            :class="idx === selectedTimelineSteps.length - 1
+                              ? 'border-candy-orange bg-candy-orange text-white shadow-lg shadow-candy-orange/30'
+                              : isDark
+                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
+                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
+                          >
+                            <Icon
+                              v-if="idx === selectedTimelineSteps.length - 1"
+                              name="ph:flag-checkered-fill"
+                              class="h-4 w-4"
+                            />
+                            <span v-else class="text-xs font-bold">{{ idx + 1 }}</span>
+                          </div>
+
+                          <!-- Office name -->
+                          <p
+                            class="mt-2 max-w-[76px] text-center text-[10px] font-semibold leading-tight"
+                            :class="headingClass"
+                            style="word-break: break-word"
+                          >
+                            {{ resolveOfficeName(step.office_id) }}
+                          </p>
+
+                          <!-- Step label -->
+                          <span
+                            class="mt-0.5 text-[9px]"
+                            :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
+                          >
+                            {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
+                          </span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <!-- Route summary footer -->
+                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                    <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
+                      <span class="flex items-center gap-1">
+                        <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
+                        <strong class="text-candy-orange">{{ selectedOriginOfficeName || '—' }}</strong>
+                      </span>
+                      <Icon name="ph:arrow-right" class="h-3 w-3" />
+                      <span>{{ selectedTimelineSteps.length }} office{{ selectedTimelineSteps.length !== 1 ? 's' : '' }} in route</span>
+                      <Icon name="ph:arrow-right" class="h-3 w-3" />
+                      <span class="flex items-center gap-1">
+                        <Icon name="ph:flag-checkered-fill" class="h-3 w-3 text-candy-orange" />
+                        <strong class="text-candy-orange">{{ finalDestinationName }}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- 4. QR Code Placement Strategy -->
+            <div>
+              <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
+
+              <!-- Excel specific notice -->
+              <div v-if="isExcelFile" class="mt-2 rounded-none border border-candy-orange/30 bg-candy-orange/10 px-4 py-3 text-xs text-candy-orange">
+                <Icon name="ph:info" class="inline h-4 w-4 mr-1 mb-0.5" />
+                <strong>Excel file detected.</strong> A dedicated trailing sheet will be generated containing only the selected QR code size to prevent data corruption.
+              </div>
+
+              <div class="mt-2 space-y-2">
+                <label
+                  class="flex items-start gap-3 rounded-none border p-3 transition"
+                  :class="[
+                    selectedStrategy === 'embedded' ? 'border-candy-orange bg-candy-orange/5' : (isDark ? 'border-white/10' : 'border-gray-200'),
+                    isExcelFile ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+                  ]"
+                >
+                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" :disabled="isExcelFile" />
+                  <span>
+                    <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
+                    <span class="block text-xs" :class="mutedClass">
+                      Prints tracking metadata directly alongside the document payload.
+                    </span>
+                  </span>
+                </label>
+
+                <label
+                  class="flex cursor-pointer items-start gap-3 rounded-none border p-3 transition"
+                  :class="selectedStrategy === 'standalone'
+                    ? 'border-candy-orange bg-candy-orange/5'
+                    : isDark ? 'border-white/10' : 'border-gray-200'"
+                >
+                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
+                  <span>
+                    <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
+                    <span class="block text-xs" :class="mutedClass">
+                      Keeps document pages clean and appends a dedicated tracking sheet.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 5. Standalone QR size -->
+            <div v-if="selectedStrategy === 'standalone'" class="block">
+              <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
+              <div class="mt-2 grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 50"
+                >
+                  <Icon name="ph:qr-code" class="h-6 w-6 mb-1" />
+                  <span class="text-xs font-semibold">Small</span>
+                  <span class="text-[10px] opacity-70">1x1 in</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 120"
+                >
+                  <Icon name="ph:qr-code" class="h-7 w-7 mb-1" />
+                  <span class="text-xs font-semibold">Medium</span>
+                  <span class="text-[10px] opacity-70">2x2 in</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  @click="selectedQrSize = 200"
+                >
+                  <Icon name="ph:qr-code" class="h-8 w-8 mb-1" />
+                  <span class="text-xs font-semibold">Large</span>
+                  <span class="text-[10px] opacity-70">4x4 in</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 6. Error -->
+            <p
+              v-if="errorMessage"
+              class="rounded-none border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500"
             >
-              <option :value="50" :style="optionStyle">Small (50px × 50px)</option>
-              <option :value="120" :style="optionStyle">Medium (120px × 120px)</option>
-              <option :value="200" :style="optionStyle">Large (200px × 200px)</option>
-            </select>
-          </label>
+              {{ errorMessage }}
+            </p>
 
-          <!-- Error -->
-          <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
-
-          <!-- AI result preview -->
-          <div
-            v-if="documentStore.lastAnalysis"
-            class="rounded-lg border p-4"
-            :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
-          >
-            <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
-              <Icon name="ph:sparkle" class="h-4 w-4" />
-              AI Analysis
+            <!-- 7. AI analysis result -->
+            <div
+              v-if="aiAnalysis"
+              class="rounded-none border p-4"
+              :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
+            >
+              <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
+                <Icon name="ph:sparkle-fill" class="h-4 w-4" />
+                AI Analysis
+              </div>
+              <p class="mt-2 text-sm font-semibold" :class="headingClass">{{ aiAnalysis.title }}</p>
+              <p class="mt-1 text-xs leading-5" :class="mutedClass">{{ aiAnalysis.description }}</p>
             </div>
-            <p class="mt-2 text-sm font-semibold" :class="headingClass">
-              {{ documentStore.lastAnalysis.title }}
-            </p>
-            <p class="mt-1 text-xs leading-5" :class="mutedTextClass">
-              {{ documentStore.lastAnalysis.description }}
-            </p>
-          </div>
+
           </div>
         </div>
 
-        <footer class="flex items-center justify-end gap-3 border-t px-5 py-4" :class="borderClass">
-          <button
-            type="button"
-            class="rounded-lg border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
-            :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
-            @click="handleClose"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="inline-flex items-center gap-2 rounded-lg bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="!canSubmit"
-          >
-            <Icon v-if="documentStore.uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-            <Icon v-else name="ph:printer" class="h-4 w-4" />
-            {{ documentStore.uploading ? 'Saving…' : 'Print & Save' }}
-          </button>
+        <!-- ── Footer ─────────────────────────────────────────────────── -->
+        <footer
+          class="flex items-center justify-between gap-3 border-t px-6 py-4"
+          :class="borderClass"
+        >
+          <!-- Route summary pill (shows in footer when a route is selected) -->
+          <div class="flex min-w-0 items-center gap-2">
+            <Transition name="fade-in">
+              <div
+                v-if="selectedStageId"
+                class="flex min-w-0 items-center gap-1.5 rounded-none border px-3 py-1.5 text-[11px] font-semibold text-candy-orange"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
+              >
+                <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
+                <span class="truncate">{{ selectedRouteName }}</span>
+                <Icon name="ph:x-bold" class="h-2.5 w-2.5 flex-none cursor-pointer hover:text-red-400" @click.stop="selectedStageId = ''" />
+              </div>
+            </Transition>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
+              :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
+              @click="handleClose"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="!canSubmit"
+            >
+              <Icon v-if="uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+              <Icon v-else name="ph:printer" class="h-4 w-4" />
+              {{ uploading ? 'Saving…' : 'Print & Save' }}
+            </button>
+          </div>
         </footer>
       </form>
     </Transition>
 
-    <!-- QR-only fallback print template (hidden on screen, isolated during print) -->
-    <DocumentPrintCanvas :qr-data-url="printQrDataUrl" />
+    <!-- QR-only fallback print template -->
+    <DocumentPrintCanvas :qr-data-url="printQrDataUrl" :qr-size="selectedQrSize" />
   </Teleport>
 </template>
 
@@ -234,58 +573,182 @@ import { computed, nextTick, ref, watch } from 'vue'
 import QRCode from 'qrcode'
 import { PDFDocument } from 'pdf-lib'
 import { renderAsync } from 'docx-preview'
-import { useDocumentStore } from '~/stores/document'
+import DocumentLivePreview from '~/components/client/documents/documentLivePreview.vue'
+import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanvas.vue'
 import { useStageStore } from '~/stores/stage'
-import DocumentPrintCanvas from './documentPrintCanvas.vue'
-import DocumentLivePreview from './documentLivePreview.vue'
+import { useOfficeStore } from '~/stores/office'
+import { useAuthStore } from '~/stores/auth'
 
-const generateTrackingId = () => `FLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+// ── Types ─────────────────────────────────────────────────────────────
+interface OfficeRecord { id: string; name: string; code?: string }
+interface AiAnalysis   { title: string; description: string }
 
+// Stage record extended with office_id (local routes) from the API
+interface EnrichedStage {
+  stage_id: number | string
+  name: string
+  office_id?: string | null
+  step_number?: number
+  workflow_items?: Array<{ office_id: string | number; step_number: number }>
+}
+
+// ── Props / emits ──────────────────────────────────────────────────────
 const props = defineProps<{
-  isOpen: boolean
+  isOpen:  boolean
   officeId?: string | number | null
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'uploaded', metadata: any): void
+  (e: 'uploaded'): void
 }>()
 
-const documentStore = useDocumentStore()
-const stageStore = useStageStore()
-const { isDark } = useTheme()
+// ── Stores ────────────────────────────────────────────────────────────
+const stageStore  = useStageStore()
+const officeStore = useOfficeStore()
+const auth        = useAuthStore()
+const { isDark }  = useTheme()
 
-const fileInput = ref<HTMLInputElement | null>(null)
-const selectedFile = ref<File | null>(null)
-const selectedStageId = ref<string>('')
-const selectedStrategy = ref<'embedded' | 'standalone'>('embedded')
-const selectedQrSize = ref<50 | 120 | 200>(120)
-const currentTrackingId = ref('')
-const isDragging = ref(false)
-const errorMessage = ref('')
+// ── Route scope tab ───────────────────────────────────────────────────
+type RouteTab = 'global' | 'local'
+const routeTab = ref<RouteTab>('global')
+const routeTabs = [
+  { value: 'global' as RouteTab, label: 'Global', icon: 'ph:globe-hemisphere-west-fill' },
+  { value: 'local'  as RouteTab, label: 'Local',  icon: 'ph:buildings-fill' },
+]
 
-// Print state
-const printQrDataUrl = ref('')
+// ── Form state ────────────────────────────────────────────────────────
+const fileInput              = ref<HTMLInputElement | null>(null)
+const selectedFile           = ref<File | null>(null)
+const selectedOriginOfficeId = computed(() => {
+  return props.officeId ? String(props.officeId) : ''
+})
+const selectedStageId        = ref<string>('')
+const selectedStrategy       = ref<'embedded' | 'standalone'>('embedded')
+const selectedQrSize         = ref<50 | 120 | 200>(120)
+const currentTrackingId      = ref('')
+const isDragging             = ref(false)
+const errorMessage           = ref('')
+const uploading              = ref(false)
+const aiAnalysis             = ref<AiAnalysis | null>(null)
+const printQrDataUrl         = ref('')
+const manualTitle            = ref('')
+const manualDescription      = ref('')
 
-watch(
-  () => props.isOpen,
-  (open) => {
-    if (open && !stageStore.stages.length) {
-      stageStore.fetchStages()
-    }
+const isExcelFile = computed(() => {
+  if (!selectedFile.value) return false
+  const name = selectedFile.value.name.toLowerCase()
+  return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')
+})
+const previewExcel = ref(false)
+
+// Force standalone strategy for Excel files
+watch(isExcelFile, (isExcel) => {
+  if (isExcel) {
+    selectedStrategy.value = 'standalone'
   }
+})
+
+const generateTrackingId = () => `FLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
+// ── All stages (cast to enriched shape with optional office_id) ────────
+const allStages = computed<EnrichedStage[]>(() => stageStore.stages as unknown as EnrichedStage[])
+
+// ── Visible routes based on selected tab ──────────────────────────────
+const visibleRoutes = computed<EnrichedStage[]>(() => {
+  if (routeTab.value === 'global') {
+    return allStages.value.filter((s) => !s.office_id)
+  }
+  // Local: stages with an office_id
+  if (!selectedOriginOfficeId.value) {
+    // show all local stages from any of the employee's offices
+    const myOfficeIds = props.offices.map((o) => String(o.id))
+    return allStages.value.filter((s) => s.office_id && myOfficeIds.includes(String(s.office_id)))
+  }
+  // filter to the selected origin office
+  return allStages.value.filter((s) => s.office_id && String(s.office_id) === selectedOriginOfficeId.value)
+})
+
+// ── Resolve all org offices for name lookup ────────────────────────────
+const resolveOfficeName = (officeId: string | number | null | undefined): string => {
+  if (officeId == null) return 'Unknown Office'
+  // Check the org office store first (all offices in org)
+  const fromStore = officeStore.offices.find((o) => String(o.id) === String(officeId))
+  if (fromStore) return fromStore.name
+  // Fallback to employee's own offices prop
+  const fromProps = props.offices.find((o) => String(o.id) === String(officeId))
+  return fromProps?.name || `Office ${String(officeId).slice(0, 8)}`
+}
+
+// ── Selected origin office name ───────────────────────────────────────
+const selectedOriginOfficeName = computed(() => {
+  if (!selectedOriginOfficeId.value) return ''
+  const found = props.offices.find((o) => String(o.id) === selectedOriginOfficeId.value)
+  return found?.name || ''
+})
+
+// ── Route step helpers ─────────────────────────────────────────────────
+const getRouteSteps = (stageId: number | string) => {
+  const seq = stageStore.stageOfficeSequences[stageId as number] || []
+  return [...seq].sort((a, b) => a.step_number - b.step_number)
+}
+
+const getRouteStops = (stageId: number | string): string[] =>
+  getRouteSteps(stageId)
+    .slice(0, 3)
+    .map((s) => resolveOfficeName(s.office_id))
+
+// ── Timeline: steps for the selected stage ────────────────────────────
+const selectedTimelineSteps = computed(() => {
+  if (!selectedStageId.value) return []
+  return getRouteSteps(selectedStageId.value)
+})
+
+const selectedRouteName = computed(() => {
+  if (!selectedStageId.value) return ''
+  return allStages.value.find((s) => String(s.stage_id) === selectedStageId.value)?.name || ''
+})
+
+const finalDestinationName = computed(() => {
+  const steps = selectedTimelineSteps.value
+  if (!steps.length) return '—'
+  return resolveOfficeName(steps[steps.length - 1].office_id)
+})
+
+// ── Select route card ─────────────────────────────────────────────────
+const selectRoute = (stage: EnrichedStage) => {
+  selectedStageId.value = String(stage.stage_id)
+}
+
+// ── When origin office changes, reset stage if it no longer matches ───
+const onOriginOfficeChange = () => {
+  if (!selectedStageId.value) return
+  const currentRoute = allStages.value.find((s) => String(s.stage_id) === selectedStageId.value)
+  if (currentRoute?.office_id && String(currentRoute.office_id) !== selectedOriginOfficeId.value) {
+    selectedStageId.value = ''
+  }
+}
+
+// ── canSubmit ─────────────────────────────────────────────────────────
+const canSubmit = computed(
+  () =>
+    !!selectedFile.value &&
+    !!selectedOriginOfficeId.value &&
+    !!selectedStageId.value &&
+    !uploading.value
 )
 
+// ── Theming ───────────────────────────────────────────────────────────
 const surfaceClass = computed(() =>
-  isDark.value ? 'border-onyx-border bg-[#1A1A1A] shadow-onyx-card' : 'border-gray-200 bg-white'
+  isDark.value ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'border-gray-200 bg-white'
 )
-const borderClass = computed(() => (isDark.value ? 'border-onyx-border' : 'border-gray-200'))
-const mutedTextClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
-const headingClass = computed(() => (isDark.value ? 'text-white' : 'text-onyx-black'))
-const inputClass = computed(() =>
+const borderClass  = computed(() => isDark.value ? 'border-white/10' : 'border-gray-200')
+const mutedClass   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
+const headingClass = computed(() => isDark.value ? 'text-white' : 'text-gray-900')
+const inputClass   = computed(() =>
   isDark.value
-    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
-    : 'border-gray-200 bg-white text-onyx-black placeholder:text-gray-400'
+    ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
+    : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 const optionStyle = computed(() =>
   isDark.value
@@ -293,23 +756,25 @@ const optionStyle = computed(() =>
     : { backgroundColor: '#ffffff', color: '#121212' }
 )
 
-const canSubmit = computed(
-  () =>
-    documentStore.canUploadDocuments &&
-    !!selectedFile.value &&
-    !!selectedStageId.value &&
-    !documentStore.uploading
+// ── Watch isOpen — fetch stages + offices ─────────────────────────────
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (!open) return
+    if (!stageStore.stages.length) stageStore.fetchStages()
+    if (!officeStore.offices.length) officeStore.fetchOffices()
+  }
 )
 
+// ── File handlers ─────────────────────────────────────────────────────
 const formatSize = (bytes: number) => {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024)           return `${bytes} B`
+  if (bytes < 1024 * 1024)   return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const handleFileChange = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0] || null
+  const file = (e.target as HTMLInputElement).files?.[0] || null
   selectedFile.value = file
   currentTrackingId.value = file ? generateTrackingId() : ''
   errorMessage.value = ''
@@ -328,200 +793,110 @@ const handleDrop = (e: DragEvent) => {
 const clearFile = () => {
   selectedFile.value = null
   currentTrackingId.value = ''
+  manualTitle.value = ''
+  manualDescription.value = ''
   if (fileInput.value) fileInput.value.value = ''
 }
 
 const handleClose = () => {
-  if (documentStore.uploading) return
+  if (uploading.value) return
   clearFile()
+  // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   printQrDataUrl.value = ''
   errorMessage.value = ''
-  documentStore.clearLastAnalysis()
+  aiAnalysis.value = null
   emit('close')
 }
 
-// Fallback: print only the raw QR via the isolated print canvas.
-// Used when an uploaded file type cannot be rendered/extended inline.
-const printFallbackLabel = async (qrDataUrl: string) => {
+// ── Print: Standalone trailer ─────────────────────────────────────────
+const printStandaloneDocument = async (file: File, qrDataUrl: string) => {
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  const buf = await file.arrayBuffer()
+  const sz  = selectedQrSize.value
+
+  if (ext === 'pdf') {
+    const pdf = await PDFDocument.load(buf)
+    const img = await pdf.embedPng(qrDataUrl)
+    const pg  = pdf.addPage()
+    const { width, height } = pg.getSize()
+    pg.drawImage(img, { x: (width - sz) / 2, y: (height - sz) / 2, width: sz, height: sz })
+    const url = URL.createObjectURL(new Blob([await pdf.save()], { type: 'application/pdf' }))
+    const win = window.open(url)
+    if (win) win.onload = () => { win.focus(); win.print() }
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+    return
+  }
+
+  if (ext === 'docx') {
+    const div = document.createElement('div')
+    await renderAsync(buf, div)
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(`<html><head><style>@page{margin:0}body{margin:0;padding:0;background:#fff}.docx-wrapper{background:#fff!important;padding:0!important}.docx{box-shadow:none!important;margin:0!important;width:100%!important}</style></head><body>${div.innerHTML}<div style="page-break-before:always;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff"><img src="${qrDataUrl}" style="width:${sz}px;height:${sz}px"/></div></body></html>`)
+      win.document.close()
+      win.focus()
+      setTimeout(() => { win.print(); win.close() }, 500)
+    }
+    return
+  }
+
   printQrDataUrl.value = qrDataUrl
   await nextTick()
   window.print()
 }
 
-// Standalone strategy: leave the original pages untouched and append a dedicated
-// high-contrast tracking trailer page as the very last sheet of the bundle.
-const printStandaloneDocument = async (file: File, qrDataUrl: string) => {
-  const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const arrayBuffer = await file.arrayBuffer()
-
-  const qrSize = selectedQrSize.value
-
-  if (ext === 'pdf') {
-    const pdfDoc = await PDFDocument.load(arrayBuffer)
-    const qrImage = await pdfDoc.embedPng(qrDataUrl)
-
-    // Append a brand-new blank trailer page and draw ONLY the centered QR matrix.
-    const newPage = pdfDoc.addPage()
-    const { width, height } = newPage.getSize()
-    newPage.drawImage(qrImage, {
-      x: (width - qrSize) / 2,
-      y: (height - qrSize) / 2,
-      width: qrSize,
-      height: qrSize,
-    })
-
-    const pdfBytes = await pdfDoc.save()
-    const url = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }))
-    const printWin = window.open(url)
-    if (printWin) {
-      printWin.onload = () => {
-        printWin.focus()
-        printWin.print()
-      }
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
-    return
-  }
-
-  if (ext === 'docx') {
-    const renderTarget = document.createElement('div')
-    await renderAsync(arrayBuffer, renderTarget)
-    const docHtml = renderTarget.innerHTML
-
-    const printWin = window.open('', '_blank')
-    if (printWin) {
-      printWin.document.write(`
-        <html>
-          <head>
-            <style>
-              @page { margin: 0; }
-              body { margin: 0; padding: 0; background: #fff; }
-              .docx-wrapper { background: #fff !important; padding: 0 !important; }
-              .docx { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
-            </style>
-          </head>
-          <body>
-            ${docHtml}
-            <div style="page-break-before: always; clear: both; display: flex; justify-content: center; align-items: center; height: 100vh; background: #ffffff;">
-              <img src="${qrDataUrl}" style="width: ${qrSize}px; height: ${qrSize}px; box-shadow: none; border: none; margin: auto;" />
-            </div>
-          </body>
-        </html>
-      `)
-      printWin.document.close()
-      printWin.focus()
-      setTimeout(() => {
-        printWin.print()
-        printWin.close()
-      }, 500)
-    }
-    return
-  }
-
-  // Unsupported file type for inline rendering — fall back to the raw QR canvas.
-  await printFallbackLabel(qrDataUrl)
-}
-
-// Embedded strategy: print the REAL uploaded document pages with a raw 50x50 QR
-// stamped at the top-left corner. No metadata text is rendered in this mode.
+// ── Print: Embedded QR stamp ──────────────────────────────────────────
 const printEmbeddedDocument = async (file: File, qrDataUrl: string) => {
   const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const arrayBuffer = await file.arrayBuffer()
+  const buf = await file.arrayBuffer()
 
   if (ext === 'pdf') {
-    const pdfDoc = await PDFDocument.load(arrayBuffer)
-    const qrImage = await pdfDoc.embedPng(qrDataUrl)
-
-    const qrSize = 50
-    const margin = 20
-    pdfDoc.getPages().forEach((page) => {
-      const { height } = page.getSize()
-      page.drawImage(qrImage, {
-        x: margin,
-        y: height - qrSize - margin, // Clean placement at the absolute top-left boundary
-        width: qrSize,
-        height: qrSize,
-      })
+    const pdf = await PDFDocument.load(buf)
+    const img = await pdf.embedPng(qrDataUrl)
+    const sz = 50, margin = 20
+    pdf.getPages().forEach((pg) => {
+      const { height } = pg.getSize()
+      pg.drawImage(img, { x: margin, y: height - sz - margin, width: sz, height: sz })
     })
-
-    const pdfBytes = await pdfDoc.save()
-    const url = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }))
-    const printWin = window.open(url)
-    if (printWin) {
-      printWin.onload = () => {
-        printWin.focus()
-        printWin.print()
-      }
-    }
+    const url = URL.createObjectURL(new Blob([await pdf.save()], { type: 'application/pdf' }))
+    const win = window.open(url)
+    if (win) win.onload = () => { win.focus(); win.print() }
     setTimeout(() => URL.revokeObjectURL(url), 60000)
     return
   }
 
   if (ext === 'docx') {
-    const renderTarget = document.createElement('div')
-    await renderAsync(arrayBuffer, renderTarget)
-    const docHtml = renderTarget.innerHTML
-
-    const printWin = window.open('', '_blank')
-    if (printWin) {
-      printWin.document.write(`
-        <html>
-          <head>
-            <style>
-              @page { margin: 0; }
-              body { margin: 0; padding: 0; background: #fff; }
-              .docx-wrapper { background: #fff !important; padding: 0 !important; }
-              .docx { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
-            </style>
-          </head>
-          <body>
-            <img src="${qrDataUrl}" style="position: absolute; top: 20px; left: 20px; width: 50px; height: 50px; box-shadow: none; border: none; z-index: 9999;" />
-            ${docHtml}
-          </body>
-        </html>
-      `)
-      printWin.document.close()
-      printWin.focus()
-      setTimeout(() => {
-        printWin.print()
-        printWin.close()
-      }, 500)
+    const div = document.createElement('div')
+    await renderAsync(buf, div)
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(`<html><head><style>@page{margin:0}body{margin:0;padding:0;background:#fff}.docx-wrapper{background:#fff!important;padding:0!important}.docx{box-shadow:none!important;margin:0!important;width:100%!important}</style></head><body><img src="${qrDataUrl}" style="position:absolute;top:20px;left:20px;width:50px;height:50px;z-index:9999"/>${div.innerHTML}</body></html>`)
+      win.document.close()
+      win.focus()
+      setTimeout(() => { win.print(); win.close() }, 500)
     }
     return
   }
 
-  // Unsupported file type for inline rendering — fall back to the raw QR canvas.
-  await printFallbackLabel(qrDataUrl)
+  printQrDataUrl.value = qrDataUrl
+  await nextTick()
+  window.print()
 }
 
-// Print BEFORE persistence: records only hit the DB after the print routine runs.
+// ── Submit: print → persist ───────────────────────────────────────────
 const handlePrintAndSubmit = async () => {
-  if (!selectedFile.value) {
-    errorMessage.value = 'Please select a file to upload.'
-    return
-  }
-
-  if (!selectedStageId.value) {
-    errorMessage.value = 'Please select a target workflow stage.'
-    return
-  }
-
   errorMessage.value = ''
+  if (!selectedFile.value)           { errorMessage.value = 'Please select a file.';              return }
+  if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
 
-  // 1. Reuse the FLOW- identity already shown in the live preview (generate if absent).
   const trackingCode = currentTrackingId.value || generateTrackingId()
   currentTrackingId.value = trackingCode
 
-  // 2. Build the QR matrix, then route printing based on the placement strategy.
   let qrDataUrl = ''
-  try {
-    qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 })
-  } catch {
-    qrDataUrl = ''
-  }
+  try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
 
   if (selectedStrategy.value === 'embedded') {
     await printEmbeddedDocument(selectedFile.value, qrDataUrl)
@@ -529,45 +904,83 @@ const handlePrintAndSubmit = async () => {
     await printStandaloneDocument(selectedFile.value, qrDataUrl)
   }
 
-  // 3. Persist to Supabase + Hostinger MySQL using the printed tracking code.
-  const res = await documentStore.uploadDocument(selectedFile.value, {
-    officeId: props.officeId ?? null,
-    stageId: selectedStageId.value,
-    qrCode: trackingCode,
-    printStrategy: selectedStrategy.value,
-    stickerSize: selectedStrategy.value === 'standalone' ? String(selectedQrSize.value) : null,
-  })
+  uploading.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file',             selectedFile.value, selectedFile.value.name)
+    if (selectedOriginOfficeId.value) {
+      fd.append('origin_office_id', selectedOriginOfficeId.value)
+      fd.append('office_id',        selectedOriginOfficeId.value)
+    }
+    fd.append('stage_id',         selectedStageId.value)
+    fd.append('qr_code_data',     trackingCode)
+    fd.append('user_id',          String(auth.user?.user_id ?? ''))
+    fd.append('org_id',           String(auth.user?.org_id ?? ''))
+    
+    if (isExcelFile.value) {
+      if (manualTitle.value) fd.append('manual_title', manualTitle.value)
+      if (manualDescription.value) fd.append('manual_description', manualDescription.value)
+    }
 
-  if (res.success) {
-    emit('uploaded', res.data)
-    clearFile()
-    selectedStageId.value = ''
-    currentTrackingId.value = ''
-    printQrDataUrl.value = ''
-    return
+    const res = await $fetch<{ success: boolean; data?: any }>('/api/documents/upload', {
+      method: 'POST',
+      body: fd,
+    })
+
+    if (res.success) {
+      if (res.data?.title || res.data?.description) {
+        aiAnalysis.value = { title: res.data.title, description: res.data.description }
+      }
+      emit('uploaded')
+      clearFile()
+      // selectedOriginOfficeId is computed, no need to reset
+      selectedStageId.value = ''
+      currentTrackingId.value = ''
+      printQrDataUrl.value = ''
+    } else {
+      errorMessage.value = 'Upload failed. Please try again.'
+      currentTrackingId.value = generateTrackingId()
+    }
+  } catch (err: any) {
+    errorMessage.value = err?.data?.message || 'Upload failed. Please try again.'
+    currentTrackingId.value = generateTrackingId()
+  } finally {
+    uploading.value = false
   }
-
-  errorMessage.value = typeof res.error === 'string' ? res.error : 'Upload failed.'
-  // Partial uploads may have persisted the printed code — allocate a fresh label for retry.
-  currentTrackingId.value = generateTrackingId()
 }
 </script>
 
 <style scoped>
-.drawer-fade-enter-active,
-.drawer-fade-leave-active {
-  transition: opacity 0.2s ease;
+/* Drawer backdrop */
+.drawer-fade-enter-active, .drawer-fade-leave-active { transition: opacity 0.2s ease; }
+.drawer-fade-enter-from,   .drawer-fade-leave-to     { opacity: 0; }
+
+/* Drawer panel slide */
+.drawer-slide-enter-active, .drawer-slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.drawer-fade-enter-from,
-.drawer-fade-leave-to {
+.drawer-slide-enter-from, .drawer-slide-leave-to { transform: translateX(100%); }
+
+/* Route timeline expand */
+.route-expand-enter-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.route-expand-leave-active {
+  transition: all 0.2s ease;
+}
+.route-expand-enter-from, .route-expand-leave-to {
   opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
 }
-.drawer-slide-enter-active,
-.drawer-slide-leave-active {
-  transition: transform 0.28s ease;
+.route-expand-enter-to, .route-expand-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 400px;
 }
-.drawer-slide-enter-from,
-.drawer-slide-leave-to {
-  transform: translateX(100%);
-}
+
+/* Footer route pill fade */
+.fade-in-enter-active { transition: all 0.2s ease; }
+.fade-in-leave-active { transition: all 0.15s ease; }
+.fade-in-enter-from, .fade-in-leave-to { opacity: 0; transform: scale(0.95); }
 </style>
