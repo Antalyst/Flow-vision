@@ -28,7 +28,7 @@ export function useClientDashboard() {
     }
   }
 
-  async function fetchDashboard(force = false) {
+  async function fetchDashboard(force = false, officeId?: string | null) {
     if (loading.value && !force) return
 
     loading.value = true
@@ -36,7 +36,10 @@ export function useClientDashboard() {
     try {
       const res = await $fetch<{ success: boolean } & ClientDashboardPayload>(
         '/api/client/dashboard',
-        { credentials: 'include' },
+        { 
+          credentials: 'include',
+          query: officeId ? { officeId } : undefined 
+        },
       )
       data.value = {
         kpis: res.kpis,

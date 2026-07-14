@@ -10,7 +10,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <!-- Title -->
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           {{
@@ -26,13 +26,13 @@
 
         <!-- ── Premium Perspective Toggle ─────────────────────────── -->
         <div
-          class="relative flex items-center gap-1 rounded-none border p-1.5"
+          class="relative flex items-center gap-1 rounded-2xl border p-1.5"
           :class="isDark
-            ? 'bg-onyx-card border-onyx-border'
-            : 'bg-white border-gray-200'"
+            ? 'bg-white/[0.04] border-white/10 backdrop-blur-md'
+            : 'bg-white border-gray-200 shadow-sm'"
         >
           <div
-            class="absolute inset-y-1.5 rounded-none bg-candy-orange transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            class="absolute inset-y-1.5 rounded-xl bg-candy-orange shadow-lg shadow-candy-orange/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
             :style="indicatorStyle"
           />
           <button
@@ -40,7 +40,7 @@
             :key="opt.value"
             :ref="(el) => setTabRef(el, opt.value)"
             type="button"
-            class="relative z-10 flex items-center gap-2 rounded-none px-3.5 py-2 text-xs font-semibold transition-colors duration-200 select-none"
+            class="relative z-10 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors duration-200 select-none"
             :class="currentScope === opt.value
               ? 'text-white'
               : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
@@ -54,19 +54,19 @@
         <!-- Scan QR Button -->
         <NuxtLink
           to="/employee/scan"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
         >
-          <Icon name="ph:qr-code-light" class="h-4 w-4" />
+          <Icon name="ph:qr-code-bold" class="h-4 w-4" />
           Scan QR
         </NuxtLink>
 
         <!-- Upload -->
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
           @click="isUploadOpen = true"
         >
-          <Icon name="ph:upload-simple-light" class="h-4 w-4" />
+          <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
           Upload Document
         </button>
       </div>
@@ -78,12 +78,14 @@
     <Transition name="scope-fade" mode="out-in">
       <div
         :key="currentScope"
-        class="flex items-center gap-3 rounded-none border px-4 py-3 text-sm"
-        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+        class="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
+        :class="currentScope === 'LOCAL'
+          ? isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'
+          : isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
       >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-none border" :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50'">
+        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
           <Icon
-            :name="currentScope === 'LOCAL' ? 'ph:buildings-light' : 'ph:globe-hemisphere-west-light'"
+            :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'"
             class="h-4 w-4 text-candy-orange"
           />
         </div>
@@ -100,10 +102,9 @@
           </p>
         </div>
         <span
-          class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-          :class="isDark ? 'border-onyx-border bg-onyx-black text-candy-orange' : 'border-gray-200 bg-white text-candy-orange'"
+          class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange"
         >
-          <span class="h-1.5 w-1.5 animate-pulse rounded-none bg-candy-orange" />
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-candy-orange" />
           Live
         </span>
       </div>
@@ -117,17 +118,17 @@
         <div
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="flex items-start gap-4 rounded-none border p-5 transition-colors"
+          class="flex items-start gap-4 rounded-xl border p-5 backdrop-blur-sm transition-all"
           :class="glassSurface"
           :style="{ transitionDelay: `${i * 40}ms` }"
         >
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-current" :class="card.iconBg">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" :class="card.iconBg">
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
           </span>
           <div class="min-w-0">
             <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
             <p class="mt-1 text-2xl font-bold">
-              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
               <span v-else>{{ card.value }}</span>
             </p>
             <p class="mt-0.5 text-[10px]" :class="card.trendColor">{{ card.trend }}</p>
@@ -140,15 +141,15 @@
     <!-- D. Filter & Search Bar                                            -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <div
-      class="flex flex-col gap-3 rounded-none border p-4 sm:flex-row sm:items-center transition-colors"
+      class="flex flex-col gap-3 rounded-xl border p-4 backdrop-blur-sm sm:flex-row sm:items-center"
       :class="glassSurface"
     >
       <!-- Search -->
       <div
-        class="flex flex-1 items-center gap-2 rounded-none border px-3 py-2.5 transition-colors"
-        :class="isDark ? 'border-onyx-border bg-onyx-black focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
+        class="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 transition-all"
+        :class="isDark ? 'border-white/10 bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
       >
-        <Icon name="ph:magnifying-glass-light" class="h-4 w-4 flex-none" :class="mutedText" />
+        <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-none" :class="mutedText" />
         <input
           v-model="search"
           type="search"
@@ -160,7 +161,7 @@
       <!-- Office filter -->
       <select
         v-model="officeFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange sm:w-56"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
         :class="inputClass"
       >
         <option value="all">All My Offices</option>
@@ -171,7 +172,7 @@
       <!-- Status filter -->
       <select
         v-model="statusFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange sm:w-44"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Statuses</option>
@@ -184,7 +185,7 @@
       <!-- Tracking filter -->
       <select
         v-model="trackingFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange sm:w-44"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Tracking</option>
@@ -201,7 +202,7 @@
     <!-- E. Documents Table                                                -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <article
-      class="overflow-hidden rounded-none border transition-colors"
+      class="overflow-hidden rounded-xl border shadow-card backdrop-blur-sm"
       :class="cardSurface"
     >
       <!-- Table header row -->
@@ -216,15 +217,15 @@
         </div>
         <div class="flex items-center gap-2">
           <span
-            class="inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase"
+            class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase"
             :class="currentScope === 'LOCAL'
-              ? isDark ? 'border-onyx-border bg-onyx-black text-candy-orange' : 'border-gray-200 bg-white text-candy-orange'
-              : isDark ? 'border-onyx-border bg-white/5 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-500'"
+              ? 'border-candy-orange/30 bg-candy-orange/5 text-candy-orange'
+              : isDark ? 'border-white/10 bg-white/5 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-500'"
           >
-            <Icon :name="currentScope === 'LOCAL' ? 'ph:buildings-light' : 'ph:globe-hemisphere-west-light'" class="h-3 w-3" />
+            <Icon :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'" class="h-3 w-3" />
             {{ currentScope === 'LOCAL' ? 'Office Scope' : 'Org Scope' }}
           </span>
-          <Icon name="ph:files-light" class="h-5 w-5 text-candy-orange" />
+          <Icon name="ph:files-fill" class="h-5 w-5 text-candy-orange" />
         </div>
       </div>
 
@@ -246,11 +247,11 @@
             <template v-if="loading">
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
                 <td class="px-5 py-4">
-                  <div class="h-4 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                  <div class="mt-1 h-3 w-32 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+                  <div class="h-4 w-48 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="mt-1 h-3 w-32 animate-pulse rounded-lg" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
                 </td>
                 <td v-for="k in 6" :key="k" class="px-5 py-4">
-                  <div class="h-4 w-20 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="h-4 w-20 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
                 </td>
               </tr>
             </template>
@@ -264,7 +265,7 @@
                 :class="[
                   borderClass,
                   isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-gray-50',
-                  activeDocument?.id === doc.id ? 'border-candy-orange ring-1 ring-inset ring-candy-orange' : '',
+                  activeDocument?.id === doc.id ? 'bg-candy-orange/5 ring-1 ring-inset ring-candy-orange/30' : '',
                 ]"
                 @click="openDocumentPreview(doc)"
               >
@@ -273,11 +274,10 @@
                   <div class="flex items-start gap-2">
                     <div
                       v-if="doc.is_own_upload"
-                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-none border"
-                      :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50'"
+                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
                       title="Your upload"
                     >
-                      <Icon name="ph:user-light" class="h-2.5 w-2.5 text-candy-orange" />
+                      <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
                     </div>
                     <div class="min-w-0">
                       <p class="font-semibold">{{ doc.title }}</p>
@@ -291,10 +291,10 @@
                 <!-- Current office -->
                 <td class="whitespace-nowrap px-5 py-4 text-xs">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-semibold"
-                    :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-semibold"
+                    :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
                   >
-                    <Icon name="ph:buildings-light" class="h-3 w-3 text-candy-orange" />
+                    <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
                     {{ doc.office_label || doc.current_label || 'Unassigned' }}
                   </span>
                 </td>
@@ -307,10 +307,10 @@
                 <!-- Source badge -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="doc.is_own_upload
-                      ? isDark ? 'border-onyx-border bg-onyx-black text-candy-orange' : 'border-gray-200 bg-white text-candy-orange'
-                      : isDark ? 'bg-white/5 border-onyx-border text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
+                      ? 'bg-candy-orange/10 text-candy-orange border-candy-orange/20'
+                      : isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
                   >
                     {{ doc.is_own_upload ? 'My Upload' : 'Routed In' }}
                   </span>
@@ -319,10 +319,10 @@
                 <!-- Tracking status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="trackingClass(doc.tracking_status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
                     {{ trackingLabel(doc.tracking_status) }}
                   </span>
                 </td>
@@ -335,10 +335,10 @@
                 <!-- Approval status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="statusClass(doc.status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
                     {{ doc.status || 'Pending' }}
                   </span>
                 </td>
@@ -348,8 +348,8 @@
             <!-- Empty -->
             <tr v-else>
               <td colspan="7" class="px-5 py-16 text-center">
-                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-none border" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
-                  <Icon name="ph:file-dashed-light" class="h-8 w-8 text-candy-orange" />
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-candy-orange/10">
+                  <Icon name="ph:file-dashed" class="h-8 w-8 text-candy-orange" />
                 </div>
                 <p class="font-bold">No documents in scope.</p>
                 <p class="mt-1 text-xs" :class="mutedText">
@@ -361,10 +361,10 @@
                 </p>
                 <button
                   type="button"
-                  class="mt-4 inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none"
+                  class="mt-4 inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
                   @click="isUploadOpen = true"
                 >
-                  <Icon name="ph:upload-simple-light" class="h-4 w-4" />
+                  <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
                   Upload Document
                 </button>
               </td>
@@ -468,8 +468,8 @@ const trackingFilter = ref<string>('all')
 
 // ── Scope toggle refs (same pattern as dashboard.vue) ─────────────────
 const scopeOptions = [
-  { value: 'LOCAL' as Scope,  label: 'Office View',  icon: 'ph:buildings-light' },
-  { value: 'GLOBAL' as Scope, label: 'Org View',     icon: 'ph:globe-hemisphere-west-light' },
+  { value: 'LOCAL' as Scope,  label: 'Office View',  icon: 'ph:buildings-fill' },
+  { value: 'GLOBAL' as Scope, label: 'Org View',     icon: 'ph:globe-hemisphere-west-fill' },
 ]
 const tabRefs = ref<Record<string, HTMLElement | null>>({})
 const indicatorStyle = ref({ left: '6px', width: '120px' })
@@ -497,16 +497,16 @@ onMounted(() => {
 
 // ── Theming ───────────────────────────────────────────────────────────
 const glassSurface = computed(() =>
-  isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'
+  isDark.value ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-white'
 )
 const cardSurface = computed(() =>
-  isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'
+  isDark.value ? 'border-white/10 bg-[#1A1A1A] shadow-xl shadow-black/30' : 'border-gray-200 bg-white shadow-card'
 )
-const borderClass  = computed(() => isDark.value ? 'border-onyx-border' : 'border-gray-100')
+const borderClass  = computed(() => isDark.value ? 'border-white/5' : 'border-gray-100')
 const mutedText    = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const inputClass   = computed(() =>
   isDark.value
-    ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-500'
+    ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
 
@@ -515,8 +515,8 @@ const kpiCards = computed(() => [
   {
     label: 'Total Docs',
     value: docs.value.length,
-    icon: 'ph:files-light',
-    iconBg: isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50',
+    icon: 'ph:files-fill',
+    iconBg: 'bg-candy-orange/10',
     iconColor: 'text-candy-orange',
     trend: currentScope.value === 'LOCAL' ? 'In your offices' : 'Org-wide',
     trendColor: 'text-candy-orange',
@@ -524,26 +524,26 @@ const kpiCards = computed(() => [
   {
     label: 'My Uploads',
     value: docs.value.filter((d) => d.is_own_upload).length,
-    icon: 'ph:user-light',
-    iconBg: isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50',
-    iconColor: 'text-blue-500',
+    icon: 'ph:user-fill',
+    iconBg: 'bg-blue-500/10',
+    iconColor: 'text-blue-400',
     trend: 'Registered by you',
     trendColor: isDark.value ? 'text-gray-500' : 'text-gray-400',
   },
   {
     label: 'In Transit',
     value: docs.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length,
-    icon: 'ph:van-light',
-    iconBg: isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50',
-    iconColor: 'text-purple-500',
+    icon: 'ph:van-fill',
+    iconBg: 'bg-purple-500/10',
+    iconColor: 'text-purple-400',
     trend: 'Moving now',
-    trendColor: 'text-purple-500',
+    trendColor: 'text-purple-400',
   },
   {
     label: 'Completed',
     value: docs.value.filter((d) => d.tracking_status === 'COMPLETED').length,
-    icon: 'ph:check-circle-light',
-    iconBg: isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-gray-50',
+    icon: 'ph:check-circle-fill',
+    iconBg: 'bg-green-500/10',
     iconColor: 'text-green-400',
     trend: 'Fully delivered',
     trendColor: 'text-green-400',
@@ -576,22 +576,22 @@ const resolveOfficeName = (officeId: string | number | null | undefined) => {
 // ── Badge helpers ─────────────────────────────────────────────────────
 const statusClass = (s: string) => {
   switch ((s || 'Pending').toLowerCase()) {
-    case 'approved':   return isDark.value ? 'border-onyx-border bg-onyx-black text-green-500' : 'border-gray-200 bg-white text-green-600'
-    case 'rejected':   return isDark.value ? 'border-onyx-border bg-onyx-black text-red-500' : 'border-gray-200 bg-white text-red-600'
-    case 'processing': return isDark.value ? 'border-onyx-border bg-onyx-black text-blue-500' : 'border-gray-200 bg-white text-blue-600'
-    case 'in review':  return isDark.value ? 'border-onyx-border bg-onyx-black text-blue-500' : 'border-gray-200 bg-white text-blue-600'
-    default:           return isDark.value ? 'border-onyx-border bg-onyx-black text-candy-orange' : 'border-gray-200 bg-white text-candy-orange'
+    case 'approved':   return 'text-green-500 border-green-500/30 bg-green-500/10'
+    case 'rejected':   return 'text-red-500 border-red-500/30 bg-red-500/10'
+    case 'processing': return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+    case 'in review':  return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+    default:           return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
   }
 }
 
 const trackingClass = (s?: string) => {
   switch (s) {
-    case 'COMPLETED':         return isDark.value ? 'border-onyx-border bg-onyx-black text-green-500' : 'border-gray-200 bg-white text-green-600'
-    case 'IN_TRANSIT':        return isDark.value ? 'border-onyx-border bg-onyx-black text-blue-500' : 'border-gray-200 bg-white text-blue-600'
-    case 'PICKED_UP':         return isDark.value ? 'border-onyx-border bg-onyx-black text-purple-500' : 'border-gray-200 bg-white text-purple-600'
-    case 'ARRIVED_AT_OFFICE': return isDark.value ? 'border-onyx-border bg-onyx-black text-teal-500' : 'border-gray-200 bg-white text-teal-600'
-    case 'DISCREPANCY_REPORTED': return isDark.value ? 'border-onyx-border bg-onyx-black text-amber-500' : 'border-gray-200 bg-white text-amber-600'
-    default:                  return isDark.value ? 'border-onyx-border bg-onyx-black text-candy-orange' : 'border-gray-200 bg-white text-candy-orange'
+    case 'COMPLETED':         return 'text-green-500 border-green-500/30 bg-green-500/10'
+    case 'IN_TRANSIT':        return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+    case 'PICKED_UP':         return 'text-purple-400 border-purple-400/30 bg-purple-400/10'
+    case 'ARRIVED_AT_OFFICE': return 'text-teal-400 border-teal-400/30 bg-teal-400/10'
+    case 'DISCREPANCY_REPORTED': return 'text-amber-400 border-amber-400/30 bg-amber-400/10'
+    default:                  return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
   }
 }
 
@@ -711,6 +711,13 @@ watch(() => route.query.document, async () => {
   if (route.query.document) await openDocumentFromQuery()
   else if (!route.query.document) activeDocument.value = null
 })
+</script>
+
+<style scoped>
+/* Scope toggle transition */
+.scope-fade-enter-active, .scope-fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.scope-fade-enter-from, .scope-fade-leave-to { opacity: 0; transform: translateY(4px); }
+</style>
 </script>
 
 <style scoped>

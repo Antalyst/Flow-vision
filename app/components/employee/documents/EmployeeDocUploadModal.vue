@@ -149,6 +149,37 @@
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 2.5 DOCUMENT CATEGORY PICKER                              -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div>
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <span class="text-sm font-semibold" :class="headingClass">
+                    Document Category <span class="text-red-500">*</span>
+                  </span>
+                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                    Classification for SLA predictive analytics.
+                  </p>
+                </div>
+              </div>
+              <div class="mt-2">
+                <select
+                  v-model="selectedCategoryId"
+                  class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange bg-transparent"
+                  :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
+                >
+                  <option value="" disabled>Select a category...</option>
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.id" :class="isDark ? 'bg-onyx-black text-white' : 'bg-white text-gray-900'">
+                    {{ cat.name }}
+                  </option>
+                </select>
+                <div v-if="!categories.length" class="mt-1 text-[10px] text-amber-500">
+                  <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
             <!-- 3. ROUTING PATHWAY PICKER                                 -->
             <!-- ══════════════════════════════════════════════════════════ -->
             <div>
@@ -638,6 +669,9 @@ const printQrDataUrl         = ref('')
 const manualTitle            = ref('')
 const manualDescription      = ref('')
 
+const categories = ref<{ id: string; name: string }[]>([])
+const selectedCategoryId = ref<string>('')
+
 const isExcelFile = computed(() => {
   if (!selectedFile.value) return false
   const name = selectedFile.value.name.toLowerCase()
@@ -738,6 +772,7 @@ const canSubmit = computed(
     !!selectedFile.value &&
     !!selectedOriginOfficeId.value &&
     !!selectedStageId.value &&
+    !!selectedCategoryId.value &&
     !uploading.value
 )
 
@@ -891,42 +926,42 @@ const printEmbeddedDocument = async (file: File, qrDataUrl: string) => {
 
 // ── Submit: print → persist ───────────────────────────────────────────
 const handlePrintAndSubmit = async () => {
-  errorMessage.value = ''
-  if (!selectedFile.value)           { errorMessage.value = 'Please select a file.';              return }
-  if (!selectedOriginOfficeId.value) { errorMessage.value = 'Please select your origin office.';  return }
-  if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
-
-  const trackingCode = currentTrackingId.value || generateTrackingId()
-  currentTrackingId.value = trackingCode
-
-  let qrDataUrl = ''
-  try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
-
-  if (selectedStrategy.value === 'embedded') {
-    await printEmbeddedDocument(selectedFile.value, qrDataUrl)
-  } else {
-    await printStandaloneDocument(selectedFile.value, qrDataUrl)
-  }
+  if (!canSubmit.value) return
 
   uploading.value = true
+  errorMessage.value = ''
+
   try {
-    const fd = new FormData()
-    fd.append('file',             selectedFile.value, selectedFile.value.name)
-    fd.append('origin_office_id', selectedOriginOfficeId.value)
-    fd.append('office_id',        selectedOriginOfficeId.value)
-    fd.append('stage_id',         selectedStageId.value)
-    fd.append('qr_code_data',     trackingCode)
-    fd.append('user_id',          String(auth.user?.user_id ?? ''))
-    fd.append('org_id',           String(auth.user?.org_id ?? ''))
-    
-    if (isExcelFile.value) {
-      if (manualTitle.value) fd.append('manual_title', manualTitle.value)
-      if (manualDescription.value) fd.append('manual_description', manualDescription.value)
+    const formData = new FormData()
+    formData.append('file', selectedFile.value!)
+    formData.append('stage_id', selectedStageId.value)
+    formData.append('origin_office_id', selectedOriginOfficeId.value)
+    formData.append('category_id', selectedCategoryId.value)
+
+    if (isExcelFile.value && (manualTitle.value || manualDescription.value)) {
+      formData.append('manual_title', manualTitle.value)
+      formData.append('manual_description', manualDescription.value)
     }
 
+    const trackingCode = currentTrackingId.value || generateTrackingId()
+    currentTrackingId.value = trackingCode
+
+    let qrDataUrl = ''
+    try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
+
+    if (selectedStrategy.value === 'embedded') {
+      await printEmbeddedDocument(selectedFile.value!, qrDataUrl)
+    } else {
+      await printStandaloneDocument(selectedFile.value!, qrDataUrl)
+    }
+
+    formData.append('qr_code_data', trackingCode)
+    formData.append('user_id',          String(auth.user?.user_id ?? ''))
+    formData.append('org_id',           String(auth.user?.org_id ?? ''))
+    
     const res = await $fetch<{ success: boolean; data?: any }>('/api/documents/upload', {
       method: 'POST',
-      body: fd,
+      body: formData,
     })
 
     if (res.success) {

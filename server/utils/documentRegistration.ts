@@ -17,6 +17,7 @@ export interface RegisterDocumentBody {
   priority: DocumentPriority
   stage_id: string
   origin_office_id?: string | null
+  category_id?: string | null
 }
 
 interface ResolvedRouteStep {
@@ -45,6 +46,7 @@ export async function registerMetadataDocument(event: H3Event, body: RegisterDoc
   const priority = body.priority
   const stageIdRaw = body.stage_id?.trim()
   const originOfficeId = body.origin_office_id?.trim() || null
+  const categoryId = body.category_id?.trim() || null
 
   if (!title) {
     throw createError({ statusCode: 400, message: 'Document title is required.' })
@@ -250,6 +252,7 @@ export async function registerMetadataDocument(event: H3Event, body: RegisterDoc
       office_id: effectiveOfficeId,
       stage_id: resolvedStageId,
       user_id: userId,
+      category_id: categoryId,
       title,
       description,
       qr_code_data: qrPayload,

@@ -77,6 +77,25 @@
             </div>
           </div>
 
+          <!-- Target Category -->
+          <label class="block">
+            <span class="text-sm font-semibold" :class="headingClass">Document Category <span class="text-red-500">*</span></span>
+            <select
+              v-model="categoryId"
+              class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-candy-orange"
+              :class="inputClass"
+              required
+            >
+              <option value="" disabled>Select a category</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+            <p v-if="!categories.length" class="mt-2 text-xs text-amber-500">
+              No categories available.
+            </p>
+          </label>
+
           <!-- Target route -->
           <label class="block">
             <span class="text-sm font-semibold" :class="headingClass">Target Route</span>
@@ -210,6 +229,8 @@ const title = ref('')
 const description = ref('')
 const priority = ref<Priority>('Medium')
 const stageId = ref('')
+const categoryId = ref('')
+const categories = ref<{ id: string; name: string }[]>([])
 const originOfficeId = ref('')
 const routeTab = ref<RouteTab>('global')
 const errorMessage = ref('')
@@ -265,6 +286,7 @@ const resetForm = () => {
   description.value = ''
   priority.value = 'Medium'
   stageId.value = ''
+  categoryId.value = ''
   originOfficeId.value = ''
   routeTab.value = 'global'
   errorMessage.value = ''
@@ -304,6 +326,7 @@ const handleSubmit = async () => {
       description: description.value.trim(),
       priority: priority.value,
       stageId: stageId.value,
+      categoryId: categoryId.value,
       originOfficeId: props.role === 'employee' ? originOfficeId.value : null,
     })
 
@@ -324,8 +347,13 @@ const handleSubmit = async () => {
 watch(
   () => props.isOpen,
   async (open) => {
-    if (open && !stageStore.stages.length) {
-      await stageStore.fetchStages()
+    if (open) {
+      if (!stageStore.stages.length) {
+        await stageStore.fetchStages()
+      }
+      const client = useSupabaseClient()
+      const { data } = await client.from('document_categories').select('id, name')
+      if (data) categories.value = data
     }
     if (!open) {
       resetForm()

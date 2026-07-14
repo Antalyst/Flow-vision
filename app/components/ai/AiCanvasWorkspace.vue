@@ -288,6 +288,33 @@
                   </div>
                 </button>
 
+                <!-- Semantic Search Inline Document Cards -->
+                <div v-if="msg.inlineDocuments && msg.inlineDocuments.length > 0" class="mt-4 space-y-2">
+                  <button
+                    v-for="doc in msg.inlineDocuments"
+                    :key="doc.id"
+                    type="button"
+                    class="fv-ai-interactive group flex w-full flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-all duration-300 active:scale-[0.99] dark:border-white/10 dark:bg-black/20 hover:border-orange-500/40 hover:shadow-sm"
+                  >
+                    <div class="flex items-center gap-3">
+                      <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/20 dark:text-orange-400">
+                        <Icon name="ph:file-text" class="h-4 w-4" />
+                      </span>
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
+                          {{ doc.title || 'Untitled Document' }}
+                        </span>
+                        <span class="block text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                          {{ doc.description || 'No description provided.' }}
+                        </span>
+                      </span>
+                      <div class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 transition-colors group-hover:bg-orange-500/10 group-hover:text-orange-600 dark:bg-white/10 dark:text-neutral-500 dark:group-hover:bg-orange-500/20 dark:group-hover:text-orange-400">
+                        <Icon name="ph:arrow-right" class="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
                 <span class="block px-1 font-mono text-[11px] text-neutral-400 dark:text-neutral-600">{{ msg.timestamp }}</span>
               </div>
             </div>
@@ -519,6 +546,7 @@ interface ChatMessage {
   content: string
   timestamp: string
   documentPayload?: DocumentPayload | null
+  inlineDocuments?: Record<string, any>[] | null
   isNew?: boolean
 }
 interface ChatSession {
@@ -535,6 +563,7 @@ interface StoredMessage {
 }
 
 const { isDark } = useTheme()
+const route = useRoute()
 const { enterClass, staggerDelay } = useAiWorkspaceEntrance()
 const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png'))
 
@@ -608,15 +637,17 @@ const thinkingStages = computed(() =>
   props.scope === 'LOCAL'
     ? [
         'Reading secure organisation token…',
-        'Applying office-scope isolation filter…',
-        'Extracting records from your branch(es)…',
+        'Isolating branch-level step sequence data bounds...',
+        'Mapping routing pipeline topology structures...',
+        'Executing semantic query over internal tracking ledger histories...',
         'Hydrating document content from storage…',
         'Assembling office-scoped report structure…',
       ]
     : [
         'Reading secure organisation token…',
-        'Parsing document schema matchers…',
-        'Executing tenant-isolated extraction logic…',
+        'Applying global routing topology map analysis...',
+        'Mapping routing pipeline topology structures...',
+        'Executing semantic query over internal tracking ledger histories...',
         'Hydrating distributed document blocks…',
         'Assembling organisation-wide data template…',
       ],
@@ -1017,6 +1048,7 @@ const selectSession = async (id: string) => {
       content: m.content,
       timestamp: formatTime(m.created_at),
       documentPayload: m.role === 'assistant' ? extractDocumentPayload(m.metadata) : null,
+      inlineDocuments: m.role === 'assistant' ? (m.metadata as any)?.inlineDocuments || null : null,
     }))
 
     // If the database returns 0 messages for this session, revert to the splash screen
@@ -1071,6 +1103,7 @@ const submitQuery = async () => {
         session_id: activeSessionId.value,
         scope:     props.scope,
         officeIds: props.officeIds,
+        current_page_context: route.path,
       },
     })
 
@@ -1081,6 +1114,7 @@ const submitQuery = async () => {
 
     // Prefer the unified documentPayload; fall back to legacy dataset metadata.
     const doc = extractDocumentPayload(data) ?? extractDocumentPayload({ dataBuilderOutput: data?.dataBuilderOutput })
+    const inlineDocs = data?.inlineDocuments || null
     const reply =
       data?.reply || (doc ? `Prepared “${doc.title}”.` : 'Done.')
 
@@ -1089,11 +1123,15 @@ const submitQuery = async () => {
       content: reply,
       timestamp: nowLabel(),
       documentPayload: doc,
+      inlineDocuments: inlineDocs,
       isNew: true,
     })
 
-    // A document payload was received — slide the canvas open automatically.
-    if (doc) {
+    // Intercept SYSTEM_ASSISTANT_HELP responses to explicitly protect viewport state
+    if (data?.mode === 'assistant_chat') {
+      // Do nothing to the canvas. It will stay open/closed as it was, retaining any active matrix.
+    } else if (doc) {
+      // A document payload was received — slide the canvas open automatically.
       openCanvas(doc)
     }
 

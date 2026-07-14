@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     //   origin_office_id  → set at upload time for employee-created docs
     //   current_office_id → updated on every ARRIVED_AT_OFFICE event
     //   office_id         → legacy column; still present on older rows
-    if (scope === 'LOCAL' && actor.userRole === 'employee') {
+    if (scope === 'LOCAL' && (actor.userRole === 'employee' || actor.userRole === 'employee_sub_user')) {
       if (actor.officeIds.length === 0) {
         // Employee has no assigned offices — return only their own uploads
         dbQuery = dbQuery.eq('user_id', actor.userId)
