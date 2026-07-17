@@ -125,7 +125,7 @@ const STEP_FADE = 0.04
 const chapters = [
   {
     number: 1,
-    title: 'Enterprise Document Tracking',
+    title: 'Enterprise Document Routing',
     description:
       'FlowVision unifies physical document logistics with digital precision. Track every physical packet, scan, and office handoff across your organization in real time, ensuring strict SLA compliance.',
     bottomLeft: {
@@ -136,39 +136,39 @@ const chapters = [
     bottomRight: {
       label: 'SLA Monitoring',
       title: 'Predictive Dashboards',
-      body: 'Identify workflow bottlenecks before they become SLA breaches using AI-driven network topology maps.',
+      body: 'Identify workflow bottlenecks before they become SLA breaches using real-time network topology maps.',
     },
   },
   {
     number: 2,
-    title: 'Semantic Search & RAG AI',
+    title: 'Collaborative Decision Rooms',
     description:
-      'Turn your physical archives into an intelligent knowledge base. FlowVision extracts metadata from uploads and creates vectorized embeddings for instant, context-aware querying.',
+      'Cross-functional teams coordinate in real time. Handoffs, escalations, and routing decisions stay visible so nothing slips between departmental silos.',
     bottomLeft: {
-      label: 'Discovery',
-      title: 'Deep Semantic Search',
-      body: 'Find documents instantly using natural language queries instead of relying solely on exact keyword matches.',
+      label: 'Teams',
+      title: 'Shared Workspaces',
+      body: 'Messengers, clerks, and clients collaborate seamlessly on the exact same live custody thread.',
     },
     bottomRight: {
-      label: 'Intelligence',
-      title: 'Contextual AI Assistant',
-      body: 'Ask the FlowVision AI complex questions about your documents and receive instant, verifiable answers.',
+      label: 'Visibility',
+      title: 'Unified Communication',
+      body: 'Resolve routing issues instantly with embedded communication tools built directly into the tracking pipeline.',
     },
   },
   {
     number: 3,
-    title: 'Automated OCR & Classification',
+    title: 'Real-Time Digital Pipeline',
     description:
-      'Eliminate manual data entry. Uploaded PDFs and images are automatically processed by advanced OCR, extracting raw text and categorizing payloads for optimal workflow routing.',
+      'As physical documents move, digital telemetry updates instantly. Track every handoff across your organization\'s infrastructure with zero latency and full audit lineage.',
     bottomLeft: {
-      label: 'Automation',
-      title: 'Intelligent Ingestion',
-      body: 'Raw files are parsed instantly, generating machine-readable text and extracting vital metadata automatically.',
+      label: 'Telemetry',
+      title: 'Live Tracking Streams',
+      body: 'Status updates propagate across the entire organizational network in milliseconds.',
     },
     bottomRight: {
       label: 'Security',
-      title: 'Cloud Document Storage',
-      body: 'Payloads are safely split-stored between relational Postgres databases and secure Supabase blob storage.',
+      title: 'Immutable Archives',
+      body: 'Every scan and status change is logged into a permanent, verifiable audit trail for compliance.',
     },
   },
   {
@@ -189,18 +189,18 @@ const chapters = [
   },
   {
     number: 5,
-    title: 'Workload & Anomaly Analytics',
+    title: 'Decentralized Storage Cloud',
     description:
-      'Leverage machine learning to anticipate operational stress. FlowVision monitors office queues, predicts messenger delays, and surfaces route anomalies automatically.',
+      'Document records and telemetry are securely split-stored across cloud nodes, ensuring high-availability access and resilient backups that scale with your enterprise.',
     bottomLeft: {
-      label: 'Predictive AI',
-      title: 'SLA Breach Forecasting',
-      body: 'AI analyzes historical routing times and current load to alert admins of potential delays before they happen.',
+      label: 'Storage',
+      title: 'Scalable Architecture',
+      body: 'Payloads are safely distributed between relational Postgres databases and secure Supabase blob storage.',
     },
     bottomRight: {
-      label: 'Operations',
-      title: 'Messenger Insights',
-      body: 'Optimize team performance with data-driven insights into route efficiency and office-level workload volumes.',
+      label: 'Performance',
+      title: 'Edge Reliability',
+      body: 'Critical data remains accessible instantly, supporting operations without relying on a single bottleneck.',
     },
   },
 ]
