@@ -718,10 +718,3 @@ watch(() => route.query.document, async () => {
 .scope-fade-enter-active, .scope-fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
 .scope-fade-enter-from, .scope-fade-leave-to { opacity: 0; transform: translateY(4px); }
 </style>
-</script>
-
-<style scoped>
-/* Scope toggle transition */
-.scope-fade-enter-active, .scope-fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
-.scope-fade-enter-from, .scope-fade-leave-to { opacity: 0; transform: translateY(4px); }
-</style>
