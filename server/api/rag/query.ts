@@ -364,10 +364,18 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // ── Branch R: iterative document revision (no DB re-query) ────────────────
   if (intent === 'document_revision' && activeDocument) {
-    const documentPayload = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
-    const reply = wantsSpreadsheetFormat(prompt)
-      ? `Converted “${documentPayload.title}” into a spreadsheet data matrix.`
-      : `Updated “${documentPayload.title}” with your requested changes.`;
+    const isPutInCanvas = prompt.toLowerCase().includes('canvas') || prompt.toLowerCase().includes('open');
+    let documentPayload = activeDocument;
+    
+    if (!isPutInCanvas) {
+      documentPayload = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
+    }
+    
+    const reply = isPutInCanvas
+      ? `I've moved the document “${documentPayload.title}” into your canvas workspace.`
+      : wantsSpreadsheetFormat(prompt)
+        ? `Converted “${documentPayload.title}” into a spreadsheet data matrix.`
+        : `Updated “${documentPayload.title}” with your requested changes.`;
 
     try {
       await persistMessage(sessionId, 'assistant', reply, { documentPayload });
@@ -377,7 +385,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
     return {
       success: true,
-      mode: 'document_revision',
+      mode: isPutInCanvas ? 'INTENT_INTERNAL_TOPOLOGY' : 'document_revision',
       session_id: sessionId,
       reply,
       documentPayload,
@@ -689,6 +697,72 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
       session_id: sessionId,
       reply: semanticReply,
       inlineDocuments: hydratedRows,
+    };
+  }
+
+  // ── Branch M: Document Summary ──────────────────────────────────────────
+  if (intent === 'document_summary') {
+    if (hydratedRows.length === 0) {
+      const reply = `I couldn't find any documents matching your request to summarize.`;
+      try { await persistMessage(sessionId, 'assistant', reply); } catch (e) {}
+      return { success: true, mode: 'conversation', session_id: sessionId, reply };
+    }
+
+    const docToSummarize = hydratedRows[0];
+    const systemInstruction = `
+      You are the FlowVision AI Intelligence Engine.
+      The user wants a summary, explanation, analysis, or overview of the following document:
+      
+      Title: ${docToSummarize.title || 'Untitled Document'}
+      Description: ${docToSummarize.description || 'No description provided.'}
+      Content:
+      ${docToSummarize.actualFileTextContent || 'No text content available.'}
+      
+      CRITICAL FORMATTING RULES:
+      1. Write a natural, user-friendly markdown summary report.
+      2. Keep our scannable emoji text layout engine intact (e.g., use emojis in subheadings).
+      3. Do NOT include any internal database UUID strings or JSON formats.
+      4. Speak naturally directly to the user's prompt: "${prompt}"
+    `;
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    let summaryText = 'Summary generation failed.';
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'system', content: systemInstruction }],
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.3,
+      });
+      summaryText = completion.choices[0]?.message?.content?.trim() || summaryText;
+    } catch (e) {
+      console.error('[Document Summary] generation failed:', e);
+    }
+
+    let htmlContent = summaryText;
+    try {
+      const { marked } = await import('marked');
+      htmlContent = await marked.parse(summaryText);
+    } catch (err) {
+      console.error('Failed to parse markdown', err);
+      // Fallback to basic HTML wrapping if marked fails
+      htmlContent = `<div style="white-space: pre-wrap;">${summaryText}</div>`;
+    }
+
+    const documentPayload: DocumentPayload = {
+      title: `Analysis: ${docToSummarize.title || 'Document'}`,
+      htmlContent: htmlContent
+    };
+
+    const reply = `I have analyzed the document and prepared a detailed breakdown for you. I've opened it in the workspace panel on the right so you can review it clearly.`;
+
+    try { await persistMessage(sessionId, 'assistant', reply, { documentPayload }); } catch (e) {}
+    
+    return {
+      success: true,
+      mode: 'INTENT_INTERNAL_TOPOLOGY',
+      session_id: sessionId,
+      reply: reply,
+      documentPayload
     };
   }
 

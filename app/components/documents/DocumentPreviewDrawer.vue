@@ -391,7 +391,7 @@ const props = withDefaults(defineProps<{
   pipelineMessagingEnabled?: boolean
   messagingOffices?: MessagingOffice[]
 }>(), {
-  widthClass: 'lg:max-w-2xl lg:w-[42rem]',
+  widthClass: 'lg:max-w-3xl lg:w-[45vw]',
   showComplianceActions: false,
   showCompletionActions: false,
   pipelineMessagingEnabled: false,

@@ -201,6 +201,8 @@ const officeStore = useOfficeStore()
 const stageStore = useStageStore()
 const documentStore = useDocumentStore()
 const { isDark } = useTheme()
+const route = useRoute()
+const router = useRouter()
 
 const isUploadModalOpen = ref(false)
 const activeDocument = ref<DocumentRecord | null>(null)
@@ -289,6 +291,9 @@ const openDocumentPreview = (doc: DocumentRecord) => {
 
 const closeDocumentPreview = () => {
   activeDocument.value = null
+  if (route.query.id || route.query.document) {
+    router.replace({ query: { ...route.query, id: undefined, document: undefined } })
+  }
 }
 
 const handleUploadSuccess = () => {
@@ -306,5 +311,15 @@ onMounted(async () => {
     stageStore.fetchStages(),
     documentStore.fetchDocuments(),
   ])
+
+  const checkRouteForDocument = () => {
+    const routeId = route.query.id || route.query.document
+    if (routeId) {
+      const doc = documentStore.documents.find(d => String(d.id) === String(routeId))
+      if (doc) activeDocument.value = doc
+    }
+  }
+
+  watch(() => route.query, checkRouteForDocument, { deep: true, immediate: true })
 })
 </script>

@@ -14,28 +14,28 @@ CREATE POLICY "Users can view categories in their org"
   ON public.document_categories
   FOR SELECT
   USING (
-    org_id = (SELECT org_id FROM public.profiles WHERE id = auth.uid())
+    org_id = (SELECT org_id FROM public.users WHERE user_id = auth.uid())
   );
 
 CREATE POLICY "Users can insert categories in their org"
   ON public.document_categories
   FOR INSERT
   WITH CHECK (
-    org_id = (SELECT org_id FROM public.profiles WHERE id = auth.uid())
+    org_id = (SELECT org_id FROM public.users WHERE user_id = auth.uid())
   );
 
 CREATE POLICY "Users can update categories in their org"
   ON public.document_categories
   FOR UPDATE
   USING (
-    org_id = (SELECT org_id FROM public.profiles WHERE id = auth.uid())
+    org_id = (SELECT org_id FROM public.users WHERE user_id = auth.uid())
   );
 
 CREATE POLICY "Users can delete categories in their org"
   ON public.document_categories
   FOR DELETE
   USING (
-    org_id = (SELECT org_id FROM public.profiles WHERE id = auth.uid())
+    org_id = (SELECT org_id FROM public.users WHERE user_id = auth.uid())
   );
 
 -- Add category_id to public.documents

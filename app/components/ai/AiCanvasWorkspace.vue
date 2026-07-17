@@ -294,7 +294,8 @@
                     v-for="doc in msg.inlineDocuments"
                     :key="doc.id"
                     type="button"
-                    class="fv-ai-interactive group flex w-full flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-all duration-300 active:scale-[0.99] dark:border-white/10 dark:bg-black/20 hover:border-orange-500/40 hover:shadow-sm"
+                    class="fv-ai-interactive group flex w-full flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-all duration-300 active:scale-[0.99] cursor-pointer hover:bg-opacity-80 transition dark:border-white/10 dark:bg-black/20 hover:border-orange-500/40 hover:shadow-sm"
+                    @click="navigateTo(`/client/documents?id=${doc.id}`)"
                   >
                     <div class="flex items-center gap-3">
                       <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/20 dark:text-orange-400">

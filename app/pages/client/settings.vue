@@ -86,6 +86,55 @@
       </section>
 
       <section class="rounded-none border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Document Categories</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Manage the categories available when uploading documents.</p>
+        
+        <div class="mt-4 flex flex-col gap-4">
+          <form @submit.prevent="handleAddCategory" class="flex items-center gap-2">
+            <input
+              v-model="newCategoryName"
+              type="text"
+              placeholder="e.g. Invoice, Contract"
+              class="flex-1 rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+              :class="isDark ? 'border-white/10 bg-onyx-black text-white focus:bg-onyx-black' : 'border-gray-200 bg-white focus:bg-white'"
+              :disabled="categoriesStore.loading"
+            />
+            <button
+              type="submit"
+              class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-none border bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:bg-candy-orange/90 active:scale-[0.98] disabled:opacity-50"
+              :disabled="categoriesStore.loading || !newCategoryName.trim()"
+            >
+              <Icon v-if="categoriesStore.loading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
+              <Icon v-else name="ph:plus-bold" class="h-4 w-4" />
+              Add
+            </button>
+          </form>
+
+          <div class="flex flex-col rounded-none border" :class="innerPanelClass">
+            <div v-if="categoriesStore.categories.length === 0" class="px-4 py-4 text-center text-xs" :class="mutedClass">
+              No categories created yet.
+            </div>
+            <div
+              v-for="category in categoriesStore.categories"
+              :key="category.id"
+              class="flex items-center justify-between border-b px-4 py-3 last:border-0"
+              :class="isDark ? 'border-white/5' : 'border-gray-100'"
+            >
+              <span class="text-sm font-medium" :class="headingClass">{{ category.name }}</span>
+              <button
+                type="button"
+                class="text-gray-400 transition hover:text-red-500"
+                :disabled="categoriesStore.loading"
+                @click="handleDeleteCategory(category.id)"
+              >
+                <Icon name="ph:trash" class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-none border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Account</h2>
         <p class="mt-1 text-xs" :class="mutedClass">
           Signed in as <span class="font-medium" :class="headingClass">{{ auth.user?.email }}</span>
@@ -119,8 +168,31 @@ import SettingToggleRow from '~/components/messenger/SettingToggleRow.vue'
 import { useClientSettings } from '~/composables/useClientSettings'
 import { useClientToast } from '~/composables/useClientToast'
 import { useAuthStore } from '~/stores/auth'
+import { useCategoriesStore } from '~/stores/categories'
 
 const auth = useAuthStore()
+const categoriesStore = useCategoriesStore()
+const newCategoryName = ref('')
+
+async function handleAddCategory() {
+  if (!newCategoryName.value.trim()) return
+  try {
+    await categoriesStore.addCategory(newCategoryName.value)
+    newCategoryName.value = ''
+    showToast('Category added successfully.')
+  } catch (err: any) {
+    showToast(err.message || 'Failed to add category.', 'error')
+  }
+}
+
+async function handleDeleteCategory(id: string) {
+  try {
+    await categoriesStore.deleteCategory(id)
+    showToast('Category deleted.')
+  } catch (err: any) {
+    showToast(err.message || 'Failed to delete category.', 'error')
+  }
+}
 
 definePageMeta({ layout: 'client' })
 
@@ -203,6 +275,7 @@ onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) {
     await auth.fetchMyOrg()
   }
+  await categoriesStore.fetchCategories()
 })
 </script>
 

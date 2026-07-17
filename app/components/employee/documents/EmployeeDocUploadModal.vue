@@ -169,11 +169,11 @@
                   :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
                 >
                   <option value="" disabled>Select a category...</option>
-                  <option v-for="cat in categories" :key="cat.id" :value="cat.id" :class="isDark ? 'bg-onyx-black text-white' : 'bg-white text-gray-900'">
+                  <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id" :class="isDark ? 'bg-onyx-black text-white' : 'bg-white text-gray-900'">
                     {{ cat.name }}
                   </option>
                 </select>
-                <div v-if="!categories.length" class="mt-1 text-[10px] text-amber-500">
+                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[10px] text-amber-500">
                   <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
                 </div>
               </div>
@@ -609,6 +609,7 @@ import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanv
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
+import { useCategoriesStore } from '~/stores/categories'
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface OfficeRecord { id: string; name: string; code?: string }
@@ -639,6 +640,7 @@ const emit = defineEmits<{
 const stageStore  = useStageStore()
 const officeStore = useOfficeStore()
 const auth        = useAuthStore()
+const categoriesStore = useCategoriesStore()
 const { isDark }  = useTheme()
 
 // ── Route scope tab ───────────────────────────────────────────────────
@@ -669,7 +671,6 @@ const printQrDataUrl         = ref('')
 const manualTitle            = ref('')
 const manualDescription      = ref('')
 
-const categories = ref<{ id: string; name: string }[]>([])
 const selectedCategoryId = ref<string>('')
 
 const isExcelFile = computed(() => {
@@ -770,7 +771,6 @@ const onOriginOfficeChange = () => {
 const canSubmit = computed(
   () =>
     !!selectedFile.value &&
-    !!selectedOriginOfficeId.value &&
     !!selectedStageId.value &&
     !!selectedCategoryId.value &&
     !uploading.value
@@ -801,6 +801,7 @@ watch(
     if (!open) return
     if (!stageStore.stages.length) stageStore.fetchStages()
     if (!officeStore.offices.length) officeStore.fetchOffices()
+    if (!categoriesStore.categories.length) categoriesStore.fetchCategories()
   }
 )
 
@@ -841,6 +842,7 @@ const handleClose = () => {
   clearFile()
   // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
+  selectedCategoryId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   printQrDataUrl.value = ''
@@ -972,6 +974,7 @@ const handlePrintAndSubmit = async () => {
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
+      selectedCategoryId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
     } else {

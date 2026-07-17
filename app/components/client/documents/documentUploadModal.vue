@@ -414,7 +414,31 @@
               </Transition>
             </div>
 
-            <!-- 4. QR Code Placement Strategy -->
+            <!-- 4. Document Category -->
+            <div>
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <span class="text-sm font-semibold" :class="headingClass">
+                    Document Category <span class="text-red-500">*</span>
+                  </span>
+                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                    Select a category to help organize documents.
+                  </p>
+                </div>
+              </div>
+              <select
+                v-model="selectedCategoryId"
+                class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                :class="inputClass"
+              >
+                <option value="" disabled>-- Select Category --</option>
+                <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id">
+                  {{ cat.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- 5. QR Code Placement Strategy -->
             <div>
               <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
 
@@ -578,6 +602,7 @@ import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanv
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
+import { useCategoriesStore } from '~/stores/categories'
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface OfficeRecord { id: string; name: string; code?: string }
@@ -607,6 +632,7 @@ const emit = defineEmits<{
 const stageStore  = useStageStore()
 const officeStore = useOfficeStore()
 const auth        = useAuthStore()
+const categoriesStore = useCategoriesStore()
 const { isDark }  = useTheme()
 
 // ── Route scope tab ───────────────────────────────────────────────────
@@ -624,6 +650,7 @@ const selectedOriginOfficeId = computed(() => {
   return props.officeId ? String(props.officeId) : ''
 })
 const selectedStageId        = ref<string>('')
+const selectedCategoryId     = ref<string>('')
 const selectedStrategy       = ref<'embedded' | 'standalone'>('embedded')
 const selectedQrSize         = ref<50 | 120 | 200>(120)
 const currentTrackingId      = ref('')
@@ -733,8 +760,8 @@ const onOriginOfficeChange = () => {
 const canSubmit = computed(
   () =>
     !!selectedFile.value &&
-    !!selectedOriginOfficeId.value &&
     !!selectedStageId.value &&
+    !!selectedCategoryId.value &&
     !uploading.value
 )
 
@@ -763,6 +790,7 @@ watch(
     if (!open) return
     if (!stageStore.stages.length) stageStore.fetchStages()
     if (!officeStore.offices.length) officeStore.fetchOffices()
+    if (!categoriesStore.categories.length) categoriesStore.fetchCategories()
   }
 )
 
@@ -803,6 +831,7 @@ const handleClose = () => {
   clearFile()
   // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
+  selectedCategoryId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   printQrDataUrl.value = ''
@@ -886,11 +915,11 @@ const printEmbeddedDocument = async (file: File, qrDataUrl: string) => {
   window.print()
 }
 
-// ── Submit: print → persist ───────────────────────────────────────────
 const handlePrintAndSubmit = async () => {
   errorMessage.value = ''
   if (!selectedFile.value)           { errorMessage.value = 'Please select a file.';              return }
   if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
+  if (!selectedCategoryId.value)     { errorMessage.value = 'Please select a document category.'; return }
 
   const trackingCode = currentTrackingId.value || generateTrackingId()
   currentTrackingId.value = trackingCode
@@ -913,6 +942,7 @@ const handlePrintAndSubmit = async () => {
       fd.append('office_id',        selectedOriginOfficeId.value)
     }
     fd.append('stage_id',         selectedStageId.value)
+    fd.append('category_id',      selectedCategoryId.value)
     fd.append('qr_code_data',     trackingCode)
     fd.append('user_id',          String(auth.user?.user_id ?? ''))
     fd.append('org_id',           String(auth.user?.org_id ?? ''))
@@ -935,6 +965,7 @@ const handlePrintAndSubmit = async () => {
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
+      selectedCategoryId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
     } else {
