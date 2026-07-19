@@ -191,6 +191,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Secure Comms',
+  description: 'Communicate with couriers, resolve active document transit issues, and review team conversations securely.'
+})
 import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useChatStore } from '~/stores/chat'

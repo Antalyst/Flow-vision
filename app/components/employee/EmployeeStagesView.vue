@@ -7,7 +7,7 @@
         <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Local Route Builder</h1>
         <p class="mt-1 text-sm" :class="mutedText">
-          Build custom routing sequences scoped to your sub-office branches
+          Build custom routing sequences assigned to your local office branches
         </p>
       </div>
 
@@ -49,7 +49,7 @@
         <span :class="mutedText">
           Showing
           <span class="font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-            {{ scopeMode === 'global' ? 'org-wide global' : scopeMode === 'local' ? 'my local' : 'all' }}
+            {{ scopeMode === 'global' ? 'organisation' : scopeMode === 'local' ? 'local office' : 'all' }}
           </span>
           routes · {{ filteredStages.length }} template{{ filteredStages.length === 1 ? '' : 's' }}
         </span>
@@ -67,7 +67,7 @@
           @click="toggleOfficeFilter(String(office.id))"
         >
           <Icon name="ph:buildings-light" class="h-3 w-3" />
-          {{ office.name }}
+          {{ formatOfficeName(office.name) }}
         </button>
       </div>
     </div>
@@ -108,7 +108,7 @@
                     ? isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-200 text-gray-800'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 >
-                  {{ stage.scope === 'local' ? stage.office_name || 'Local' : 'Global' }}
+                  {{ stage.scope === 'local' ? formatOfficeName(stage.office_name) || 'Local Office' : 'Organisation' }}
                 </span>
               </div>
               <p class="text-xs" :class="mutedText">
@@ -169,7 +169,7 @@
                 <div class="flex h-6 w-6 flex-none items-center justify-center rounded-none bg-candy-orange text-[10px] font-bold text-white">
                   {{ step.step_number }}
                 </div>
-                <span class="font-semibold">{{ getOfficeName(step.office_id) }}</span>
+                <span class="font-semibold">{{ formatOfficeName(getOfficeName(step.office_id)) }}</span>
 
                 <button
                   v-if="stage.scope === 'local'"
@@ -213,7 +213,7 @@
       </div>
       <p class="font-bold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">No route templates</p>
       <p class="mt-1 text-sm" :class="mutedText">
-        {{ scopeMode === 'local' ? 'Create a local route for one of your sub-offices.' : 'No routes exist yet.' }}
+        {{ scopeMode === 'local' ? 'Create a local route for one of your local offices.' : 'No routes exist yet.' }}
       </p>
       <div class="mt-5 flex items-center gap-3">
         <button
@@ -259,7 +259,7 @@
                 {{ scopeMode === 'local' ? 'Create Local Route' : 'Create Route' }}
               </h2>
               <p class="mt-0.5 text-xs" :class="mutedText">
-                {{ scopeMode === 'local' ? 'Scoped to your selected office branch' : 'Organisation-wide routing' }}
+                {{ scopeMode === 'local' ? 'Assigned to your selected office branch' : 'Organisation-wide routing' }}
               </p>
             </div>
             <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
@@ -290,7 +290,7 @@
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                 Owning Office <span class="text-red-500">*</span>
               </span>
-              <p class="mt-0.5 text-xs" :class="mutedText">This route will be scoped to the selected sub-branch</p>
+              <p class="mt-0.5 text-xs" :class="mutedText">This route will be assigned to the selected local office</p>
               <select
                 v-model="stageForm.office_id"
                 class="mt-2 w-full rounded-none border px-3 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
@@ -325,7 +325,7 @@
                   @dragend="drawerDragOffice = null"
                 >
                   <div class="min-w-0">
-                    <span class="truncate font-semibold">{{ office.name }}</span>
+                    <span class="truncate font-semibold">{{ formatOfficeName(office.name) }}</span>
                     <span v-if="isMyOffice(office.id)" class="ml-2 rounded-none border px-1.5 py-0.5 text-[10px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
                   </div>
                   <Icon name="ph:plus-circle-light" class="h-4 w-4 flex-none text-candy-orange" />
@@ -584,6 +584,11 @@ const isMyOffice = (id: string) => myOffices.value.some((o) => String(o.id) === 
 const toggleOfficeFilter = (id: string) => {
   activeOfficeFilter.value = activeOfficeFilter.value === id ? null : id
   if (activeOfficeFilter.value) scopeMode.value = 'local'
+}
+
+const formatOfficeName = (val?: string | null) => {
+  if (!val) return '—'
+  return val.replace(/\s*\(OFF-[A-Z0-9]+\)\s*/i, '').trim()
 }
 
 // ── Data fetching ──────────────────────────────────────────────────────

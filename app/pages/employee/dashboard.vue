@@ -158,7 +158,7 @@
     <!-- ── Main Two-Column Layout ─────────────────────────────────────── -->
     <div ref="mainGridEl" class="grid grid-cols-1 gap-5 lg:grid-cols-5">
 
-      <!-- ── Left Column: Document Ledger (3/5) ───────────────────────── -->
+      <!-- ── Left Column: Documents (3/5) ───────────────────────── -->
       <section
         class="rounded-none border lg:col-span-3 flex flex-col overflow-hidden transition-colors"
         :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"

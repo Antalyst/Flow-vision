@@ -67,80 +67,56 @@
     </div>
 
     <!-- ── Ledger Table ───────────────────────────────────────────────── -->
-    <div
-      ref="tableEl"
-      class="overflow-x-auto rounded-none border"
-      :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
-    >
-      <table class="min-w-full divide-y text-sm text-left" :class="isDark ? 'divide-onyx-border' : 'divide-gray-200'">
-        <thead :class="isDark ? 'bg-white/[0.02]' : 'bg-gray-50'">
-          <tr>
-            <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Desk / Table Name</th>
-            <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Unique Code</th>
-            <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Assigned User</th>
-            <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
-          <tr v-if="loading">
-            <td colspan="4" class="px-6 py-12 text-center" :class="mutedText">
-              <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
-              <p class="text-xs font-medium">Loading office desks…</p>
-            </td>
-          </tr>
-          <tr v-else-if="!tables.length">
-            <td colspan="4" class="px-6 py-16 text-center">
-              <div class="flex flex-col items-center gap-3">
-                <div class="flex h-14 w-14 items-center justify-center rounded-none bg-candy-orange/10 border border-candy-orange/20">
-                  <Icon name="ph:buildings-light" class="h-7 w-7 text-candy-orange/60" />
-                </div>
-                <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No desks registered</p>
-                <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk node to begin assigning internal staff.</p>
-              </div>
-            </td>
-          </tr>
-          <tr
+    <!-- ── Ledger Grid ───────────────────────────────────────────────── -->
+    <div ref="tableEl" class="space-y-8">
+      
+      <!-- Assigned Offices Section -->
+      <div>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">My Assigned Offices</h2>
+        <div v-if="myOfficesLoading" class="py-12 text-center" :class="mutedText">
+          <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
+          <p class="text-xs font-medium">Loading offices…</p>
+        </div>
+        <div v-else-if="!myOffices.length" class="py-12 text-center rounded-none transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
+          <div class="flex flex-col items-center gap-2">
+            <Icon name="ph:building-office-light" class="h-6 w-6 text-gray-400" />
+            <p class="text-xs font-medium" :class="mutedText">No offices assigned to you yet.</p>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <OfficeQrCard
+            v-for="office in myOffices"
+            :key="'my-' + office.id"
+            :office="office"
+          />
+        </div>
+      </div>
+
+      <!-- Sub-Offices / Desks Section -->
+      <div>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Registered Desks & Sub-Nodes</h2>
+        <div v-if="loading" class="py-12 text-center" :class="mutedText">
+          <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
+          <p class="text-xs font-medium">Loading office desks…</p>
+        </div>
+        <div v-else-if="!tables.length" class="py-16 text-center rounded-none transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
+          <div class="flex flex-col items-center gap-3">
+            <div class="flex h-14 w-14 items-center justify-center rounded-none bg-candy-orange/10 border-transparent">
+              <Icon name="ph:buildings-light" class="h-7 w-7 text-candy-orange/60" />
+            </div>
+            <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No desks registered</p>
+            <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk node to begin assigning internal staff.</p>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <OfficeQrCard
             v-for="table in tables"
-            :key="table.id"
-            class="transition-colors"
-            :class="isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50/80'"
-          >
-            <td class="px-6 py-4 font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
-              <div class="flex items-center gap-3">
-                <span class="flex h-7 w-7 items-center justify-center rounded-none bg-candy-orange/10 flex-shrink-0 border border-candy-orange/20">
-                  <Icon name="ph:desktop-light" class="h-3.5 w-3.5 text-candy-orange" />
-                </span>
-                {{ table.name }}
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <span class="inline-flex items-center rounded-none border px-2.5 py-1 font-mono text-xs font-semibold"
-                :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-700'">
-                {{ table.code }}
-              </span>
-            </td>
-            <td class="px-6 py-4">
-              <div v-if="table.assigned_user_profile" class="flex items-center gap-2.5">
-                <span class="flex h-7 w-7 items-center justify-center rounded-none border border-candy-orange/40 bg-candy-orange/10 text-candy-orange text-[10px] font-bold flex-shrink-0">
-                  {{ table.assigned_user_profile.full_name?.charAt(0) || '?' }}
-                </span>
-                <div>
-                  <p class="text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ table.assigned_user_profile.full_name }}</p>
-                  <p class="text-[10px]" :class="mutedText">{{ table.assigned_user_profile.email }}</p>
-                </div>
-              </div>
-              <span v-else class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-semibold"
-                :class="isDark ? 'border-onyx-border text-gray-500' : 'border-gray-200 text-gray-400'">
-                <span class="h-1.5 w-1.5 rounded-none bg-gray-300 dark:bg-gray-600" />
-                Unassigned
-              </span>
-            </td>
-            <td class="px-6 py-4 text-xs" :class="mutedText">
-              {{ new Date(table.created_at).toLocaleDateString() }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            :key="'table-' + table.id"
+            :office="table"
+          />
+        </div>
+      </div>
+
     </div>
 
     <!-- ── Registration Modal ─────────────────────────────────────────── -->
@@ -250,10 +226,13 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useTheme } from '~/composables/useTheme'
 import { gsap } from 'gsap'
+import OfficeQrCard from '~/components/employee/OfficeQrCard.vue'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'employee' })
 
 const { isDark } = useTheme()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -261,6 +240,9 @@ const isModalOpen = ref(false)
 const tables = ref<any[]>([])
 const subUsers = ref<any[]>([])
 const errorMsg = ref('')
+
+const myOffices = ref<any[]>([])
+const myOfficesLoading = ref(true)
 
 const form = reactive({
   name: '',
@@ -285,6 +267,26 @@ function generateCode() {
     .replace(/\s+/g, '-')
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
   form.code = `${prefix}-${rand}`
+}
+
+async function fetchMyOffices() {
+  const orgId  = auth.user?.org_id
+  const userId = auth.user?.user_id
+  if (!orgId || !userId) {
+    myOfficesLoading.value = false
+    return
+  }
+  myOfficesLoading.value = true
+  try {
+    const res = await $fetch<{ data: any[] }>('/api/employee/my-offices', {
+      params: { orgId, userId }
+    })
+    myOffices.value = res.data || []
+  } catch (err) {
+    console.error('Failed to fetch my offices:', err)
+  } finally {
+    myOfficesLoading.value = false
+  }
 }
 
 async function fetchTables() {
@@ -356,6 +358,7 @@ const runEntranceAnimation = () => {
 
 onMounted(() => {
   runEntranceAnimation()
+  fetchMyOffices()
   fetchTables()
   fetchSubUsers()
 })

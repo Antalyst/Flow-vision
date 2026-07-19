@@ -10,51 +10,20 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <!-- Title -->
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
         <p class="mt-1 text-sm" :class="mutedText">
-          {{
-            currentScope === 'LOCAL'
-              ? 'Documents scoped to your sub-office branches.'
-              : 'Organisation-wide document stream and analytics.'
-          }}
+          Documents scoped to your sub-office branches.
         </p>
       </div>
 
-      <!-- Right: toggle + upload button -->
+      <!-- Right: upload button -->
       <div class="flex flex-wrap items-center gap-3">
-
-        <!-- ── Premium Perspective Toggle ─────────────────────────── -->
-        <div
-          class="relative flex items-center gap-1 rounded-2xl border p-1.5"
-          :class="isDark
-            ? 'bg-white/[0.04] border-white/10 backdrop-blur-md'
-            : 'bg-white border-gray-200 shadow-sm'"
-        >
-          <div
-            class="absolute inset-y-1.5 rounded-xl bg-candy-orange shadow-lg shadow-candy-orange/30 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-            :style="indicatorStyle"
-          />
-          <button
-            v-for="opt in scopeOptions"
-            :key="opt.value"
-            :ref="(el) => setTabRef(el, opt.value)"
-            type="button"
-            class="relative z-10 flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors duration-200 select-none"
-            :class="currentScope === opt.value
-              ? 'text-white'
-              : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
-            @click="setScope(opt.value)"
-          >
-            <Icon :name="opt.icon" class="h-3.5 w-3.5 flex-none" />
-            <span class="whitespace-nowrap">{{ opt.label }}</span>
-          </button>
-        </div>
-
         <!-- Scan QR Button -->
         <NuxtLink
           to="/employee/scan"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-white dark:bg-onyx-card border px-4 py-2 text-sm font-semibold transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
         >
           <Icon name="ph:qr-code-bold" class="h-4 w-4" />
           Scan QR
@@ -63,7 +32,7 @@
         <!-- Upload -->
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-[#F47D2F] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           @click="isUploadOpen = true"
         >
           <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -73,95 +42,53 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- B. Scope Context Banner                                           -->
-    <!-- ══════════════════════════════════════════════════════════════════ -->
-    <Transition name="scope-fade" mode="out-in">
-      <div
-        :key="currentScope"
-        class="flex items-center gap-3 rounded-xl border px-4 py-3 text-sm"
-        :class="currentScope === 'LOCAL'
-          ? isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'
-          : isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
-      >
-        <div class="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-candy-orange/10">
-          <Icon
-            :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'"
-            class="h-4 w-4 text-candy-orange"
-          />
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="text-[11px] font-bold uppercase tracking-widest text-candy-orange">
-            {{ currentScope === 'LOCAL' ? 'Small Picture — Office View' : 'Big Picture — Organisation View' }}
-          </p>
-          <p class="mt-0.5 text-xs" :class="mutedText">
-            {{
-              currentScope === 'LOCAL'
-                ? `Showing documents scoped to your ${myOffices.length} sub-office${myOffices.length !== 1 ? 's' : ''}.`
-                : `Showing all ${docs.length} documents across the entire organisation.`
-            }}
-          </p>
-        </div>
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange"
-        >
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-candy-orange" />
-          Live
-        </span>
-      </div>
-    </Transition>
-
-    <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- C. KPI Cards                                                      -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <Transition name="scope-fade" mode="out-in">
-      <div :key="`kpi-${currentScope}`" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="flex items-start gap-4 rounded-xl border p-5 backdrop-blur-sm transition-all"
-          :class="glassSurface"
+          class="flex items-start gap-4 rounded-none border p-5 shadow-card transition-all"
+          :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
           :style="{ transitionDelay: `${i * 40}ms` }"
         >
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" :class="card.iconBg">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none" :class="card.iconBg">
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
           </span>
           <div class="min-w-0">
             <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
             <p class="mt-1 text-2xl font-bold">
-              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
               <span v-else>{{ card.value }}</span>
             </p>
             <p class="mt-0.5 text-[10px]" :class="card.trendColor">{{ card.trend }}</p>
           </div>
         </div>
       </div>
-    </Transition>
 
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- D. Filter & Search Bar                                            -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <div
-      class="flex flex-col gap-3 rounded-xl border p-4 backdrop-blur-sm sm:flex-row sm:items-center"
-      :class="glassSurface"
+      class="flex flex-col gap-3 rounded-none border p-4 shadow-card sm:flex-row sm:items-center"
+      :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
-      <!-- Search -->
-      <div
-        class="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 transition-all"
-        :class="isDark ? 'border-white/10 bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
+      <button
+        @click="isSemanticSearchOpen = true"
+        class="flex flex-1 items-center justify-between gap-2 rounded-none border px-4 py-2 transition-all text-left"
+        :class="isDark ? 'border-onyx-border bg-onyx-black/40 hover:border-candy-orange hover:bg-white/5' : 'border-gray-200 bg-gray-50 hover:border-candy-orange hover:bg-white'"
       >
-        <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-none" :class="mutedText" />
-        <input
-          v-model="search"
-          type="search"
-          placeholder="Search by title or description…"
-          class="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
-        />
-      </div>
+        <span class="flex items-center gap-2" :class="mutedText">
+          <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
+          Describe your intent...
+        </span>
+        <span class="rounded-none bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+      </button>
 
       <!-- Office filter -->
       <select
         v-model="officeFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
+        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
         :class="inputClass"
       >
         <option value="all">All My Offices</option>
@@ -172,7 +99,7 @@
       <!-- Status filter -->
       <select
         v-model="statusFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Statuses</option>
@@ -185,7 +112,7 @@
       <!-- Tracking filter -->
       <select
         v-model="trackingFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Tracking</option>
@@ -198,34 +125,33 @@
       </select>
     </div>
 
+    <!-- Active Semantic Search Indicator -->
+    <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-none p-3 text-sm animate-fade-in shadow-sm">
+      <Icon name="ph:sparkle-fill" class="h-5 w-5 text-candy-orange" />
+      <span :class="isDark ? 'text-amber-200' : 'text-amber-800'">
+        Showing <strong>{{ filtered.length }}</strong> results for "<span class="italic">{{ semanticQuery }}</span>"
+      </span>
+      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-[#D96518] font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-none border border-amber-200 dark:border-candy-orange/30 transition-colors">
+        Clear Filter
+      </button>
+    </div>
+
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- E. Documents Table                                                -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <article
-      class="overflow-hidden rounded-xl border shadow-card backdrop-blur-sm"
-      :class="cardSurface"
+      class="overflow-hidden rounded-none border shadow-card"
+      :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
       <!-- Table header row -->
       <div class="flex items-center justify-between border-b px-5 py-4" :class="borderClass">
         <div>
           <h2 class="text-base font-bold">
-            {{ currentScope === 'LOCAL' ? 'Isolated Document Ledger' : 'Organisation Document Directory' }}
+            Office Documents
           </h2>
           <p class="mt-0.5 text-xs" :class="mutedText">
-            {{ filtered.length }} document{{ filtered.length === 1 ? '' : 's' }} in scope
+            {{ filtered.length }} document{{ filtered.length === 1 ? '' : 's' }} found
           </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span
-            class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase"
-            :class="currentScope === 'LOCAL'
-              ? 'border-candy-orange/30 bg-candy-orange/5 text-candy-orange'
-              : isDark ? 'border-white/10 bg-white/5 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-500'"
-          >
-            <Icon :name="currentScope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill'" class="h-3 w-3" />
-            {{ currentScope === 'LOCAL' ? 'Office Scope' : 'Org Scope' }}
-          </span>
-          <Icon name="ph:files-fill" class="h-5 w-5 text-candy-orange" />
         </div>
       </div>
 
@@ -247,11 +173,11 @@
             <template v-if="loading">
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
                 <td class="px-5 py-4">
-                  <div class="h-4 w-48 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                  <div class="mt-1 h-3 w-32 animate-pulse rounded-lg" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+                  <div class="h-4 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="mt-1 h-3 w-32 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
                 </td>
                 <td v-for="k in 6" :key="k" class="px-5 py-4">
-                  <div class="h-4 w-20 animate-pulse rounded-lg" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="h-4 w-20 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
                 </td>
               </tr>
             </template>
@@ -274,7 +200,7 @@
                   <div class="flex items-start gap-2">
                     <div
                       v-if="doc.is_own_upload"
-                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
+                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-none bg-candy-orange/15"
                       title="Your upload"
                     >
                       <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
@@ -286,28 +212,32 @@
                       </p>
                     </div>
                   </div>
+                  <div v-if="getSemanticExplanation(doc.id)" class="mt-3 text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-candy-orange/10 p-2.5 rounded-none flex gap-2 items-start border border-amber-100 dark:border-candy-orange/20">
+                    <Icon name="ph:sparkle-fill" class="h-4 w-4 shrink-0 mt-0.5 text-candy-orange" />
+                    <span class="leading-relaxed">{{ getSemanticExplanation(doc.id) }}</span>
+                  </div>
                 </td>
 
                 <!-- Current office -->
                 <td class="whitespace-nowrap px-5 py-4 text-xs">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-semibold"
-                    :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
+                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-semibold"
+                    :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
                   >
                     <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
-                    {{ doc.office_label || doc.current_label || 'Unassigned' }}
+                    {{ formatOfficeName(doc.office_label || doc.current_label) || 'Unassigned' }}
                   </span>
                 </td>
 
                 <!-- Origin office -->
                 <td class="whitespace-nowrap px-5 py-4 text-xs" :class="mutedText">
-                  {{ doc.origin_label || '—' }}
+                  {{ formatOfficeName(doc.origin_label) }}
                 </td>
 
                 <!-- Source badge -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-xs font-semibold"
                     :class="doc.is_own_upload
                       ? 'bg-candy-orange/10 text-candy-orange border-candy-orange/20'
                       : isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
@@ -319,10 +249,10 @@
                 <!-- Tracking status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
                     :class="trackingClass(doc.tracking_status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
                     {{ trackingLabel(doc.tracking_status) }}
                   </span>
                 </td>
@@ -335,10 +265,10 @@
                 <!-- Approval status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
                     :class="statusClass(doc.status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
                     {{ doc.status || 'Pending' }}
                   </span>
                 </td>
@@ -348,20 +278,16 @@
             <!-- Empty -->
             <tr v-else>
               <td colspan="7" class="px-5 py-16 text-center">
-                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-candy-orange/10">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-none bg-candy-orange/10">
                   <Icon name="ph:file-dashed" class="h-8 w-8 text-candy-orange" />
                 </div>
-                <p class="font-bold">No documents in scope.</p>
+                <p class="font-bold">No documents found.</p>
                 <p class="mt-1 text-xs" :class="mutedText">
-                  {{
-                    currentScope === 'LOCAL'
-                      ? 'Upload a document from your office or adjust the office filter.'
-                      : 'No organisation documents found. Try adjusting the search.'
-                  }}
+                  Upload a document from your office or adjust your search filters.
                 </p>
                 <button
                   type="button"
-                  class="mt-4 inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b]"
+                  class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-[#F47D2F] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
                   @click="isUploadOpen = true"
                 >
                   <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -403,9 +329,17 @@
     <EmployeeDocUploadModal
       :is-open="isUploadOpen"
       :offices="myOffices"
-      :scope="currentScope"
+      scope="LOCAL"
       @close="isUploadOpen = false"
       @uploaded="handleUploadSuccess"
+    />
+
+    <!-- Semantic Search Modal -->
+    <SemanticSearchModal
+      :is-open="isSemanticSearchOpen"
+      :documents="docs"
+      @close="isSemanticSearchOpen = false"
+      @results="handleSemanticResults"
     />
 
   </section>
@@ -419,6 +353,7 @@ import { useStageStore } from '~/stores/stage'
 import EmployeeDocUploadModal from './EmployeeDocUploadModal.vue'
 import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
 import DocumentIssueChatPanel from './DocumentIssueChatPanel.vue'
+import SemanticSearchModal from '~/components/client/documents/SemanticSearchModal.vue'
 
 // ── Types ─────────────────────────────────────────────────────────────
 type Scope = 'LOCAL' | 'GLOBAL'
@@ -454,46 +389,30 @@ const stageStore = useStageStore()
 const { isDark } = useTheme()
 
 // ── Reactive state ────────────────────────────────────────────────────
-const currentScope  = ref<Scope>('LOCAL')
 const docs          = ref<LedgerDoc[]>([])
 const myOffices     = ref<OfficeRecord[]>([])
 const loading       = ref(false)
 const isUploadOpen  = ref(false)
 const activeDocument = ref<LedgerDoc | null>(null)
 const issueChatRef   = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
-const search        = ref('')
 const officeFilter  = ref<string>('all')
 const statusFilter  = ref<string>('all')
 const trackingFilter = ref<string>('all')
 
-// ── Scope toggle refs (same pattern as dashboard.vue) ─────────────────
-const scopeOptions = [
-  { value: 'LOCAL' as Scope,  label: 'Office View',  icon: 'ph:buildings-fill' },
-  { value: 'GLOBAL' as Scope, label: 'Org View',     icon: 'ph:globe-hemisphere-west-fill' },
-]
-const tabRefs = ref<Record<string, HTMLElement | null>>({})
-const indicatorStyle = ref({ left: '6px', width: '120px' })
+const isSemanticSearchOpen = ref(false)
+const semanticResults = ref<{ id: string, explanation: string }[] | null>(null)
+const semanticQuery = ref('')
 
-const setTabRef = (el: any, value: Scope) => {
-  tabRefs.value[value] = el as HTMLElement | null
+function handleSemanticResults(results: any[], query: string) {
+  semanticResults.value = results
+  semanticQuery.value = query
 }
 
-const updateIndicator = () => {
-  const el = tabRefs.value[currentScope.value]
-  if (!el) return
-  indicatorStyle.value = { left: `${el.offsetLeft}px`, width: `${el.offsetWidth}px` }
+function getSemanticExplanation(docId: string | number) {
+  if (!semanticResults.value) return null
+  const match = semanticResults.value.find(r => String(r.id) === String(docId))
+  return match ? match.explanation : null
 }
-
-const setScope = (scope: Scope) => {
-  currentScope.value = scope
-  nextTick(updateIndicator)
-}
-
-watch(currentScope, () => reloadData())
-
-onMounted(() => {
-  nextTick(updateIndicator)
-})
 
 // ── Theming ───────────────────────────────────────────────────────────
 const glassSurface = computed(() =>
@@ -518,7 +437,7 @@ const kpiCards = computed(() => [
     icon: 'ph:files-fill',
     iconBg: 'bg-candy-orange/10',
     iconColor: 'text-candy-orange',
-    trend: currentScope.value === 'LOCAL' ? 'In your offices' : 'Org-wide',
+    trend: 'In your offices',
     trendColor: 'text-candy-orange',
   },
   {
@@ -552,7 +471,6 @@ const kpiCards = computed(() => [
 
 // ── Filtered docs ─────────────────────────────────────────────────────
 const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase()
   return docs.value.filter((doc) => {
     if (officeFilter.value === 'own' && !doc.is_own_upload) return false
     if (officeFilter.value !== 'all' && officeFilter.value !== 'own') {
@@ -562,7 +480,11 @@ const filtered = computed(() => {
     }
     if (statusFilter.value !== 'all' && doc.status !== statusFilter.value) return false
     if (trackingFilter.value !== 'all' && (doc.tracking_status || 'CREATED') !== trackingFilter.value) return false
-    if (q && !doc.title?.toLowerCase().includes(q) && !doc.description?.toLowerCase().includes(q)) return false
+    
+    if (semanticResults.value) {
+      if (!semanticResults.value.some(r => String(r.id) === String(doc.id))) return false
+    }
+
     return true
   })
 })
@@ -571,6 +493,11 @@ const resolveOfficeName = (officeId: string | number | null | undefined) => {
   if (officeId == null) return 'Unknown Office'
   const found = myOffices.value.find((o) => String(o.id) === String(officeId))
   return found?.name || `Office ${String(officeId).slice(0, 6)}`
+}
+
+const formatOfficeName = (val?: string) => {
+  if (!val) return '—'
+  return val.replace(/\s*\(OFF-[A-Z0-9]+\)\s*/i, '').trim()
 }
 
 // ── Badge helpers ─────────────────────────────────────────────────────
@@ -649,7 +576,7 @@ const fetchDocs = async () => {
   loading.value = true
   try {
     const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/employee/ledger', {
-      params: { orgId, userId, scope: currentScope.value, limit: 200 },
+      params: { orgId, userId, scope: 'LOCAL', limit: 200 },
     })
     docs.value = res.data ?? []
   } catch (err) {
@@ -680,22 +607,22 @@ const handleUploadSuccess = () => {
   fetchDocs()
 }
 
-const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: boolean; status?: string; checkpoint_cleared_step?: number | null }) => {
+const handleIssueUpdated = (data: { tracking_status: string; issueClosed?: boolean; status?: string; checkpoint_cleared_step?: number | null }) => {
   if (activeDocument.value) {
     activeDocument.value = {
       ...activeDocument.value,
-      tracking_status: payload.tracking_status,
-      ...(payload.status ? { status: payload.status } : {}),
-      ...(payload.checkpoint_cleared_step != null ? { checkpoint_cleared_step: payload.checkpoint_cleared_step } : {}),
+      tracking_status: data.tracking_status,
+      ...(data.status ? { status: data.status } : {}),
+      ...(data.checkpoint_cleared_step != null ? { checkpoint_cleared_step: data.checkpoint_cleared_step } : {}),
     }
   }
   const idx = docs.value.findIndex((d) => d.id === activeDocument.value?.id)
   if (idx !== -1) {
     docs.value[idx] = {
       ...docs.value[idx],
-      tracking_status: payload.tracking_status,
-      ...(payload.status ? { status: payload.status } : {}),
-      ...(payload.checkpoint_cleared_step != null ? { checkpoint_cleared_step: payload.checkpoint_cleared_step } : {}),
+      tracking_status: data.tracking_status,
+      ...(data.status ? { status: data.status } : {}),
+      ...(data.checkpoint_cleared_step != null ? { checkpoint_cleared_step: data.checkpoint_cleared_step } : {}),
     }
   }
 }
@@ -703,7 +630,6 @@ const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: bo
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
   await Promise.all([fetchMyOffices(), fetchDocs(), stageStore.fetchStages()])
-  nextTick(updateIndicator)
   await openDocumentFromQuery()
 })
 
@@ -714,7 +640,4 @@ watch(() => route.query.document, async () => {
 </script>
 
 <style scoped>
-/* Scope toggle transition */
-.scope-fade-enter-active, .scope-fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
-.scope-fade-enter-from, .scope-fade-leave-to { opacity: 0; transform: translateY(4px); }
 </style>

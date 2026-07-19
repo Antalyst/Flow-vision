@@ -164,6 +164,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Organization Settings',
+  description: 'Configure global system preferences, customize your organization profile, and manage application settings.'
+})
 import SettingToggleRow from '~/components/messenger/SettingToggleRow.vue'
 import { useClientSettings } from '~/composables/useClientSettings'
 import { useClientToast } from '~/composables/useClientToast'

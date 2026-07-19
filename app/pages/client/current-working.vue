@@ -262,6 +262,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Active Pipeline',
+  description: 'Track all in-flight documents across your organization. Monitor active couriers, pending branch deliveries, and real-time transit logistics.'
+})
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import DocumentTimeline from '~/components/client/tracking/DocumentTimeline.vue'

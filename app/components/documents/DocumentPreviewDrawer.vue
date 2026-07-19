@@ -26,9 +26,9 @@
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
-              <div class="mb-2 h-1 w-10 rounded-full bg-candy-orange" />
+              <div class="mb-2 h-1 w-10 rounded-none bg-candy-orange" />
               <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
-                Document Directory Preview
+                Document Details
               </p>
               <h2 class="mt-1 truncate text-xl font-bold">
                 {{ document.title }}
@@ -36,7 +36,7 @@
             </div>
             <button
               type="button"
-              class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl transition hover:bg-candy-orange/10 hover:text-candy-orange"
+              class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
               aria-label="Close preview"
               @click="emit('close')"
             >
@@ -46,24 +46,24 @@
 
           <div class="mt-4 flex flex-wrap items-center gap-2">
             <span
-              class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
+              class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold"
               :class="trackingBadgeClass(displayTrackingStatus)"
             >
               <span
-                class="h-1.5 w-1.5 rounded-full bg-current"
+                class="h-1.5 w-1.5 rounded-none bg-current"
                 :class="displayTrackingStatus === 'IN_TRANSIT' ? 'animate-pulse' : ''"
               />
               {{ trackingLabel(displayTrackingStatus) }}
             </span>
             <span
-              class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
+              class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold"
               :class="priorityBadgeClass"
             >
               {{ displayPriority }} Priority
             </span>
             <span
               v-if="creatorName"
-              class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
+              class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold"
               :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
             >
               <Icon name="ph:user-circle-fill" class="h-3.5 w-3.5 text-candy-orange" />
@@ -72,7 +72,7 @@
           </div>
 
           <p class="mt-3 font-mono text-[11px]" :class="mutedClass">
-            ID: {{ document.id }}
+            Reference ID: {{ document.id }}
           </p>
         </header>
 
@@ -80,44 +80,44 @@
           <div class="flex-1 space-y-8 overflow-y-auto px-8 py-8">
             <!-- Compact metadata -->
             <div class="stagger-block grid grid-cols-2 gap-4">
-              <div class="col-span-2 rounded-xl border p-4" :class="cellClass">
+              <div class="col-span-2 rounded-none border p-4" :class="cellClass">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Description</p>
                 <p class="mt-2 text-sm leading-relaxed" :class="mutedClass">
                   {{ document.description?.trim() || 'No description provided.' }}
                 </p>
               </div>
-              <div class="rounded-xl border p-3" :class="cellClass">
+              <div class="rounded-none border p-3" :class="cellClass">
                 <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Created</p>
                 <p class="mt-1 text-sm font-semibold">{{ formatDate(document.created_at) }}</p>
               </div>
-              <div class="rounded-xl border p-3" :class="cellClass">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Target Route</p>
+              <div class="rounded-none border p-3" :class="cellClass">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Workflow</p>
                 <p class="mt-1 text-sm font-semibold">{{ stageName || 'Unassigned' }}</p>
               </div>
-              <div class="col-span-2 rounded-xl border p-3" :class="cellClass">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Target Office</p>
+              <div class="col-span-2 rounded-none border p-3" :class="cellClass">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Destination</p>
                 <p class="mt-1 text-sm font-semibold">{{ targetOfficeLabel }}</p>
               </div>
             </div>
 
             <!-- §2 Fulfillment pipeline timeline -->
             <section class="stagger-block">
-              <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-candy-orange">
+              <div class="mb-5 flex items-center gap-2 text-sm font-semibold text-candy-orange">
                 <Icon name="ph:path" class="h-4 w-4" />
-                Fulfillment Pipeline
+                Routing Timeline
               </div>
 
-              <div v-if="steps.length" class="mb-6">
+              <div v-if="steps.length" class="mb-8">
                 <div class="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-candy-orange/90">
-                  <span>Route progress</span>
+                  <span>Progress</span>
                   <span>{{ pipelineProgressPct }}%</span>
                 </div>
                 <div
-                  class="h-2 w-full overflow-hidden rounded-full shadow-inner"
-                  :class="isDark ? 'bg-black/50' : 'bg-gray-100'"
+                  class="h-1.5 w-full overflow-hidden rounded-none shadow-inner"
+                  :class="isDark ? 'bg-white/10' : 'bg-gray-200'"
                 >
                   <div
-                    class="h-full rounded-full bg-gradient-to-r from-candy-orange to-[#ff6b00] transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(244,125,47,0.5)]"
+                    class="h-full rounded-none bg-candy-orange transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(244,125,47,0.5)]"
                     :style="{ width: `${pipelineProgressPct}%` }"
                   />
                 </div>
@@ -128,22 +128,17 @@
                   v-for="(step, index) in steps"
                   :key="`${step.office_id}-${index}`"
                   type="button"
-                  class="group relative flex w-full cursor-pointer select-none items-center gap-4 rounded-2xl border p-3.5 text-left transition-all duration-300"
+                  class="group relative flex w-full cursor-pointer select-none items-center gap-4 rounded-none border p-3.5 text-left transition-all duration-300"
                   :class="[
-                    isPipelineOfficeSelected(step) ? 'border-candy-orange bg-candy-orange/10 shadow-[0_0_20px_rgba(244,125,47,0.15)]' : (isDark ? 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10' : 'border-gray-100 bg-gray-50 hover:bg-gray-100'),
+                    isPipelineOfficeSelected(step) ? 'border-candy-orange bg-candy-orange/10 shadow-[0_0_20px_rgba(244,125,47,0.15)]' : (isDark ? 'border-onyx-border bg-white/[0.02] hover:bg-white/5 hover:border-white/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'),
                     isStepDone(step) ? 'opacity-80' : ''
                   ]"
                   :disabled="!pipelineMessagingEnabled"
                   @click="selectPipelineOffice(step)"
                 >
+
                   <div
-                    v-if="index < steps.length - 1"
-                    class="pointer-events-none absolute left-[33px] top-14 h-full w-[2px]"
-                    :class="isStepDone(step) ? 'bg-gradient-to-b from-candy-orange to-candy-orange/30' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
-                  />
-                  
-                  <div
-                    class="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-bold shadow-lg transition-all duration-300"
+                    class="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-none text-sm font-bold shadow-lg transition-all duration-300"
                     :class="[
                       isStepDone(step) ? 'bg-candy-orange text-white shadow-candy-orange/30' : 
                       isStepCurrent(step) ? 'border-2 border-candy-orange bg-onyx-black text-candy-orange shadow-[0_0_15px_rgba(244,125,47,0.4)]' : 
@@ -185,11 +180,11 @@
 
               <div
                 v-if="!steps.length"
-                class="rounded-2xl border border-dashed p-8 text-center text-sm"
-                :class="isDark ? 'border-onyx-border text-white-muted' : 'border-gray-200 text-gray-400'"
+                class="rounded-none border border-dashed p-8 text-center text-sm"
+                :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
               >
-                <Icon name="ph:route" class="h-8 w-8 mx-auto mb-3 opacity-50" />
-                No workflow stages mapped to this document's route.
+                <Icon name="ph:route" class="h-8 w-8 mx-auto mb-3 opacity-30" />
+                No workflow stages mapped to this document.
               </div>
             </section>
 
@@ -203,7 +198,7 @@
             <!-- Office checkpoint review (intermediate + final) -->
             <section
               v-if="showCompletionActions && canMarkCheckpointDone"
-              class="stagger-block rounded-2xl border p-5 shadow-lg backdrop-blur-md transition-all hover:shadow-xl"
+              class="stagger-block rounded-none border p-5 shadow-sm backdrop-blur-md transition-all hover:shadow-md"
               :class="isFinalCheckpoint
                 ? 'border-emerald-500/30 bg-emerald-500/5'
                 : 'border-candy-orange/30 bg-candy-orange/5'"
@@ -227,8 +222,8 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
-                  :class="isFinalCheckpoint ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 hover:shadow-emerald-500/25' : 'bg-gradient-to-r from-candy-orange to-[#ff6b00] hover:shadow-candy-orange/25'"
+                  class="inline-flex items-center gap-2 rounded-none px-5 py-3 text-sm font-bold text-white shadow-sm transition-all disabled:opacity-50 hover:-translate-y-0.5 active:translate-y-0"
+                  :class="isFinalCheckpoint ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 hover:shadow-emerald-500/20' : 'bg-gradient-to-r from-candy-orange to-[#ff6b00] hover:shadow-candy-orange/20'"
                   :disabled="completingCheckpoint"
                   @click="handleApproveCheckpoint"
                 >
@@ -242,7 +237,7 @@
             <!-- Compliance flag action -->
             <section
               v-if="showComplianceActions"
-              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5 shadow-lg shadow-candy-orange/5"
+              class="stagger-block rounded-none border border-candy-orange/30 bg-candy-orange/5 p-5 shadow-sm shadow-candy-orange/5"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -255,7 +250,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-candy-orange to-[#ff6b00] px-5 py-3 text-sm font-bold text-white-pure shadow-lg shadow-candy-orange/25 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/40 active:translate-y-0"
+                  class="inline-flex items-center gap-2 rounded-none bg-gradient-to-r from-candy-orange to-[#ff6b00] px-5 py-3 text-sm font-bold text-white-pure shadow-sm shadow-candy-orange/20 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/30 active:translate-y-0"
                   @click="emit('flag-issue')"
                 >
                   <Icon name="ph:warning-fill" class="h-4 w-4" />
@@ -268,7 +263,7 @@
 
             <!-- §3 Official routing slip view (bottom) -->
             <section
-              class="stagger-block overflow-hidden rounded-2xl border shadow-2xl transition-all hover:shadow-candy-orange/10"
+              class="stagger-block overflow-hidden rounded-none border shadow-card transition-all hover:shadow-md hover:shadow-candy-orange/10"
               :class="isDark ? 'border-candy-orange/30 bg-onyx-black/50' : 'border-candy-orange/40 bg-white/50'"
             >
               <div class="border-b border-candy-orange/30 bg-candy-orange px-5 py-3">
@@ -296,7 +291,7 @@
                   </div>
                 </div>
 
-                <div class="flex flex-col items-center gap-4 rounded-xl border border-candy-orange/25 bg-white-pure p-5">
+                <div class="flex flex-col items-center gap-4 rounded-none border border-candy-orange/25 bg-white-pure p-5">
                   <canvas
                     ref="qrCanvas"
                     class="h-44 w-44 max-w-full"
@@ -309,7 +304,7 @@
 
                 <button
                   type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-candy-orange to-[#ff6b00] px-4 py-3.5 text-sm font-semibold text-white-pure shadow-lg shadow-candy-orange/25 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                  class="flex w-full items-center justify-center gap-2 rounded-none bg-gradient-to-r from-candy-orange to-[#ff6b00] px-4 py-3.5 text-sm font-semibold text-white-pure shadow-sm shadow-candy-orange/20 transition-all hover:-translate-y-0.5 hover:shadow-candy-orange/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                   :disabled="downloading || !document.qr_code_data"
                   @click="handleDownloadPdf"
                 >

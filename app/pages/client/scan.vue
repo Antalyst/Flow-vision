@@ -242,6 +242,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Secure Scanning',
+  description: 'Use the secure QR scanner to verify documents, update tracking statuses, and log courier pickups and deliveries.'
+})
 import { computed, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'

@@ -69,6 +69,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | SLA Tracking',
+  description: 'Track delivery compliance, deadline management, and service level agreement performance for your physical documents.'
+})
 definePageMeta({ layout: 'client' })
 
 interface SlaRow {

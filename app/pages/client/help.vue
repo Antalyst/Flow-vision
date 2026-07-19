@@ -80,6 +80,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Help & Support',
+  description: 'Get assistance, review documentation, and find answers to common questions about your FlowVision platform.'
+})
 import { getDefaultHelpArticles, matchHelpQuery, type HelpArticle } from '~/utils/helpNlp'
 
 definePageMeta({ layout: 'client' })

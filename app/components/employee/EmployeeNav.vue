@@ -58,7 +58,7 @@ const workspaceItems = [
   { to: '/employee/dashboard',     label: 'Dashboard',       icon: 'ph:squares-four-light' },
   { to: '/employee/messages',      label: 'Messages',        icon: 'ph:chat-teardrop-text-light' },
   { to: '/employee/notifications', label: 'Notifications',   icon: 'ph:bell-light' },
-  { to: '/employee/offices',       label: 'My Offices',      icon: 'ph:buildings-light' },
+  { to: '/employee/offices',       label: 'Office QR Codes', icon: 'ph:qr-code-light' },
   { to: '/employee/users',         label: 'Internal Staff',  icon: 'ph:users-light' },
   { to: '/employee/working',       label: 'Current Working', icon: 'ph:briefcase-light' },
   { to: '/employee/stages',        label: 'Stages',          icon: 'ph:steps-light' },

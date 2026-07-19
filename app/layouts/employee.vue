@@ -139,7 +139,7 @@
 
     <!-- ── Mobile bottom nav ─────────────────────────────────────────── -->
     <nav
-      class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom"
+      class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom fixed left-0"
       :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
       <div class="flex items-center justify-around px-2 py-2">

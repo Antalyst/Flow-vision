@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-3xl overflow-hidden border  relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
+  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-none overflow-hidden border relative shadow-[0_0_15px_rgba(0,0,0,0.5)]" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
     <header ref="scanHeaderEl" class="flex items-center justify-between px-4 pt-4 pb-3">
@@ -247,7 +247,7 @@ import { gsap } from 'gsap'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'
 import {
-  buildDocumentTrackQrPayload,
+  buildDocumentTrackQrData,
   extractCheckpointOfficeId,
   extractDocumentTrackId,
   parseFlowVisionQr,
@@ -380,42 +380,42 @@ const handleScan = async (raw: string) => {
         return
       }
 
-      await handleDocumentPickup(buildDocumentTrackQrPayload(documentId))
+      await handleDocumentPickup(buildDocumentTrackQrData(documentId))
       return
     }
 
-    const payload = parseFlowVisionQr(scannedText)
+    const data = parseFlowVisionQr(scannedText)
 
-    if (payload.type === 'unknown') {
+    if (data.type === 'unknown') {
       scanState.value = 'unknown'
       return
     }
 
-    if (payload.type === 'document') {
+    if (data.type === 'document') {
       if (mode.value === 'dropoff') {
         errorMessage.value = 'You scanned a document QR in Drop-off mode. Switch to Pickup mode to pick up a document.'
         scanState.value = 'error'
         return
       }
-      await handleDocumentPickup(payload.qr)
+      await handleDocumentPickup(data.qr)
       return
     }
 
-    if (payload.type === 'office') {
+    if (data.type === 'office') {
       if (mode.value === 'pickup') {
         errorMessage.value = 'You scanned an office drop-off QR in Pickup mode. Switch to Drop-off mode to check in at an office.'
         scanState.value = 'error'
         return
       }
-      await handleDocumentDropOff(payload.id)
+      await handleDocumentDropOff(data.id)
       return
     }
 
-    if (payload.type === 'checkpoint') {
+    if (data.type === 'checkpoint') {
       if (mode.value === 'dropoff') {
-        await handleDocumentDropOff(payload.office_id)
+        await handleDocumentDropOff(data.office_id)
       } else {
-        await handleCheckpointPickup(payload.office_id)
+        await handleCheckpointPickup(data.office_id)
       }
     }
   } catch (err: any) {

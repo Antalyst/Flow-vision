@@ -136,6 +136,57 @@
         </div>
       </section>
 
+      <!-- ── Appearance Preferences ──────────────────────────────── -->
+      <section
+        class="rounded-none border overflow-hidden mb-6"
+        :class="panelClass"
+      >
+        <div
+          class="flex items-center gap-3 border-b px-6 py-4"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
+        >
+          <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+            <Icon name="ph:paint-brush-broad-light" class="h-4.5 w-4.5 text-candy-orange" />
+          </span>
+          <div>
+            <h2 class="text-sm font-bold" :class="headingClass">Appearance</h2>
+            <p class="text-[11px]" :class="mutedClass">Customise the visual theme of your workspace.</p>
+          </div>
+        </div>
+
+        <div class="px-6 py-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold" :class="headingClass">Dark Mode</p>
+              <p class="mt-1 text-xs" :class="mutedClass">Toggle between light and dark themes.</p>
+            </div>
+            <button
+              @click="toggleTheme"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-none border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-candy-orange focus:ring-offset-2"
+              :class="isDark ? 'bg-candy-orange' : 'bg-gray-200'"
+            >
+              <span
+                class="pointer-events-none relative inline-block h-5 w-5 transform rounded-none bg-white shadow ring-0 transition duration-200 ease-in-out"
+                :class="isDark ? 'translate-x-5' : 'translate-x-0'"
+              >
+                <span
+                  class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity"
+                  :class="isDark ? 'opacity-0 duration-100 ease-out' : 'opacity-100 duration-200 ease-in'"
+                >
+                  <Icon name="ph:sun-fill" class="h-3 w-3 text-gray-400" />
+                </span>
+                <span
+                  class="absolute inset-0 flex h-full w-full items-center justify-center transition-opacity"
+                  :class="isDark ? 'opacity-100 duration-200 ease-in' : 'opacity-0 duration-100 ease-out'"
+                >
+                  <Icon name="ph:moon-fill" class="h-3 w-3 text-candy-orange" />
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ── Workspace Canvas Preferences ──────────────────────────────── -->
       <section
         ref="section3El"
@@ -252,7 +303,7 @@ interface AccountTypeRow {
 }
 
 const auth = useAuthStore()
-const { isDark } = useTheme()
+const { isDark, toggleTheme } = useTheme()
 const {
   ready: settingsReady,
   flaggedDocumentAlerts,

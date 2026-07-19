@@ -48,6 +48,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Send Feedback',
+  description: 'Report issues, suggest improvements, and provide feedback directly to the FlowVision development team.'
+})
 import { useClientToast } from '~/composables/useClientToast'
 
 definePageMeta({ layout: 'client' })

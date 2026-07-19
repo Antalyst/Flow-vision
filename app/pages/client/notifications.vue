@@ -114,6 +114,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Notifications',
+  description: 'Review critical alerts, SLA warnings, and important updates regarding your document workflows.'
+})
 import { isUnreadNotification } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'client' })

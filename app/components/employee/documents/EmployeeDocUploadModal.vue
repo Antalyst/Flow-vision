@@ -467,7 +467,7 @@
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
                     <span class="block text-xs" :class="mutedClass">
-                      Prints tracking metadata directly alongside the document payload.
+                      Prints tracking metadata directly alongside the document data.
                     </span>
                   </span>
                 </label>

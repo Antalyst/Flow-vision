@@ -67,6 +67,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Workload Analytics',
+  description: 'Visualize employee productivity, courier efficiency, and branch workload distribution with interactive charts.'
+})
 definePageMeta({ layout: 'client' })
 
 interface WorkloadPayload {

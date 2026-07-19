@@ -14,32 +14,12 @@
           Live Workspace
         </h1>
         <p class="mt-1.5 text-sm" :class="mutedClass">
-          {{ viewScope === 'LOCAL'
-            ? 'Documents at your station awaiting action, review, or hand-off.'
-            : 'Organisation-wide pipeline — every active document across all checkpoints.' }}
+          Documents at your station awaiting action, review, or hand-off.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-        <!-- Scope toggle -->
-        <div
-          class="flex items-center gap-0.5 rounded-none border p-1"
-          :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
-        >
-          <button
-            v-for="opt in scopeOptions"
-            :key="opt.value"
-            type="button"
-            class="flex items-center gap-1.5 rounded-none px-3.5 py-2 text-xs font-semibold transition-colors duration-200"
-            :class="viewScope === opt.value
-              ? 'bg-candy-orange text-white'
-              : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800')"
-            @click="viewScope = opt.value"
-          >
-            <Icon :name="opt.icon" class="h-3.5 w-3.5" />
-            {{ opt.label }}
-          </button>
-        </div>
+
 
         <button
           type="button"
@@ -171,16 +151,9 @@
               <p class="mt-1.5 line-clamp-2 text-xs font-semibold leading-snug" :class="headingClass">
                 {{ doc.title || 'Untitled' }}
               </p>
+
               <p
-                v-if="viewScope === 'GLOBAL' && doc.current_label"
-                class="mt-1.5 truncate text-[10px] flex items-center gap-1"
-                :class="mutedClass"
-              >
-                <Icon name="ph:map-pin-light" class="inline h-2.5 w-2.5 flex-none" />
-                {{ doc.current_label }}
-              </p>
-              <p
-                v-else-if="doc.messenger_name"
+                v-if="doc.messenger_name"
                 class="mt-1.5 truncate text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
               >
                 <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
@@ -239,7 +212,7 @@ import { useEmployeeSettings } from '~/composables/useEmployeeSettings'
 
 definePageMeta({ layout: 'employee' })
 
-type ViewScope = 'LOCAL' | 'GLOBAL'
+
 type PipelinePhase = 'awaiting_pickup' | 'in_transit' | 'under_review' | 'verified'
 
 interface QueueDoc extends PreviewDocument {
@@ -270,10 +243,7 @@ const {
   ready: settingsReady,
 } = useEmployeeSettings()
 
-const scopeOptions = [
-  { value: 'LOCAL' as ViewScope, label: 'Local Workspace', icon: 'ph:buildings-light' },
-  { value: 'GLOBAL' as ViewScope, label: 'Global Pipeline', icon: 'ph:globe-hemisphere-west-light' },
-]
+
 
 const pipelineColumns = [
   { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-light' },
@@ -282,7 +252,7 @@ const pipelineColumns = [
   { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-light' },
 ]
 
-const viewScope = ref<ViewScope>('LOCAL')
+
 const allDocs = ref<QueueDoc[]>([])
 const myOffices = ref<OfficeRecord[]>([])
 const myOfficeIds = computed(() => new Set(myOffices.value.map((o) => String(o.id))))
@@ -309,29 +279,24 @@ const lastSyncedLabel = computed(() => {
 
 function classifyPhase(doc: QueueDoc): PipelinePhase {
   const status = doc.tracking_status ?? 'CREATED'
-  if (status === 'IN_TRANSIT') return 'in_transit'
+  
+  if (status === 'COMPLETED') return 'verified'
+  if (status === 'PICKED_UP' || status === 'IN_TRANSIT') return 'in_transit'
+  
   if (status === 'ARRIVED_AT_OFFICE') {
     const step = doc.current_step ?? 0
-    if ((doc.checkpoint_cleared_step ?? null) === step) return 'verified'
+    // If the document has cleared the checkpoint for its current step (or beyond)
+    if (doc.checkpoint_cleared_step != null && doc.checkpoint_cleared_step >= step) {
+      return 'verified'
+    }
     return 'under_review'
   }
-  if (status === 'COMPLETED') return 'verified'
+  
+  // Fallback for CREATED or other unmapped statuses
   return 'awaiting_pickup'
 }
 
-const visibleDocs = computed(() => {
-  if (viewScope.value === 'GLOBAL') return allDocs.value
-  const ids = myOfficeIds.value
-  return allDocs.value.filter((doc) => {
-    const current = doc.current_office_id ? String(doc.current_office_id) : ''
-    if (current && ids.has(current)) return true
-    if (doc.tracking_status === 'CREATED') {
-      const origin = doc.origin_office_id ? String(doc.origin_office_id) : ''
-      if (origin && ids.has(origin)) return true
-    }
-    return false
-  })
-})
+const visibleDocs = computed(() => allDocs.value)
 
 const columnDocs = (phase: PipelinePhase) =>
   visibleDocs.value.filter((doc) => classifyPhase(doc) === phase)
@@ -357,15 +322,13 @@ async function fetchMyOffices() {
 }
 
 async function refreshQueue(silent = false) {
-  const orgId = auth.user?.org_id
-  if (!orgId) return
   if (!silent) loading.value = true
   try {
     const res = await $fetch<{
       success: boolean
       data: QueueDoc[]
     }>('/api/tracking/queue', {
-      params: { orgId, scope: 'GLOBAL', status: ACTIVE_STATUSES, limit: 300 },
+      params: { limit: 300 },
     })
     allDocs.value = res.data ?? []
     lastSyncedAt.value = new Date()
@@ -410,7 +373,7 @@ async function openDocumentFromQuery() {
   if (match) activeDocument.value = match
 }
 
-function handleDocUpdated(payload: {
+function handleDocUpdated(data: {
   tracking_status: string
   issueClosed?: boolean
   status?: string
@@ -421,10 +384,10 @@ function handleDocUpdated(payload: {
 
   const patch = (doc: QueueDoc): QueueDoc => ({
     ...doc,
-    tracking_status: payload.tracking_status,
-    ...(payload.status ? { status: payload.status } : {}),
-    ...(payload.checkpoint_cleared_step != null
-      ? { checkpoint_cleared_step: payload.checkpoint_cleared_step }
+    tracking_status: data.tracking_status,
+    ...(data.status ? { status: data.status } : {}),
+    ...(data.checkpoint_cleared_step != null
+      ? { checkpoint_cleared_step: data.checkpoint_cleared_step }
       : {}),
   })
 
@@ -447,9 +410,7 @@ watch(workingBoardPollIntervalMs, () => {
   if (import.meta.client) restartPollTimer()
 })
 
-watch(settingsReady, (ready) => {
-  if (ready) viewScope.value = defaultPipelineView.value
-})
+
 
 // ── GSAP Entrance ──────────────────────────────────────────────────────
 const runEntranceAnimation = () => {
@@ -474,9 +435,7 @@ const animateBoard = () => {
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
   hydrateSettings()
-  if (settingsReady.value) {
-    viewScope.value = defaultPipelineView.value
-  }
+
   runEntranceAnimation()
   await Promise.all([fetchMyOffices(), stageStore.fetchStages(), refreshQueue()])
   animateBoard()
