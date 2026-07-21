@@ -561,12 +561,12 @@ const getStageSequence = (stageId: number) => {
   return stageStore.stageOfficeSequences[stageId] || []
 }
 
-const getOfficeName = (officeId: number) => {
-  return officeStore.offices.find((office) => Number(office.id) === Number(officeId))?.name || 'Unknown office'
+const getOfficeName = (officeId: string | number) => {
+  return officeStore.offices.find((office) => String(office.id) === String(officeId))?.name || 'Unknown office'
 }
 
-const getUserName = (userId: number) => {
-  return officeStore.usersUnderOrg.find((user) => Number(user.user_id) === Number(userId))?.full_name || 'Unassigned'
+const getUserName = (userId: string | number) => {
+  return officeStore.usersUnderOrg.find((user) => String(user.user_id) === String(userId))?.full_name || 'Unassigned'
 }
 
 const getOccurrenceIndex = (stageId: number, officeId: number, itemIndex: number) => {
