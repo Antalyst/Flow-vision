@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <script setup>
 import { PDFDocument } from 'pdf-lib'
 import QRCode from 'qrcode'
@@ -169,20 +170,22 @@ const onFileChange = (e) => {
         </div>
       </div>
     </div>
+=======
+<template>
+  <div class="landing-page w-full">
+    <LandingHeroSection />
+    <LandingAiFeaturesSection />
+    <LandingScrollVideoSection />
+    <LandingBrandRevealSection />
+>>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
   </div>
 </template>
 
-<style>
-.docx-wrapper {
-  background-color: #f3f4f6 !important;
-  padding: 1.5rem !important;
-  display: flex !important;
-  justify-content: center !important;
-}
-.docx {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-  margin-bottom: 0 !important;
-  background-color: white !important;
-  width: 100% !important;
-}
-</style>
+<script setup lang="ts">
+import LandingHeroSection from '~/components/landing/LandingHeroSection.vue'
+import LandingAiFeaturesSection from '~/components/landing/LandingAiFeaturesSection.vue'
+import LandingScrollVideoSection from '~/components/landing/LandingScrollVideoSection.vue'
+import LandingBrandRevealSection from '~/components/landing/LandingBrandRevealSection.vue'
+
+definePageMeta({ layout: 'default' })
+</script>

@@ -1,15 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async(event) => {
   try {
     const config = useRuntimeConfig()
     const body = await readBody(event);
-    const { orgId } = body;
+    const org_id = body?.org_id ?? body?.orgId;
 
-    if (!orgId) {
+    if (org_id == null || org_id === '') {
       throw createError({
         statusCode: 400,
-        message: "orgId is required",
+        message: 'org_id is required',
       });
     }
 
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     const { data, error } = await client
       .from('users')
       .select('user_id, full_name, email, role, org_id')
-      .eq('org_id', orgId)
+      .eq('org_id', org_id)
       .eq('role', 'employee')
       .order('full_name', { ascending: true })
 
@@ -31,6 +31,8 @@ export default defineEventHandler(async (event) => {
         message: error.message || 'Failed to fetch employees',
       });
     }
+
+    console.log('[Backend Data Check]:', data)
 
     return {
       success: true,

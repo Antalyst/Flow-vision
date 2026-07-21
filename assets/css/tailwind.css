@@ -1,8 +1,182 @@
-/* 1. Import the font */
+/* 1. Import fonts */
 @import url('https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400..700;1,400..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+  }
 
+  body {
+    @apply bg-white-pure text-onyx-black;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  .dark body,
+  body.dark {
+    @apply bg-onyx-black text-white-pure;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-600;
+  }
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-white-pure dark:bg-onyx-card rounded-card border border-onyx-border/20 dark:border-onyx-border shadow-card;
+  }
+
+  .dashboard-card-hover {
+    @apply hover:shadow-card-hover dark:hover:shadow-card-hover hover:border-onyx-border/40 dark:hover:border-onyx-border transition-all duration-200;
+  }
+
+  .matrix-card {
+    @apply rounded-2xl border border-zinc-200 bg-white-surface shadow-card transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card;
+  }
+
+  .matrix-card-glass {
+    @apply rounded-2xl border border-zinc-200 bg-white-surface/90 shadow-card backdrop-blur-xl transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-card/70;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200;
+    @apply text-white-muted hover:text-candy-orange hover:bg-candy-orange/5 dark:hover:bg-candy-orange/10;
+  }
+
+  .nav-item-active {
+    @apply text-candy-orange bg-candy-orange/[0.08] dark:bg-candy-orange/[0.12] relative;
+  }
+
+  .nav-item-active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-high {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-medium {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+  }
+
+  .badge-low {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full inline-block;
+  }
+
+  /* ── Dashboard staggered entrance orchestration ─────────────────────── */
+  .fv-enter-sidebar,
+  .fv-enter-header,
+  .fv-enter-main,
+  .fv-enter-card {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    transition-property: transform, opacity;
+    backface-visibility: hidden;
+  }
+
+  /* Step 1 — Sidebar: slide in from left + fade */
+  .fv-enter-sidebar {
+    opacity: 0;
+    transform: translate3d(-1rem, 0, 0);
+    transition-duration: 500ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fv-enter-sidebar.fv-enter-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+
+  /* Prevent invisible animating layers from intercepting clicks */
+  .fv-enter-sidebar:not(.fv-enter-visible),
+  .fv-enter-header:not(.fv-enter-visible),
+  .fv-enter-main:not(.fv-enter-visible),
+  .fv-enter-card:not(.fv-enter-visible) {
+    pointer-events: none;
+  }
+
+  /* Step 2 — Top header: slide down + fade */
+  .fv-enter-header {
+    opacity: 0;
+    transform: translate3d(0, -0.75rem, 0);
+    transition-duration: 300ms;
+    transition-delay: 100ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fv-enter-header.fv-enter-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+
+  /* Step 3 — Main viewport: float up + fade */
+  .fv-enter-main {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0);
+    transition-duration: 500ms;
+    transition-delay: 200ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .fv-enter-main.fv-enter-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+
+  /* Step 4 — Metrics / cards: scale-up with subtle bounce */
+  .fv-enter-card {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.95);
+    transition-duration: 500ms;
+    transition-delay: 300ms;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .fv-enter-card.fv-enter-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fv-enter-sidebar,
+    .fv-enter-header,
+    .fv-enter-main,
+    .fv-enter-card {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+      pointer-events: auto !important;
+    }
+  }
+}

@@ -1,11 +1,113 @@
 <template>
-  <div class="min-h-screen w-full font-primary sticky top-0 relative">
-    <nav class="flex justify-between items-center p-4 px-28">
-      <div class="flex items-center">
-        <img class="w-[50px] h-auto" src="/logo/Logos.png" alt="FlowVision Logo">
-        <h1 class="text-heading text-heading-dark font-bold">FlowVision</h1>
-      </div>
+  <div
+    class="w-full min-h-screen transition-colors duration-300"
+    :class="isMarketingPage
+      ? [
+        isLandingDark ? 'dark bg-onyx-black text-white-pure font-dashboard' : 'bg-white-surface text-zinc-900 font-dashboard',
+        'relative',
+      ]
+      : 'overflow-x-hidden font-primary bg-white-pure dark:bg-onyx-black'"
+  >
+    <!-- Landing atmosphere vignette -->
+    <div
+      v-if="isMarketingPage && isLandingDark"
+      class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-zinc-800/20 via-transparent to-[#09090b]"
+      aria-hidden="true"
+    />
 
+    <!-- Ghost grid texture (landing) -->
+    <div
+      v-if="isMarketingPage"
+      class="pointer-events-none absolute inset-0 z-0"
+      :class="isLandingDark ? 'grid-bg-lines-dark opacity-[0.03]' : 'grid-bg-lines opacity-[0.35]'"
+      aria-hidden="true"
+    />
+
+    <!-- Sticky navigation (landing) — top-locked, solid capsule -->
+    <div
+      v-if="isMarketingPage"
+      class="sticky top-0 left-0 right-0 z-50 w-full px-3 pt-3 sm:px-4 sm:pt-4 md:px-8"
+    >
+      <div class="container relative mx-auto flex max-w-[1800px] items-center justify-between pr-10 sm:pr-11 md:pr-0">
+        <nav
+          class="pointer-events-auto flex h-12 w-full max-w-[960px] items-center justify-between gap-2 rounded-full px-3 transition-colors duration-300 sm:mx-auto sm:h-14 sm:gap-4 sm:px-5 md:gap-6 md:px-8"
+          :class="navCapsuleClass"
+        >
+          <NuxtLink to="/" class="flex shrink-0 items-center">
+            <img
+              src="/logo/new-logo-dark.png"
+              alt="FlowVision"
+              class="h-7 w-auto sm:h-8"
+              :class="isLandingDark ? 'hidden' : 'block'"
+            >
+            <img
+              src="/logo/new-logo.png"
+              alt="FlowVision"
+              class="h-7 w-auto sm:h-8"
+              :class="isLandingDark ? 'block' : 'hidden'"
+            >
+          </NuxtLink>
+
+          <div class="hidden items-center gap-6 md:flex">
+            <NuxtLink
+              v-for="link in landingNavLinks"
+              :key="link.label"
+              :to="link.to"
+              class="font-dashboard text-[11px] font-semibold uppercase tracking-wider transition-colors hover:text-candy-orange"
+              :class="route.path === link.to ? 'text-candy-orange' : 'text-white-muted'"
+            >{{ link.label }}</NuxtLink>
+          </div>
+
+          <div class="ml-auto hidden shrink-0 items-center gap-2 sm:gap-3 md:ml-0 md:flex md:gap-4">
+            <NuxtLink
+              to="/login"
+              class="font-dashboard text-[10px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange sm:text-[11px]"
+            >
+              Sign in
+            </NuxtLink>
+            <NuxtLink
+              to="/register"
+              class="rounded-full bg-candy-orange px-3 py-1 font-dashboard text-[10px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover sm:px-4 sm:py-1.5 sm:text-[11px]"
+            >
+              Get started!
+            </NuxtLink>
+          </div>
+
+          <button
+            type="button"
+            class="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full text-white-muted transition-colors hover:text-candy-orange md:hidden"
+            :aria-expanded="mobileMenuOpen"
+            aria-controls="mobile-navigation"
+            aria-label="Open navigation menu"
+            @click="mobileMenuOpen = true"
+          >
+            <Icon name="ph:list-bold" class="h-5 w-5" />
+          </button>
+        </nav>
+
+        <button
+          type="button"
+          class="pointer-events-auto absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition-all duration-300 sm:h-10 sm:w-10 md:right-2"
+          :class="isLandingDark
+            ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black'
+            : 'border-zinc-200 bg-white hover:bg-zinc-50'"
+          :aria-label="isLandingDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          :aria-pressed="isLandingDark"
+          @click="toggleLandingTheme"
+        >
+          <Icon
+            :name="isLandingDark ? 'ph:sun-fill' : 'ph:moon-fill'"
+            class="h-4 w-4"
+            :class="isLandingDark ? 'text-candy-orange' : 'text-zinc-700'"
+          />
+        </button>
+      </div>
+    </div>
+
+    <nav v-else class="mx-4 my-5 flex items-center justify-between rounded-full bg-onyx-black p-4 text-white shadow-md md:mx-60">
+      <div class="flex items-center">
+        <img class="w-[40px] h-auto pl-4" src="/logo/new-logo.png" alt="FlowVision Logo">
+      </div>
       <div class="hidden md:block">
         <ul class="flex md:pl-52 gap-8 justify-center">
           <li class="cursor-pointer transition"><nuxt-link to="/">Home</nuxt-link></li>
@@ -15,44 +117,71 @@
         </ul>
       </div>
 
-      <div class="flex items-center justify-center gap-4">
-        <div class="relative hidden sm:flex items-center">
-          <input 
-            type="text" 
-            placeholder="Search documents..."
-            class="pl-10 pr-4 py-1.5 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-          <Icon name="material-symbols-light:search" class="absolute left-3 text-xl text-gray-400"/>
-        </div>
+      <div class="hidden items-center justify-center gap-4 md:flex">
+       
 
         <div class="flex gap-2">
-      
-    
-            <button @click="loginModal = true" class="px-4 py-2 text-sm font-medium hover:text-blue-600 transition">Sign in</button>
-            <button @click="registerModal = true" class="px-5 py-2 text-sm font-medium bg-primary-btn text-white rounded-md transition shadow-sm">
+            <NuxtLink to="/login" class="px-4 py-2 text-md font-medium hover:text-candy-orange transition">Sign in</NuxtLink>
+            <NuxtLink to="/register" class="px-5 py-2 text-md font-medium bg-white text-onyx-black rounded-full hover:bg-candy-orange hover:text-white transition shadow-sm">
               Get started
+<<<<<<< HEAD
             </button>
 
+=======
+            </NuxtLink>
+     
+>>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
         </div>
       </div>
+
+      <button
+        type="button"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-full text-white-muted transition-colors hover:text-candy-orange md:hidden"
+        :aria-expanded="mobileMenuOpen"
+        aria-controls="mobile-navigation"
+        aria-label="Open navigation menu"
+        @click="mobileMenuOpen = true"
+      >
+        <Icon name="ph:list-bold" class="h-5 w-5" />
+      </button>
     </nav>
-  
-    <div v-if="registerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div class="relative bg-white w-full max-w-5xl min-h-[600px] rounded-md shadow-2xl overflow-hidden flex">
-          <div class="hidden lg:flex flex-1 relative bg-[url('/bg/bg.png')] bg-cover bg-center items-center justify-center p-12">
-              <div class="absolute inset-0 bg-black/20"></div>
-              <div class="relative z-10 text-center">
-                  <img src="/logo/Logos.png" class="w-20 mx-auto mb-4 brightness-0 invert" alt="FlowVision">
-                  <h1 class="text-4xl font-bold text-white tracking-tight">Join FlowVision</h1>
-                  <p class="text-white/80 mt-2">Start managing your workflow today.</p>
-              </div>
+
+    <Transition name="mobile-menu">
+      <div
+        v-if="mobileMenuOpen"
+        id="mobile-navigation"
+        class="fixed inset-0 z-[60] bg-white-surface/95 backdrop-blur-lg dark:bg-onyx-black/95 md:hidden"
+      >
+        <div class="flex min-h-screen flex-col px-6 py-6">
+          <div class="flex items-center justify-between">
+            <NuxtLink to="/" class="inline-flex items-center" @click="mobileMenuOpen = false">
+              <img src="/logo/new-logo-dark.png" alt="FlowVision" class="h-8 w-auto dark:hidden">
+              <img src="/logo/new-logo.png" alt="FlowVision" class="hidden h-8 w-auto dark:block">
+            </NuxtLink>
+            <button
+              type="button"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full text-neutral-500 transition-colors duration-200 hover:text-neutral-900 dark:text-white-muted dark:hover:text-white-pure"
+              aria-label="Close navigation menu"
+              @click="mobileMenuOpen = false"
+            >
+              <Icon name="ph:x-bold" class="h-5 w-5" />
+            </button>
           </div>
 
-          <div class="flex-1 bg-white p-8 md:p-10 flex flex-col justify-center relative overflow-y-auto max-h-[90vh]">
-              <button @click="registerModal = false" class="absolute top-6 right-8 text-3xl text-gray-400 hover:text-gray-800 transition">
-                  &times;
-              </button>
+          <nav class="mt-10 flex flex-1 flex-col" aria-label="Mobile navigation">
+            <NuxtLink
+              v-for="link in mobileNavLinks"
+              :key="link.label"
+              :to="link.to"
+              class="border-b border-neutral-200/70 py-4 font-primary text-lg font-medium tracking-wide transition-colors dark:border-onyx-border"
+              :class="route.path === link.to ? 'text-candy-orange' : 'text-neutral-900 hover:text-candy-orange dark:text-white-pure dark:hover:text-candy-orange'"
+              @click="mobileMenuOpen = false"
+            >
+              {{ link.label }}
+            </NuxtLink>
+          </nav>
 
+<<<<<<< HEAD
               <div class="w-full max-w-md mx-auto">
                   <div class="mb-6 text-center lg:text-left">
                       <h1 class="text-3xl font-bold text-gray-900 mb-1">Create Account</h1>
@@ -210,215 +339,82 @@
                   </p>
               </div>
             </div>
+=======
+          <div class="grid gap-3 pb-3">
+            <NuxtLink
+              to="/login"
+              class="py-4 text-center font-primary text-lg font-medium tracking-wide transition-colors"
+              :class="route.path === '/login' ? 'text-candy-orange' : 'text-neutral-900 hover:text-candy-orange dark:text-white-pure dark:hover:text-candy-orange'"
+              @click="mobileMenuOpen = false"
+            >
+              Sign in
+            </NuxtLink>
+            <NuxtLink
+              to="/register"
+              class="rounded-lg bg-candy-orange py-4 text-center font-primary text-lg font-bold tracking-wide text-white-pure shadow-md shadow-candy-orange/10 transition-colors hover:bg-candy-hover"
+              @click="mobileMenuOpen = false"
+            >
+              Get started
+            </NuxtLink>
+          </div>
+>>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
         </div>
-    </div>
-    <main class="p-2 max-w-[1200px] mx-auto">
+      </div>
+    </Transition>
+  
+    <main
+      :class="isMarketingPage
+        ? 'container relative z-10 mx-auto max-w-[1800px] px-8 pt-6 2xl:px-0'
+        : 'w-full p-2'"
+    >
       <slot />
     </main>
   </div>
 </template>
 
 <script setup>
+const route = useRoute()
+const { isMarketingPage } = useMarketingPage()
+const { isLandingDark, toggleLandingTheme, navCapsuleClass } = useLandingTheme()
+const mobileMenuOpen = ref(false)
 
-import { useAuthStore } from '~/stores/auth'
-const {startLoading, stopLoading} = useLoading();
-const employeeAuth = useEmployeeAuthStore();
+const landingNavLinks = [
+  { label: 'Home', to: '/' },
+  { label: 'Features', to: '/features' },
+  { label: 'Tracking', to: '/tracking' },
+  { label: 'Pricing', to: '/pricing' },
+  { label: 'About', to: '/about' },
+  { label: 'Contact', to: '/contact' },
+]
 
-const showPassword = ref(false);
-const auth = useAuthStore() 
-const accTypeData = ref([])
-const selectedType = ref(null)
-const registerModal = ref(false)
-const userRole = ref("")
-const loginModal = ref(false)
-const verifyCode = ref(false)
-const selectedTypeObj = ref(null)
-const selectedTypeName = ref('')
+const mobileNavLinks = landingNavLinks
 
-const selectType = (accType) => {
-  selectedType.value = accType.acctype_id
-  selectedTypeName.value = accType.name.toLowerCase()
-}
-const login = ref({
-  email: '',
-  password: '',
-  rememberMe:false
+watch(() => route.fullPath, () => {
+  mobileMenuOpen.value = false
 })
 
-const form = ref({
-  full_name: '',
-  email: '',
-  acctype_id: selectedType.value,
-  role:userRole.value,
-  birth_date: '',
-  password: '',
-  confirm_password: '',
-  org_code:''
-})
-
-const getPostLoginRoute = (role = '') => {
-  return role.toLowerCase() === 'client' ? '/client' : '/client/office'
-}
-
-const callAccType = async () => {
-  try {
-    const data = await $fetch("/api/account_type")
-    accTypeData.value = data
-    if (data.length > 0) {
-      selectedType.value = data[0].acctype_id
-      selectedTypeName.value = data[0].name.toLowerCase()
-    }
-  } catch (e) {
-    console.error("Fetch error:", e)
-  }
-}
-
-const fetchOrgCode = async () => {
-  try {
-    const res = await employeeAuth.fetchOrgCode({
-      code: form.value.org_code
-    })
-    
-    if (res && res.org_id) {
-      verifyCode.value = true;
-      return true;
-    } else {
-      verifyCode.value = false;
-      return false;
-    }
-  } catch (e) {
-    console.error("Verification Error:", e);
-    verifyCode.value = false;
-    return false;
-  }
-}
-
-const handleRegister = async () => {
-
-  if (form.value.password !== form.value.confirm_password) {
-    alert("Passwords do not match!")
-    return
-  }
-
-  try {
-    startLoading(); 
-
-    if (selectedTypeName.value === 'organization') {
-      const result = await auth.register({
-        ...form.value,
-        acctype_id: selectedType.value,
-        role: userRole.value
-      })
-      processResult(result);
-
-    } else {
-      await fetchOrgCode();
-
-      if (verifyCode.value) {
-        const result = await auth.register({
-          ...form.value,
-          acctype_id: selectedType.value,
-          role: userRole.value
-        })
-        processResult(result);
-      } else {
-
-        form.value.password = '';
-        form.value.confirm_password = '';
-        form.value.org_code = '';
-        alert('Invalid registration Code');
-      }
-    }
-  } catch (e) {
-    alert(e.data?.statusMessage || 'Registration failed');
-  } finally {
-    stopLoading();
-  }
-}
-
-
-
-
-const handleLogin = async () => {
-  console.log("Attempting login with:", login.value);
-
-  if (!login.value.email || !login.value.password) {
-      alert("Please fill in all fields");
-      return;
-  }
-
-  try {
-    startLoading();
-    const result = await auth.login(login.value); 
-    console.log("Login result:", result);
-
-    if (result.success) {
-      console.log("Login successful, navigating to /client...");
-      loginModal.value = false;
-      
-      const userSession = useCookie('user_session', {
-        maxAge: 60 * 60 * 24 * 30,
-        path: '/',
-        sameSite: 'lax'
-      });
-      const userRole = useCookie('user_role', {
-        maxAge: 60 * 60 * 24 * 30,
-        path: '/',
-        sameSite: 'lax'
-      });
-      const sessionUserId = result.user?.user_id || result.user?.id || '';
-      userSession.value = sessionUserId;
-      userRole.value = result.user.role || '';
-      
-      await navigateTo(getPostLoginRoute(result.user.role || ''));
-    } else {
-      console.warn("Login failed: result.success is false");
-    }
-  } catch (e) {
-    console.error("Login catch error:", e);
-    alert(e.data?.statusMessage || 'Login failed');
-  } finally {
-    stopLoading();
-  }
-}
-const processResult = async (result) => {
-  if (result && (result.autoLogin || result.success)) {
-    registerModal.value = false;
-
-    const currentUser = result.user || auth.user;
-    const userSession = useCookie('user_session', {
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-      sameSite: 'lax'
-    });
-    const userRole = useCookie('user_role', {
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-      sameSite: 'lax'
-    });
-
-    const sessionUserId = currentUser?.user_id || currentUser?.id || '';
-    userSession.value = sessionUserId;
-    userRole.value = currentUser?.role || '';
-
-    await navigateTo(getPostLoginRoute(currentUser?.role || ''));
-  } else {
-    alert('Registration successful! Please sign in.');
-    registerModal.value = false;
-    loginModal.value = true;
-  }
-}
-
-
-onMounted(async() => {
-  await callAccType()
-})
-watch(selectedType, (newVal)=>{
-  if(newVal === 1 ){
-    userRole.value = "client";
-  }else{
-    userRole.value = "employee"
-  }
-  
-})
 </script>
+
+<style scoped>
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: opacity 0.22s ease;
+}
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  opacity: 0;
+}
+.grid-bg-lines {
+  background-image:
+    linear-gradient(to right, rgb(228 228 231 / 0.55) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(228 228 231 / 0.55) 1px, transparent 1px);
+  background-size: 100px 100px;
+}
+
+.grid-bg-lines-dark {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.35) 1px, transparent 1px);
+  background-size: 100px 100px;
+}
+</style>
