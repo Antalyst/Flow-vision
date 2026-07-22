@@ -506,6 +506,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, computed } from 'vue'
 import AiGeminiLoader from './AiGeminiLoader.vue'
 import AiTypewriter from './AiTypewriter.vue'
+import { Document as DocxDocument, Packer, Paragraph, TextRun, Table, TableRow, TableCell, HeadingLevel, WidthType, BorderStyle } from 'docx'
 
 // ── Scope props ────────────────────────────────────────────────────────
 // AiCanvasWorkspace is role-agnostic; the caller (client/ai.vue or
@@ -840,44 +841,144 @@ const resolveTableMatrix = (payload: DocumentPayload): string[][] => {
   return parsedTable ? htmlTableToMatrix(parsedTable) : []
 }
 
-const buildWordHtmlDocument = (title: string, htmlContent: string): string => {
-  const parsed = parseCanvasHtml(htmlContent)
-  const bodyMarkup = parsed.body.innerHTML.trim()
+const processHtmlNode = (node: globalThis.Node): any => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent?.replace(/\s+/g, ' ') || ''
+    if (!text.trim()) return null
+    return new TextRun({ text })
+  }
 
-  return `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:w="urn:schemas-microsoft-com:office:word"
-      xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<meta charset="utf-8">
-<title>${escapeXml(title)}</title>
-<!--[if gte mso 9]><xml>
-<w:WordDocument>
-  <w:View>Print</w:View>
-  <w:Zoom>100</w:Zoom>
-  <w:DoNotOptimizeForBrowser/>
-</w:WordDocument>
-</xml><![endif]-->
-<style>
-  @page { margin: 1in; }
-  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1f2937; line-height: 1.45; }
-  h1 { font-size: 22pt; font-weight: 700; color: #111827; margin: 0 0 14pt; }
-  h2 { font-size: 14pt; font-weight: 700; color: #111827; margin: 18pt 0 8pt; }
-  h3 { font-size: 12pt; font-weight: 700; color: #1f2937; margin: 14pt 0 6pt; }
-  p { margin: 0 0 9pt; }
-  ul, ol { margin: 0 0 9pt 18pt; }
-  li { margin: 2pt 0; }
-  strong, b { font-weight: 700; color: #111827; }
-  table { border-collapse: collapse; width: 100%; margin: 10pt 0 16pt; }
-  th, td { border: 1px solid #d1d5db; padding: 6pt 8pt; vertical-align: top; }
-  th { background: #f3f4f6; font-weight: 700; font-size: 9pt; text-transform: uppercase; color: #4b5563; }
-</style>
-</head>
-<body>
-  <h1>${escapeXml(title)}</h1>
-  ${bodyMarkup}
-</body>
-</html>`
+  if (node.nodeType !== Node.ELEMENT_NODE) return null
+  const el = node as globalThis.Element
+  const tagName = el.tagName.toLowerCase()
+
+  // Inline formatting
+  if (tagName === 'b' || tagName === 'strong') {
+    return Array.from(el.childNodes).map((child) => {
+      const parsed = processHtmlNode(child)
+      if (parsed instanceof TextRun) return new TextRun({ text: parsed.text, bold: true })
+      return parsed
+    }).flat().filter(Boolean)
+  }
+  if (tagName === 'i' || tagName === 'em') {
+    return Array.from(el.childNodes).map((child) => {
+      const parsed = processHtmlNode(child)
+      if (parsed instanceof TextRun) return new TextRun({ text: parsed.text, italics: true })
+      return parsed
+    }).flat().filter(Boolean)
+  }
+  if (tagName === 'span' || tagName === 'a') {
+    return Array.from(el.childNodes).map(processHtmlNode).flat().filter(Boolean)
+  }
+
+  // Block formatting
+  if (tagName.match(/^h[1-6]$/)) {
+    const level = parseInt(tagName.substring(1), 10)
+    const headingTypes = [
+      HeadingLevel.HEADING_1, HeadingLevel.HEADING_2, HeadingLevel.HEADING_3,
+      HeadingLevel.HEADING_4, HeadingLevel.HEADING_5, HeadingLevel.HEADING_6
+    ]
+    const runs = Array.from(el.childNodes).map(processHtmlNode).flat().filter(Boolean) as TextRun[]
+    return new Paragraph({
+      children: runs.length ? runs : [new TextRun({ text: el.textContent || '' })],
+      heading: headingTypes[level - 1],
+    })
+  }
+
+  if (tagName === 'p' || tagName === 'div') {
+    const runs = Array.from(el.childNodes).map(processHtmlNode).flat().filter(Boolean) as TextRun[]
+    if (runs.length === 0) return null
+    return new Paragraph({ children: runs })
+  }
+
+  if (tagName === 'ul' || tagName === 'ol') {
+    const listItems: Paragraph[] = []
+    Array.from(el.children).forEach((li) => {
+      if (li.tagName.toLowerCase() === 'li') {
+        const runs = Array.from(li.childNodes).map(processHtmlNode).flat().filter(Boolean) as TextRun[]
+        listItems.push(new Paragraph({
+          children: runs,
+          bullet: { level: 0 }
+        }))
+      }
+    })
+    return listItems
+  }
+
+  if (tagName === 'table') {
+    const rows: TableRow[] = []
+    Array.from(el.querySelectorAll('tr')).forEach((tr) => {
+      const cells: TableCell[] = []
+      Array.from(tr.querySelectorAll('th, td')).forEach((td) => {
+        const paragraphs = Array.from(td.childNodes)
+          .map(processHtmlNode)
+          .flat()
+          .filter((n) => n instanceof Paragraph) as Paragraph[]
+        
+        if (paragraphs.length === 0) {
+          paragraphs.push(new Paragraph({ text: td.textContent?.trim() || '' }))
+        }
+        
+        cells.push(new TableCell({
+          children: paragraphs,
+          borders: {
+            top: { style: BorderStyle.SINGLE, size: 1, color: "D1D5DB" },
+            bottom: { style: BorderStyle.SINGLE, size: 1, color: "D1D5DB" },
+            left: { style: BorderStyle.SINGLE, size: 1, color: "D1D5DB" },
+            right: { style: BorderStyle.SINGLE, size: 1, color: "D1D5DB" },
+          }
+        }))
+      })
+      if (cells.length > 0) {
+        rows.push(new TableRow({ children: cells }))
+      }
+    })
+    
+    if (rows.length > 0) {
+      return new Table({
+        rows,
+        width: { size: 100, type: WidthType.PERCENTAGE }
+      })
+    }
+    return null
+  }
+
+  // Fallback for unknown elements
+  const children = Array.from(el.childNodes).map(processHtmlNode).flat().filter(Boolean)
+  return children.length > 0 ? children : null
+}
+
+const buildNativeWordDocument = async (title: string, htmlContent: string): Promise<Blob> => {
+  const parsed = parseCanvasHtml(htmlContent)
+  const sectionsContent: any[] = [
+    new Paragraph({
+      text: title,
+      heading: HeadingLevel.TITLE,
+    }),
+  ]
+
+  Array.from(parsed.body.childNodes).forEach((node) => {
+    const parsedComponent = processHtmlNode(node)
+    if (parsedComponent) {
+      if (Array.isArray(parsedComponent)) {
+        sectionsContent.push(...parsedComponent.filter(c => c instanceof Paragraph || c instanceof Table))
+      } else if (parsedComponent instanceof Paragraph || parsedComponent instanceof Table) {
+        sectionsContent.push(parsedComponent)
+      } else {
+        // If it's TextRun, wrap in a Paragraph
+        sectionsContent.push(new Paragraph({ children: [parsedComponent].flat() }))
+      }
+    }
+  })
+
+  const doc = new DocxDocument({
+    sections: [{
+      properties: {},
+      children: sectionsContent,
+    }]
+  })
+
+  return await Packer.toBlob(doc)
 }
 
 const buildSpreadsheetXml = (rows: string[][], sheetName: string): string => {
@@ -912,18 +1013,17 @@ const buildSpreadsheetXml = (rows: string[][], sheetName: string): string => {
 </Workbook>`
 }
 
-const downloadAsDocx = () => {
+const downloadAsDocx = async () => {
   const payload = documentPayload.value
   if (!payload?.content || isExporting.value) return
 
   isExporting.value = true
   try {
     const htmlContent = payload.content
-    const wordDocument = buildWordHtmlDocument(payload.title, htmlContent)
-    const blob = new Blob(['\ufeff', wordDocument], {
-      type: 'application/msword',
-    })
+    const blob = await buildNativeWordDocument(payload.title, htmlContent)
     triggerNativeDownload(blob, buildExportFilename(payload.title, 'docx'))
+  } catch (error) {
+    console.error('Failed to generate native .docx file:', error)
   } finally {
     isExporting.value = false
   }
