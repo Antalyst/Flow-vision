@@ -247,7 +247,7 @@ import { gsap } from 'gsap'
 import { useAuthStore } from '~/stores/auth'
 import QrScanner from '~/components/messenger/QrScanner.vue'
 import {
-  buildDocumentTrackQrData,
+  buildDocumentTrackQrPayload,
   extractCheckpointOfficeId,
   extractDocumentTrackId,
   parseFlowVisionQr,
@@ -380,7 +380,7 @@ const handleScan = async (raw: string) => {
         return
       }
 
-      await handleDocumentPickup(buildDocumentTrackQrData(documentId))
+      await handleDocumentPickup(buildDocumentTrackQrPayload(documentId))
       return
     }
 
