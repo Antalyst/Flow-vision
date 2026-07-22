@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
+    class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
     :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'"
   >
     <!-- ── Mobile top bar ────────────────────────────────────────────── -->
