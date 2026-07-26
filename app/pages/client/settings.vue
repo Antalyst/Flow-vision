@@ -86,6 +86,69 @@
       </section>
 
       <section class="rounded-none border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Employee Pre-Validation</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Require employees to be whitelisted via their Employee ID during registration.</p>
+
+        <div class="mt-4 space-y-3">
+          <SettingToggleRow
+            label="Enable Employee ID Validation"
+            description="If enabled, employees must enter an ID matching an uploaded whitelist to register."
+            :checked="enableEmployeeValidation"
+            :disabled="savingValidationStatus"
+            @update:checked="onValidationToggle"
+          />
+        </div>
+
+        <div v-if="enableEmployeeValidation" class="mt-4 pt-4 border-t" :class="isDark ? 'border-white/5' : 'border-gray-100'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold" :class="headingClass">Employee Whitelist (CSV)</h3>
+            <button
+              v-if="whitelist.length > 0"
+              @click="clearWhitelist"
+              class="text-xs font-semibold text-red-500 hover:text-red-400 transition"
+              :disabled="loadingWhitelist"
+            >
+              Clear Whitelist
+            </button>
+          </div>
+          
+          <div class="flex gap-2 items-center mb-4">
+            <input type="file" accept=".csv" @change="onFileChange" class="text-xs" :class="mutedClass" ref="csvFileInput" />
+            <button
+              @click="uploadCsv"
+              class="rounded-none border bg-candy-orange px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-candy-orange/90 active:scale-[0.98] disabled:opacity-50"
+              :disabled="!selectedFile || uploadingCsv"
+            >
+              {{ uploadingCsv ? 'Uploading...' : 'Upload CSV' }}
+            </button>
+          </div>
+
+          <div class="rounded-none border" :class="innerPanelClass">
+            <div v-if="loadingWhitelist" class="p-4 text-center text-xs" :class="mutedClass">Loading whitelist...</div>
+            <div v-else-if="whitelist.length === 0" class="p-4 text-center text-xs" :class="mutedClass">No employees whitelisted.</div>
+            <div v-else class="max-h-64 overflow-y-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="sticky top-0 border-b z-10" :class="[innerPanelClass, isDark ? 'border-white/5' : 'border-gray-200']">
+                  <tr>
+                    <th class="px-4 py-2 font-semibold" :class="headingClass">Employee ID</th>
+                    <th class="px-4 py-2 font-semibold" :class="headingClass">Name</th>
+                    <th class="px-4 py-2 font-semibold" :class="headingClass">Email</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y" :class="isDark ? 'divide-white/5' : 'divide-gray-100'">
+                  <tr v-for="emp in whitelist" :key="emp.id" class="transition-colors hover:bg-gray-500/5">
+                    <td class="px-4 py-2 font-medium" :class="headingClass">{{ emp.employee_id_number }}</td>
+                    <td class="px-4 py-2" :class="mutedClass">{{ emp.full_name || '-' }}</td>
+                    <td class="px-4 py-2" :class="mutedClass">{{ emp.email || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-none border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Document Categories</h2>
         <p class="mt-1 text-xs" :class="mutedClass">Manage the categories available when uploading documents.</p>
         
@@ -219,6 +282,14 @@ const savingSound = ref(false)
 const isLoggingOut = ref(false)
 const copiedOrg = ref(false)
 
+const enableEmployeeValidation = ref(false)
+const savingValidationStatus = ref(false)
+const whitelist = ref<any[]>([])
+const loadingWhitelist = ref(false)
+const uploadingCsv = ref(false)
+const selectedFile = ref<File | null>(null)
+const csvFileInput = ref<HTMLInputElement | null>(null)
+
 const headingClass = computed(() => (isDark.value ? 'text-white-pure' : 'text-onyx-black'))
 const mutedClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-500'))
 const panelClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white'))
@@ -262,6 +333,91 @@ async function handleLogout() {
   try { await auth.logout() } finally { isLoggingOut.value = false }
 }
 
+async function onValidationToggle(v: boolean) {
+  savingValidationStatus.value = true
+  try {
+    await $fetch('/api/org/settings', {
+      method: 'PUT',
+      body: {
+        org_id: auth.currentOrg?.org_id || auth.user?.org_id,
+        enable_employee_validation: v
+      }
+    })
+    enableEmployeeValidation.value = v
+    if (auth.currentOrg) {
+      auth.currentOrg.enable_employee_validation = v
+    }
+    showToast(v ? 'Employee validation enabled.' : 'Employee validation disabled.')
+    if (v) fetchWhitelist()
+  } catch (err: any) {
+    showToast(err.message || 'Failed to update validation settings.', 'error')
+  } finally {
+    savingValidationStatus.value = false
+  }
+}
+
+function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    selectedFile.value = target.files[0]
+  } else {
+    selectedFile.value = null
+  }
+}
+
+async function uploadCsv() {
+  const orgId = auth.currentOrg?.org_id || auth.user?.org_id
+  if (!selectedFile.value || !orgId) return
+  uploadingCsv.value = true
+  const formData = new FormData()
+  formData.append('org_id', String(orgId))
+  formData.append('file', selectedFile.value)
+
+  try {
+    await $fetch('/api/org/employee-whitelist/upload', {
+      method: 'POST',
+      body: formData
+    })
+    showToast('CSV uploaded successfully.')
+    selectedFile.value = null
+    if (csvFileInput.value) csvFileInput.value.value = ''
+    fetchWhitelist()
+  } catch (err: any) {
+    showToast(err.data?.statusMessage || err.message || 'Failed to upload CSV.', 'error')
+  } finally {
+    uploadingCsv.value = false
+  }
+}
+
+async function fetchWhitelist() {
+  const orgId = auth.currentOrg?.org_id || auth.user?.org_id
+  if (!orgId) return
+  loadingWhitelist.value = true
+  try {
+    const data = await $fetch(`/api/org/employee-whitelist?org_id=${orgId}`)
+    whitelist.value = data as any[]
+  } catch (err) {
+    // ignore
+  } finally {
+    loadingWhitelist.value = false
+  }
+}
+
+async function clearWhitelist() {
+  const orgId = auth.currentOrg?.org_id || auth.user?.org_id
+  if (!orgId) return
+  loadingWhitelist.value = true
+  try {
+    await $fetch(`/api/org/employee-whitelist/clear?org_id=${orgId}`, { method: 'DELETE' })
+    whitelist.value = []
+    showToast('Whitelist cleared.')
+  } catch (err: any) {
+    showToast(err.message || 'Failed to clear whitelist.', 'error')
+  } finally {
+    loadingWhitelist.value = false
+  }
+}
+
 async function copyOrgCode() {
   if (!auth.currentOrg?.code) return
   try {
@@ -276,9 +432,15 @@ async function copyOrgCode() {
 
 onMounted(async () => {
   hydrate()
-  if (auth.isLoggedIn && !auth.currentOrg) {
+  if (!auth.currentOrg) {
     await auth.fetchMyOrg()
   }
+  
+  if (auth.currentOrg?.enable_employee_validation) {
+    enableEmployeeValidation.value = true
+    fetchWhitelist()
+  }
+  
   await categoriesStore.fetchCategories()
 })
 </script>

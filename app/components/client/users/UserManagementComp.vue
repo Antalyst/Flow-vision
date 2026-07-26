@@ -187,6 +187,14 @@
                   <div class="flex justify-end gap-1">
                     <button
                       type="button"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-none text-sky-500 transition hover:bg-sky-500/10"
+                      title="Edit member"
+                      @click="openEditDrawer(member)"
+                    >
+                      <Icon name="ph:pencil-simple" class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
                       title="Remove member"
                       @click="handleRemove(member)"
@@ -264,16 +272,18 @@
           v-if="drawerOpen"
           class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-lg flex-col border-l shadow-2xl"
           :class="isDark ? 'bg-[#1A1A1A] border-onyx-border' : 'bg-white border-gray-200'"
-          @submit.prevent="handleProvision"
+          @submit.prevent="handleSaveDrawer"
         >
           <header
             class="flex items-start justify-between gap-4 border-b px-6 py-5"
             :class="borderClass"
           >
             <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Provision</p>
+              <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">
+                {{ drawerMode === 'edit' ? 'Edit' : 'Provision' }}
+              </p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                New Messenger Account
+                {{ drawerMode === 'edit' ? 'Edit Member Account' : 'New Messenger Account' }}
               </h2>
               <p class="mt-0.5 text-xs" :class="mutedClass">
                 Bound to {{ auth.currentOrg?.name }} · org_id {{ auth.user?.org_id }}
@@ -294,10 +304,12 @@
               class="flex items-center gap-3 rounded-none border px-4 py-3"
               :class="isDark ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-200 bg-amber-50'"
             >
-              <Icon name="ph:motorcycle-fill" class="h-5 w-5 text-amber-500" />
+              <Icon :name="form.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-amber-500" />
               <div>
-                <p class="text-sm font-bold text-amber-600 dark:text-amber-400">Role: Messenger</p>
-                <p class="text-[11px]" :class="mutedClass">Fixed — only messenger roles can be provisioned here.</p>
+                <p class="text-sm font-bold text-amber-600 dark:text-amber-400">Role: {{ form.role === 'messenger' ? 'Messenger' : 'Employee' }}</p>
+                <p class="text-[11px]" :class="mutedClass">
+                  {{ drawerMode === 'edit' ? 'Role cannot be changed here.' : 'Fixed — only messenger roles can be provisioned here.' }}
+                </p>
               </div>
             </div>
 
@@ -334,7 +346,8 @@
             <!-- Password -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                Initial Password <span class="text-red-500">*</span>
+                {{ drawerMode === 'edit' ? 'New Password' : 'Initial Password' }}
+                <span v-if="drawerMode === 'provision'" class="text-red-500">*</span>
               </span>
               <div class="relative mt-2">
                 <input
@@ -344,7 +357,7 @@
                   class="w-full rounded-none border px-4 py-3 pr-11 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
                   :class="inputClass"
                   minlength="8"
-                  required
+                  :required="drawerMode === 'provision'"
                 />
                 <button
                   type="button"
@@ -356,7 +369,7 @@
                 </button>
               </div>
               <p class="mt-1.5 text-[11px]" :class="mutedClass">
-                Share this with the messenger securely. They can change it after first login.
+                {{ drawerMode === 'edit' ? 'Leave blank to keep the current password.' : 'Share this with the messenger securely. They can change it after first login.' }}
               </p>
             </label>
 
@@ -410,12 +423,12 @@
             </button>
             <button
               type="submit"
-              :disabled="saving || !form.full_name || !form.email || form.password.length < 8"
+              :disabled="saving || !form.full_name || !form.email || (drawerMode === 'provision' && form.password.length < 8) || (drawerMode === 'edit' && form.password && form.password.length < 8)"
               class="inline-flex items-center gap-2 rounded-none bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="saving" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-              <Icon v-else name="ph:motorcycle-fill" class="h-4 w-4" />
-              {{ saving ? 'Provisioning…' : 'Provision Account' }}
+              <Icon v-else :name="drawerMode === 'edit' ? 'ph:floppy-disk' : 'ph:motorcycle-fill'" class="h-4 w-4" />
+              {{ saving ? 'Saving…' : (drawerMode === 'edit' ? 'Save Changes' : 'Provision Account') }}
             </button>
           </footer>
         </form>
@@ -466,12 +479,14 @@ const members      = ref<OrgMember[]>([])
 const loading      = ref(false)
 const saving       = ref(false)
 const drawerOpen   = ref(false)
+const drawerMode   = ref<'provision' | 'edit'>('provision')
+const editingUserId = ref<string | number | null>(null)
 const showPassword = ref(false)
 const activeTab    = ref<'all' | 'employee' | 'messenger'>('all')
 const searchQuery  = ref('')
 const provisionError = ref('')
 
-const form = reactive({ full_name: '', email: '', password: '' })
+const form = reactive({ full_name: '', email: '', password: '', role: 'messenger' })
 
 const toast = reactive({ visible: false, message: '', type: 'success' as 'success' | 'error' })
 
@@ -579,9 +594,24 @@ const fetchMembers = async () => {
 
 // ── Drawer handlers ────────────────────────────────────────────────────
 const openProvisionDrawer = () => {
+  drawerMode.value = 'provision'
+  editingUserId.value = null
   form.full_name = ''
   form.email     = ''
   form.password  = ''
+  form.role      = 'messenger'
+  provisionError.value = ''
+  showPassword.value   = false
+  drawerOpen.value     = true
+}
+
+const openEditDrawer = (member: OrgMember) => {
+  drawerMode.value = 'edit'
+  editingUserId.value = member.user_id
+  form.full_name = member.full_name
+  form.email     = member.email
+  form.password  = ''
+  form.role      = member.role
   provisionError.value = ''
   showPassword.value   = false
   drawerOpen.value     = true
@@ -590,27 +620,47 @@ const openProvisionDrawer = () => {
 const closeDrawer = () => { drawerOpen.value = false }
 
 // ── CRUD ───────────────────────────────────────────────────────────────
-const handleProvision = async () => {
+const handleSaveDrawer = async () => {
   if (saving.value) return
   provisionError.value = ''
   saving.value = true
 
   try {
-    const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/users/provision', {
-      method: 'POST',
-      body: {
-        full_name: form.full_name,
-        email:     form.email,
-        password:  form.password,
-        role:      'messenger',
-      },
-    })
-    members.value.push(res.data)
-    members.value.sort((a, b) => a.full_name.localeCompare(b.full_name))
-    closeDrawer()
-    showToast(`Messenger "${res.data.full_name}" provisioned successfully`)
+    if (drawerMode.value === 'provision') {
+      const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/users/provision', {
+        method: 'POST',
+        body: {
+          full_name: form.full_name,
+          email:     form.email,
+          password:  form.password,
+          role:      'messenger',
+        },
+      })
+      members.value.push(res.data)
+      members.value.sort((a, b) => a.full_name.localeCompare(b.full_name))
+      closeDrawer()
+      showToast(`Messenger "${res.data.full_name}" provisioned successfully`)
+    } else {
+      const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/users/update', {
+        method: 'PUT',
+        body: {
+          user_id:   editingUserId.value,
+          full_name: form.full_name,
+          email:     form.email,
+          password:  form.password,
+        },
+      })
+      
+      const index = members.value.findIndex(m => m.user_id === editingUserId.value)
+      if (index !== -1) {
+        members.value[index] = { ...members.value[index], ...res.data }
+        members.value.sort((a, b) => a.full_name.localeCompare(b.full_name))
+      }
+      closeDrawer()
+      showToast(`Member "${res.data.full_name}" updated successfully`)
+    }
   } catch (err: any) {
-    provisionError.value = err?.data?.message || 'Provisioning failed. Please try again.'
+    provisionError.value = err?.data?.message || 'Operation failed. Please try again.'
   } finally {
     saving.value = false
   }

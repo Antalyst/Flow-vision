@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
       }
       const { data: orgData, error: orgError } = await client
         .from('org')
-        .select('org_id')
+        .select('org_id, enable_employee_validation')
         .eq('code', org_code)
         .single();
 
@@ -74,6 +74,22 @@ export default defineEventHandler(async (event) => {
         throw createError({ statusCode: 404, statusMessage: 'Invalid organization code' });
       }
       resolvedOrgId = orgData.org_id;
+
+      if (orgData.enable_employee_validation) {
+        if (!body.employee_id_number) {
+          throw createError({ statusCode: 400, statusMessage: 'Employee ID is required for this organization' });
+        }
+        const { data: whitelistData, error: whitelistError } = await client
+          .from('org_employee_whitelists')
+          .select('id')
+          .eq('org_id', resolvedOrgId)
+          .eq('employee_id_number', body.employee_id_number)
+          .single();
+
+        if (whitelistError || !whitelistData) {
+          throw createError({ statusCode: 403, statusMessage: 'Employee ID not found in organization whitelist. Please contact your organization administrator.' });
+        }
+      }
     }
 
     // 3. Insert User into Supabase

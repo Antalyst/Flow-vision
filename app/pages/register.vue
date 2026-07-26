@@ -86,6 +86,25 @@
             >
           </div>
 
+          <div v-if="selectedTypeName === 'employee'" class="flex items-center gap-2 md:col-span-2">
+            <input type="checkbox" id="prevalidationToggle" v-model="requiresEmployeeId" class="h-4 w-4 rounded border-gray-300 text-candy-orange focus:ring-candy-orange dark:border-onyx-border dark:bg-onyx-black dark:ring-offset-onyx-card">
+            <label for="prevalidationToggle" class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted cursor-pointer">
+              My organization requires Employee Pre-Validation
+            </label>
+          </div>
+
+          <div v-if="selectedTypeName === 'employee' && requiresEmployeeId" class="flex flex-col gap-1.5 md:col-span-2">
+            <label class="font-dashboard text-[11px] font-medium text-candy-orange">Employee ID Number</label>
+            <input
+              v-model="form.employee_id_number"
+              :class="[inputClass, 'border-candy-orange/50 dark:border-candy-orange/60']"
+              type="text"
+              required
+              placeholder="Enter your Employee ID"
+            >
+          </div>
+
+
           <div class="flex flex-col gap-1.5 md:col-span-2">
             <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Birth date</label>
             <input v-model="form.birth_date" type="date" :class="inputClass">
@@ -143,6 +162,7 @@ const userRole = ref("")
 const verifyCode = ref(false)
 const selectedTypeObj = ref(null)
 const selectedTypeName = ref('')
+const requiresEmployeeId = ref(false)
 
 const selectType = (accType) => {
   selectedType.value = accType.acctype_id
@@ -157,8 +177,11 @@ const form = ref({
   birth_date: '',
   password: '',
   confirm_password: '',
-  org_code:''
+  org_code: '',
+  employee_id_number: ''
 })
+
+// dynamic checking logic removed per request
 
 const getPostLoginRoute = (role = '') => {
   const map = {
