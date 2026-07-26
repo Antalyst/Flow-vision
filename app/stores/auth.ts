@@ -20,6 +20,7 @@ interface OrgDetails {
   org_id: string | number
   name: string
   code: string
+  enable_employee_validation?: boolean
   created_at: string
 }
 
@@ -56,13 +57,18 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async fetchMyOrg() {
-      if (!this.user?.user_id) return;
+      const uId = this.user?.user_id || this.user?.id;
+      const orgId = this.user?.org_id;
+      if (!uId && !orgId) return;
       
       try {
-        const org = await $fetch<OrgDetails>('/api/org/getorg', {
+        let org = await $fetch<OrgDetails>('/api/org/getorg', {
           method: 'POST',
-          body: { user_id: this.user.user_id }
+          body: { user_id: uId, org_id: orgId }
         });
+        if (typeof org === 'string') {
+          org = JSON.parse(org);
+        }
         this.currentOrg = org; 
         return org; 
       } catch (error) {
