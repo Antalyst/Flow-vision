@@ -15,7 +15,7 @@
       </div>
       <NuxtLink
         to="/client/documents"
-        class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+        class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
       >
         <Icon name="ph:files-fill" class="h-4 w-4" />
         View Documents
@@ -29,7 +29,7 @@
         </p>
         <button
           type="button"
-          class="rounded-lg border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
+          class="rounded-none border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
           :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
           :disabled="loading"
           @click="refreshAlerts"
@@ -44,14 +44,14 @@
 
       <div
         v-else-if="error"
-        class="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500"
+        class="rounded-none border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500"
       >
         {{ error }}
       </div>
 
       <div
         v-else-if="notifications.length === 0"
-        class="rounded-xl border border-dashed px-4 py-10 text-center text-sm"
+        class="rounded-none border border-dashed px-4 py-10 text-center text-sm"
         :class="isDark ? 'border-zinc-700 text-zinc-500' : 'border-gray-200 text-gray-400'"
       >
         No document updates right now. You will be notified when your documents change status.
@@ -61,14 +61,14 @@
         <div
           v-for="notif in notifications"
           :key="notif.id"
-          class="flex flex-col gap-4 rounded-xl border p-5 md:flex-row md:items-center md:justify-between"
+          class="flex flex-col gap-4 rounded-none border p-5 md:flex-row md:items-center md:justify-between"
           :class="isDark ? 'border-zinc-800 bg-[#1e1e24]' : 'border-gray-200 bg-white'"
         >
           <div class="min-w-0 flex-1">
             <div class="mb-1 flex items-center gap-2">
               <span
                 v-if="isUnreadNotification(notif.is_read)"
-                class="h-2 w-2 animate-pulse rounded-full bg-candy-orange"
+                class="h-2 w-2 animate-pulse rounded-none bg-candy-orange"
               />
               <h4 class="truncate text-base font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ notif.title }}
@@ -86,7 +86,7 @@
             <NuxtLink
               v-if="notif.document_id"
               :to="`/client/documents?document=${notif.document_id}`"
-              class="inline-flex items-center justify-center rounded-lg border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
+              class="inline-flex items-center justify-center rounded-none border px-4 py-2 text-xs font-semibold transition hover:opacity-80"
               :class="isDark ? 'border-zinc-700 text-zinc-200' : 'border-gray-200 text-gray-700'"
             >
               View Document
@@ -94,7 +94,7 @@
             <button
               v-if="isUnreadNotification(notif.is_read)"
               type="button"
-              class="rounded-lg bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              class="rounded-none bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               :disabled="markingId === notif.id"
               @click="markAsRead(notif.id)"
             >
@@ -102,7 +102,7 @@
             </button>
             <span
               v-else
-              class="inline-flex items-center justify-center rounded-lg bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+              class="inline-flex items-center justify-center rounded-none bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
             >
               Read
             </span>
@@ -114,6 +114,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Notifications',
+  description: 'Review critical alerts, SLA warnings, and important updates regarding your document workflows.'
+})
 import { isUnreadNotification } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'client' })

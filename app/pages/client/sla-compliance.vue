@@ -14,13 +14,13 @@
     </header>
 
     <div class="grid grid-cols-3 gap-3">
-      <div v-for="chip in summaryChips" :key="chip.label" class="rounded-lg border p-4" :class="panelClass">
+      <div v-for="chip in summaryChips" :key="chip.label" class="rounded-none border p-4" :class="panelClass">
         <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedClass">{{ chip.label }}</p>
         <p class="mt-1 text-2xl font-bold" :class="chip.tone">{{ chip.value }}</p>
       </div>
     </div>
 
-    <section class="overflow-hidden rounded-lg border" :class="panelClass">
+    <section class="overflow-hidden rounded-none border" :class="panelClass">
       <div class="flex items-center justify-between border-b px-4 py-3" :class="borderClass">
         <h2 class="text-sm font-bold" :class="headingClass">Active Document SLA Ledger</h2>
         <button type="button" class="text-xs font-semibold text-candy-orange" :disabled="loading" @click="loadData">Sync</button>
@@ -51,7 +51,7 @@
               <td class="px-4 py-3 text-xs tabular-nums" :class="mutedClass">{{ row.sla_hours_allowed }}h</td>
               <td class="px-4 py-3">
                 <span
-                  class="inline-flex rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                  class="inline-flex rounded-none border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
                   :class="row.sla_status === 'overdue'
                     ? 'border-red-500/40 text-red-600 dark:text-red-400'
                     : 'border-candy-orange/40 text-candy-orange'"
@@ -69,6 +69,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | SLA Tracking',
+  description: 'Track delivery compliance, deadline management, and service level agreement performance for your physical documents.'
+})
 definePageMeta({ layout: 'client' })
 
 interface SlaRow {

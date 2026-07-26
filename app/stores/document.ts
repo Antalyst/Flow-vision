@@ -81,6 +81,7 @@ export const useDocumentStore = defineStore('document', {
       priority: 'High' | 'Medium' | 'Low'
       stageId: string | number
       originOfficeId?: string | null
+      categoryId?: string | null
     }) {
       if (!this.canUploadDocuments) {
         return { success: false, error: 'You are not permitted to register documents.' }
@@ -91,7 +92,7 @@ export const useDocumentStore = defineStore('document', {
         return { success: false, error: 'Missing organization ID.' }
       }
 
-      const { title, description = '', priority, stageId, originOfficeId = null } = options
+      const { title, description = '', priority, stageId, originOfficeId = null, categoryId = null } = options
 
       if (!title?.trim()) {
         return { success: false, error: 'Title is required.' }
@@ -110,6 +111,7 @@ export const useDocumentStore = defineStore('document', {
             priority,
             stage_id: String(stageId),
             origin_office_id: originOfficeId ? String(originOfficeId) : null,
+            category_id: categoryId ? String(categoryId) : null,
           },
         })
 

@@ -1,7 +1,6 @@
 <template>
-<<<<<<< HEAD
   <div class="flex flex-col h-screen w-full font-primary overflow-hidden">
-    <nav class="flex justify-between items-center p-4 px-28 sticky top-0 bg-white z-50 border-b flex-none"> 
+    <nav class="flex justify-between items-center p-4 px-28 sticky top-0 bg-white z-50 border-b flex-none">
       <div class="flex items-center">
         <img class="w-[50px] h-auto" src="/logo/Logos.png" alt="FlowVision Logo">
         <h1 class="text-heading text-heading-dark font-bold">FlowVision</h1>
@@ -25,8 +24,9 @@
             <button @click="auth.logout()" class="px-4 py-2 text-sm text-red-500 font-medium transition">Logout</button>
           </template>
         </div>
-=======
+
   <div class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
+  <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
     :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 
     <!-- Mobile Top Bar -->
@@ -42,7 +42,6 @@
               <img :src="brandLogo" alt="FlowVision Logo" class="w-10 h-10" />
             </div>
         <span class="text-base font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
->>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
       </div>
       <button class="p-2 -mr-2 rounded-xl hover:bg-gray-100 dark:hover:bg-onyx-black/50 transition">
         <Icon name="ph:bell" class="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -79,50 +78,52 @@
     </Teleport>
 
     <div class="flex min-h-0 w-full flex-1 overflow-hidden">
-      <!-- Desktop Sidebar -->
       <aside
-        class="fv-enter-sidebar relative z-30 hidden md:flex md:w-64 h-full flex-shrink-0 flex-col overflow-hidden border-r"
-        :class="[isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200', entranceVisibleClass]"
+        class="fv-enter-sidebar relative z-30 hidden md:flex h-full flex-shrink-0 flex-col overflow-hidden border-r transition-all duration-300"
+        :class="[isDark ? 'bg-onyx-sidebar border-onyx-border' : 'bg-white border-gray-200', entranceVisibleClass, isSidebarMinimized ? 'w-[72px]' : 'w-64']"
       >
 
         <!-- Brand -->
-        <div class="px-5 pt-5 pb-2 flex-none">
-          <div class="flex items-center gap-2  mb-6">
-            <div class="w-14 h-14 rounded-xl flex items-center justify-center">
-              <img :src="brandLogo" alt="FlowVision Logo" class="w-10 h-10" />
+        <div class="px-4 pt-5 pb-2 flex-none">
+          <div class="flex items-center mb-6" :class="isSidebarMinimized ? 'justify-center flex-col gap-4' : 'gap-2'">
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 flex items-center justify-center">
+                <img :src="brandLogo" alt="FlowVision Logo" class="w-8 h-8" />
+              </div>
+              <span v-if="!isSidebarMinimized" class="text-base font-bold text-gray-900 dark:text-white tracking-tight truncate">FlowVision</span>
             </div>
-            <span class="text-lg font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
-            <button class="ml-auto p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition">
-              <Icon name="ph:sidebar-simple" class="w-4 h-4 text-gray-400" />
+            <button @click="isSidebarMinimized = !isSidebarMinimized" class="p-1.5 hover:bg-gray-100 dark:hover:bg-onyx-card transition"
+              :class="isSidebarMinimized ? '' : 'ml-auto'">
+              <Icon :name="isSidebarMinimized ? 'ph:list-light' : 'ph:caret-left-light'" class="w-4 h-4 text-gray-400" />
             </button>
           </div>
 
           <!-- Search -->
-          <div class="relative mb-5">
+          <div v-if="!isSidebarMinimized" class="relative mb-5">
             <Icon name="ph:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search anything"
-              class="w-full pl-9 pr-16 py-2.5 rounded-xl text-xs outline-none transition border"
+              class="w-full pl-9 pr-16 py-2.5 text-xs outline-none transition border rounded-none"
               :class="isDark
                 ? 'bg-onyx-black/50 border-onyx-border text-gray-300 placeholder:text-gray-500 focus:border-candy-orange/50'
                 : 'bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-400 focus:border-candy-orange/50'" />
             <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <kbd class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+              <kbd class="px-1.5 py-0.5 rounded-none text-[10px] font-semibold"
                 :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">⌘</kbd>
-              <kbd class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+              <kbd class="px-1.5 py-0.5 rounded-none text-[10px] font-semibold"
                 :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">K</kbd>
             </div>
           </div>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-1 px-3 overflow-y-auto">
-          <SidebarNav />
+        <nav class="flex-1 px-0 overflow-y-auto">
+          <SidebarNav :minimized="isSidebarMinimized" />
         </nav>
 
         <!-- Bottom Profile -->
-        <div class="flex-none border-t px-3 py-3"
+        <div class="flex-none border-t p-3"
           :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
-          <SidebarProfile :user="auth.user" @logout="auth.logout()" />
+          <SidebarProfile :user="auth.user" :minimized="isSidebarMinimized" @logout="auth.logout()" />
         </div>
       </aside>
 
@@ -150,6 +151,9 @@
         </NuxtLink>
       </div>
     </nav>
+
+    <!-- Contextual AI Assistant Overlay -->
+    <AiOverlay />
   </div>
 </template>
 
@@ -157,6 +161,7 @@
 import { ref, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import ClientOrgSetup from '~/components/client/org.vue'
+import AiOverlay from '~/components/ai/AiOverlay.vue'
 
 const auth = useAuthStore()
 const { isDark } = useTheme()
@@ -167,6 +172,7 @@ const { entranceVisibleClass } = provideDashboardEntrance()
 const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png'))
 
 const mobileMenuOpen = ref(false)
+const isSidebarMinimized = ref(false)
 
 const mobileNavItems = [
   { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-fill' },

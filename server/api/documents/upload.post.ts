@@ -38,7 +38,7 @@ import { broadcastPickupNotification } from '~~/server/utils/notifications'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
 
-const ALLOWED_ROLES = ['client', 'employee'] as const
+const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
 
 // Resolved step shape used internally across steps 5b and 9
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may upload documents.',
+      message: 'Forbidden: only client, employee, or sub-user accounts may upload documents.',
     })
   }
 
@@ -121,6 +121,9 @@ export default defineEventHandler(async (event) => {
   const stageIdRaw     = get('stage_id')
   const originOfficeId = get('origin_office_id')   // UUID string | null
   const officeIdLegacy = get('office_id')           // legacy field — kept for compatibility
+  const manualTitle       = get('manual_title')
+  const manualDescription = get('manual_description')
+  const categoryId        = get('category_id')
 
   if (!fileItem?.data) {
     throw createError({ statusCode: 400, message: 'Missing document file payload.' })
@@ -352,10 +355,18 @@ export default defineEventHandler(async (event) => {
   }
 
   // ─────────────────────────────────────────────────────────────────────
-  // Step 6 — AI Document Analysis
+  // Step 6 — AI Document Analysis (or Manual Override)
   // ─────────────────────────────────────────────────────────────────────
 
-  const aiAnalysis = await analyzeDocumentBuffer(fileItem.data, mimeType)
+  let aiAnalysis = { title: '', description: '' }
+  if (manualTitle || manualDescription) {
+    aiAnalysis = {
+      title: manualTitle || fileName,
+      description: manualDescription || 'Manually uploaded document.'
+    }
+  } else {
+    aiAnalysis = await analyzeDocumentBuffer(fileItem.data, mimeType)
+  }
 
   // ─────────────────────────────────────────────────────────────────────
   // Step 7 — Supabase Document Insert
@@ -397,6 +408,7 @@ export default defineEventHandler(async (event) => {
         office_id:         effectiveOfficeId,
         stage_id:          resolvedStageId,
         user_id:           userId,
+        category_id:       categoryId || null,
         title:             aiAnalysis.title,
         description:       aiAnalysis.description,
         qr_code_data:      qrCode,

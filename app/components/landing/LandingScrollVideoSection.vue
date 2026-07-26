@@ -125,82 +125,82 @@ const STEP_FADE = 0.04
 const chapters = [
   {
     number: 1,
-    title: 'Structural Overview',
+    title: 'Enterprise Document Routing',
     description:
-      'FlowVision unifies offices, couriers, and clients into a single architectural spine—every packet, scan, and status update flows through one coherent system designed for scale.',
+      'FlowVision unifies physical document logistics with digital precision. Track every physical packet, scan, and office handoff across your organization in real time, ensuring strict SLA compliance.',
     bottomLeft: {
-      label: 'Core Layer',
+      label: 'Core Infrastructure',
       title: 'Unified Routing Mesh',
-      body: 'Documents traverse a deterministic graph of offices with live SLA telemetry at every hop.',
+      body: 'Documents seamlessly traverse a deterministic graph of offices with live telemetry captured at every hop.',
     },
     bottomRight: {
-      label: 'Visibility',
-      title: 'Real-Time Topology',
-      body: 'Operators see the full network map—bottlenecks surface before they become failures.',
+      label: 'SLA Monitoring',
+      title: 'Predictive Dashboards',
+      body: 'Identify workflow bottlenecks before they become SLA breaches using real-time network topology maps.',
     },
   },
   {
     number: 2,
-    title: 'Collaborative Brainstorming',
+    title: 'Collaborative Decision Rooms',
     description:
-      'Cross-functional teams coordinate in real time. Handoffs, escalations, and routing decisions stay visible so nothing slips between silos.',
+      'Cross-functional teams coordinate in real time. Handoffs, escalations, and routing decisions stay visible so nothing slips between departmental silos.',
     bottomLeft: {
       label: 'Teams',
-      title: 'Shared Decision Rooms',
-      body: 'Messengers, clerks, and clients collaborate on the same live custody thread.',
+      title: 'Shared Workspaces',
+      body: 'Messengers, clerks, and clients collaborate seamlessly on the exact same live custody thread.',
     },
     bottomRight: {
-      label: 'Signals',
-      title: 'Priority Intelligence',
-      body: 'AI-ranked urgency flags keep critical packets ahead of routine volume.',
+      label: 'Visibility',
+      title: 'Unified Communication',
+      body: 'Resolve routing issues instantly with embedded communication tools built directly into the tracking pipeline.',
     },
   },
   {
     number: 3,
-    title: 'Document Infrastructure',
+    title: 'Real-Time Digital Pipeline',
     description:
-      'Versioned ingestion pipelines classify, encrypt, and archive every file—from first scan through long-term retention—with full audit lineage.',
+      'As physical documents move, digital telemetry updates instantly. Track every handoff across your organization\'s infrastructure with zero latency and full audit lineage.',
     bottomLeft: {
-      label: 'Pipeline',
-      title: 'Ingest & Classify',
-      body: 'OCR, metadata extraction, and policy checks run automatically at intake.',
+      label: 'Telemetry',
+      title: 'Live Tracking Streams',
+      body: 'Status updates propagate across the entire organizational network in milliseconds.',
     },
     bottomRight: {
-      label: 'Storage',
+      label: 'Security',
       title: 'Immutable Archives',
-      body: 'Checksum-sealed records satisfy compliance without slowing daily operations.',
+      body: 'Every scan and status change is logged into a permanent, verifiable audit trail for compliance.',
     },
   },
   {
     number: 4,
     title: 'Smart QR Verification',
     description:
-      'QR checkpoints authenticate custody at every physical touchpoint—pickup, transit, drop-off—closing the loop between digital state and physical reality.',
+      'Authenticate the physical chain of custody effortlessly. Messengers scan document QR codes at every pickup, transit, and drop-off point to eliminate manual logging errors.',
     bottomLeft: {
-      label: 'Scan',
+      label: 'Traceability',
       title: 'Instant Handoff Proof',
-      body: 'A single scan binds courier, location, and timestamp to the chain of custody.',
+      body: 'A single quick scan definitively binds the courier, location, and timestamp to the document custody record.',
     },
     bottomRight: {
-      label: 'Trust',
+      label: 'Trust & Audit',
       title: 'Zero-Ambiguity Status',
-      body: 'Clients and staff share one source of truth for where a document is right now.',
+      body: 'Clients and internal staff share one verified source of truth for where a physical document is right now.',
     },
   },
   {
     number: 5,
-    title: 'Decentralized AI Node Cloud',
+    title: 'Decentralized Storage Cloud',
     description:
-      'Edge AI nodes analyze patterns locally—predicting delays, surfacing anomalies, and responding in seconds without waiting on a central bottleneck.',
+      'Document records and telemetry are securely split-stored across cloud nodes, ensuring high-availability access and resilient backups that scale with your enterprise.',
     bottomLeft: {
-      label: 'Edge',
-      title: 'Local Inference',
-      body: 'Each office runs lightweight models tuned to its workload and geography.',
+      label: 'Storage',
+      title: 'Scalable Architecture',
+      body: 'Payloads are safely distributed between relational Postgres databases and secure Supabase blob storage.',
     },
     bottomRight: {
-      label: 'Scale',
-      title: 'Federated Learning',
-      body: 'Insights propagate across the network while sensitive data stays on-premise.',
+      label: 'Performance',
+      title: 'Edge Reliability',
+      body: 'Critical data remains accessible instantly, supporting operations without relying on a single bottleneck.',
     },
   },
 ]

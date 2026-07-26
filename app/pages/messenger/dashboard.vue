@@ -3,9 +3,9 @@
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-          <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
+          <Icon name="ph:squares-four-light" class="h-4 w-4 text-candy-orange" />
           <span>Messenger Portal</span>
-          <Icon name="ph:caret-right" class="h-3 w-3" />
+          <Icon name="ph:caret-right-light" class="h-3 w-3" />
           <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Dashboard</span>
         </div>
         <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white' : 'text-gray-900'">
@@ -18,10 +18,10 @@
 
       <div
         v-if="auth.currentOrg"
-        class="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm"
+        class="inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-sm"
         :class="isDark ? 'border-onyx-border bg-onyx-card text-gray-300' : 'border-gray-200 bg-white text-gray-700'"
       >
-        <Icon name="ph:building-office-fill" class="h-4 w-4 text-candy-orange" />
+        <Icon name="ph:building-office-light" class="h-4 w-4 text-candy-orange" />
         <span class="font-semibold">{{ auth.currentOrg.name }}</span>
       </div>
     </div>
@@ -32,7 +32,7 @@
         :key="card.label"
         class="dashboard-card flex items-start gap-4 p-5"
       >
-        <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" :class="card.iconBg">
+        <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none" :class="card.iconBg">
           <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
         </span>
         <div>
@@ -56,7 +56,7 @@
         <div class="flex items-center gap-2">
           <button
             type="button"
-            class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
+            class="rounded-none border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
             :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
             :disabled="loading"
             @click="loadCustody(true)"
@@ -65,9 +65,9 @@
           </button>
           <NuxtLink
             to="/messenger/scan?mode=dropoff"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-candy-orange px-3 py-1.5 text-xs font-bold text-white-pure transition hover:bg-opacity-90"
+            class="inline-flex items-center gap-1.5 rounded-none bg-candy-orange px-3 py-1.5 text-xs font-bold text-white-pure transition hover:bg-opacity-90"
           >
-            <Icon name="ph:scan-fill" class="h-3.5 w-3.5" />
+            <Icon name="ph:scan-light" class="h-3.5 w-3.5" />
             Scanner
           </NuxtLink>
         </div>
@@ -79,7 +79,7 @@
 
       <div
         v-else-if="custody.in_transit.length === 0 && custody.awaiting_scan.length === 0"
-        class="rounded-xl border border-dashed px-4 py-12 text-center text-sm"
+        class="rounded-none border border-dashed px-4 py-12 text-center text-sm"
         :class="isDark ? 'border-onyx-border text-gray-500' : 'border-gray-200 text-gray-400'"
       >
         No documents in your custody. Accept a pickup from notifications to begin.
@@ -90,8 +90,8 @@
           v-for="doc in allCustodyDocs"
           :key="doc.id"
           type="button"
-          class="flex flex-col gap-3 rounded-xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md"
-          :class="isDark ? 'border-onyx-border bg-onyx-card/40 hover:border-candy-orange/40' : 'border-gray-200 bg-white hover:border-candy-orange/30'"
+          class="flex flex-col gap-3 rounded-none border p-4 text-left transition hover:-translate-y-0.5 hover:"
+          :class="isDark ? 'border-onyx-border bg-onyx-card/40 hover:border-candy-orange' : 'border-gray-200 bg-white hover:border-candy-orange'"
           @click="openDrawer(doc)"
         >
           <div class="flex items-start justify-between gap-2">
@@ -99,9 +99,9 @@
               {{ doc.title }}
             </p>
             <span
-              class="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+              class="flex-shrink-0 rounded-none px-2 py-0.5 text-[10px] font-bold uppercase"
               :class="doc.tracking_status === 'IN_TRANSIT'
-                ? 'bg-candy-orange/10 text-candy-orange'
+                ? 'bg-transparent text-candy-orange'
                 : 'bg-amber-500/10 text-amber-500'"
             >
               {{ doc.tracking_status === 'IN_TRANSIT' ? 'In Transit' : 'Awaiting Scan' }}
@@ -109,7 +109,7 @@
           </div>
           <p class="font-mono text-[10px]" :class="mutedClass">{{ doc.tracking_id }}</p>
           <div class="flex items-center gap-2 text-xs" :class="mutedClass">
-            <Icon name="ph:map-pin-fill" class="h-3.5 w-3.5 text-candy-orange" />
+            <Icon name="ph:map-pin-light" class="h-3.5 w-3.5 text-candy-orange" />
             <span class="truncate">Next: {{ doc.destination_office_name || '—' }}</span>
           </div>
           <p class="text-[11px]" :class="mutedClass">Step {{ doc.current_step }} / {{ doc.total_steps || '—' }}</p>
@@ -158,7 +158,7 @@ const kpiCards = computed(() => [
     label: 'In Custody',
     value: String(custody.value.in_transit.length),
     icon: 'ph:package-fill',
-    iconBg: 'bg-candy-orange/10',
+    iconBg: 'bg-transparent',
     iconColor: 'text-candy-orange',
   },
   {

@@ -4,7 +4,7 @@
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">User Management</h1>
         <p class="mt-1 text-sm animate-pulse" :class="mutedClass">
           {{ auth.currentOrg?.name || '—' }} · org_id {{ auth.user?.org_id }}
@@ -13,7 +13,7 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:bg-amber-600 active:scale-[0.98]"
+        class="inline-flex min-h-11 items-center gap-2 rounded-none bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:bg-amber-600 active:scale-[0.98]"
         @click="openProvisionDrawer"
       >
         <Icon name="ph:motorcycle-fill" class="h-4 w-4" />
@@ -26,11 +26,11 @@
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="rounded-xl border p-4 transition-all duration-300"
+        class="rounded-none border p-4 transition-all duration-300"
         :class="surfaceClass"
       >
         <div class="flex items-center gap-3">
-          <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl" :class="stat.iconBg">
+          <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none" :class="stat.iconBg">
             <Icon :name="stat.icon" class="h-4 w-4" :class="stat.iconColor" />
           </span>
           <div>
@@ -43,12 +43,12 @@
 
     <!-- ── Filter tabs + search ────────────────────────────────────────── -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+      <div class="flex rounded-none border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
         <button
           v-for="tab in TABS"
           :key="tab.value"
           type="button"
-          class="rounded-lg px-4 py-1.5 text-sm font-semibold transition-all duration-200"
+          class="rounded-none px-4 py-1.5 text-sm font-semibold transition-all duration-200"
           :class="activeTab === tab.value
             ? (isDark ? 'bg-white/10 text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
             : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')"
@@ -57,7 +57,7 @@
           {{ tab.label }}
           <span
             v-if="tabCount(tab.value) > 0"
-            class="ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+            class="ml-1.5 rounded-none px-1.5 py-0.5 text-[10px] font-bold"
             :class="tab.value === 'messenger'
               ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
               : tab.value === 'employee'
@@ -70,7 +70,7 @@
       </div>
 
       <div
-        class="flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all"
+        class="flex items-center gap-2 rounded-none border px-3.5 py-2.5 transition-all"
         :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-white focus-within:border-candy-orange'"
       >
         <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-shrink-0" :class="mutedClass" />
@@ -84,7 +84,7 @@
     </div>
 
     <!-- ── Member table ────────────────────────────────────────────────── -->
-    <article class="overflow-hidden rounded-xl border transition-all duration-300" :class="surfaceClass">
+    <article class="overflow-hidden rounded-none border transition-all duration-300" :class="surfaceClass">
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
@@ -104,10 +104,10 @@
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
                 <td class="px-6 py-4" colspan="5">
                   <div class="flex items-center gap-3">
-                    <div class="h-9 w-9 animate-pulse rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+                    <div class="h-9 w-9 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
                     <div class="flex-1 space-y-2">
-                      <div class="h-3 w-36 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
-                      <div class="h-2.5 w-48 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+                      <div class="h-3 w-36 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+                      <div class="h-2.5 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
                     </div>
                   </div>
                 </td>
@@ -126,7 +126,7 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div
-                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold"
+                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold"
                       :class="member.role === 'messenger'
                         ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                         : 'bg-sky-500/10 text-sky-600 dark:text-sky-400'"
@@ -145,7 +145,7 @@
                 <!-- Role badge -->
                 <td class="whitespace-nowrap px-6 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
+                    class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
                     :class="member.role === 'messenger'
                       ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                       : 'bg-sky-500/10 text-sky-600 dark:text-sky-400'"
@@ -163,14 +163,14 @@
                   <button
                     type="button"
                     :title="member.status === 1 ? 'Click to deactivate' : 'Click to activate'"
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all hover:opacity-80"
+                    class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-semibold transition-all hover:opacity-80"
                     :class="member.status === 1
                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                       : 'bg-gray-400/10 text-gray-500 dark:text-gray-400'"
                     @click="handleToggleStatus(member)"
                   >
                     <span
-                      class="h-1.5 w-1.5 rounded-full"
+                      class="h-1.5 w-1.5 rounded-none"
                       :class="member.status === 1 ? 'bg-emerald-500' : 'bg-gray-400'"
                     />
                     {{ member.status === 1 ? 'Active' : 'Inactive' }}
@@ -187,7 +187,7 @@
                   <div class="flex justify-end gap-1">
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
                       title="Remove member"
                       @click="handleRemove(member)"
                     >
@@ -232,9 +232,9 @@
     </article>
 
     <!-- ── Org scope info card ─────────────────────────────────────────── -->
-    <article class="rounded-xl border p-5 transition-all duration-300" :class="surfaceClass">
+    <article class="rounded-none border p-5 transition-all duration-300" :class="surfaceClass">
       <div class="flex items-start gap-3">
-        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/10">
+        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none bg-candy-orange/10">
           <Icon name="ph:shield-check-fill" class="h-5 w-5 text-candy-orange" />
         </span>
         <div class="space-y-1 min-w-0">
@@ -281,7 +281,7 @@
             </div>
             <button
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-gray-100 dark:hover:bg-white/5"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-gray-100 dark:hover:bg-white/5"
               @click="closeDrawer"
             >
               <Icon name="ph:x-bold" class="h-4 w-4" />
@@ -291,7 +291,7 @@
           <div class="flex-1 overflow-y-auto px-6 py-6 space-y-5">
             <!-- Role badge (readonly) -->
             <div
-              class="flex items-center gap-3 rounded-xl border px-4 py-3"
+              class="flex items-center gap-3 rounded-none border px-4 py-3"
               :class="isDark ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-200 bg-amber-50'"
             >
               <Icon name="ph:motorcycle-fill" class="h-5 w-5 text-amber-500" />
@@ -310,7 +310,7 @@
                 v-model.trim="form.full_name"
                 type="text"
                 placeholder="e.g. Juan Dela Cruz"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
                 :class="inputClass"
                 required
               />
@@ -325,7 +325,7 @@
                 v-model.trim="form.email"
                 type="email"
                 placeholder="messenger@yourorg.com"
-                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
                 :class="inputClass"
                 required
               />
@@ -341,14 +341,14 @@
                   v-model="form.password"
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="Min 8 characters"
-                  class="w-full rounded-xl border px-4 py-3 pr-11 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                  class="w-full rounded-none border px-4 py-3 pr-11 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
                   :class="inputClass"
                   minlength="8"
                   required
                 />
                 <button
                   type="button"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 transition hover:text-amber-500"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 rounded-none p-1 transition hover:text-amber-500"
                   :class="mutedClass"
                   @click="showPassword = !showPassword"
                 >
@@ -362,7 +362,7 @@
 
             <!-- Org scope lock -->
             <div
-              class="rounded-xl border p-4 text-sm"
+              class="rounded-none border p-4 text-sm"
               :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex items-center gap-2 font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
@@ -392,7 +392,7 @@
             <!-- Error feedback -->
             <div
               v-if="provisionError"
-              class="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-500"
+              class="flex items-start gap-2 rounded-none border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-500"
             >
               <Icon name="ph:warning-circle-fill" class="mt-0.5 h-4 w-4 flex-shrink-0" />
               {{ provisionError }}
@@ -402,7 +402,7 @@
           <footer class="flex items-center justify-end gap-3 border-t px-6 py-4" :class="borderClass">
             <button
               type="button"
-              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5"
+              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5"
               :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-700'"
               @click="closeDrawer"
             >
@@ -411,7 +411,7 @@
             <button
               type="submit"
               :disabled="saving || !form.full_name || !form.email || form.password.length < 8"
-              class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-none bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="saving" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
               <Icon v-else name="ph:motorcycle-fill" class="h-4 w-4" />
@@ -427,7 +427,7 @@
       <Transition name="toast-fade">
         <div
           v-if="toast.visible"
-          class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-2xl border px-5 py-4 shadow-2xl text-sm font-semibold"
+          class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-none border px-5 py-4 shadow-2xl text-sm font-semibold"
           :class="toast.type === 'success'
             ? (isDark ? 'bg-emerald-900/90 border-emerald-500/30 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-700')
             : (isDark ? 'bg-red-900/90 border-red-500/30 text-red-300' : 'bg-red-50 border-red-200 text-red-700')"

@@ -118,17 +118,15 @@ export function useMessengerSettings() {
       throw new Error('Camera enumeration is not supported in this browser.')
     }
 
+    let hasPermission = false
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       stream.getTracks().forEach((track) => track.stop())
+      hasPermission = true
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (/permission|denied|notallowed/i.test(message)) {
-        throw new Error(
-          'Camera permission denied. Allow camera access in your browser settings, then tap Refresh Devices.',
-        )
-      }
-      throw new Error(`Unable to access camera hardware: ${message}`)
+      console.warn('getUserMedia failed or permission denied:', err)
+      // We don't throw immediately. We still attempt enumerateDevices() 
+      // to return empty-label devices or the default fallback list.
     }
 
     const devices = await navigator.mediaDevices.enumerateDevices()
@@ -142,8 +140,8 @@ export function useMessengerSettings() {
     }
 
     return videoInputs.map((device, index) => ({
-      deviceId: device.deviceId,
-      label: device.label?.trim() || `Camera ${index + 1}`,
+      deviceId: device.deviceId || (index === 0 ? 'environment' : `camera-${index}`),
+      label: device.label?.trim() || `Camera ${index + 1} (Permission Required)`,
       facingHint: inferFacing(device.label || ''),
     }))
   }

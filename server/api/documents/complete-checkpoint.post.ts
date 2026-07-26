@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Authentication required' })
   }
 
-  if (actorRole !== 'employee') {
-    throw createError({ statusCode: 403, message: 'Only employees may approve office checkpoint reviews' })
+  if (actorRole !== 'employee' && actorRole !== 'employee_sub_user') {
+    throw createError({ statusCode: 403, message: 'Only employees or sub-users may approve office checkpoint reviews' })
   }
 
   const { data: actorRow } = await client

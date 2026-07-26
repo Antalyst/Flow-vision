@@ -1,9 +1,9 @@
 <template>
   <article
-    class="group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl"
+    class="group relative flex flex-col overflow-hidden rounded-none transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
     :class="isDark
-      ? 'border-white/10 bg-[#1A1A1A] shadow-xl shadow-black/30'
-      : 'border-gray-200 bg-white shadow-card'"
+      ? 'bg-[#18181B] shadow-xl shadow-black/40'
+      : 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.08)]'"
   >
     <!-- Orange top accent bar -->
     <div class="h-1 w-full bg-gradient-to-r from-candy-orange via-[#ff8040] to-candy-orange/40" />
@@ -27,7 +27,7 @@
         <div class="flex flex-shrink-0 items-center gap-1">
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-none transition hover:bg-candy-orange/10 hover:text-candy-orange"
             :class="isDark ? 'text-gray-400' : 'text-gray-500'"
             title="Edit office"
             @click="emit('edit', office)"
@@ -36,7 +36,7 @@
           </button>
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-500/10"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
             title="Delete office"
             @click="emit('delete', office.id)"
           >
@@ -48,14 +48,13 @@
       <!-- QR Code display -->
       <div class="flex flex-col items-center gap-3">
         <div
-          class="relative flex h-44 w-44 items-center justify-center rounded-2xl border bg-white p-3 shadow-sm transition-shadow group-hover:shadow-md"
-          :class="isDark ? 'border-white/10' : 'border-gray-100'"
+          class="relative flex h-44 w-44 items-center justify-center rounded-none bg-white p-3 shadow-sm transition-shadow group-hover:shadow-md"
         >
           <img
             v-if="qrDataUrl"
             :src="qrDataUrl"
             :alt="`QR code for ${office.name}`"
-            class="h-full w-full object-contain"
+            class="h-full w-full object-contain mix-blend-multiply"
           />
           <div v-else class="flex flex-col items-center gap-2">
             <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-candy-orange" />
@@ -70,8 +69,8 @@
 
       <!-- Stats row -->
       <div
-        class="grid grid-cols-2 gap-3 rounded-xl border p-3 text-center"
-        :class="isDark ? 'border-white/5 bg-white/[0.03]' : 'border-gray-100 bg-gray-50'"
+        class="grid grid-cols-2 gap-3 rounded-none p-3 text-center"
+        :class="isDark ? 'bg-white/[0.03]' : 'bg-gray-50'"
       >
         <div>
           <p class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ office.doc_count ?? '—' }}</p>
@@ -89,7 +88,7 @@
       <button
         type="button"
         :disabled="!qrDataUrl"
-        class="flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+        class="flex w-full items-center justify-center gap-2 rounded-none border px-3 py-2 text-xs font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
         :class="isDark
           ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange hover:bg-candy-orange/20'
           : 'border-candy-orange/30 bg-orange-50 text-candy-orange hover:bg-orange-100'"
@@ -105,6 +104,7 @@
 <script setup lang="ts">
 import QRCode from 'qrcode'
 import { computed, onMounted, ref } from 'vue'
+import { useTheme } from '~/composables/useTheme'
 
 interface OfficeRecord {
   id: number

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3"
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-none border px-4 py-3"
     :class="isDark ? 'border-onyx-border bg-onyx-card/50' : 'border-gray-200 bg-white'">
     <div class="flex items-center gap-2 text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-600'">
       <Icon name="ph:layout-fill" class="h-4 w-4 text-candy-orange" />
@@ -10,7 +10,7 @@
         v-for="option in layoutOptions"
         :key="option.id"
         type="button"
-        class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+        class="rounded-none border px-3 py-1.5 text-xs font-semibold transition"
         :class="currentLayout === option.id
           ? 'border-candy-orange bg-candy-orange/10 text-candy-orange'
           : isDark

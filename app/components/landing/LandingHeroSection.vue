@@ -17,13 +17,16 @@
 
     <!-- Bottom ambient glow -->
     <div
-      class="pointer-events-none absolute bottom-0 left-1/2 z-[1] h-[1000px] w-[1500px] -translate-x-1/2 translate-y-1/2 rounded-t-full bg-orange-500/20 blur-[50px] -z-10"
+      ref="glowRef"
+      class="hero-glow pointer-events-none absolute bottom-0 left-1/2 z-[1] h-[1000px] w-[1500px] -translate-x-1/2 translate-y-1/2 bg-orange-500/20 blur-[60px] -z-10 mix-blend-screen"
+      style="border-radius: 50% 50% 0 0;"
       aria-hidden="true"
     />
 
     <!-- Overlay: title + metric panels -->
     <div
       class="relative z-10 flex h-full min-h-screen w-full flex-col justify-between pointer-events-none px-4 pb-12 pt-28 sm:px-6 md:pb-24 md:pt-32 lg:px-8"
+      @mousemove="handleMouseMove"
     >
       <!-- Top: hero typography -->
       <div class="mx-auto w-full max-w-[1800px] shrink-0 text-center">
@@ -120,6 +123,7 @@ const {
 const rootRef = ref<HTMLElement | null>(null)
 const titleRef = ref<HTMLElement | null>(null)
 const subtitleRef = ref<HTMLElement | null>(null)
+const glowRef = ref<HTMLElement | null>(null)
 
 const leftMetrics = [
   { value: '99.4%', label: 'SLA Compliance Processing Rate' },
@@ -137,8 +141,27 @@ const allMetrics = [...leftMetrics, ...rightMetrics]
 
 let activeTweens: gsap.core.Tween[] = []
 
+// Interactive Mouse Tracking
+const handleMouseMove = (e: MouseEvent) => {
+  if (!glowRef.value) return
+  // Calculate offset relative to center of screen
+  const xOffset = (e.clientX / window.innerWidth - 0.5) * 200 // Max 100px move
+  const yOffset = (e.clientY / window.innerHeight - 0.5) * 100
+  
+  gsap.to(glowRef.value, {
+    x: xOffset,
+    y: yOffset,
+    duration: 1.5,
+    ease: 'power2.out'
+  })
+}
+
 onMounted(() => {
   if (!import.meta.client) return
+
+  // Because the glow has -translate-x-1/2 translate-y-1/2 in CSS, 
+  // GSAP x/y will be appended. We'll use xPercent and yPercent to maintain centering.
+  gsap.set(glowRef.value, { xPercent: -50, yPercent: 50 })
 
   const textTargets = [titleRef.value, subtitleRef.value].filter(Boolean)
   activeTweens.push(
@@ -182,6 +205,28 @@ onMounted(() => {
       repeat: -1,
       stagger: 0.25,
     }),
+    
+    // Reshaping amoeba effect on the glow
+    gsap.to(glowRef.value, {
+      borderRadius: '40% 60% 70% 30% / 40% 50% 60% 50%',
+      duration: 5,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    }),
+    gsap.to(glowRef.value, {
+      rotation: 360,
+      duration: 30,
+      ease: 'none',
+      repeat: -1,
+    }),
+    gsap.to(glowRef.value, {
+      scale: 1.1,
+      duration: 4,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    })
   )
 })
 
@@ -189,5 +234,6 @@ onUnmounted(() => {
   activeTweens.forEach((t) => t.kill())
   activeTweens = []
   gsap.killTweensOf('.metric-card-left, .metric-card-right, .metric-card-mobile, .hero-center-image')
+  if (glowRef.value) gsap.killTweensOf(glowRef.value)
 })
 </script>

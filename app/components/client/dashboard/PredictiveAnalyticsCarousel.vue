@@ -1,30 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Chart as ChartJSChart } from 'chart.js'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-import { Line, Bar } from 'vue-chartjs'
+import Highcharts from 'highcharts'
+import { Chart as HighchartsVue } from 'highcharts-vue'
 import type { ClientDashboardPayload } from '~~/server/utils/dashboardAnalytics'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Filler,
-  Tooltip,
-  Legend,
-)
 
 const props = defineProps<{
   charts: ClientDashboardPayload['charts'] | null | undefined
@@ -35,24 +13,15 @@ const props = defineProps<{
 const {
   themeKey,
   candy,
-  buildCartesianScales,
-  buildLegendPlugin,
-  buildTooltipPlugin,
-  watchChartTheme,
+  gridColor,
+  tickColor,
+  legendColor,
+  tooltip,
+  isDark,
 } = useChartTheme()
 
 const activeChartIndex = ref(0)
 const slideDirection = ref<'next' | 'prev'>('next')
-
-const trafficChartRef = ref<{ chart: ChartJSChart } | null>(null)
-const barChartRef = ref<{ chart: ChartJSChart } | null>(null)
-const messengerChartRef = ref<{ chart: ChartJSChart } | null>(null)
-
-watchChartTheme(() => {
-  if (activeChartIndex.value === 0) return trafficChartRef.value?.chart
-  if (activeChartIndex.value === 1) return barChartRef.value?.chart
-  return messengerChartRef.value?.chart
-})
 
 const slides = [
   { title: 'Document Traffic Forecast', subtitle: 'Historical volume with 7-day linear projection' },
@@ -60,53 +29,82 @@ const slides = [
   { title: 'Messenger Dispatch Lag', subtitle: 'Average pickup wait times across the week' },
 ]
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: buildLegendPlugin(),
-    tooltip: buildTooltipPlugin(),
-  },
-  scales: buildCartesianScales(),
-}))
-
-const congestionOptions = computed(() => ({
-  ...chartOptions.value,
-  indexAxis: 'y' as const,
-}))
+const commonOptions = computed(() => {
+  const isD = isDark.value
+  return {
+    chart: {
+      backgroundColor: 'transparent',
+      style: { fontFamily: 'Inter, sans-serif' },
+      spacing: [10, 0, 10, 0]
+    },
+    title: { text: '' },
+    credits: { enabled: false },
+    legend: {
+      itemStyle: { color: legendColor.value, fontWeight: 'normal', fontSize: '11px' },
+      itemHoverStyle: { color: isD ? '#ffffff' : '#000000' }
+    },
+    tooltip: {
+      backgroundColor: tooltip.value.backgroundColor,
+      borderColor: tooltip.value.borderColor,
+      style: { color: tooltip.value.bodyColor },
+      borderRadius: 0,
+      borderWidth: 1,
+      shadow: false,
+      padding: 12
+    },
+    xAxis: {
+      gridLineWidth: 0,
+      lineColor: gridColor.value,
+      tickColor: gridColor.value,
+      labels: { style: { color: tickColor.value, fontSize: '11px' } }
+    },
+    yAxis: {
+      title: { text: '' },
+      gridLineColor: gridColor.value,
+      gridLineDashStyle: 'Dash',
+      labels: { style: { color: tickColor.value, fontSize: '11px' } }
+    },
+    plotOptions: {
+      series: {
+        animation: { duration: 800 },
+        marker: { enabled: false, states: { hover: { enabled: true, radius: 4 } } },
+        states: { hover: { lineWidthPlus: 0 } },
+        lineWidth: 2
+      },
+      column: { borderRadius: 0, borderWidth: 0, pointPadding: 0.1 },
+      bar: { borderRadius: 0, borderWidth: 0, pointPadding: 0.1 },
+      spline: { lineWidth: 2 }
+    }
+  }
+})
 
 const trafficChartData = computed(() => {
   const c = props.charts?.trafficForecast
   if (!c) return null
-  const histLen = c.historical.length
-  const forecastLen = c.forecast.length
   const labels = [...c.labels, ...c.forecastLabels]
-  const historical = [...c.historical, ...Array(forecastLen).fill(null)]
-  const forecast = [...Array(histLen - 1).fill(null), c.historical[histLen - 1] ?? 0, ...c.forecast]
+  const historical = [...c.historical, ...Array(c.forecast.length).fill(null)]
+  const forecast = [...Array(c.historical.length - 1).fill(null), c.historical[c.historical.length - 1] ?? 0, ...c.forecast]
 
   return {
-    labels,
-    datasets: [
+    ...commonOptions.value,
+    xAxis: { ...commonOptions.value.xAxis, categories: labels },
+    series: [
       {
-        label: 'Historical',
+        type: 'spline',
+        name: 'Historical',
         data: historical,
-        borderColor: candy.primary,
-        backgroundColor: candy.soft,
-        tension: 0.35,
-        pointRadius: 3,
-        fill: false,
+        color: candy.primary,
+        zIndex: 2
       },
       {
-        label: 'Forecast',
+        type: 'spline',
+        name: 'Forecast',
         data: forecast,
-        borderColor: candy.forecast,
-        borderDash: [6, 4],
-        backgroundColor: 'transparent',
-        tension: 0.35,
-        pointRadius: 2,
-        fill: false,
-      },
-    ],
+        color: candy.forecast,
+        dashStyle: 'Dash',
+        zIndex: 1
+      }
+    ]
   }
 })
 
@@ -114,21 +112,21 @@ const congestionChartData = computed(() => {
   const c = props.charts?.workstationCongestion
   if (!c) return null
   return {
-    labels: c.labels,
-    datasets: [
+    ...commonOptions.value,
+    chart: { ...commonOptions.value.chart, type: 'bar' },
+    xAxis: { ...commonOptions.value.xAxis, categories: c.labels },
+    series: [
       {
-        label: 'Historical avg (hrs)',
+        name: 'Historical avg (hrs)',
         data: c.historicalAvgHours,
-        backgroundColor: candy.strong,
-        borderRadius: 6,
+        color: candy.strong
       },
       {
-        label: 'Current delay (hrs)',
+        name: 'Current delay (hrs)',
         data: c.currentDelayHours,
-        backgroundColor: 'rgba(160, 160, 160, 0.45)',
-        borderRadius: 6,
-      },
-    ],
+        color: 'rgba(160, 160, 160, 0.45)'
+      }
+    ]
   }
 })
 
@@ -136,28 +134,27 @@ const messengerChartData = computed(() => {
   const c = props.charts?.messengerLag
   if (!c) return null
   return {
-    labels: c.labels,
-    datasets: [
+    ...commonOptions.value,
+    xAxis: { ...commonOptions.value.xAxis, categories: c.labels },
+    plotOptions: {
+      ...commonOptions.value.plotOptions,
+      area: { fillOpacity: 0.1, lineWidth: 2, marker: { enabled: false } }
+    },
+    series: [
       {
-        label: 'Avg pickup wait (hrs)',
+        type: 'area',
+        name: 'Avg pickup wait (hrs)',
         data: c.waitHours,
-        borderColor: candy.primary,
-        backgroundColor: candy.medium,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 3,
+        color: candy.primary
       },
       {
-        label: 'Projected (hrs)',
+        type: 'spline',
+        name: 'Projected (hrs)',
         data: c.forecastHours.slice(0, c.labels.length),
-        borderColor: candy.forecast,
-        borderDash: [5, 4],
-        backgroundColor: candy.soft,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 2,
-      },
-    ],
+        color: candy.forecast,
+        dashStyle: 'Dash'
+      }
+    ]
   }
 })
 
@@ -187,7 +184,7 @@ function goToSlide(index: number) {
 </script>
 
 <template>
-  <div class="matrix-card-glass p-6 transition-all duration-300 hover:scale-[1.005]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-6 flex items-start justify-between gap-4">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
@@ -204,7 +201,7 @@ function goToSlide(index: number) {
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
+          class="flex h-8 w-8 items-center justify-center rounded-none border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Previous chart"
           @click="prevSlide"
         >
@@ -212,7 +209,7 @@ function goToSlide(index: number) {
         </button>
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
+          class="flex h-8 w-8 items-center justify-center rounded-none border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Next chart"
           @click="nextSlide"
         >
@@ -222,7 +219,7 @@ function goToSlide(index: number) {
     </div>
 
     <div
-      class="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white-pure/60 p-4 backdrop-blur-md transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-black/40"
+      class="relative overflow-hidden rounded-none border border-zinc-200 bg-white-pure/60 p-4 backdrop-blur-md transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-black/40"
     >
       <div v-if="loading" class="flex h-[280px] items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
         <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-candy-orange" />
@@ -236,23 +233,20 @@ function goToSlide(index: number) {
         >
           <div :key="`${activeChartIndex}-${themeKey}`" class="absolute inset-0">
             <ClientOnly>
-              <Line
+              <HighchartsVue
                 v-if="activeChartIndex === 0 && trafficChartData"
-                ref="trafficChartRef"
-                :data="trafficChartData"
-                :options="chartOptions"
+                :options="trafficChartData"
+                :highcharts="Highcharts"
               />
-              <Bar
+              <HighchartsVue
                 v-else-if="activeChartIndex === 1 && congestionChartData"
-                ref="barChartRef"
-                :data="congestionChartData"
-                :options="congestionOptions"
+                :options="congestionChartData"
+                :highcharts="Highcharts"
               />
-              <Line
+              <HighchartsVue
                 v-else-if="activeChartIndex === 2 && messengerChartData"
-                ref="messengerChartRef"
-                :data="messengerChartData"
-                :options="chartOptions"
+                :options="messengerChartData"
+                :highcharts="Highcharts"
               />
               <div v-else class="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
                 No chart data available yet.
@@ -279,7 +273,7 @@ function goToSlide(index: number) {
       <div
         v-for="block in microBlocks"
         :key="block.label"
-        class="rounded-xl border border-zinc-200 bg-white-surface px-4 py-3 transition-all duration-300 hover:border-candy-orange/30 dark:border-onyx-border dark:bg-onyx-black/70"
+        class="rounded-none border border-zinc-200 bg-white-surface px-4 py-3 transition-all duration-300 hover:border-candy-orange/30 dark:border-onyx-border dark:bg-onyx-black/70"
       >
         <div class="mb-1 flex items-center gap-2">
           <Icon :name="block.icon" class="h-3.5 w-3.5 text-candy-orange" />

@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     .select(
       'id, title, description, status, tracking_status, current_step, stage_id, ' +
       'office_id, origin_office_id, current_office_id, qr_code_data, ' +
-      'checkpoint_cleared_step, assigned_messenger_id, created_at, user_id, creator_role, priority',
+      'checkpoint_cleared_step, assigned_messenger_id, created_at, user_id, creator_role',
     )
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })
@@ -68,15 +68,15 @@ export default defineEventHandler(async (event) => {
 
   // ── Role + scope filters ──────────────────────────────────────────────────
 
-  if (actor.userRole === 'messenger') {
+  if (String(actor.userRole).toLowerCase() === 'messenger') {
     // Messengers only see documents assigned to them OR unassigned CREATED docs
     // Scope toggle does not apply — messengers are always in "LOCAL" context
     dbQuery = dbQuery.or(
       `assigned_messenger_id.eq.${actor.userId},` +
-      `and(tracking_status.eq.CREATED,assigned_messenger_id.is.null)`,
+      `and(tracking_status.eq.CREATED,assigned_messenger_id.is.null)`
     )
-  } else if (actor.userRole === 'employee' && scope === 'LOCAL') {
-    // ── Employee LOCAL — Small Picture ──────────────────────────────────────
+  } else {
+    // ── Employee / Client / Default — Restricted to their offices ──────────────────────────────
     // Only documents that originate from or are currently resting in one of
     // this employee's assigned mini-office branches.
     if (actor.officeIds.length === 0) {
@@ -85,22 +85,25 @@ export default defineEventHandler(async (event) => {
     } else {
       const officeList = actor.officeIds.join(',')
       // Filter on current_office_id first (where the doc physically is now),
-      // then fall back to origin_office_id (where it started),
+      // then fall back to origin_office_id (where it started) and office_id,
       // and include their own uploads regardless.
       dbQuery = dbQuery.or(
         `user_id.eq.${actor.userId},` +
         `current_office_id.in.(${officeList}),` +
-        `origin_office_id.in.(${officeList})`,
+        `origin_office_id.in.(${officeList}),` +
+        `office_id.in.(${officeList})`,
       )
     }
   }
-  // client + GLOBAL employee: no additional filter — full org queue
 
   const { data: docs, error } = await dbQuery
 
   if (error) {
-    throw createError({ statusCode: 500, message: error.message })
+    console.error('[queue.get.ts] Supabase Query Error:', error)
+    return { success: false, error: error.message, data: [], summary: {} }
   }
+
+  console.log(`[queue.get.ts] Fetched ${docs?.length || 0} docs for userRole=${actor.userRole}, officeIds=${actor.officeIds.length}`)
 
   const rows = docs ?? []
 

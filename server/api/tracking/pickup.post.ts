@@ -36,8 +36,8 @@ export default defineEventHandler(async (event) => {
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })
-  if (actorRole !== 'messenger') {
-    throw createError({ statusCode: 403, message: 'Forbidden: only messenger accounts can perform document pickups' })
+  if (!['messenger', 'client', 'employee'].includes(actorRole)) {
+    throw createError({ statusCode: 403, message: 'Forbidden: only messenger, client, or employee accounts can perform document pickups' })
   }
 
   const { data: actorRow, error: actorErr } = await client

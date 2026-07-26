@@ -1,4 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server';
+import Groq from 'groq-sdk';
 import { translateTextToQuery } from '~~/server/utils/ttqt';
 import { generateDocumentTemplate } from '~~/server/utils/formatter';
 import { extractTextFromFile } from '~~/server/utils/documentParser';
@@ -20,6 +21,30 @@ import {
 
 type AiScope = 'GLOBAL' | 'LOCAL'
 
+function levenshteinDistance(a: string, b: string): number {
+  const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return matrix[a.length][b.length];
+}
+
+function fuzzyMatchRatio(a: string, b: string): number {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 100;
+  const dist = levenshteinDistance(a, b);
+  return ((maxLen - dist) / maxLen) * 100;
+}
+
 interface RagQueryRequestBody {
   prompt: string;
   session_id?: string | null;
@@ -31,6 +56,7 @@ interface RagQueryRequestBody {
    * narrows the document set, never expands it.
    */
   officeIds?: string[];
+  current_page_context?: string;
 }
 
 interface QueryFilters {
@@ -98,10 +124,30 @@ interface RagDataResponse {
   documentPayload: DocumentPayload;
 }
 
+// Semantic Search returns inline documents inside the chat bubble without full data-builder layout.
+interface RagSemanticSearchResponse {
+  success: true;
+  mode: 'semantic_search';
+  session_id: string;
+  reply: string;
+  inlineDocuments: HydratedDocumentRow[];
+}
+
+// Topology Lookup returns structural pipeline data rendered as a step-by-step flow document.
+interface RagTopologyResponse {
+  success: true;
+  mode: 'INTENT_INTERNAL_TOPOLOGY';
+  session_id: string;
+  reply: string;
+  documentPayload: DocumentPayload;
+}
+
 type RagQueryResponse =
   | RagConversationResponse
   | RagRevisionResponse
-  | RagDataResponse;
+  | RagDataResponse
+  | RagSemanticSearchResponse
+  | RagTopologyResponse;
 
 const HYDRATION_FALLBACK_TEXT = 'Physical document contents are unreadable or missing.';
 
@@ -146,15 +192,29 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
   }
 
   // 1. Resolve multi-tenant context from trusted session cookies (fails closed).
-  const { orgId, userId } = await resolveTenant(event);
+  const { orgId, userId, role } = await resolveTenant(event);
 
   // 1b. Read scope context from the request body.
   //     org_id is always from the session (trusted); officeIds are client-supplied
   //     but can only *narrow* the dataset — never expand it beyond the org.
-  const scope: AiScope = body.scope === 'LOCAL' ? 'LOCAL' : 'GLOBAL';
-  const rawOfficeIds: string[] = Array.isArray(body.officeIds)
+  let scope: AiScope = body.scope === 'LOCAL' ? 'LOCAL' : 'GLOBAL';
+  let rawOfficeIds: string[] = Array.isArray(body.officeIds)
     ? body.officeIds.map(String).filter(Boolean)
     : [];
+
+  // SECURITY ENFORCEMENT: Employees are strictly hard-scoped to their assigned offices.
+  // They cannot view GLOBAL data, and they cannot spoof officeIds via the request body.
+  if (role === 'employee') {
+    scope = 'LOCAL';
+    const supabase = await serverSupabaseClient(event);
+    const { data: employeeOffices } = await supabase
+      .from('offices')
+      .select('id')
+      .eq('org_id', orgId)
+      .eq('assigned_user', userId);
+      
+    rawOfficeIds = (employeeOffices ?? []).map(o => String(o.id));
+  }
 
   // 2. Validate or provision the active chat session.
   const sessionId = await ensureSession(body.session_id, orgId, userId, prompt);
@@ -174,6 +234,74 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     console.error('Postgres Insertion Error Details:', error);
   }
 
+  const supabase = await serverSupabaseClient(event);
+  
+  // -- TOPOLOGY DATA FETCH --
+  let topologyData = '';
+  try {
+    const usersRes = await supabase.from('users').select('user_id, full_name');
+    const usersMap = new Map<string, string>();
+    if (usersRes.data) {
+      usersRes.data.forEach((u: any) => {
+        usersMap.set(String(u.user_id), u.full_name);
+      });
+    }
+
+    const enrichOffices = (offices: any[]) => {
+      return offices.map((o: any) => ({
+        ...o,
+        employee_name: o.assigned_user ? usersMap.get(String(o.assigned_user)) || null : null
+      }));
+    };
+
+    if (scope === 'GLOBAL') {
+      const [officesRes, stagesRes, stepsRes] = await Promise.all([
+        supabase.from('offices').select('*').eq('org_id', orgId),
+        supabase.from('stages').select('*').eq('org_id', orgId),
+        supabase.from('stage_steps').select('*').eq('org_id', orgId)
+      ]);
+      topologyData = JSON.stringify({
+        offices: enrichOffices(officesRes.data || []),
+        stages: stagesRes.data || [],
+        stageSteps: stepsRes.data || []
+      });
+    } else {
+      // LOCAL scope
+      if (rawOfficeIds.length > 0) {
+        const idList = rawOfficeIds.join(',');
+        
+        // Include the offices directly assigned, PLUS any child offices (parent_office_id).
+        const officesRes = await supabase.from('offices')
+          .select('*')
+          .eq('org_id', orgId)
+          .or(`id.in.(${idList}),parent_office_id.in.(${idList})`);
+          
+        const allLocalOfficeIds = (officesRes.data || []).map((o: any) => o.id);
+        const localOfficeList = allLocalOfficeIds.join(',') || '00000000-0000-0000-0000-000000000000'; // fallback to prevent empty `.in()`
+
+        const [stagesRes, stepsRes] = await Promise.all([
+          // Catch stages owned by the office explicitly, or stages that have steps in these offices.
+          supabase.from('stages').select('*').eq('org_id', orgId),
+          supabase.from('stage_steps').select('*').eq('org_id', orgId).in('office_id', allLocalOfficeIds)
+        ]);
+        
+        // Filter stages: must either belong to the local office_id directly, OR have routing steps passing through the local office.
+        const touchedStageIds = new Set((stepsRes.data || []).map((s: any) => s.stage_id));
+        const filteredStages = (stagesRes.data || []).filter((s: any) => 
+          allLocalOfficeIds.includes(s.office_id) || touchedStageIds.has(s.id)
+        );
+        
+        topologyData = JSON.stringify({
+          offices: enrichOffices(officesRes.data || []),
+          stages: filteredStages,
+          stageSteps: stepsRes.data || []
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch topology data for context hydration:', error);
+  }
+
   // 5. Build a scope-context block that is prepended to every LLM call.
   //    This informs the model about the data boundaries without changing the
   //    user's persisted prompt text.
@@ -188,28 +316,66 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
           `${rawOfficeIds.join(', ')}. ` +
           `ALL summaries, tables, audit trails, and insights MUST reflect ONLY these ` +
           `micro-office transactions. Do not surface records from other branches or ` +
-          `organisation-wide statistics unless explicitly requested.]`
+          `organisation-wide statistics unless explicitly requested.\n` +
+          `ROLE: You are an internal local helpdesk persona answering operations questions.\n` +
+          `STRUCTURAL TOPOLOGY DATASET: ${topologyData}]`
         : `[SCOPE: EMPLOYEE-PERSONAL — This analysis is restricted to documents directly ` +
           `registered by the authenticated employee only. Do not reference other users' ` +
-          `documents, other offices, or organisation-wide records.]`
+          `documents, other offices, or organisation-wide records.\n` +
+          `ROLE: You are an internal local helpdesk persona answering operations questions.]`
       : `[SCOPE: ORGANIZATION-GLOBAL — This analysis spans the ENTIRE organisation ` +
         `(org_id: ${orgId}). Provide macro-level synthesis across all document records, ` +
         `office branches, routing pipelines, and historical transactions. ` +
-        `Aggregate counts, cross-office comparisons, and org-wide trends are appropriate.]`;
+        `Aggregate counts, cross-office comparisons, and org-wide trends are appropriate.\n` +
+        `STRUCTURAL TOPOLOGY DATASET: ${topologyData}]`;
+
+  const PAGE_MAPPING: Record<string, { name: string, data: string }> = {
+    'dashboard': { name: 'Dashboard View', data: 'Total active tracking files count, quick action status metrics, and recent activity logs' },
+    'documents': { name: 'Document Tracking Terminal', data: 'Complete data grid of organizational files, search queries, and status filters' },
+    'stages': { name: 'Workflow Routing Designer', data: 'Active routing stages, pipeline tracks, and ordered step arrays' },
+    'topology': { name: 'Workflow Routing Designer', data: 'Active routing stages, pipeline tracks, and ordered step arrays' },
+    'working': { name: 'Current Working Terminal', data: "Documents currently assigned to the user's specific office queue" },
+    'scan': { name: 'Smart Scanner Terminal', data: 'QR/Barcode scanner interface and rapid document validation forms' },
+    'office': { name: 'Organization Management', data: 'Organization roster, active user directories, hierarchy assignments, and office branches' },
+    'user': { name: 'Organization Management', data: 'Organization roster, active user directories, hierarchy assignments, and office branches' },
+    'deliver': { name: 'Delivery Management', data: 'Physical transit routes, active delivery tasks, drop-off validations, and custody transfers' },
+    'message': { name: 'Communication Center', data: 'Direct messaging threads and internal conversation logs' },
+    'report': { name: 'Insights and Reports', data: 'Analytical charts, SLA compliance scores, and historical productivity trends' },
+    'analytic': { name: 'Insights and Reports', data: 'Analytical charts, SLA compliance scores, and historical productivity trends' },
+    'sla': { name: 'Insights and Reports', data: 'Analytical charts, SLA compliance scores, and historical productivity trends' }
+  };
+
+  let pageContextInstruction = '';
+  if (body.current_page_context) {
+    for (const [key, info] of Object.entries(PAGE_MAPPING)) {
+      if (body.current_page_context.includes(key)) {
+        pageContextInstruction = `\nCRITICAL USER STATE: The user is currently looking directly at the [${info.name}] screen. This view displays [${info.data}]. Prioritize your assistance, recommendations, and action models around features native to this terminal view.\n`;
+        break;
+      }
+    }
+  }
 
   // The AI-facing prompt includes the scope directive; the persisted user turn
   // stores only the clean user text so the chat log stays readable.
-  const aiPrompt = `${scopeContextBlock}\n\nUser Request: ${prompt}`;
+  const aiPrompt = `${scopeContextBlock}\n${pageContextInstruction}\nUser Request: ${prompt}`;
 
   // 5b. Classify intent — conversation, document revision, or new data request.
-  const intent = await classifyIntent(aiPrompt, memory, Boolean(activeDocument));
+  const { intent, target_entity } = await classifyIntent(aiPrompt, memory, Boolean(activeDocument));
 
   // ── Branch R: iterative document revision (no DB re-query) ────────────────
   if (intent === 'document_revision' && activeDocument) {
-    const documentPayload = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
-    const reply = wantsSpreadsheetFormat(prompt)
-      ? `Converted “${documentPayload.title}” into a spreadsheet data matrix.`
-      : `Updated “${documentPayload.title}” with your requested changes.`;
+    const isPutInCanvas = prompt.toLowerCase().includes('canvas') || prompt.toLowerCase().includes('open');
+    let documentPayload = activeDocument;
+    
+    if (!isPutInCanvas) {
+      documentPayload = await reviseDocumentPayload(activeDocument, aiPrompt, memory);
+    }
+    
+    const reply = isPutInCanvas
+      ? `I've moved the document “${documentPayload.title}” into your canvas workspace.`
+      : wantsSpreadsheetFormat(prompt)
+        ? `Converted “${documentPayload.title}” into a spreadsheet data matrix.`
+        : `Updated “${documentPayload.title}” with your requested changes.`;
 
     try {
       await persistMessage(sessionId, 'assistant', reply, { documentPayload });
@@ -219,7 +385,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
     return {
       success: true,
-      mode: 'document_revision',
+      mode: isPutInCanvas ? 'INTENT_INTERNAL_TOPOLOGY' : 'document_revision',
       session_id: sessionId,
       reply,
       documentPayload,
@@ -244,7 +410,156 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     };
   }
 
-  // ── Branch B: structured NLQ data-builder pipeline ────────────────────────
+  // ── Branch S: SYSTEM_TOPOLOGY (Unified Dynamic Decision AI Engine) ───────────
+  if (intent === 'SYSTEM_TOPOLOGY') {
+    // 1. Fetch Topology
+    let topologyPayload: { offices: any[]; stages: any[]; stageSteps: any[] } = { offices: [], stages: [], stageSteps: [] };
+    try {
+      if (topologyData) {
+        topologyPayload = JSON.parse(topologyData);
+      } else {
+        const [officesRes, stagesRes, stepsRes] = await Promise.all([
+          supabase.from('offices').select('*').eq('org_id', orgId),
+          supabase.from('stages').select('*').eq('org_id', orgId),
+          supabase.from('stage_steps').select('*').eq('org_id', orgId),
+        ]);
+        topologyPayload = { offices: officesRes.data || [], stages: stagesRes.data || [], stageSteps: stepsRes.data || [] };
+      }
+    } catch (parseErr) {
+      console.error('[TopologyLookup] failed to parse/fetch topology:', parseErr);
+    }
+
+    // 2. Call LLM for Decision
+    const systemContext = `Here is the active system topology for the user's organization. Use it to answer their questions accurately:\n${topologyData}`;
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const decisionPrompt = `
+      You are the central core engine of the FlowVision Workspace. You are provided with a complete, privacy-compliant snapshot of the organization's structural nodes (Stages, Offices, Steps) in your system prompt. Analyze the user's question, inspect this data footprint, and dynamically decide how the system should display the output.
+      
+      Return EXACTLY this JSON schema:
+      {
+        "response_mode": "canvas_topology" | "timeline_chat",
+        "target_stage_id": "string | null",
+        "reply_text": "Markdown conversational text answer or brief canvas summary acknowledgment"
+      }
+      
+      - If the user wants to see a visual layout map (e.g., "show me the payroll route"), set response_mode: "canvas_topology", identify the target stage ID from the topology data (if no specific stage, leave null to show all), and set target_stage_id. Set reply_text to a brief acknowledgment.
+      - If the user is asking a conversational question or reverse-lookup (e.g., "list all stages where office 1 is present"), set response_mode: "timeline_chat", target_stage_id to null, and write your full markdown answer in reply_text.
+
+      STRICT FORMATTING CONSTRAINTS FOR \`reply_text\`:
+      1. STRICT ID/UUID REDACTION: You are strictly forbidden from printing raw database IDs, UUID strings, tracking hashes, or internal system keys in the reply_text.
+      2. ENFORCE CLEAN, SCANNABLE UI STRUCTURE: Strictly prohibit dense walls of raw bullet points or continuous itemized lists. Force the LLM to structure its situational updates using a clean, professional hierarchy: Start with a single concise, friendly, and encouraging introductory sentence. Use small subheadings with clean emojis (### 📈 Active Workflows, ### 🔍 System Action Items) to visually separate distinct core sections. Bold critical operational objects only (**Office 1**, **Payrol Stage**) to guide the user's eye naturally. Enforce clean double-line breaks between paragraph blocks to ensure maximum whitespace readability.
+      3. ENFORCE NON-TECHNICAL, HUMAN-FRIENDLY TONE: Strip away all developer or backend database jargon. You must NEVER say terms like "hydrated topology data arrays," "context parameters," "metadata mapping matrices," or "database tables." Speak like a helpful, grounded human office supervisor. Explain system configurations and operations in everyday workspace language that anyone can easily understand.
+      4. REFINE CONTEXTUAL DISCOVERY: Stop reciting static page descriptions from the mapping file. Cross-examine the live database snapshot first. Prioritize highlighting real, concrete operational assignments found in the data (like active offices or step sequences) and explain their real-world impact clearly.
+      5. POLISHED TARGET SAMPLE FORMAT:
+         "Based on your current Dashboard view, here is a quick look at your workspace focus areas this morning:
+
+         ### 📈 Active Workflows
+         **Office 1** is currently processing steps inside the **Payrol Stage** (Step 1). It looks like a great time to ensure documents moving through this station are reviewed promptly to keep your timeline on track.
+
+         ### 🔍 System Operations
+         Take a quick look at your recent activity log stream. Keeping an eye on this will help you track exactly how work is being handled across your active processing offices."
+    `;
+    
+    let decision;
+    try {
+      const decisionCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: decisionPrompt + '\n\n' + systemContext },
+          { role: 'user', content: prompt }
+        ],
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.1,
+        response_format: { type: 'json_object' }
+      });
+      const rawDecision = decisionCompletion.choices[0]?.message?.content || '{}';
+      decision = JSON.parse(rawDecision);
+    } catch (error) {
+      console.error('[TopologyLookup] Decision engine failed:', error);
+      decision = { response_mode: 'timeline_chat', target_stage_id: null, reply_text: "I encountered an error processing the topology." };
+    }
+
+    // 3. Handle 'timeline_chat'
+    if (decision.response_mode === 'timeline_chat') {
+      try { await persistMessage(sessionId, 'assistant', decision.reply_text); } catch(e){}
+      return {
+        success: true,
+        mode: 'assistant_chat',
+        session_id: sessionId,
+        reply: decision.reply_text,
+        documentPayload: null
+      };
+    }
+
+    // 4. Handle 'canvas_topology'
+    const officeMap = new Map<string, string>();
+    for (const o of topologyPayload.offices) {
+      officeMap.set(String(o.id).trim().toLowerCase(), o.name || o.office_name || `Office ${String(o.id).slice(0, 8)}`);
+    }
+
+    let targetStages = topologyPayload.stages;
+    if (decision.target_stage_id) {
+       targetStages = targetStages.filter(s => String(s.id) === String(decision.target_stage_id));
+    }
+    
+    // Build a structured HTML document showing each stage and its ordered steps.
+    const stagesHtml = targetStages.map((stage: any) => {
+      const stageIdTarget = String(stage.id).trim().toLowerCase();
+      const stageSteps = topologyPayload.stageSteps
+        .filter((s: any) => String(s.stage_id).trim().toLowerCase() === stageIdTarget)
+        .sort((a: any, b: any) => (a.step_number ?? 0) - (b.step_number ?? 0));
+
+      const stepsMarkup = stageSteps.length > 0
+        ? stageSteps.map((step: any, idx: number) => {
+            const officeIdTarget = String(step.office_id).trim().toLowerCase();
+            const officeName = officeMap.get(officeIdTarget) || 'Unassigned Office';
+            return `<tr>
+              <td>Step ${step.step_number ?? idx + 1}</td>
+              <td>${officeName}</td>
+              <td>${step.description || step.action || '—'}</td>
+            </tr>`;
+          }).join('')
+        : '<tr><td colspan="3">No steps configured for this stage.</td></tr>';
+
+      return `
+        <h3>${stage.name || stage.stage_name || 'Unnamed Stage'}</h3>
+        ${stage.description ? `<p>${stage.description}</p>` : ''}
+        <table>
+          <thead><tr><th>Step</th><th>Office</th><th>Action</th></tr></thead>
+          <tbody>${stepsMarkup}</tbody>
+        </table>
+      `;
+    }).join('');
+
+    const topologyHtmlContent = `
+      <h2>Routing Pipeline Overview</h2>
+      <p>This report maps <strong>${targetStages.length}</strong> stage(s) and
+         <strong>${topologyPayload.stageSteps.length}</strong> routing step(s) across
+         <strong>${topologyPayload.offices.length}</strong> registered office(s)
+         for your organization.</p>
+      ${stagesHtml || '<p>No routing stages are currently configured.</p>'}
+    `;
+
+    const topologyTitle = 'ROUTING PIPELINE TOPOLOGY MAP';
+    const topologyDocPayload: DocumentPayload = {
+      title: topologyTitle,
+      htmlContent: topologyHtmlContent,
+    };
+
+    try {
+      await persistMessage(sessionId, 'assistant', decision.reply_text, { documentPayload: topologyDocPayload });
+    } catch (error) {}
+
+    return {
+      success: true,
+      mode: 'INTENT_INTERNAL_TOPOLOGY',
+      session_id: sessionId,
+      reply: decision.reply_text,
+      documentPayload: topologyDocPayload,
+    };
+  }
+
+  // ── Branch B: structured NLQ data-builder & semantic search pipelines ───────
+  const ttqtOutput = await translateTextToQuery(aiPrompt, memory);
   const mysqlDb = event.context.db;
   if (!mysqlDb) {
     throw createError({
@@ -252,9 +567,6 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
       statusMessage: 'MySQL database connector is not available on the request context.',
     });
   }
-
-  const supabase = await serverSupabaseClient(event);
-  const ttqtOutput = (await translateTextToQuery(aiPrompt)) as TextToQueryOutput;
 
   // The org filter is mandatory and unconditional — no cross-tenant reads.
   let query = supabase.from('documents').select('*').eq('org_id', orgId);
@@ -367,6 +679,94 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     })
   );
 
+  // ── Branch S: Semantic Search ───────────────────────────────────────────
+  if (intent === 'semantic_search') {
+    const semanticReply = hydratedRows.length > 0 
+      ? `I found ${hydratedRows.length} document(s) that match your semantic query. Check the items below:`
+      : `I couldn't find any documents matching that specific semantic query in your records.`;
+
+    try {
+      await persistMessage(sessionId, 'assistant', semanticReply, { inlineDocuments: hydratedRows });
+    } catch (error) {
+      console.error('Postgres Insertion Error Details:', error);
+    }
+
+    return {
+      success: true,
+      mode: 'semantic_search',
+      session_id: sessionId,
+      reply: semanticReply,
+      inlineDocuments: hydratedRows,
+    };
+  }
+
+  // ── Branch M: Document Summary ──────────────────────────────────────────
+  if (intent === 'document_summary') {
+    if (hydratedRows.length === 0) {
+      const reply = `I couldn't find any documents matching your request to summarize.`;
+      try { await persistMessage(sessionId, 'assistant', reply); } catch (e) {}
+      return { success: true, mode: 'conversation', session_id: sessionId, reply };
+    }
+
+    const docToSummarize = hydratedRows[0];
+    const systemInstruction = `
+      You are the FlowVision AI Intelligence Engine.
+      The user wants a summary, explanation, analysis, or overview of the following document:
+      
+      Title: ${docToSummarize.title || 'Untitled Document'}
+      Description: ${docToSummarize.description || 'No description provided.'}
+      Content:
+      ${docToSummarize.actualFileTextContent || 'No text content available.'}
+      
+      CRITICAL FORMATTING RULES:
+      1. Write a natural, user-friendly markdown summary report.
+      2. Keep our scannable emoji text layout engine intact (e.g., use emojis in subheadings).
+      3. Do NOT include any internal database UUID strings or JSON formats.
+      4. Speak naturally directly to the user's prompt: "${prompt}"
+    `;
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    let summaryText = 'Summary generation failed.';
+    try {
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'system', content: systemInstruction }],
+        model: 'llama-3.1-8b-instant',
+        temperature: 0.3,
+      });
+      summaryText = completion.choices[0]?.message?.content?.trim() || summaryText;
+    } catch (e) {
+      console.error('[Document Summary] generation failed:', e);
+    }
+
+    let htmlContent = summaryText;
+    try {
+      const { marked } = await import('marked');
+      htmlContent = await marked.parse(summaryText);
+    } catch (err) {
+      console.error('Failed to parse markdown', err);
+      // Fallback to basic HTML wrapping if marked fails
+      htmlContent = `<div style="white-space: pre-wrap;">${summaryText}</div>`;
+    }
+
+    const documentPayload: DocumentPayload = {
+      title: `Analysis: ${docToSummarize.title || 'Document'}`,
+      htmlContent: htmlContent
+    };
+
+    const reply = `I have analyzed the document and prepared a detailed breakdown for you. I've opened it in the workspace panel on the right so you can review it clearly.`;
+
+    try { await persistMessage(sessionId, 'assistant', reply, { documentPayload }); } catch (e) {}
+    
+    return {
+      success: true,
+      mode: 'INTENT_INTERNAL_TOPOLOGY',
+      session_id: sessionId,
+      reply: reply,
+      documentPayload
+    };
+  }
+
+  // ── Branch D: Data Builder ──────────────────────────────────────────────
   // Pass the scope-enriched prompt so the LLM knows whether to frame the output
   // as a micro-office audit or an org-wide executive synthesis.
   const visualTemplateBlueprint = await generateDocumentTemplate(aiPrompt, hydratedRows);

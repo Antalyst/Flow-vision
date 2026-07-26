@@ -1,53 +1,34 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col gap-5 pb-24 lg:pb-8">
-    <!-- Header + view controller -->
-    <header class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+  <div ref="pageRoot" class="flex h-full min-h-0 flex-col gap-5 pb-24 lg:pb-8">
+
+    <!-- ── Page Header ───────────────────────────────────────────────── -->
+    <header ref="headerEl" class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-          <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
+        <div class="mb-2 flex items-center gap-2 text-xs font-medium" :class="mutedClass">
+          <Icon name="ph:briefcase-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
-          <Icon name="ph:caret-right" class="h-3 w-3" />
-          <span class="font-medium" :class="headingClass">Working</span>
+          <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
+          <span :class="headingClass">Live Workspace</span>
         </div>
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">
+        <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="headingClass">
           Live Workspace
         </h1>
-        <p class="mt-1 text-sm" :class="mutedClass">
-          {{ viewScope === 'LOCAL'
-            ? 'Documents at your station awaiting action, review, or hand-off.'
-            : 'Organisation-wide pipeline — every active document across checkpoints.' }}
+        <p class="mt-1.5 text-sm" :class="mutedClass">
+          Documents at your station awaiting action, review, or hand-off.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-        <!-- Flat scope toggle (no glow / blur) -->
-        <div
-          class="flex items-center gap-0.5 rounded-lg border p-0.5"
-          :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
-        >
-          <button
-            v-for="opt in scopeOptions"
-            :key="opt.value"
-            type="button"
-            class="flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-colors duration-200"
-            :class="viewScope === opt.value
-              ? 'bg-candy-orange text-white'
-              : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800')"
-            @click="viewScope = opt.value"
-          >
-            <Icon :name="opt.icon" class="h-3.5 w-3.5" />
-            {{ opt.label }}
-          </button>
-        </div>
+
 
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
           :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
           :disabled="loading"
           @click="refreshQueue(true)"
         >
-          <Icon name="ph:arrows-clockwise" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
+          <Icon name="ph:arrows-clockwise-light" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
           Sync
         </button>
 
@@ -61,12 +42,17 @@
       </div>
     </header>
 
-    <!-- Pipeline summary strip -->
+    <!-- ── Pipeline Summary Strip ─────────────────────────────────────── -->
     <div
-      class="flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 text-xs"
-      :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
+      ref="stripEl"
+      class="flex flex-wrap items-center gap-4 rounded-none border px-5 py-3.5 text-xs"
+      :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
-      <span class="font-bold uppercase tracking-widest text-candy-orange">Active</span>
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 animate-pulse rounded-none bg-candy-orange" />
+        <span class="font-bold uppercase tracking-widest text-candy-orange text-[10px]">Active Pipeline</span>
+      </div>
+      <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
       <span :class="mutedClass">{{ visibleDocs.length }} documents</span>
       <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
       <span
@@ -80,7 +66,7 @@
       </span>
     </div>
 
-    <!-- Kanban board -->
+    <!-- ── Kanban Board ───────────────────────────────────────────────── -->
     <div
       v-if="loading && !allDocs.length"
       class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -88,53 +74,63 @@
       <div
         v-for="n in 4"
         :key="n"
-        class="min-h-[320px] animate-pulse rounded-lg border"
-        :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
+        class="min-h-[320px] animate-pulse rounded-none border"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       />
     </div>
 
     <div
       v-else
+      ref="boardEl"
       class="grid min-h-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
     >
       <section
-        v-for="col in pipelineColumns"
+        v-for="(col, colIdx) in pipelineColumns"
         :key="col.id"
-        class="flex min-h-[280px] flex-col rounded-lg border"
+        class="flex min-h-[280px] flex-col rounded-none border overflow-hidden transition-all duration-200"
         :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
       >
+        <!-- Column accent strip -->
+        <div
+          class="h-0.5 w-full"
+          :class="colIdx === 0 ? 'bg-candy-orange' : colIdx === 1 ? 'bg-blue-500' : colIdx === 2 ? 'bg-amber-500' : 'bg-emerald-500'"
+        />
         <!-- Column header -->
         <div
-          class="flex items-center justify-between border-b px-3 py-2.5"
-          :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
+          class="flex items-center justify-between border-b px-4 py-3"
+          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
           <div class="flex items-center gap-2 min-w-0">
-            <Icon :name="col.icon" class="h-4 w-4 flex-none text-candy-orange" />
+            <Icon
+              :name="col.icon"
+              class="h-3.5 w-3.5 flex-none"
+              :class="colIdx === 0 ? 'text-candy-orange' : colIdx === 1 ? 'text-blue-500' : colIdx === 2 ? 'text-amber-500' : 'text-emerald-500'"
+            />
             <h2 class="truncate text-xs font-bold uppercase tracking-wider" :class="headingClass">
               {{ col.label }}
             </h2>
           </div>
           <span
-            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded px-1.5 text-[10px] font-bold tabular-nums"
-            :class="isDark ? 'bg-onyx-card text-gray-300' : 'bg-gray-100 text-gray-600'"
+            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-none px-1.5 text-[10px] font-bold tabular-nums border"
+            :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
           >
             {{ columnDocs(col.id).length }}
           </span>
         </div>
 
         <!-- Token list -->
-        <div class="flex-1 overflow-y-auto p-2">
-          <TransitionGroup name="token-fade" tag="div" class="flex flex-col gap-1.5">
+        <div class="flex-1 overflow-y-auto p-2.5">
+          <TransitionGroup name="token-fade" tag="div" class="flex flex-col gap-2">
             <button
               v-for="doc in columnDocs(col.id)"
               :key="doc.id"
               type="button"
-              class="group w-full rounded-md border px-2.5 py-2 text-left transition-transform duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0"
+              class="group w-full rounded-none border px-3 py-2.5 text-left transition-colors duration-200"
               :class="[
                 isDark
-                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/50'
-                  : 'border-gray-200 bg-white-surface hover:border-candy-orange/40',
-                activeDocument?.id === doc.id ? 'ring-1 ring-candy-orange' : '',
+                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange'
+                  : 'border-gray-200 bg-white hover:border-candy-orange',
+                activeDocument?.id === doc.id ? 'border-candy-orange' : '',
               ]"
               @click="openDocument(doc)"
             >
@@ -146,28 +142,21 @@
                 </span>
                 <span
                   v-if="doc.total_steps"
-                  class="flex-none rounded border px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
+                  class="flex-none rounded-none border px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
                   :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
                 >
                   Step {{ doc.current_step }}/{{ doc.total_steps }}
                 </span>
               </div>
-              <p class="mt-1 line-clamp-2 text-xs font-semibold leading-snug" :class="headingClass">
+              <p class="mt-1.5 line-clamp-2 text-xs font-semibold leading-snug" :class="headingClass">
                 {{ doc.title || 'Untitled' }}
               </p>
+
               <p
-                v-if="viewScope === 'GLOBAL' && doc.current_label"
-                class="mt-1 truncate text-[10px]"
-                :class="mutedClass"
+                v-if="doc.messenger_name"
+                class="mt-1.5 truncate text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
               >
-                <Icon name="ph:map-pin-fill" class="mr-0.5 inline h-2.5 w-2.5" />
-                {{ doc.current_label }}
-              </p>
-              <p
-                v-else-if="doc.messenger_name"
-                class="mt-1 truncate text-[10px] text-amber-600 dark:text-amber-400"
-              >
-                <Icon name="ph:motorcycle-fill" class="mr-0.5 inline h-2.5 w-2.5" />
+                <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
                 {{ doc.messenger_name }}
               </p>
             </button>
@@ -175,9 +164,9 @@
 
           <div
             v-if="!columnDocs(col.id).length"
-            class="flex flex-col items-center justify-center gap-2 px-3 py-10 text-center"
+            class="flex flex-col items-center justify-center gap-2 px-3 py-12 text-center"
           >
-            <Icon :name="col.icon" class="h-6 w-6 opacity-20" />
+            <Icon :name="col.icon" class="h-6 w-6 opacity-15" />
             <p class="text-[10px] font-medium" :class="mutedClass">No documents</p>
           </div>
         </div>
@@ -216,13 +205,14 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 import { useStageStore } from '~/stores/stage'
+import { gsap } from 'gsap'
 import DocumentPreviewDrawer, { type PreviewDocument } from '~/components/documents/DocumentPreviewDrawer.vue'
 import DocumentIssueChatPanel from '~/components/employee/documents/DocumentIssueChatPanel.vue'
 import { useEmployeeSettings } from '~/composables/useEmployeeSettings'
 
 definePageMeta({ layout: 'employee' })
 
-type ViewScope = 'LOCAL' | 'GLOBAL'
+
 type PipelinePhase = 'awaiting_pickup' | 'in_transit' | 'under_review' | 'verified'
 
 interface QueueDoc extends PreviewDocument {
@@ -253,19 +243,16 @@ const {
   ready: settingsReady,
 } = useEmployeeSettings()
 
-const scopeOptions = [
-  { value: 'LOCAL' as ViewScope, label: 'Local Workspace', icon: 'ph:buildings-fill' },
-  { value: 'GLOBAL' as ViewScope, label: 'Global Pipeline', icon: 'ph:globe-hemisphere-west-fill' },
-]
+
 
 const pipelineColumns = [
-  { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-fill' },
-  { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-fill' },
-  { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-fill' },
-  { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-fill' },
+  { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-light' },
+  { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-light' },
+  { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-light' },
+  { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-light' },
 ]
 
-const viewScope = ref<ViewScope>('LOCAL')
+
 const allDocs = ref<QueueDoc[]>([])
 const myOffices = ref<OfficeRecord[]>([])
 const myOfficeIds = computed(() => new Set(myOffices.value.map((o) => String(o.id))))
@@ -273,6 +260,12 @@ const loading = ref(false)
 const lastSyncedAt = ref<Date | null>(null)
 const activeDocument = ref<QueueDoc | null>(null)
 const issueChatRef = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
+
+// GSAP refs
+const pageRoot = ref<HTMLElement | null>(null)
+const headerEl = ref<HTMLElement | null>(null)
+const stripEl  = ref<HTMLElement | null>(null)
+const boardEl  = ref<HTMLElement | null>(null)
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
@@ -286,29 +279,24 @@ const lastSyncedLabel = computed(() => {
 
 function classifyPhase(doc: QueueDoc): PipelinePhase {
   const status = doc.tracking_status ?? 'CREATED'
-  if (status === 'IN_TRANSIT') return 'in_transit'
+  
+  if (status === 'COMPLETED') return 'verified'
+  if (status === 'PICKED_UP' || status === 'IN_TRANSIT') return 'in_transit'
+  
   if (status === 'ARRIVED_AT_OFFICE') {
     const step = doc.current_step ?? 0
-    if ((doc.checkpoint_cleared_step ?? null) === step) return 'verified'
+    // If the document has cleared the checkpoint for its current step (or beyond)
+    if (doc.checkpoint_cleared_step != null && doc.checkpoint_cleared_step >= step) {
+      return 'verified'
+    }
     return 'under_review'
   }
-  if (status === 'COMPLETED') return 'verified'
+  
+  // Fallback for CREATED or other unmapped statuses
   return 'awaiting_pickup'
 }
 
-const visibleDocs = computed(() => {
-  if (viewScope.value === 'GLOBAL') return allDocs.value
-  const ids = myOfficeIds.value
-  return allDocs.value.filter((doc) => {
-    const current = doc.current_office_id ? String(doc.current_office_id) : ''
-    if (current && ids.has(current)) return true
-    if (doc.tracking_status === 'CREATED') {
-      const origin = doc.origin_office_id ? String(doc.origin_office_id) : ''
-      if (origin && ids.has(origin)) return true
-    }
-    return false
-  })
-})
+const visibleDocs = computed(() => allDocs.value)
 
 const columnDocs = (phase: PipelinePhase) =>
   visibleDocs.value.filter((doc) => classifyPhase(doc) === phase)
@@ -334,15 +322,13 @@ async function fetchMyOffices() {
 }
 
 async function refreshQueue(silent = false) {
-  const orgId = auth.user?.org_id
-  if (!orgId) return
   if (!silent) loading.value = true
   try {
     const res = await $fetch<{
       success: boolean
       data: QueueDoc[]
     }>('/api/tracking/queue', {
-      params: { orgId, scope: 'GLOBAL', status: ACTIVE_STATUSES, limit: 300 },
+      params: { limit: 300 },
     })
     allDocs.value = res.data ?? []
     lastSyncedAt.value = new Date()
@@ -387,7 +373,7 @@ async function openDocumentFromQuery() {
   if (match) activeDocument.value = match
 }
 
-function handleDocUpdated(payload: {
+function handleDocUpdated(data: {
   tracking_status: string
   issueClosed?: boolean
   status?: string
@@ -398,10 +384,10 @@ function handleDocUpdated(payload: {
 
   const patch = (doc: QueueDoc): QueueDoc => ({
     ...doc,
-    tracking_status: payload.tracking_status,
-    ...(payload.status ? { status: payload.status } : {}),
-    ...(payload.checkpoint_cleared_step != null
-      ? { checkpoint_cleared_step: payload.checkpoint_cleared_step }
+    tracking_status: data.tracking_status,
+    ...(data.status ? { status: data.status } : {}),
+    ...(data.checkpoint_cleared_step != null
+      ? { checkpoint_cleared_step: data.checkpoint_cleared_step }
       : {}),
   })
 
@@ -424,17 +410,35 @@ watch(workingBoardPollIntervalMs, () => {
   if (import.meta.client) restartPollTimer()
 })
 
-watch(settingsReady, (ready) => {
-  if (ready) viewScope.value = defaultPipelineView.value
-})
+
+
+// ── GSAP Entrance ──────────────────────────────────────────────────────
+const runEntranceAnimation = () => {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+  if (headerEl.value) {
+    tl.fromTo(headerEl.value, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45 }, 0)
+  }
+  if (stripEl.value) {
+    tl.fromTo(stripEl.value, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, 0.15)
+  }
+}
+
+const animateBoard = () => {
+  if (!boardEl.value) return
+  const cols = boardEl.value.querySelectorAll(':scope > section')
+  gsap.fromTo(cols,
+    { opacity: 0, x: -20 },
+    { opacity: 1, x: 0, duration: 0.45, stagger: 0.08, ease: 'power3.out' }
+  )
+}
 
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
   hydrateSettings()
-  if (settingsReady.value) {
-    viewScope.value = defaultPipelineView.value
-  }
+
+  runEntranceAnimation()
   await Promise.all([fetchMyOffices(), stageStore.fetchStages(), refreshQueue()])
+  animateBoard()
   await openDocumentFromQuery()
   restartPollTimer()
 })

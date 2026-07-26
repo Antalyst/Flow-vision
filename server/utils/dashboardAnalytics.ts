@@ -175,7 +175,7 @@ export interface ClientDashboardPayload {
   }
 }
 
-export async function buildClientDashboardPayload(event: H3Event): Promise<ClientDashboardPayload> {
+export async function buildClientDashboardPayload(event: H3Event, officeId?: string): Promise<ClientDashboardPayload> {
   const client = await serverSupabaseClient(event)
   const actor = await resolveActorContext(event, client)
 
@@ -186,6 +186,25 @@ export async function buildClientDashboardPayload(event: H3Event): Promise<Clien
   const orgId = actor.orgId
   const db = getServiceSupabase()
 
+  if (officeId) {
+    const { data: officeData, error: officeCheckErr } = await db.from('offices').select('id').eq('id', officeId).eq('org_id', orgId).single()
+    if (officeCheckErr || !officeData) {
+      throw createError({ statusCode: 403, message: 'Invalid office or unauthorized.' })
+    }
+  }
+
+  const docBaseQuery = db.from('documents').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
+  const docQuery = db.from('documents').select('id, created_at, tracking_status, stage_id, current_office_id, office_id, origin_office_id').eq('org_id', orgId)
+  const eventsQuery = db.from('document_tracking_events').select('document_id, status, created_at, office_id').eq('org_id', orgId).order('created_at', { ascending: true })
+  const logsQuery = db.from('activity_logs').select('id, document_id, action_type, created_at, office_id, message, details').eq('org_id', orgId).order('created_at', { ascending: false }).limit(50)
+
+  if (officeId) {
+    docBaseQuery.eq('current_office_id', officeId)
+    docQuery.eq('current_office_id', officeId)
+    eventsQuery.eq('office_id', officeId)
+    logsQuery.eq('office_id', officeId)
+  }
+
   const [
     { count: totalDocuments, error: docCountErr },
     { data: documents, error: docsErr },
@@ -195,10 +214,10 @@ export async function buildClientDashboardPayload(event: H3Event): Promise<Clien
     { data: stageSteps, error: stepsErr },
     { data: stages, error: stagesErr },
   ] = await Promise.all([
-    db.from('documents').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
-    db.from('documents').select('id, created_at, tracking_status, stage_id, current_office_id, office_id, origin_office_id').eq('org_id', orgId),
-    db.from('document_tracking_events').select('document_id, status, created_at, office_id').eq('org_id', orgId).order('created_at', { ascending: true }),
-    db.from('activity_logs').select('id, document_id, action_type, created_at, office_id, message, details').eq('org_id', orgId).order('created_at', { ascending: false }).limit(50),
+    docBaseQuery,
+    docQuery,
+    eventsQuery,
+    logsQuery,
     db.from('offices').select('id, name, code').eq('org_id', orgId),
     db.from('stage_steps').select('stage_id, office_id, step_number'),
     db.from('stages').select('*').eq('org_id', orgId),

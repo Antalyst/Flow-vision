@@ -27,76 +27,57 @@ function cycleLayout() {
 </script>
 
 <template>
-  <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-white-muted">
-        <Icon name="ph:squares-four-fill" class="h-4 w-4 text-candy-orange" />
-        <span>Architecture Matrix</span>
-        <Icon name="ph:caret-right" class="h-3 w-3" />
-        <span class="font-medium text-onyx-black dark:text-white-pure">Dashboard</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          class="relative h-8 w-14 rounded-full transition-colors duration-300"
-          :class="isDark ? 'bg-candy-orange' : 'bg-zinc-300'"
-          aria-label="Toggle light and dark mode"
-          @click="toggleTheme"
-        >
-          <span
-            class="absolute top-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white-pure shadow-md transition-transform duration-300"
-            :class="isDark ? 'translate-x-6' : 'translate-x-0.5'"
-          >
-            <Icon
-              :name="isDark ? 'ph:moon-fill' : 'ph:sun-fill'"
-              class="h-3.5 w-3.5 text-candy-orange"
-            />
-          </span>
-        </button>
-        <NuxtLink
-          to="/client/notifications"
-          class="rounded-xl border border-zinc-200 p-2 text-zinc-500 transition hover:border-candy-orange/40 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
-        >
-          <Icon name="ph:bell" class="h-5 w-5" />
-        </NuxtLink>
-      </div>
+  <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <!-- Left: Title & Subtitle -->
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-3xl">
+        Hello, {{ userName }}
+      </h1>
+      <p class="mt-1.5 flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+        </span>
+        Live organization tracking synced
+      </p>
     </div>
 
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-onyx-black dark:text-white-pure">Hello, {{ userName }}!</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-white-muted">Live architecture matrix — org-scoped tracking intelligence.</p>
+    <!-- Right: Controls -->
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Layout Switcher -->
+      <div class="flex items-center rounded-none border border-neutral-200 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-[#111113]">
+        <button
+          v-for="(opt, index) in layoutOptions"
+          :key="opt.id"
+          type="button"
+          class="flex items-center gap-2 rounded-none px-3 py-1.5 text-xs font-semibold transition-all duration-200"
+          :class="activeIndex === index
+            ? 'bg-neutral-100 text-neutral-900 shadow-sm dark:bg-white/10 dark:text-white'
+            : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'"
+          @click="setLayout(opt.id)"
+        >
+          <Icon :name="['ph:squares-four', 'ph:rows', 'ph:grid-nine'][index] || 'ph:layout'" class="h-4 w-4" />
+          <span class="hidden sm:inline">{{ opt.label }}</span>
+        </button>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white-surface px-3 py-2 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card">
-          <Icon name="ph:layout-fill" class="h-4 w-4 text-candy-orange" />
-          <span class="text-xs font-semibold text-onyx-black dark:text-white-pure">Layout</span>
-          <button
-            type="button"
-            class="ml-1 grid h-7 w-24 grid-cols-3 gap-0.5 rounded-full bg-zinc-200 p-0.5 transition-all duration-500 ease-in-out dark:bg-onyx-black"
-            @click="cycleLayout"
-          >
-            <span
-              v-for="(opt, index) in layoutOptions"
-              :key="opt.id"
-              class="flex items-center justify-center rounded-full text-[9px] font-bold uppercase leading-none transition-all duration-500 ease-in-out"
-              :class="activeIndex === index
-                ? 'bg-candy-orange text-white-pure shadow-[0_0_12px_rgba(244,125,47,0.45)]'
-                : 'text-zinc-500 dark:text-white-muted'"
-            >
-              {{ ['M', 'S', 'C'][index] }}
-            </span>
-          </button>
-          <span class="text-[10px] font-semibold uppercase tracking-wider text-candy-orange">
-            {{ layoutOptions.find((o) => o.id === currentLayout)?.label }}
-          </span>
-        </div>
+      <!-- Action Icons -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-9 w-9 items-center justify-center rounded-none border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+          aria-label="Toggle theme"
+          @click="toggleTheme"
+        >
+          <Icon :name="isDark ? 'ph:moon' : 'ph:sun'" class="h-4 w-4" />
+        </button>
 
-        <div class="inline-flex items-center gap-2 rounded-xl border border-candy-orange/20 bg-candy-orange/5 px-3 py-2 text-xs text-candy-orange">
-          <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
-          Live sync
-        </div>
+        <NuxtLink
+          to="/client/notifications"
+          class="flex h-9 w-9 items-center justify-center rounded-none border border-neutral-200 bg-white text-neutral-500 shadow-sm transition-colors hover:bg-neutral-50 hover:text-neutral-900 dark:border-white/10 dark:bg-[#111113] dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-white"
+        >
+          <Icon name="ph:bell" class="h-4 w-4" />
+        </NuxtLink>
       </div>
     </div>
   </div>

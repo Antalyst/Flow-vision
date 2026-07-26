@@ -11,10 +11,10 @@
       <p class="mt-1 text-sm" :class="mutedClass">Report processing glitches or share operational notes with your organisation.</p>
     </header>
 
-    <form class="max-w-2xl space-y-4 rounded-lg border p-6" :class="panelClass" @submit.prevent="submit">
+    <form class="max-w-2xl space-y-5 rounded-none border p-8 shadow-sm transition-all duration-300 hover:shadow-md" :class="panelClass" @submit.prevent="submit">
       <label class="block">
         <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Category</span>
-        <select v-model="category" class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass">
+        <select v-model="category" class="w-full rounded-none border px-4 py-3 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange" :class="inputClass">
           <option value="platform">Platform Glitch</option>
           <option value="operations">Team Operations</option>
           <option value="routing">Routing / Stages</option>
@@ -23,21 +23,23 @@
       </label>
       <label class="block">
         <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Subject</span>
-        <input v-model="subject" required type="text" class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" />
+        <input v-model="subject" required type="text" class="w-full rounded-none border px-4 py-3 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange" :class="inputClass" placeholder="Brief summary of your feedback" />
       </label>
       <label class="block">
         <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Message</span>
-        <textarea v-model="message" required rows="6" class="w-full resize-y rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" />
+        <textarea v-model="message" required rows="6" class="w-full resize-y rounded-none border px-4 py-3 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange" :class="inputClass" placeholder="Provide as much detail as possible..." />
       </label>
-      <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-candy-orange px-5 py-2.5 text-sm font-bold text-white-pure disabled:opacity-50" :disabled="submitting">
+      <div class="pt-2">
+        <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-none bg-candy-orange px-8 py-3 text-sm font-bold text-white-pure shadow-sm transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.98] disabled:opacity-50" :disabled="submitting">
         <Icon v-if="submitting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
         Submit Feedback
-      </button>
+        </button>
+      </div>
     </form>
 
     <Teleport to="body">
       <Transition name="toast-fade">
-        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-lg border px-4 py-3 text-sm font-semibold md:bottom-8" :class="toastClass">
+        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-none border px-5 py-4 text-sm font-semibold shadow-lg md:bottom-8" :class="toastClass">
           {{ toast.message }}
         </div>
       </Transition>
@@ -46,6 +48,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Send Feedback',
+  description: 'Report issues, suggest improvements, and provide feedback directly to the FlowVision development team.'
+})
 import { useClientToast } from '~/composables/useClientToast'
 
 definePageMeta({ layout: 'client' })

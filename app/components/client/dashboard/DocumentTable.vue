@@ -10,16 +10,16 @@
           <input
             v-model="searchQuery"
             placeholder="Document"
-            class="pl-9 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border w-40 outline-none focus:border-candy-orange transition text-gray-700 dark:text-gray-300 placeholder:text-gray-400"
+            class="pl-9 pr-3 py-2 text-xs rounded-none bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border w-40 outline-none focus:border-candy-orange transition text-gray-700 dark:text-gray-300 placeholder:text-gray-400"
           />
         </div>
         <!-- Filter Button -->
-        <button class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border border-gray-200 dark:border-onyx-border text-gray-600 dark:text-gray-400 hover:border-candy-orange transition">
+        <button class="flex items-center gap-2 px-3 py-2 rounded-none text-xs font-medium border border-gray-200 dark:border-onyx-border text-gray-600 dark:text-gray-400 hover:border-candy-orange transition">
           <Icon name="ph:funnel" class="w-4 h-4" />
           Filter
         </button>
         <!-- Menu Dots -->
-        <button class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition">
+        <button class="p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-onyx-card transition">
           <Icon name="ph:dots-three-vertical-bold" class="w-4 h-4 text-gray-500" />
         </button>
       </div>
@@ -140,7 +140,7 @@
             </td>
             <!-- Actions -->
             <td class="px-5 py-3.5">
-              <button class="p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-onyx-border transition">
+              <button class="p-1 rounded-none opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-onyx-border transition">
                 <Icon name="ph:dots-three-vertical-bold" class="w-4 h-4 text-gray-500" />
               </button>
             </td>
@@ -152,7 +152,7 @@
     <!-- Pagination -->
     <div class="flex items-center justify-center gap-2 p-4 border-t border-gray-200 dark:border-onyx-border">
       <button
-        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
+        class="p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
         :disabled="currentPage === 1"
         @click="currentPage--"
       >
@@ -166,7 +166,7 @@
         :class="currentPage === i ? 'bg-candy-orange' : 'bg-gray-300 dark:bg-gray-600'"
       />
       <button
-        class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
+        class="p-1.5 rounded-none hover:bg-gray-100 dark:hover:bg-onyx-card transition disabled:opacity-40 disabled:cursor-not-allowed"
         :disabled="currentPage === totalPages"
         @click="currentPage++"
       >

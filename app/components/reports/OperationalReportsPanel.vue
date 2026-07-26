@@ -20,7 +20,7 @@
       <div
         v-for="stat in contextStats"
         :key="stat.label"
-        class="rounded-lg border p-4"
+        class="rounded-none border p-4"
         :class="panelClass"
       >
         <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedClass">{{ stat.label }}</p>
@@ -28,28 +28,28 @@
       </div>
     </section>
 
-    <section class="rounded-lg border p-6" :class="panelClass">
+    <section class="rounded-none border p-6" :class="panelClass">
       <h2 class="text-sm font-bold" :class="headingClass">Submit Operational Report</h2>
       <p class="mt-1 text-xs" :class="mutedClass">{{ submitHint }}</p>
 
       <form class="mt-5 space-y-4" @submit.prevent="submitReport">
         <label class="block">
           <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Report Type</span>
-          <select v-model="form.report_type" class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass">
+          <select v-model="form.report_type" class="w-full rounded-none border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass">
             <option v-for="opt in reportTypes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </label>
         <label class="block">
           <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Title</span>
-          <input v-model="form.title" type="text" required class="w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" placeholder="Daily desk summary" />
+          <input v-model="form.title" type="text" required class="w-full rounded-none border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" placeholder="Daily desk summary" />
         </label>
         <label class="block">
           <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">Summary / Incident Details</span>
-          <textarea v-model="form.body" required rows="5" class="w-full resize-y rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" placeholder="Describe operational findings…" />
+          <textarea v-model="form.body" required rows="5" class="w-full resize-y rounded-none border px-4 py-2.5 text-sm outline-none focus:border-candy-orange" :class="inputClass" placeholder="Describe operational findings…" />
         </label>
         <button
           type="submit"
-          class="inline-flex items-center gap-2 rounded-lg bg-candy-orange px-5 py-2.5 text-sm font-bold text-white-pure transition hover:opacity-90 disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-bold text-white-pure transition hover:opacity-90 disabled:opacity-50"
           :disabled="submitting"
         >
           <Icon v-if="submitting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -59,7 +59,7 @@
       </form>
     </section>
 
-    <section class="rounded-lg border" :class="panelClass">
+    <section class="rounded-none border" :class="panelClass">
       <div class="flex items-center justify-between border-b px-4 py-3" :class="borderClass">
         <h2 class="text-sm font-bold" :class="headingClass">Report Archive</h2>
         <button type="button" class="text-xs font-semibold text-candy-orange hover:underline" :disabled="loading" @click="loadReports">

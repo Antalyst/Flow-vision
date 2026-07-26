@@ -11,8 +11,8 @@
     </header>
 
     <div
-      class="overflow-hidden rounded-2xl border"
-      :class="isDark ? 'border-white/10 bg-[#1A1A1A]' : 'border-gray-200 bg-white shadow-card'"
+      class="overflow-hidden rounded-none border shadow-card"
+      :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
       <div v-if="loading" class="flex items-center justify-center gap-2 px-6 py-16" :class="mutedText">
         <Icon name="ph:spinner-gap" class="h-5 w-5 animate-spin text-candy-orange" />
@@ -31,7 +31,7 @@
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
-          <thead :class="isDark ? 'bg-white/[0.03] text-gray-400' : 'bg-gray-50 text-gray-500'">
+          <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
             <tr>
               <th class="px-5 py-3 font-semibold">Document</th>
               <th class="px-5 py-3 font-semibold">Issue</th>
@@ -44,8 +44,8 @@
             <tr
               v-for="row in rows"
               :key="row.issue.id"
-              class="cursor-pointer border-t transition hover:bg-candy-orange/5"
-              :class="isDark ? 'border-white/5' : 'border-gray-100'"
+              class="cursor-pointer border-t transition-colors duration-150"
+              :class="isDark ? 'border-white/5 hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
               @click="openDocument(row)"
             >
               <td class="px-5 py-4">
@@ -55,12 +55,12 @@
                 <p class="mt-0.5 text-xs" :class="mutedText">{{ row.document.id.slice(0, 8) }}…</p>
               </td>
               <td class="px-5 py-4">
-                <span class="inline-flex rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[11px] font-bold text-amber-400">
+                <span class="inline-flex rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" :class="isDark ? 'border-amber-400/30 bg-amber-400/10 text-amber-400' : 'border-amber-200 bg-amber-50 text-amber-600'">
                   {{ row.issue.issue_type || 'Discrepancy' }}
                 </span>
               </td>
-              <td class="px-5 py-4" :class="mutedText">{{ row.issue.reported_by_office_name || '—' }}</td>
-              <td class="px-5 py-4 text-candy-orange">{{ row.issue.target_office_name || '—' }}</td>
+              <td class="px-5 py-4" :class="mutedText">{{ formatOfficeName(row.issue.reported_by_office_name) || '—' }}</td>
+              <td class="px-5 py-4 font-semibold text-candy-orange">{{ formatOfficeName(row.issue.target_office_name) || '—' }}</td>
               <td class="px-5 py-4" :class="mutedText">{{ fmtDate(row.issue.created_at) }}</td>
             </tr>
           </tbody>
@@ -136,6 +136,11 @@ const issueChatRef = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(nul
 
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 
+const formatOfficeName = (val?: string | null) => {
+  if (!val) return '—'
+  return val.replace(/\s*\(OFF-[A-Z0-9]+\)\s*/i, '').trim()
+}
+
 const fetchFlagged = async () => {
   loading.value = true
   try {
@@ -179,11 +184,11 @@ const closeDocumentPreview = () => {
   router.replace({ query })
 }
 
-const handleIssueUpdated = (payload: { tracking_status: string; issueClosed?: boolean }) => {
+const handleIssueUpdated = (data: { tracking_status: string; issueClosed?: boolean }) => {
   if (activeDocument.value) {
-    activeDocument.value = { ...activeDocument.value, tracking_status: payload.tracking_status }
+    activeDocument.value = { ...activeDocument.value, tracking_status: data.tracking_status }
   }
-  if (payload.issueClosed) {
+  if (data.issueClosed) {
     fetchFlagged()
   }
 }

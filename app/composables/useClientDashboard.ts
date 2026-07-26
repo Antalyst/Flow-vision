@@ -28,7 +28,7 @@ export function useClientDashboard() {
     }
   }
 
-  async function fetchDashboard(force = false) {
+  async function fetchDashboard(force = false, officeId?: string | null) {
     if (loading.value && !force) return
 
     loading.value = true
@@ -36,7 +36,10 @@ export function useClientDashboard() {
     try {
       const res = await $fetch<{ success: boolean } & ClientDashboardPayload>(
         '/api/client/dashboard',
-        { credentials: 'include' },
+        { 
+          credentials: 'include',
+          query: officeId ? { officeId } : undefined 
+        },
       )
       data.value = {
         kpis: res.kpis,
@@ -92,17 +95,41 @@ export function useClientDashboard() {
   })
 
   let refreshTimer: ReturnType<typeof setInterval> | null = null
+  let realtimeChannel: any = null
 
   function startAutoRefresh(intervalMs = 30000) {
     if (!import.meta.client) return
     stopAutoRefresh()
-    refreshTimer = setInterval(() => fetchDashboard(), intervalMs)
+    
+    // Fallback polling
+    refreshTimer = setInterval(() => fetchDashboard(true), intervalMs)
+
+    // Supabase Realtime for instant alerts
+    try {
+      const client = useSupabaseClient()
+      realtimeChannel = client
+        .channel('dashboard-alerts')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'activity_logs' },
+          () => {
+            fetchDashboard(true)
+          }
+        )
+        .subscribe()
+    } catch (err) {
+      // Ignore if supabase client isn't available
+    }
   }
 
   function stopAutoRefresh() {
     if (refreshTimer) {
       clearInterval(refreshTimer)
       refreshTimer = null
+    }
+    if (realtimeChannel) {
+      realtimeChannel.unsubscribe()
+      realtimeChannel = null
     }
   }
 

@@ -18,6 +18,10 @@
 </template>
 
 <script setup>
+useSeoMeta({
+  title: 'FlowVision | Audit Activity',
+  description: 'Review real-time system interactions, security events, and audit logs across your organization.'
+})
 definePageMeta({ layout: 'client' })
 
 const { isDark } = useTheme()

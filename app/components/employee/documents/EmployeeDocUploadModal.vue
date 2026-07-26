@@ -11,7 +11,7 @@
     <Transition name="drawer-slide">
       <form
         v-if="isOpen"
-        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-5xl flex-col border-l shadow-2xl"
+        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-5xl flex-col border-l "
         :class="surfaceClass"
         @submit.prevent="handlePrintAndSubmit"
       >
@@ -21,7 +21,7 @@
           :class="borderClass"
         >
           <div>
-            <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+            <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
             <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
             </p>
@@ -32,11 +32,11 @@
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-candy-orange/10 hover:text-candy-orange"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-none transition hover:bg-transparent hover:text-candy-orange"
             aria-label="Close"
             @click="handleClose"
           >
-            <Icon name="ph:x-bold" class="h-4 w-4" :class="headingClass" />
+            <Icon name="ph:x-light" class="h-4 w-4" :class="headingClass" />
           </button>
         </header>
 
@@ -59,13 +59,13 @@
 
             <!-- 2. Drop zone -->
             <label
-              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-7 text-center transition"
-              :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
+              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-none border-2 border-dashed p-7 text-center transition"
+              :class="isDragging ? 'border-candy-orange bg-transparent' : borderClass"
               @dragover.prevent="isDragging = true"
               @dragleave.prevent="isDragging = false"
               @drop.prevent="handleDrop"
             >
-              <Icon name="ph:cloud-arrow-up" class="h-9 w-9 text-candy-orange" />
+              <Icon name="ph:cloud-arrow-up-light" class="h-9 w-9 text-candy-orange" />
               <div>
                 <p class="text-sm font-semibold" :class="headingClass">
                   {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
@@ -84,12 +84,12 @@
             <!-- Selected file chip -->
             <div
               v-if="selectedFile"
-              class="flex flex-col gap-3 rounded-xl border p-3 text-sm"
+              class="flex flex-col gap-3 rounded-none border p-3 text-sm"
               :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex min-w-0 items-center justify-between gap-3">
                 <div class="flex items-center gap-3 min-w-0">
-                  <Icon name="ph:file-text" class="h-5 w-5 flex-none text-candy-orange" />
+                  <Icon name="ph:file-text-light" class="h-5 w-5 flex-none text-candy-orange" />
                   <div class="min-w-0">
                     <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
                     <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
@@ -97,26 +97,84 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-xl text-red-500 transition hover:bg-red-500/10"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-transparent"
                   aria-label="Remove file"
                   @click="clearFile"
                 >
-                  <Icon name="ph:trash" class="h-4 w-4" />
+                  <Icon name="ph:trash-light" class="h-4 w-4" />
                 </button>
               </div>
               
               <!-- Excel options -->
-              <div v-if="isExcelFile" class="mt-2 rounded-lg bg-candy-orange/10 p-3 border border-candy-orange/20">
-                <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
-                <div class="flex items-center gap-2">
-                  <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
-                    <Icon name="ph:table" class="h-3.5 w-3.5" />
-                    Preview Metadata
-                  </button>
-                  <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-[#e95a0b] transition">
-                    <Icon name="ph:printer" class="h-3.5 w-3.5" />
-                    Print Summary
-                  </button>
+              <div v-if="isExcelFile" class="mt-2 rounded-none bg-transparent p-4 border border-candy-orange space-y-4">
+                <div>
+                  <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
+                      <Icon name="ph:table-light" class="h-3.5 w-3.5" />
+                      Preview Metadata
+                    </button>
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-[#e95a0b] transition">
+                      <Icon name="ph:printer-light" class="h-3.5 w-3.5" />
+                      Print Summary
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Manual override for AI analysis -->
+                <div class="space-y-3 pt-3 border-t border-candy-orange">
+                  <p class="text-[11px] font-medium text-candy-orange/80">Manual Document Details</p>
+                  <div>
+                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
+                    <input
+                      v-model="manualTitle"
+                      type="text"
+                      placeholder="Enter document title..."
+                      class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      :class="inputClass"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Description</label>
+                    <textarea
+                      v-model="manualDescription"
+                      rows="2"
+                      placeholder="Briefly describe the contents..."
+                      class="w-full resize-none rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      :class="inputClass"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 2.5 DOCUMENT CATEGORY PICKER                              -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div>
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <span class="text-sm font-semibold" :class="headingClass">
+                    Document Category <span class="text-red-500">*</span>
+                  </span>
+                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                    Classification for SLA predictive analytics.
+                  </p>
+                </div>
+              </div>
+              <div class="mt-2">
+                <select
+                  v-model="selectedCategoryId"
+                  class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange bg-transparent"
+                  :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
+                >
+                  <option value="" disabled>Select a category...</option>
+                  <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id" :class="isDark ? 'bg-onyx-black text-white' : 'bg-white text-gray-900'">
+                    {{ cat.name }}
+                  </option>
+                </select>
+                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[10px] text-amber-500">
+                  <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
                 </div>
               </div>
             </div>
@@ -138,14 +196,14 @@
 
                 <!-- Dual-scope tab toggle -->
                 <div
-                  class="flex flex-none items-center rounded-xl border p-0.5 text-xs"
+                  class="flex flex-none items-center rounded-none border p-0.5 text-xs"
                   :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
                 >
                   <button
                     v-for="tab in routeTabs"
                     :key="tab.value"
                     type="button"
-                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 select-none"
+                    class="flex items-center gap-1.5 rounded-none px-3 py-1.5 font-semibold transition-all duration-200 select-none"
                     :class="routeTab === tab.value
                       ? 'bg-candy-orange text-white shadow'
                       : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
@@ -160,11 +218,11 @@
               <!-- Route description line -->
               <p class="mt-2 text-[11px]" :class="mutedClass">
                 <span v-if="routeTab === 'global'">
-                  <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-candy-orange" />
+                  <Icon name="ph:globe-hemisphere-west-light" class="inline h-3 w-3 text-candy-orange" />
                   Organisation-wide routes created by your Client Admin — available to all offices.
                 </span>
                 <span v-else>
-                  <Icon name="ph:buildings-fill" class="inline h-3 w-3 text-candy-orange" />
+                  <Icon name="ph:buildings-light" class="inline h-3 w-3 text-candy-orange" />
                   Custom routes built specifically for
                   <span class="font-semibold text-candy-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
                 </span>
@@ -178,20 +236,20 @@
                 <!-- No origin warning for local tab -->
                 <div
                   v-if="routeTab === 'local' && !selectedOriginOfficeId"
-                  class="flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-xs"
+                  class="flex items-center gap-2 rounded-none border border-dashed px-4 py-3 text-xs"
                   :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
                 >
-                  <Icon name="ph:warning" class="h-4 w-4 text-amber-500" />
+                  <Icon name="ph:warning-light" class="h-4 w-4 text-amber-500" />
                   Select your origin office first to see local routes.
                 </div>
 
                 <!-- Empty state -->
                 <div
                   v-else-if="!visibleRoutes.length"
-                  class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-5 text-center text-xs"
+                  class="flex flex-col items-center gap-2 rounded-none border border-dashed px-4 py-5 text-center text-xs"
                   :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
                 >
-                  <Icon name="ph:path" class="h-6 w-6" :class="mutedClass" />
+                  <Icon name="ph:path-light" class="h-6 w-6" :class="mutedClass" />
                   <span>
                     No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
                     <template v-if="routeTab === 'local'">
@@ -205,11 +263,11 @@
                   v-for="stage in visibleRoutes"
                   :key="stage.stage_id"
                   type="button"
-                  class="group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange/40"
+                  class="group w-full rounded-none border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange"
                   :class="selectedStageId === String(stage.stage_id)
                     ? isDark
-                      ? 'border-candy-orange bg-candy-orange/10 shadow-md shadow-candy-orange/10'
-                      : 'border-candy-orange bg-orange-50 shadow-md shadow-candy-orange/10'
+                      ? 'border-candy-orange bg-transparent  '
+                      : 'border-candy-orange bg-white  '
                     : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
                   @click="selectRoute(stage)"
                 >
@@ -218,14 +276,14 @@
                       <div class="flex items-center gap-2">
                         <!-- Selected checkmark -->
                         <div
-                          class="flex h-4 w-4 flex-none items-center justify-center rounded-full transition-all"
+                          class="flex h-4 w-4 flex-none items-center justify-center rounded-none transition-all"
                           :class="selectedStageId === String(stage.stage_id)
                             ? 'bg-candy-orange'
                             : isDark ? 'border border-white/20' : 'border border-gray-300'"
                         >
                           <Icon
                             v-if="selectedStageId === String(stage.stage_id)"
-                            name="ph:check-bold"
+                            name="ph:check-light"
                             class="h-2.5 w-2.5 text-white"
                           />
                         </div>
@@ -237,15 +295,15 @@
                         <span
                           v-for="(stop, idx) in getRouteStops(stage.stage_id)"
                           :key="idx"
-                          class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
+                          class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-medium"
                           :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                         >
-                          <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
+                          <span class="h-1 w-1 rounded-none bg-transparent" />
                           {{ stop }}
                         </span>
                         <span
                           v-if="getRouteSteps(stage.stage_id).length > 3"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium text-candy-orange"
+                          class="inline-flex items-center rounded-none px-2 py-0.5 text-[10px] font-medium text-candy-orange"
                         >
                           +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                         </span>
@@ -255,10 +313,10 @@
                     <!-- Right: stop count badge + scope tag -->
                     <div class="flex flex-none flex-col items-end gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                        class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-bold"
                         :class="routeTab === 'global'
-                          ? 'border-blue-400/30 bg-blue-400/10 text-blue-400'
-                          : 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'"
+                          ? 'border-blue-400 bg-transparent text-blue-400'
+                          : 'border-candy-orange bg-transparent text-candy-orange'"
                       >
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
@@ -275,15 +333,15 @@
               <Transition name="route-expand">
                 <div
                   v-if="selectedStageId && selectedTimelineSteps.length"
-                  class="mt-4 overflow-hidden rounded-xl border"
+                  class="mt-4 overflow-hidden rounded-none border"
                   :class="isDark
-                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
-                    : 'border-orange-200 bg-orange-50/60'"
+                    ? 'border-candy-orange bg-candy-orange/[0.03]'
+                    : 'border-gray-200 bg-white'"
                 >
                   <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
                     <div class="flex items-center gap-2">
-                      <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
+                      <Icon name="ph:path-light" class="h-3.5 w-3.5 text-candy-orange" />
                       <span class="text-[11px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
                     </div>
                     <span class="text-[10px]" :class="mutedClass">
@@ -297,10 +355,10 @@
 
                       <!-- ── Origin node (always first) ─────────────── -->
                       <div class="flex flex-col items-center" style="min-width: 80px">
-                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange shadow-lg shadow-candy-orange/40">
-                          <Icon name="ph:map-pin-fill" class="h-5 w-5 text-white" />
+                        <div class="relative flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange  ">
+                          <Icon name="ph:map-pin-light" class="h-5 w-5 text-white" />
                           <!-- Pulse ring -->
-                          <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
+                          <span class="absolute inset-0 animate-ping rounded-none bg-candy-orange opacity-20" />
                         </div>
                         <p
                           class="mt-2 max-w-[76px] text-center text-[10px] font-bold leading-tight text-candy-orange"
@@ -308,7 +366,7 @@
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-candy-orange">
+                        <span class="mt-0.5 rounded-none bg-transparent px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-candy-orange">
                           Origin
                         </span>
                       </div>
@@ -322,25 +380,25 @@
                         <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
                           <div
                             class="h-px flex-1"
-                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
+                            :class="isDark ? 'bg-transparent' : 'bg-transparent'"
                           />
-                          <Icon name="ph:caret-right-fill" class="h-3 w-3 flex-none text-candy-orange/50" />
+                          <Icon name="ph:caret-right-light" class="h-3 w-3 flex-none text-candy-orange/50" />
                         </div>
 
                         <!-- Step node -->
                         <div class="flex flex-col items-center" style="min-width: 80px">
                           <!-- Circle: final stop gets filled, others get ring -->
                           <div
-                            class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
+                            class="flex h-10 w-10 items-center justify-center rounded-none border-2 transition-all"
                             :class="idx === selectedTimelineSteps.length - 1
-                              ? 'border-candy-orange bg-candy-orange text-white shadow-lg shadow-candy-orange/30'
+                              ? 'border-candy-orange bg-candy-orange text-white  '
                               : isDark
-                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
-                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
+                                ? 'border-candy-orange bg-transparent text-candy-orange'
+                                : 'border-candy-orange bg-white text-candy-orange'"
                           >
                             <Icon
                               v-if="idx === selectedTimelineSteps.length - 1"
-                              name="ph:flag-checkered-fill"
+                              name="ph:flag-checkered-light"
                               class="h-4 w-4"
                             />
                             <span v-else class="text-xs font-bold">{{ idx + 1 }}</span>
@@ -368,17 +426,17 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
-                        <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
+                        <Icon name="ph:buildings-light" class="h-3 w-3 text-candy-orange" />
                         <strong class="text-candy-orange">{{ selectedOriginOfficeName || '—' }}</strong>
                       </span>
-                      <Icon name="ph:arrow-right" class="h-3 w-3" />
+                      <Icon name="ph:arrow-right-light" class="h-3 w-3" />
                       <span>{{ selectedTimelineSteps.length }} office{{ selectedTimelineSteps.length !== 1 ? 's' : '' }} in route</span>
-                      <Icon name="ph:arrow-right" class="h-3 w-3" />
+                      <Icon name="ph:arrow-right-light" class="h-3 w-3" />
                       <span class="flex items-center gap-1">
-                        <Icon name="ph:flag-checkered-fill" class="h-3 w-3 text-candy-orange" />
+                        <Icon name="ph:flag-checkered-light" class="h-3 w-3 text-candy-orange" />
                         <strong class="text-candy-orange">{{ finalDestinationName }}</strong>
                       </span>
                     </div>
@@ -390,26 +448,34 @@
             <!-- 4. QR Code Placement Strategy -->
             <div>
               <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
+
+              <!-- Excel specific notice -->
+              <div v-if="isExcelFile" class="mt-2 rounded-none border border-candy-orange bg-transparent px-4 py-3 text-xs text-candy-orange">
+                <Icon name="ph:info-light" class="inline h-4 w-4 mr-1 mb-0.5" />
+                <strong>Excel file detected.</strong> A dedicated trailing sheet will be generated containing only the selected QR code size to prevent data corruption.
+              </div>
+
               <div class="mt-2 space-y-2">
                 <label
-                  class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
-                  :class="selectedStrategy === 'embedded'
-                    ? 'border-candy-orange bg-candy-orange/5'
-                    : isDark ? 'border-white/10' : 'border-gray-200'"
+                  class="flex items-start gap-3 rounded-none border p-3 transition"
+                  :class="[
+                    selectedStrategy === 'embedded' ? 'border-candy-orange bg-transparent' : (isDark ? 'border-white/10' : 'border-gray-200'),
+                    isExcelFile ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+                  ]"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" />
+                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" :disabled="isExcelFile" />
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
                     <span class="block text-xs" :class="mutedClass">
-                      Prints tracking metadata directly alongside the document payload.
+                      Prints tracking metadata directly alongside the document data.
                     </span>
                   </span>
                 </label>
 
                 <label
-                  class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
+                  class="flex cursor-pointer items-start gap-3 rounded-none border p-3 transition"
                   :class="selectedStrategy === 'standalone'
-                    ? 'border-candy-orange bg-candy-orange/5'
+                    ? 'border-candy-orange bg-transparent'
                     : isDark ? 'border-white/10' : 'border-gray-200'"
                 >
                   <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
@@ -429,31 +495,31 @@
               <div class="mt-2 grid grid-cols-3 gap-3">
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 50"
                 >
-                  <Icon name="ph:qr-code" class="h-6 w-6 mb-1" />
+                  <Icon name="ph:qr-code-light" class="h-6 w-6 mb-1" />
                   <span class="text-xs font-semibold">Small</span>
                   <span class="text-[10px] opacity-70">1x1 in</span>
                 </button>
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 120"
                 >
-                  <Icon name="ph:qr-code" class="h-7 w-7 mb-1" />
+                  <Icon name="ph:qr-code-light" class="h-7 w-7 mb-1" />
                   <span class="text-xs font-semibold">Medium</span>
                   <span class="text-[10px] opacity-70">2x2 in</span>
                 </button>
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
+                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 200"
                 >
-                  <Icon name="ph:qr-code" class="h-8 w-8 mb-1" />
+                  <Icon name="ph:qr-code-light" class="h-8 w-8 mb-1" />
                   <span class="text-xs font-semibold">Large</span>
                   <span class="text-[10px] opacity-70">4x4 in</span>
                 </button>
@@ -463,7 +529,7 @@
             <!-- 6. Error -->
             <p
               v-if="errorMessage"
-              class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500"
+              class="rounded-none border border-red-500 bg-transparent px-4 py-3 text-sm text-red-500"
             >
               {{ errorMessage }}
             </p>
@@ -471,11 +537,11 @@
             <!-- 7. AI analysis result -->
             <div
               v-if="aiAnalysis"
-              class="rounded-xl border p-4"
+              class="rounded-none border p-4"
               :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
-                <Icon name="ph:sparkle-fill" class="h-4 w-4" />
+                <Icon name="ph:sparkle-light" class="h-4 w-4" />
                 AI Analysis
               </div>
               <p class="mt-2 text-sm font-semibold" :class="headingClass">{{ aiAnalysis.title }}</p>
@@ -495,12 +561,12 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold text-candy-orange"
-                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
+                class="flex min-w-0 items-center gap-1.5 rounded-none border px-3 py-1.5 text-[11px] font-semibold text-candy-orange"
+                :class="isDark ? 'border-candy-orange bg-transparent' : 'border-gray-200 bg-white'"
               >
-                <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
+                <Icon name="ph:path-light" class="h-3 w-3 flex-none" />
                 <span class="truncate">{{ selectedRouteName }}</span>
-                <Icon name="ph:x-bold" class="h-2.5 w-2.5 flex-none cursor-pointer hover:text-red-400" @click.stop="selectedStageId = ''" />
+                <Icon name="ph:x-light" class="h-2.5 w-2.5 flex-none cursor-pointer hover:text-red-400" @click.stop="selectedStageId = ''" />
               </div>
             </Transition>
           </div>
@@ -508,7 +574,7 @@
           <div class="flex items-center gap-3">
             <button
               type="button"
-              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
+              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
               :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
               @click="handleClose"
             >
@@ -516,11 +582,11 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white   transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="!canSubmit"
             >
-              <Icon v-if="uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-              <Icon v-else name="ph:printer" class="h-4 w-4" />
+              <Icon v-if="uploading" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+              <Icon v-else name="ph:printer-light" class="h-4 w-4" />
               {{ uploading ? 'Saving…' : 'Print & Save' }}
             </button>
           </div>
@@ -529,7 +595,7 @@
     </Transition>
 
     <!-- QR-only fallback print template -->
-    <DocumentPrintCanvas :qr-data-url="printQrDataUrl" />
+    <DocumentPrintCanvas :qr-data-url="printQrDataUrl" :qr-size="selectedQrSize" />
   </Teleport>
 </template>
 
@@ -543,6 +609,7 @@ import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanv
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
+import { useCategoriesStore } from '~/stores/categories'
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface OfficeRecord { id: string; name: string; code?: string }
@@ -573,6 +640,7 @@ const emit = defineEmits<{
 const stageStore  = useStageStore()
 const officeStore = useOfficeStore()
 const auth        = useAuthStore()
+const categoriesStore = useCategoriesStore()
 const { isDark }  = useTheme()
 
 // ── Route scope tab ───────────────────────────────────────────────────
@@ -600,6 +668,10 @@ const errorMessage           = ref('')
 const uploading              = ref(false)
 const aiAnalysis             = ref<AiAnalysis | null>(null)
 const printQrDataUrl         = ref('')
+const manualTitle            = ref('')
+const manualDescription      = ref('')
+
+const selectedCategoryId = ref<string>('')
 
 const isExcelFile = computed(() => {
   if (!selectedFile.value) return false
@@ -607,6 +679,13 @@ const isExcelFile = computed(() => {
   return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')
 })
 const previewExcel = ref(false)
+
+// Force standalone strategy for Excel files
+watch(isExcelFile, (isExcel) => {
+  if (isExcel) {
+    selectedStrategy.value = 'standalone'
+  }
+})
 
 const generateTrackingId = () => `FLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
@@ -692,14 +771,14 @@ const onOriginOfficeChange = () => {
 const canSubmit = computed(
   () =>
     !!selectedFile.value &&
-    !!selectedOriginOfficeId.value &&
     !!selectedStageId.value &&
+    !!selectedCategoryId.value &&
     !uploading.value
 )
 
 // ── Theming ───────────────────────────────────────────────────────────
 const surfaceClass = computed(() =>
-  isDark.value ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'border-gray-200 bg-white'
+  isDark.value ? 'bg-[#111111] border-white/10' : 'border-gray-200 bg-white'
 )
 const borderClass  = computed(() => isDark.value ? 'border-white/10' : 'border-gray-200')
 const mutedClass   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
@@ -722,6 +801,7 @@ watch(
     if (!open) return
     if (!stageStore.stages.length) stageStore.fetchStages()
     if (!officeStore.offices.length) officeStore.fetchOffices()
+    if (!categoriesStore.categories.length) categoriesStore.fetchCategories()
   }
 )
 
@@ -752,6 +832,8 @@ const handleDrop = (e: DragEvent) => {
 const clearFile = () => {
   selectedFile.value = null
   currentTrackingId.value = ''
+  manualTitle.value = ''
+  manualDescription.value = ''
   if (fileInput.value) fileInput.value.value = ''
 }
 
@@ -760,6 +842,7 @@ const handleClose = () => {
   clearFile()
   // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
+  selectedCategoryId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   printQrDataUrl.value = ''
@@ -845,37 +928,42 @@ const printEmbeddedDocument = async (file: File, qrDataUrl: string) => {
 
 // ── Submit: print → persist ───────────────────────────────────────────
 const handlePrintAndSubmit = async () => {
-  errorMessage.value = ''
-  if (!selectedFile.value)           { errorMessage.value = 'Please select a file.';              return }
-  if (!selectedOriginOfficeId.value) { errorMessage.value = 'Please select your origin office.';  return }
-  if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
-
-  const trackingCode = currentTrackingId.value || generateTrackingId()
-  currentTrackingId.value = trackingCode
-
-  let qrDataUrl = ''
-  try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
-
-  if (selectedStrategy.value === 'embedded') {
-    await printEmbeddedDocument(selectedFile.value, qrDataUrl)
-  } else {
-    await printStandaloneDocument(selectedFile.value, qrDataUrl)
-  }
+  if (!canSubmit.value) return
 
   uploading.value = true
-  try {
-    const fd = new FormData()
-    fd.append('file',             selectedFile.value, selectedFile.value.name)
-    fd.append('origin_office_id', selectedOriginOfficeId.value)
-    fd.append('office_id',        selectedOriginOfficeId.value)
-    fd.append('stage_id',         selectedStageId.value)
-    fd.append('qr_code_data',     trackingCode)
-    fd.append('user_id',          String(auth.user?.user_id ?? ''))
-    fd.append('org_id',           String(auth.user?.org_id ?? ''))
+  errorMessage.value = ''
 
+  try {
+    const formData = new FormData()
+    formData.append('file', selectedFile.value!)
+    formData.append('stage_id', selectedStageId.value)
+    formData.append('origin_office_id', selectedOriginOfficeId.value)
+    formData.append('category_id', selectedCategoryId.value)
+
+    if (isExcelFile.value && (manualTitle.value || manualDescription.value)) {
+      formData.append('manual_title', manualTitle.value)
+      formData.append('manual_description', manualDescription.value)
+    }
+
+    const trackingCode = currentTrackingId.value || generateTrackingId()
+    currentTrackingId.value = trackingCode
+
+    let qrDataUrl = ''
+    try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
+
+    if (selectedStrategy.value === 'embedded') {
+      await printEmbeddedDocument(selectedFile.value!, qrDataUrl)
+    } else {
+      await printStandaloneDocument(selectedFile.value!, qrDataUrl)
+    }
+
+    formData.append('qr_code_data', trackingCode)
+    formData.append('user_id',          String(auth.user?.user_id ?? ''))
+    formData.append('org_id',           String(auth.user?.org_id ?? ''))
+    
     const res = await $fetch<{ success: boolean; data?: any }>('/api/documents/upload', {
       method: 'POST',
-      body: fd,
+      body: formData,
     })
 
     if (res.success) {
@@ -886,6 +974,7 @@ const handlePrintAndSubmit = async () => {
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
+      selectedCategoryId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
     } else {

@@ -4,7 +4,7 @@
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="isDark ? 'text-white' : 'text-gray-900'">
           Tracking Operations
         </h1>
@@ -19,7 +19,7 @@
           v-for="chip in statusChips"
           :key="chip.status"
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all duration-200 hover:scale-[1.02]"
+          class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1.5 text-xs font-bold transition-all duration-200 hover:scale-[1.02]"
           :class="statusFilter === chip.status
             ? chip.activeClass
             : (isDark ? 'border-onyx-border bg-white/5 text-gray-400' : 'border-gray-200 bg-white text-gray-500')"
@@ -28,7 +28,7 @@
           <Icon :name="chip.icon" class="h-3.5 w-3.5" />
           <span>{{ chip.label }}</span>
           <span
-            class="rounded-full px-1.5 py-0.5 text-[10px]"
+            class="rounded-none px-1.5 py-0.5 text-[10px]"
             :class="isDark ? 'bg-white/10' : 'bg-black/5'"
           >{{ queueSummary[chip.countKey] ?? 0 }}</span>
         </button>
@@ -40,11 +40,11 @@
       <div
         v-for="kpi in kpiCards"
         :key="kpi.label"
-        class="flex flex-col gap-1 rounded-xl border p-4 transition-all duration-300"
+        class="flex flex-col gap-1 rounded-none border p-4 transition-all duration-300"
         :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <div class="flex items-center gap-2 mb-1">
-          <span class="flex h-7 w-7 items-center justify-center rounded-lg" :class="kpi.iconBg">
+          <span class="flex h-7 w-7 items-center justify-center rounded-none" :class="kpi.iconBg">
             <Icon :name="kpi.icon" class="h-3.5 w-3.5" :class="kpi.iconColor" />
           </span>
           <span class="text-[10px] font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
@@ -62,7 +62,7 @@
 
       <!-- Document list (2/3 width) -->
       <section
-        class="overflow-hidden rounded-xl border transition-all duration-300 lg:col-span-2"
+        class="overflow-hidden rounded-none border transition-all duration-300 lg:col-span-2"
         :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <!-- Section header -->
@@ -80,7 +80,7 @@
           </div>
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange"
+            class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1.5 text-xs font-semibold transition hover:border-candy-orange hover:text-candy-orange"
             :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
             @click="refreshQueue"
           >
@@ -95,10 +95,10 @@
             v-for="n in 5" :key="n"
             class="flex items-center gap-4 px-6 py-4"
           >
-            <div class="h-9 w-9 animate-pulse rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+            <div class="h-9 w-9 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
             <div class="flex-1 space-y-2">
-              <div class="h-3 w-48 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
-              <div class="h-2.5 w-32 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+              <div class="h-3 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+              <div class="h-2.5 w-32 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
             </div>
           </div>
         </div>
@@ -120,7 +120,7 @@
           >
             <!-- Status icon -->
             <span
-              class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+              class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none"
               :class="statusIconBg(doc.tracking_status)"
             >
               <Icon :name="STATUS_ICONS[doc.tracking_status] ?? 'ph:file'" class="h-4 w-4" :class="statusIconColor(doc.tracking_status)" />
@@ -132,7 +132,7 @@
                   {{ doc.title || 'Untitled Document' }}
                 </p>
                 <span
-                  class="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                  class="flex-shrink-0 rounded-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
                   :class="statusBadgeClass(doc.tracking_status)"
                 >
                   {{ STATUS_LABELS[doc.tracking_status] ?? doc.tracking_status }}
@@ -158,11 +158,11 @@
               <!-- Mini progress bar -->
               <div
                 v-if="doc.total_steps"
-                class="mt-2 h-1 w-full overflow-hidden rounded-full"
+                class="mt-2 h-1 w-full overflow-hidden rounded-none"
                 :class="isDark ? 'bg-white/10' : 'bg-gray-200'"
               >
                 <div
-                  class="h-full rounded-full transition-all duration-500"
+                  class="h-full rounded-none transition-all duration-500"
                   :class="doc.tracking_status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-candy-orange'"
                   :style="{ width: `${doc.progress_pct}%` }"
                 />
@@ -183,7 +183,7 @@
 
       <!-- Detail panel (1/3) -->
       <aside
-        class="rounded-xl border transition-all duration-300"
+        class="rounded-none border transition-all duration-300"
         :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <div class="border-b px-5 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
@@ -209,10 +209,10 @@
         <!-- Timeline loading -->
         <div v-else-if="timelineLoading" class="p-5 space-y-3">
           <div v-for="n in 4" :key="n" class="flex items-center gap-3">
-            <div class="h-8 w-8 animate-pulse rounded-full" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+            <div class="h-8 w-8 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
             <div class="flex-1 space-y-1.5">
-              <div class="h-3 w-28 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
-              <div class="h-2.5 w-20 animate-pulse rounded" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+              <div class="h-3 w-28 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+              <div class="h-2.5 w-20 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@
               :key="nextStatus"
               type="button"
               :disabled="advancing"
-              class="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wide transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              class="w-full flex items-center justify-center gap-2 rounded-none px-4 py-2.5 text-xs font-bold uppercase tracking-wide transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
               :class="advanceButtonClass(nextStatus)"
               @click="advanceStatus(nextStatus)"
             >
@@ -262,6 +262,10 @@
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Active Pipeline',
+  description: 'Track all in-flight documents across your organization. Monitor active couriers, pending branch deliveries, and real-time transit logistics.'
+})
 import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import DocumentTimeline from '~/components/client/tracking/DocumentTimeline.vue'

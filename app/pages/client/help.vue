@@ -17,7 +17,7 @@
         v-model="query"
         type="search"
         placeholder="How do I track my missing document?"
-        class="w-full rounded-lg border py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+        class="w-full rounded-none border py-4 pl-12 pr-4 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange shadow-sm"
         :class="inputClass"
         @keydown.enter.prevent="runSearch"
       />
@@ -28,7 +28,7 @@
         v-for="article in defaults"
         :key="article.id"
         type="button"
-        class="rounded-lg border px-4 py-4 text-left transition hover:-translate-y-0.5"
+        class="rounded-none border px-5 py-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-candy-orange/50"
         :class="panelClass"
         @click="selectArticle(article)"
       >
@@ -41,7 +41,7 @@
       <article
         v-for="match in results"
         :key="match.article.id"
-        class="rounded-lg border px-5 py-5"
+        class="rounded-none border px-6 py-6 shadow-sm transition-all duration-300"
         :class="panelClass"
       >
         <h2 class="text-sm font-bold" :class="headingClass">{{ match.article.title }}</h2>
@@ -54,15 +54,36 @@
 
     <div
       v-if="query.trim() && !results.length"
-      class="rounded-lg border px-4 py-8 text-center text-sm"
+      class="rounded-none border px-4 py-8 text-center text-sm shadow-sm"
       :class="panelClass"
     >
-      <p :class="mutedClass">No direct match found. Try keywords like <span class="text-candy-orange">flagged</span>, <span class="text-candy-orange">track</span>, or <span class="text-candy-orange">SLA</span>.</p>
+      <p :class="mutedClass">No direct match found. Try keywords like <span class="text-candy-orange font-semibold">flagged</span>, <span class="text-candy-orange font-semibold">track</span>, or <span class="text-candy-orange font-semibold">SLA</span>.</p>
+    </div>
+
+    <!-- Contact Support Callout -->
+    <div class="mt-8 rounded-none border p-6 sm:flex sm:items-center sm:justify-between shadow-sm transition-all duration-300" :class="panelClass">
+      <div class="sm:pr-8">
+        <h3 class="text-sm font-bold" :class="headingClass">Still need help?</h3>
+        <p class="mt-1 text-xs" :class="mutedClass">If you cannot find the answer to your question in our documentation, you can submit a direct feedback ticket to our operations team.</p>
+      </div>
+      <div class="mt-4 sm:mt-0 sm:flex-shrink-0">
+        <NuxtLink
+          to="/client/feedback"
+          class="inline-flex items-center justify-center gap-2 rounded-none bg-candy-orange px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#e95a0b] active:scale-[0.98]"
+        >
+          <Icon name="ph:paper-plane-tilt-fill" class="h-4 w-4" />
+          Contact Support
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+useSeoMeta({
+  title: 'FlowVision | Help & Support',
+  description: 'Get assistance, review documentation, and find answers to common questions about your FlowVision platform.'
+})
 import { getDefaultHelpArticles, matchHelpQuery, type HelpArticle } from '~/utils/helpNlp'
 
 definePageMeta({ layout: 'client' })

@@ -1,155 +1,222 @@
 <template>
-  <section class="w-full max-w-[1800px] mx-auto space-y-6 pb-24 lg:pb-8" :class="isDark ? 'text-white' : 'text-gray-900'">
-    
-    <!-- Header -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <section ref="pageRoot" class="w-full max-w-[1800px] mx-auto space-y-6 pb-24 lg:pb-8" :class="isDark ? 'text-white' : 'text-gray-900'">
+
+    <!-- ── Page Header ───────────────────────────────────────────────── -->
+    <div ref="headerEl" class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Office & Desk Ledger</h1>
-        <p class="mt-1 text-sm" :class="mutedText">
+        <div class="mb-2 flex items-center gap-2 text-xs font-medium" :class="mutedText">
+          <Icon name="ph:buildings-light" class="h-3.5 w-3.5 text-candy-orange" />
+          <span>Employee Portal</span>
+          <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
+          <span :class="isDark ? 'text-white' : 'text-gray-800'">Office Ledger</span>
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight leading-tight">Office & Desk Ledger</h1>
+        <p class="mt-1.5 text-sm" :class="mutedText">
           Manage desks and tables registered under your primary office node.
         </p>
       </div>
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.97]"
+        class="inline-flex min-h-11 items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 active:scale-[0.97]"
         @click="openCreateModal"
       >
-        <Icon name="ph:plus-bold" class="h-4 w-4" />
-        Register New Table/Desk
+        <Icon name="ph:plus-light" class="h-4 w-4" />
+        Register New Desk
       </button>
     </div>
 
-    <!-- Stats summary -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div class="flex items-center gap-4 rounded-xl border p-4 shadow-sm" :class="glassSurface">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-candy-orange/10 text-candy-orange">
-          <Icon name="ph:desktop-fill" class="h-6 w-6" />
+    <!-- ── Stats Summary ─────────────────────────────────────────────── -->
+    <div ref="statsEl" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+      >
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-candy-orange/10 border border-candy-orange/20">
+          <Icon name="ph:desktop-light" class="h-6 w-6 text-candy-orange" />
         </div>
         <div>
-          <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">Active Desks</p>
-          <p class="text-2xl font-bold mt-0.5">{{ tables.length }}</p>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
+          <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.length }}</p>
+        </div>
+      </div>
+      <div
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+      >
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-emerald-500/10 border border-emerald-500/20">
+          <Icon name="ph:user-check-light" class="h-6 w-6 text-emerald-500" />
+        </div>
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Assigned</p>
+          <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => t.assigned_user_profile).length }}</p>
+        </div>
+      </div>
+      <div
+        class="flex items-center gap-4 rounded-none border p-5 transition-colors hover:bg-gray-50 dark:hover:bg-onyx-black"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+      >
+        <div class="flex h-12 w-12 items-center justify-center rounded-none bg-amber-500/10 border border-amber-500/20">
+          <Icon name="ph:user-minus-light" class="h-6 w-6 text-amber-500" />
+        </div>
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Unassigned</p>
+          <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => !t.assigned_user_profile).length }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Ledger table -->
-    <div class="overflow-x-auto rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-onyx-black shadow-sm">
-      <table class="min-w-full divide-y divide-gray-200 dark:divide-white/10 text-sm text-left">
-        <thead class="bg-gray-50 dark:bg-white/[0.02] text-xs font-bold uppercase tracking-wider">
-          <tr>
-            <th class="px-6 py-4 text-gray-500 dark:text-gray-400">Office/Table Name</th>
-            <th class="px-6 py-4 text-gray-500 dark:text-gray-400">Unique Code</th>
-            <th class="px-6 py-4 text-gray-500 dark:text-gray-400">Assigned User</th>
-            <th class="px-6 py-4 text-gray-500 dark:text-gray-400">Created At</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 dark:divide-white/10">
-          <tr v-if="loading">
-            <td colspan="4" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-              <Icon name="ph:spinner-gap-bold" class="h-6 w-6 animate-spin mx-auto mb-2 text-candy-orange" />
-              Loading office tables & desks...
-            </td>
-          </tr>
-          <tr v-else-if="!tables.length">
-            <td colspan="4" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-              <Icon name="ph:buildings-fill" class="h-10 w-10 mx-auto mb-3 text-candy-orange/50" />
-              <p class="font-semibold text-base">No desks registered</p>
-              <p class="text-xs mt-1">Spin up a new table/desk node to assign sub-staff.</p>
-            </td>
-          </tr>
-          <tr v-for="table in tables" :key="table.id" class="hover:bg-gray-50 dark:hover:bg-white/[0.01]">
-            <td class="px-6 py-4 font-semibold text-gray-900 dark:text-white">{{ table.name }}</td>
-            <td class="px-6 py-4">
-              <span class="font-mono bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded text-xs font-semibold">
-                {{ table.code }}
-              </span>
-            </td>
-            <td class="px-6 py-4">
-              <div v-if="table.assigned_user_profile" class="flex flex-col">
-                <span class="font-medium text-gray-900 dark:text-white">{{ table.assigned_user_profile.full_name }}</span>
-                <span class="text-[11px] text-gray-500">{{ table.assigned_user_profile.email }}</span>
-              </div>
-              <span v-else class="text-gray-400 italic text-xs">Unassigned</span>
-            </td>
-            <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
-              {{ new Date(table.created_at).toLocaleDateString() }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- ── Ledger Table ───────────────────────────────────────────────── -->
+    <!-- ── Ledger Grid ───────────────────────────────────────────────── -->
+    <div ref="tableEl" class="space-y-8">
+      
+      <!-- Assigned Offices Section -->
+      <div>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">My Assigned Offices</h2>
+        <div v-if="myOfficesLoading" class="py-12 text-center" :class="mutedText">
+          <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
+          <p class="text-xs font-medium">Loading offices…</p>
+        </div>
+        <div v-else-if="!myOffices.length" class="py-12 text-center rounded-none transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
+          <div class="flex flex-col items-center gap-2">
+            <Icon name="ph:building-office-light" class="h-6 w-6 text-gray-400" />
+            <p class="text-xs font-medium" :class="mutedText">No offices assigned to you yet.</p>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <OfficeQrCard
+            v-for="office in myOffices"
+            :key="'my-' + office.id"
+            :office="office"
+          />
+        </div>
+      </div>
+
+      <!-- Sub-Offices / Desks Section -->
+      <div>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Registered Desks & Sub-Nodes</h2>
+        <div v-if="loading" class="py-12 text-center" :class="mutedText">
+          <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
+          <p class="text-xs font-medium">Loading office desks…</p>
+        </div>
+        <div v-else-if="!tables.length" class="py-16 text-center rounded-none transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
+          <div class="flex flex-col items-center gap-3">
+            <div class="flex h-14 w-14 items-center justify-center rounded-none bg-candy-orange/10 border-transparent">
+              <Icon name="ph:buildings-light" class="h-7 w-7 text-candy-orange/60" />
+            </div>
+            <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No desks registered</p>
+            <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk node to begin assigning internal staff.</p>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <OfficeQrCard
+            v-for="table in tables"
+            :key="'table-' + table.id"
+            :office="table"
+          />
+        </div>
+      </div>
+
     </div>
 
-    <!-- Registration Modal -->
+    <!-- ── Registration Modal ─────────────────────────────────────────── -->
     <Teleport to="body">
-      <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <form @submit.prevent="registerOffice" class="w-full max-w-md rounded-2xl bg-white dark:bg-onyx-black p-6 shadow-2xl border border-gray-200 dark:border-white/10">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Register New Table/Desk</h2>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Table/Desk Name <span class="text-red-500">*</span>
-              </label>
-              <input 
-                v-model="form.name" 
-                type="text" 
-                required 
-                placeholder="e.g. Table A - Public Intake"
-                class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-transparent px-3.5 py-2.5 text-gray-900 dark:text-white focus:border-candy-orange focus:ring-1 focus:ring-candy-orange outline-none transition" 
-                @input="generateCode"
-              />
-            </div>
-            
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Custom Table Code <span class="text-red-500">*</span>
-              </label>
-              <input 
-                v-model="form.code" 
-                type="text" 
-                required 
-                placeholder="e.g. TABLE-A"
-                class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-transparent px-3.5 py-2.5 text-gray-900 dark:text-white focus:border-candy-orange focus:ring-1 focus:ring-candy-orange outline-none transition font-mono uppercase" 
-              />
-            </div>
-            
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Assigned Sub-User
-              </label>
-              <select 
-                v-model="form.assigned_user" 
-                class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-transparent px-3.5 py-2.5 text-gray-900 dark:text-white focus:border-candy-orange focus:ring-1 focus:ring-candy-orange outline-none transition"
+      <Transition name="modal-fade">
+        <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <form
+            class="w-full max-w-md rounded-none border"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+            @submit.prevent="registerOffice"
+          >
+            <!-- Modal header -->
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
+              <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-none border border-candy-orange/20 bg-candy-orange/10">
+                  <Icon name="ph:desktop-light" class="h-4.5 w-4.5 text-candy-orange" />
+                </span>
+                <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Register New Desk</h2>
+              </div>
+              <button
+                type="button"
+                class="rounded-none p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-white/10"
+                @click="isModalOpen = false"
               >
-                <option value="">Unassigned</option>
-                <option v-for="user in subUsers" :key="user.user_id" :value="user.user_id">
-                  {{ user.full_name }} ({{ user.email }})
-                </option>
-              </select>
+                <Icon name="ph:x-light" class="h-4 w-4" :class="mutedText" />
+              </button>
             </div>
-          </div>
 
-          <div v-if="errorMsg" class="mt-4 p-3 rounded-lg bg-red-500/10 text-red-500 border border-red-500/20 text-xs">
-            {{ errorMsg }}
-          </div>
-          
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" @click="isModalOpen = false" class="rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition">
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              :disabled="submitting" 
-              class="rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow hover:bg-[#e95a0b] disabled:opacity-50 transition inline-flex items-center gap-2"
-            >
-              <Icon v-if="submitting" name="ph:spinner-gap-bold" class="h-4 w-4 animate-spin" />
-              {{ submitting ? 'Registering...' : 'Register' }}
-            </button>
-          </div>
-        </form>
-      </div>
+            <div class="space-y-4 px-6 py-5">
+              <div>
+                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">
+                  Desk / Table Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="form.name"
+                  type="text"
+                  required
+                  placeholder="e.g. Table A — Public Intake"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
+                  @input="generateCode"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">
+                  Desk Code <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="form.code"
+                  type="text"
+                  required
+                  placeholder="e.g. TABLE-A"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange font-mono uppercase tracking-wider"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">
+                  Assign to Staff Member
+                </label>
+                <select
+                  v-model="form.assigned_user"
+                  class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
+                >
+                  <option value="">Unassigned</option>
+                  <option v-for="user in subUsers" :key="user.user_id" :value="user.user_id">
+                    {{ user.full_name }} ({{ user.email }})
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div v-if="errorMsg" class="mx-6 mb-4 rounded-none border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500">
+              {{ errorMsg }}
+            </div>
+
+            <div class="flex justify-end gap-3 px-6 pb-6">
+              <button
+                type="button"
+                class="rounded-none px-4 py-2.5 text-sm font-semibold transition-colors border border-transparent"
+                :class="isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'"
+                @click="isModalOpen = false"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="submitting"
+                class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+              >
+                <Icon v-if="submitting" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+                {{ submitting ? 'Registering…' : 'Register Desk' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </Transition>
     </Teleport>
 
   </section>
@@ -158,10 +225,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useTheme } from '~/composables/useTheme'
+import { gsap } from 'gsap'
+import OfficeQrCard from '~/components/employee/OfficeQrCard.vue'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'employee' })
 
 const { isDark } = useTheme()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -170,21 +241,23 @@ const tables = ref<any[]>([])
 const subUsers = ref<any[]>([])
 const errorMsg = ref('')
 
+const myOffices = ref<any[]>([])
+const myOfficesLoading = ref(true)
+
 const form = reactive({
   name: '',
   code: '',
   assigned_user: ''
 })
 
-// Theming helpers
-const glassSurface = computed(() =>
-  isDark.value
-    ? 'border-white/10 bg-white/[0.04]'
-    : 'border-gray-200 bg-white'
-)
+// GSAP refs
+const pageRoot = ref<HTMLElement | null>(null)
+const headerEl = ref<HTMLElement | null>(null)
+const statsEl  = ref<HTMLElement | null>(null)
+const tableEl  = ref<HTMLElement | null>(null)
+
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 
-// Auto-generate code from name
 function generateCode() {
   if (!form.name) return
   const prefix = form.name
@@ -192,10 +265,28 @@ function generateCode() {
     .replace(/[^A-Z0-9 ]/g, '')
     .trim()
     .replace(/\s+/g, '-')
-  
-  // Append a short random string to guarantee basic uniqueness
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
   form.code = `${prefix}-${rand}`
+}
+
+async function fetchMyOffices() {
+  const orgId  = auth.user?.org_id
+  const userId = auth.user?.user_id
+  if (!orgId || !userId) {
+    myOfficesLoading.value = false
+    return
+  }
+  myOfficesLoading.value = true
+  try {
+    const res = await $fetch<{ data: any[] }>('/api/employee/my-offices', {
+      params: { orgId, userId }
+    })
+    myOffices.value = res.data || []
+  } catch (err) {
+    console.error('Failed to fetch my offices:', err)
+  } finally {
+    myOfficesLoading.value = false
+  }
 }
 
 async function fetchTables() {
@@ -250,8 +341,30 @@ async function registerOffice() {
   }
 }
 
+// ── GSAP Entrance ──────────────────────────────────────────────────────
+const runEntranceAnimation = () => {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+  if (headerEl.value) {
+    tl.fromTo(headerEl.value, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45 }, 0)
+  }
+  if (statsEl.value) {
+    const cards = statsEl.value.querySelectorAll(':scope > div')
+    tl.fromTo(cards, { opacity: 0, y: 18, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.08 }, 0.15)
+  }
+  if (tableEl.value) {
+    tl.fromTo(tableEl.value, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45 }, 0.32)
+  }
+}
+
 onMounted(() => {
+  runEntranceAnimation()
+  fetchMyOffices()
   fetchTables()
   fetchSubUsers()
 })
 </script>
+
+<style scoped>
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+</style>

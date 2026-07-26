@@ -85,22 +85,7 @@
           </button>
         </nav>
 
-        <button
-          type="button"
-          class="pointer-events-auto absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border shadow-md transition-all duration-300 sm:h-10 sm:w-10 md:right-2"
-          :class="isLandingDark
-            ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black'
-            : 'border-zinc-200 bg-white hover:bg-zinc-50'"
-          :aria-label="isLandingDark ? 'Switch to light mode' : 'Switch to dark mode'"
-          :aria-pressed="isLandingDark"
-          @click="toggleLandingTheme"
-        >
-          <Icon
-            :name="isLandingDark ? 'ph:sun-fill' : 'ph:moon-fill'"
-            class="h-4 w-4"
-            :class="isLandingDark ? 'text-candy-orange' : 'text-zinc-700'"
-          />
-        </button>
+
       </div>
     </div>
 

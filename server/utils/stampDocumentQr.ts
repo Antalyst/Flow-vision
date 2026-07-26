@@ -22,7 +22,7 @@ function isXlsx(fileName: string, mimeType: string): boolean {
 
 /** True when the upload pipeline must embed a QR image before persisting the blob. */
 export function requiresQrStamp(fileName: string, mimeType: string): boolean {
-  return isDocx(fileName, mimeType) || isXlsx(fileName, mimeType)
+  return isDocx(fileName, mimeType)
 }
 
 async function generateQrPngBuffer(payload: string): Promise<Buffer> {
@@ -173,10 +173,6 @@ export async function stampDocumentWithQr(
 
   if (isDocx(fileName, mimeType)) {
     return stampDocxBuffer(buffer, qrPng)
-  }
-
-  if (isXlsx(fileName, mimeType)) {
-    return stampXlsxBuffer(buffer, qrPng)
   }
 
   return buffer

@@ -65,30 +65,28 @@ const areaPoints = computed(() => {
 
 <template>
   <div
-    class="matrix-card group relative overflow-hidden p-5 transition-all duration-300 hover:scale-[1.02]"
+    class="group relative flex flex-col justify-between overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/10 dark:bg-[#111113]"
   >
-    <div class="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-candy-orange/10 blur-2xl opacity-60 transition-opacity duration-300 group-hover:opacity-100" />
-
     <div class="relative flex items-center justify-between">
-      <h3 class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-white-muted">
+      <h3 class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
         {{ title }}
       </h3>
-      <span class="h-2 w-2 rounded-full bg-candy-orange shadow-[0_0_8px_rgba(244,125,47,0.8)]" />
     </div>
 
-    <div class="relative mt-4 flex items-end justify-between gap-4">
-      <div class="flex flex-col gap-1">
-        <p class="text-3xl font-bold tracking-tight text-onyx-black dark:text-white-pure">
+    <div class="relative mt-6 flex items-end justify-between gap-4">
+      <div class="flex flex-col gap-1.5">
+        <p class="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">
           {{ value }}
         </p>
         <div class="flex items-center gap-1.5">
           <span
-            class="text-xs font-semibold"
-            :class="trendUp ? 'text-candy-orange' : 'text-red-500'"
+            class="flex items-center gap-0.5 text-xs font-medium"
+            :class="trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
           >
+            <Icon :name="trendUp ? 'ph:trend-up' : 'ph:trend-down'" class="h-3 w-3" />
             {{ trend }}
           </span>
-          <span class="text-xs text-zinc-500 dark:text-white-muted">vs last week</span>
+          <span class="text-xs text-neutral-400 dark:text-neutral-500">vs last week</span>
         </div>
       </div>
 
@@ -96,21 +94,21 @@ const areaPoints = computed(() => {
         width="100"
         height="40"
         viewBox="0 0 100 40"
-        class="flex-shrink-0 opacity-90"
+        class="flex-shrink-0 opacity-80 transition-opacity group-hover:opacity-100"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#F47D2F" stop-opacity="0.35" />
-            <stop offset="100%" stop-color="#F47D2F" stop-opacity="0.02" />
+            <stop offset="0%" :stop-color="trendUp ? '#10B981' : '#EF4444'" stop-opacity="0.2" />
+            <stop offset="100%" :stop-color="trendUp ? '#10B981' : '#EF4444'" stop-opacity="0" />
           </linearGradient>
         </defs>
         <polygon :points="areaPoints" :fill="`url(#${gradientId})`" />
         <polyline
           :points="polylinePoints"
           fill="none"
-          stroke="#F47D2F"
-          stroke-width="2"
+          :stroke="trendUp ? '#10B981' : '#EF4444'"
+          stroke-width="1.5"
           stroke-linecap="round"
           stroke-linejoin="round"
         />

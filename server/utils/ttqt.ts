@@ -19,6 +19,13 @@ export async function translateTextToQuery(userPrompt: string) {
     - You must respond ONLY with a raw JSON object. 
     - Do not wrap it in markdown block fences like \`\`\`json.
 
+    SCHEMA EXECUTION STRUCTURE INJECTION:
+    When Mapping Department Steps, Operational Workflows, or Pipelines:
+    - Query \`public.stages\` to match the named pipeline (e.g., \`stages.name ILIKE '%Treasury%'\`).
+    - Join \`public.stage_steps\` matching \`stage_steps.stage_id = stages.id\` (or \`stages.stage_id\` if applicable).
+    - Join \`public.offices\` matching \`stage_steps.office_id = offices.id\` to fetch human-readable office/table names assigned to sequences.
+    - Enforce order via \`ORDER BY stage_steps.step_number ASC\`.
+
     Target Output JSON Schema:
     {
       "documentType": "The targeted report category (e.g., 'payroll')",

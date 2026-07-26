@@ -5,19 +5,19 @@
     <header class="flex items-center justify-between px-4 pt-4 pb-3">
       <NuxtLink
         to="/messenger/dashboard"
-        class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+        class="inline-flex items-center gap-1.5 rounded-none px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
       >
-        <Icon name="ph:arrow-left-bold" class="h-4 w-4" />
+        <Icon name="ph:arrow-left-light" class="h-4 w-4" />
         Back
       </NuxtLink>
 
       <h1 class="text-sm font-bold text-white">Document Handshake</h1>
 
       <!-- Mode toggle pill -->
-      <div class="flex rounded-xl border border-white/10 bg-white/5 p-1">
+      <div class="flex rounded-none border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-inner">
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'pickup'
             ? 'bg-amber-500 text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-amber-500 text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -55,6 +55,7 @@
         :scanner-id="`fv-scanner-${scannerKey}`"
         :fps="12"
         :qrbox-size="220"
+        theme-color="amber"
         @scan="handleScan"
         @error="handleCameraError"
       />
@@ -63,12 +64,12 @@
       <Transition name="result-pop">
         <div
           v-if="scanState !== 'idle'"
-          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-2xl border"
+          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-none border bg-black backdrop-blur-xl "
           :class="resultCardClass"
         >
           <!-- Processing -->
           <div v-if="scanState === 'processing'" class="flex items-center gap-3 p-5">
-            <Icon name="ph:spinner-gap" class="h-6 w-6 animate-spin text-amber-400 flex-shrink-0" />
+            <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin text-amber-400 flex-shrink-0" />
             <div>
               <p class="text-sm font-bold text-white">Processing scan…</p>
               <p class="text-xs text-white/60 mt-0.5">Contacting server</p>
@@ -78,8 +79,8 @@
           <!-- SUCCESS ── Pickup -->
           <div v-else-if="scanState === 'success' && mode === 'pickup'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
-                <Icon name="ph:check-circle-fill" class="h-6 w-6 text-emerald-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-transparent">
+                <Icon name="ph:check-circle-light" class="h-6 w-6 text-emerald-400" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-bold uppercase tracking-widest text-emerald-400">
@@ -95,15 +96,15 @@
                   Checked in — no documents waiting at this station.
                 </p>
                 <p v-if="resultData?.destination?.office_name" class="mt-1 text-xs text-white/60">
-                  <Icon name="ph:map-pin-fill" class="inline h-3 w-3 text-amber-400 mr-1" />
+                  <Icon name="ph:map-pin-light" class="inline h-3 w-3 text-amber-400 mr-1" />
                   Heading to <strong class="text-white/80">{{ resultData.destination.office_name }}</strong>
                   <span class="ml-1 text-amber-400">(Step {{ resultData.destination.step }})</span>
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-400"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-transparent border border-amber-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400"
                 >
-                  <Icon name="ph:motorcycle-fill" class="h-3 w-3" />
+                  <Icon name="ph:motorcycle-light" class="h-3.5 w-3.5" />
                   IN TRANSIT
                 </div>
               </div>
@@ -114,8 +115,8 @@
           <div v-else-if="scanState === 'success' && mode === 'dropoff'" class="p-5">
             <div class="flex items-start gap-3">
               <span
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
-                :class="resultData?.is_final_stop ? 'bg-emerald-500/20' : 'bg-amber-500/20'"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none"
+                :class="resultData?.is_final_stop ? 'bg-transparent' : 'bg-transparent'"
               >
                 <Icon
                   :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'"
@@ -139,12 +140,12 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
-                    ? 'bg-emerald-500/10 text-emerald-400'
-                    : 'bg-candy-orange/10 text-candy-orange'"
+                    ? 'bg-transparent border-emerald-500 text-emerald-400'
+                    : 'bg-transparent border-amber-500 text-amber-400'"
                 >
-                  <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3 w-3" />
+                  <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3.5 w-3.5" />
                   {{ resultData?.is_final_stop ? 'AWAITING REVIEW' : 'ARRIVED' }}
                 </div>
               </div>
@@ -154,8 +155,8 @@
           <!-- SECURITY ERROR -->
           <div v-else-if="scanState === 'security-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/20">
-                <Icon name="ph:shield-warning-fill" class="h-6 w-6 text-red-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-transparent">
+                <Icon name="ph:shield-warning-light" class="h-6 w-6 text-red-400" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-bold uppercase tracking-widest text-red-400">🚫 Security Violation</p>
@@ -165,7 +166,7 @@
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-xl bg-red-500/5 border border-red-500/20 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
+            <div class="mt-3 rounded-none bg-transparent border border-red-500 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -173,8 +174,8 @@
           <!-- ROUTE MISMATCH ERROR -->
           <div v-else-if="scanState === 'route-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
-                <Icon name="ph:warning-fill" class="h-6 w-6 text-amber-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-transparent">
+                <Icon name="ph:warning-light" class="h-6 w-6 text-amber-400" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-bold uppercase tracking-widest text-amber-400">Wrong Checkpoint</p>
@@ -187,8 +188,8 @@
           <!-- GENERIC ERROR -->
           <div v-else-if="scanState === 'error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/10">
-                <Icon name="ph:x-circle-fill" class="h-6 w-6 text-red-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-transparent">
+                <Icon name="ph:x-circle-light" class="h-6 w-6 text-red-400" />
               </span>
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-red-400">Scan Failed</p>
@@ -200,8 +201,8 @@
           <!-- UNKNOWN QR -->
           <div v-else-if="scanState === 'unknown'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-500/10">
-                <Icon name="ph:question-fill" class="h-6 w-6 text-gray-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-transparent">
+                <Icon name="ph:question-light" class="h-6 w-6 text-gray-400" />
               </span>
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognised QR</p>
@@ -215,10 +216,10 @@
           <div v-if="scanState !== 'processing'" class="border-t border-white/5 px-5 py-3">
             <button
               type="button"
-              class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 py-2.5 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+              class="w-full flex items-center justify-center gap-2 rounded-none bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
               @click="resetScan"
             >
-              <Icon name="ph:scan" class="h-4 w-4 text-amber-400" />
+              <Icon name="ph:scan-light" class="h-4 w-4 text-amber-400" />
               Scan Next
             </button>
           </div>
@@ -228,9 +229,9 @@
       <!-- ── Instruction chip when idle ──────────────────────────────────── -->
       <div
         v-if="scanState === 'idle'"
-        class="mt-4 flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-xs text-amber-300/80"
+        class="mt-4 flex items-center gap-2 rounded-none border border-amber-500 bg-transparent px-4 py-2.5 text-xs text-amber-300/80"
       >
-        <Icon name="ph:qr-code" class="h-4 w-4 text-amber-400 flex-shrink-0" />
+        <Icon name="ph:qr-code-light" class="h-4 w-4 text-amber-400 flex-shrink-0" />
         <span>
           <strong v-if="mode === 'pickup'">Point camera at document QR</strong>
           <strong v-else>Point camera at office wall QR</strong>
@@ -271,12 +272,12 @@ const scannerKey = ref(0) // bump to force re-mount scanner
 // ── Computed ───────────────────────────────────────────────────────────
 const resultCardClass = computed(() => {
   switch (scanState.value) {
-    case 'security-error': return 'border-red-500/40 bg-red-950/80 shadow-lg shadow-red-500/10'
-    case 'route-error':    return 'border-amber-500/30 bg-amber-950/80 shadow-lg shadow-amber-500/10'
-    case 'error':          return 'border-red-400/20 bg-gray-900'
-    case 'success':        return 'border-emerald-500/30 bg-gray-900 shadow-lg shadow-emerald-500/10'
-    case 'unknown':        return 'border-white/10 bg-gray-900'
-    default:               return 'border-amber-500/20 bg-gray-900'
+    case 'security-error': return 'border-red-500 bg-red-950/80  shadow-red-500/10'
+    case 'route-error':    return 'border-amber-500 bg-amber-950/80  shadow-amber-500/10'
+    case 'error':          return 'border-red-400/20 bg-black'
+    case 'success':        return 'border-emerald-500 bg-black  shadow-emerald-500/10'
+    case 'unknown':        return 'border-white/10 bg-black'
+    default:               return 'border-amber-500 bg-black'
   }
 })
 
