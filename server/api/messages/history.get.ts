@@ -36,5 +36,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: msgErr.message })
   }
 
+  // 3. Mark unread messages as read
+  const actorId = actor.userRole === 'client' ? actor.userId : (actor.officeIds[0] || actor.userId)
+  const unreadMsgs = (messages || []).filter(m => {
+    const rb = m.read_by || []
+    const isSender = m.sender_user_id === actorId || m.sender_office_id === actorId
+    return !isSender && !rb.includes(actorId)
+  })
+
+  if (unreadMsgs.length > 0) {
+    // Fire and forget update
+    Promise.all(unreadMsgs.map(m => {
+      const rb = m.read_by || []
+      rb.push(actorId)
+      return client.from('direct_messages').update({ read_by: rb }).eq('id', m.id)
+    })).catch(e => console.error('Failed to mark read', e))
+  }
+
   return { success: true, data: messages }
 })

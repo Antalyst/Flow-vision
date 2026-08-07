@@ -31,9 +31,11 @@ export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: [] as Conversation[],
     messages: [] as DirectMessage[],
+    contacts: [] as ConversationParticipant[],
     activeConversationId: null as string | null,
     loadingConversations: false,
     loadingMessages: false,
+    loadingContacts: false,
     subscription: null as any,
   }),
   actions: {
@@ -95,6 +97,50 @@ export const useChatStore = defineStore('chat', {
         throw err
       }
     },
+    async fetchContacts() {
+      this.loadingContacts = true
+      try {
+        const res: any = await $fetch('/api/messages/contacts')
+        if (res.success) {
+          this.contacts = res.data
+        }
+      } catch (err) {
+        console.error('Failed to fetch contacts', err)
+      } finally {
+        this.loadingContacts = false
+      }
+    },
+    async createGroup(participantIds: string[], participantOffices: string[], title?: string) {
+      try {
+        const res: any = await $fetch('/api/messages/group', {
+          method: 'POST',
+          body: { participantIds, participantOffices, title }
+        })
+        if (res.success) {
+          await this.fetchConversations()
+          this.activeConversationId = res.conversationId
+        }
+        return res
+      } catch (err) {
+        console.error('Failed to create group', err)
+        throw err
+      }
+    },
+    async updateGroupTitle(conversationId: string, title: string) {
+      try {
+        const res: any = await $fetch('/api/messages/updateGroup', {
+          method: 'PUT',
+          body: { conversationId, title }
+        })
+        if (res.success) {
+          await this.fetchConversations()
+        }
+        return res
+      } catch (err) {
+        console.error('Failed to update group title', err)
+        throw err
+      }
+    },
     setActiveConversation(id: string | null) {
       this.activeConversationId = id
       if (id) {
@@ -140,7 +186,8 @@ export const useChatStore = defineStore('chat', {
       convo.latest_message = {
         text: message.message_text,
         created_at: message.created_at,
-        sender_id: message.sender_user_id || message.sender_office_id || ''
+        sender_id: message.sender_user_id || message.sender_office_id || '',
+        read_by: message.read_by || []
       }
       
       // 4. Sort conversations

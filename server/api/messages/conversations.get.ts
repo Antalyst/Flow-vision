@@ -45,6 +45,8 @@ export default defineEventHandler(async (event) => {
     .from('conversations')
     .select(`
       id,
+      org_id,
+      title,
       created_at,
       conversation_participants (
         participant_type,
@@ -56,7 +58,8 @@ export default defineEventHandler(async (event) => {
         sender_user_id,
         sender_office_id,
         message_text,
-        created_at
+        created_at,
+        read_by
       )
     `)
     .in('id', conversationIds)
@@ -113,9 +116,10 @@ export default defineEventHandler(async (event) => {
       latest_message: latestMessage ? {
         text: latestMessage.message_text,
         created_at: latestMessage.created_at,
-        sender_id: latestMessage.sender_office_id || latestMessage.sender_user_id
+        sender_id: latestMessage.sender_office_id || latestMessage.sender_user_id,
+        read_by: latestMessage.read_by || []
       } : null,
-      title: participantsInfo.map((p: any) => p.name).join(', ') || 'Empty Chat'
+      title: c.title || participantsInfo.map((p: any) => p.name).join(', ') || 'Empty Chat'
     }
   })
 

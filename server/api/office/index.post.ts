@@ -19,12 +19,7 @@ export default defineEventHandler(async (event) => {
         message: `Missing required fields: ${!name ? 'name ' : ''}${!org_id ? 'org_id ' : ''}${!user_id ? 'user_id' : ''}`,
       }
     }
-      const { data: rows, error } = await (client as any).from('offices').insert({
-        name,
-        assigned_user: user_id,
-        org_id,
-    }).select('*').single();
-    
+
     // const [rows] = await db.query(`
     //         insert into offices (name, assigned_user, org_id, created_at) values (?, ?, ?, ?)
     //     `, [name, user_id, org_id, created_at]);
