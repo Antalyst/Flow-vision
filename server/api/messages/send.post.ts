@@ -21,14 +21,14 @@ export default defineEventHandler(async (event) => {
 
   let finalConversationId = conversationId
 
+  const selfType = senderOfficeId ? 'office' : 'user'
+  const selfId = senderOfficeId || (actualSenderUserId || actor.userId)
+
   // 1. If no conversationId is provided, check if one exists or create it
   if (!finalConversationId) {
     if (!targetUserId && !targetOfficeId) {
        throw createError({ statusCode: 400, message: 'Must provide target to start a conversation' })
     }
-
-    const selfType = senderOfficeId ? 'office' : 'user'
-    const selfId = senderOfficeId || (actualSenderUserId || actor.userId)
 
     const targetType = targetOfficeId ? 'office' : 'user'
     const targetId = targetOfficeId || targetUserId
@@ -83,13 +83,30 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Validate sender is part of this conversation
+  const senderOrCondition = `user_id.eq.${actor.userId}${actor.officeIds && actor.officeIds.length > 0 ? `,office_id.in.(${actor.officeIds.join(',')})` : ''}`
+
+  const { data: participations, error: partError } = await client
+    .from('conversation_participants')
+    .select('participant_type, user_id, office_id')
+    .eq('conversation_id', finalConversationId)
+    .or(senderOrCondition)
+
+  if (partError || !participations || participations.length === 0) {
+    throw createError({ statusCode: 403, message: 'You are not a participant of this conversation' })
+  }
+
+  const activeParticipant = participations[0]
+  const msgSenderUserId = activeParticipant.participant_type === 'user' ? activeParticipant.user_id : null
+  const msgSenderOfficeId = activeParticipant.participant_type === 'office' ? activeParticipant.office_id : null
+
   // 2. Insert message
   const { data: message, error: msgErr } = await client
     .from('direct_messages')
     .insert({
       conversation_id: finalConversationId,
-      sender_user_id: actualSenderUserId || (senderOfficeId ? null : actor.userId),
-      sender_office_id: senderOfficeId,
+      sender_user_id: msgSenderUserId,
+      sender_office_id: msgSenderOfficeId,
       message_text: text
     })
     .select('*')

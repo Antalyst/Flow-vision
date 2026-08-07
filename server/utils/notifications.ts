@@ -12,7 +12,7 @@ export interface BroadcastPickupInput {
 }
 
 const NOTIFICATION_COLUMNS =
-  'id, org_id, office_id, document_id, target_role, title, message, user_id, is_claimed, is_read, claimed_by_user_id, created_at, metadata'
+  'id, org_id, office_id, document_id, target_role, title, message, user_id, is_claimed, is_read, claimed_by_user_id, created_at, metadata, documents(tracking_status)'
 
 export interface MessengerPickupRouteMetadata {
   pickup_source_name?: string | null
@@ -483,11 +483,23 @@ export async function fetchNotificationsForRole(
     console.info('[notifications] Messenger queue empty', { orgId: actor.orgId, userId })
   }
 
-  if (options.unclaimedOnly === false) {
-    return rows
+  // Filter out notifications for documents that are not in a claimable status
+  let filteredRows = rows
+  if (options.unclaimedOnly !== false) {
+    filteredRows = rows.filter((row) => {
+      const doc = (row as any).documents
+      if (doc) {
+        return ['CREATED', 'ARRIVED_AT_OFFICE'].includes(doc.tracking_status)
+      }
+      return true
+    })
   }
 
-  return rows.filter((row) => isUnclaimedFlag(row.is_claimed))
+  if (options.unclaimedOnly === false) {
+    return filteredRows
+  }
+
+  return filteredRows.filter((row) => isUnclaimedFlag(row.is_claimed))
 }
 
 export async function countUnclaimedMessengerNotifications(event: H3Event): Promise<number> {

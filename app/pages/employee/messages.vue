@@ -16,6 +16,17 @@
         ]"
       >
         <div class="shrink-0 p-4">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Inbox</h2>
+            <button
+              @click="showGroupModal = true"
+              class="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+              :class="isDark ? 'bg-onyx-card hover:bg-white/10 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'"
+              title="Create Group"
+            >
+              <Icon name="ph:users-three-light" class="h-4 w-4" />
+            </button>
+          </div>
           <div class="relative">
             <input
               v-model="searchQuery"
@@ -54,18 +65,27 @@
             >
               <div class="pointer-events-none flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-candy-orange/20 text-candy-orange"
                 :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
-                <Icon name="ph:files-light" class="pointer-events-none h-5 w-5" />
+                <Icon :name="item.is_group ? 'ph:users-three-light' : 'ph:files-light'" class="pointer-events-none h-5 w-5" />
               </div>
               <div class="pointer-events-none min-w-0 flex-1">
                 <div class="pointer-events-none flex items-center justify-between">
-                  <h3 class="pointer-events-none truncate text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                  <h3 class="pointer-events-none truncate text-sm" :class="[
+                    item.unread_count > 0 
+                      ? (isDark ? 'text-white font-extrabold' : 'text-gray-900 font-extrabold')
+                      : (isDark ? 'text-white/80 font-bold' : 'text-gray-900/80 font-bold')
+                  ]">
                     {{ item.title }}
                   </h3>
-                  <span class="pointer-events-none shrink-0 text-xs text-gray-400">
-                    {{ formatTimeRelative(item.latest_message?.created_at) }}
+                  <span class="pointer-events-none shrink-0 text-xs text-gray-400 flex items-center gap-1.5">
+                    {{ formatTimeRelative(item.latest_message?.created_at || item.created_at) }}
+                    <span v-if="item.unread_count > 0" class="h-2.5 w-2.5 rounded-full bg-red-500 inline-block shrink-0"></span>
                   </span>
                 </div>
-                <p class="pointer-events-none mt-1 truncate text-xs" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+                <p class="pointer-events-none mt-1 truncate text-xs" :class="[
+                  item.unread_count > 0
+                    ? (isDark ? 'text-white font-bold' : 'text-gray-900 font-bold')
+                    : (isDark ? 'text-gray-400' : 'text-gray-500')
+                ]">
                   <span v-if="item.latest_message" class="pointer-events-none" :class="item.latest_message.sender_id === auth.user?.user_id ? 'font-medium' : ''">
                     {{ item.latest_message.sender_id === auth.user?.user_id ? 'You: ' : '' }}{{ item.latest_message.text }}
                   </span>
@@ -98,7 +118,7 @@
             </button>
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-candy-orange/20 text-candy-orange"
               :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
-              <Icon name="ph:files-light" class="h-5 w-5" />
+              <Icon :name="activeConversation?.is_group ? 'ph:users-three-light' : 'ph:files-light'" class="h-5 w-5" />
             </div>
             <div class="min-w-0 flex-1">
               <h2 class="truncate text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
@@ -186,13 +206,47 @@
         </div>
       </main>
     </div>
+
+    <!-- Create Group Modal -->
+    <div v-if="showGroupModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-md rounded-none shadow-xl border" :class="isDark ? 'bg-onyx-card border-white/5' : 'bg-white border-gray-200'">
+        <div class="flex items-center justify-between border-b p-4" :class="isDark ? 'border-white/5' : 'border-gray-200'">
+          <h2 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create Group</h2>
+          <button @click="showGroupModal = false" class="text-gray-400 hover:text-gray-500">
+            <Icon name="ph:x-light" class="h-5 w-5" />
+          </button>
+        </div>
+        <div class="p-4">
+          <div class="mb-4">
+            <label class="mb-1 block text-sm font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">Group Name</label>
+            <input v-model="newGroupName" type="text" class="w-full rounded-none border p-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange" :class="isDark ? 'border-white/10 bg-onyx-black text-white' : 'border-gray-200 bg-white'" placeholder="Enter group name" />
+          </div>
+          <div class="mb-4">
+            <label class="mb-1 block text-sm font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">Select Members</label>
+            <div class="max-h-48 overflow-y-auto rounded-none border" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+              <div v-for="office in officeStore.offices" :key="office.id" class="flex items-center gap-3 p-2 border-b last:border-b-0" :class="isDark ? 'border-white/5 hover:bg-white/5' : 'border-gray-100 hover:bg-gray-50'">
+                <input type="checkbox" :id="'cb-' + office.id" :value="String(office.id)" v-model="selectedGroupOffices" class="accent-candy-orange" />
+                <label :for="'cb-' + office.id" class="flex-1 cursor-pointer text-sm" :class="isDark ? 'text-gray-200' : 'text-gray-700'">{{ office.name }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 pt-2">
+            <button @click="showGroupModal = false" class="px-4 py-2 text-sm font-medium" :class="isDark ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'">Cancel</button>
+            <button @click="handleCreateGroup" :disabled="!newGroupName || selectedGroupOffices.length === 0 || creatingGroup" class="flex items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:opacity-50">
+              <Icon v-if="creatingGroup" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
-import { useChatStore } from '~/stores/chat'
+import { useChatStore, parseUtcDate } from '~/stores/chat'
 import { useOfficeStore } from '~/stores/office'
 import { useTheme } from '~/composables/useTheme'
 
@@ -214,6 +268,26 @@ const newMessage = ref('')
 const sending = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
+const showGroupModal = ref(false)
+const newGroupName = ref('')
+const selectedGroupOffices = ref<string[]>([])
+const creatingGroup = ref(false)
+
+const handleCreateGroup = async () => {
+  if (!newGroupName.value || selectedGroupOffices.value.length === 0) return
+  creatingGroup.value = true
+  try {
+    await chat.createGroup(newGroupName.value, [], selectedGroupOffices.value)
+    showGroupModal.value = false
+    newGroupName.value = ''
+    selectedGroupOffices.value = []
+  } catch (err) {
+    console.error(err)
+  } finally {
+    creatingGroup.value = false
+  }
+}
+
 // Computed
 const mergedList = computed(() => {
   // Combine offices and existing conversations.
@@ -234,7 +308,11 @@ const mergedList = computed(() => {
       isExisting: true,
       targetOfficeId: null, // it's already an existing convo
       title: c.title,
-      latest_message: c.latest_message
+      is_group: c.is_group,
+      latest_message: c.latest_message,
+      created_at: c.created_at,
+      unread_count: c.unread_count,
+      has_unread: c.has_unread
     })
   }
 
@@ -246,7 +324,8 @@ const mergedList = computed(() => {
         isExisting: false,
         targetOfficeId: String(o.id),
         title: o.name,
-        latest_message: null
+        latest_message: null,
+        created_at: null
       })
     }
   }
@@ -313,8 +392,7 @@ const selectConversation = async (item: any) => {
   console.log("Clicked sidebar item:", item)
   if (item.isExisting) {
     localDraftTarget.value = null
-    chat.activeConversationId = item.id
-    await chat.fetchHistory(item.id)
+    chat.setActiveConversation(item.id)
     console.log("Active Conversation ID:", currentActiveId.value, "Fetched Messages Array:", chat.messages)
     await scrollToBottom()
   } else {
@@ -373,10 +451,12 @@ const scrollToBottom = async () => {
 // Formatting
 const formatTimeRelative = (dateString: string | undefined | null) => {
   if (!dateString) return ''
-  const date = new Date(dateString)
+  const date = parseUtcDate(dateString)
+  if (!date) return ''
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
   
+  if (diffInSeconds < 0) return 'Just now'
   if (diffInSeconds < 60) return 'Just now'
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
@@ -385,7 +465,9 @@ const formatTimeRelative = (dateString: string | undefined | null) => {
 }
 
 const formatTimeOnly = (dateString: string) => {
-  return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const date = parseUtcDate(dateString)
+  if (!date) return ''
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 </script>
 

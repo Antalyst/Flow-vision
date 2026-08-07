@@ -109,13 +109,7 @@
             <NuxtLink to="/login" class="px-4 py-2 text-md font-medium hover:text-candy-orange transition">Sign in</NuxtLink>
             <NuxtLink to="/register" class="px-5 py-2 text-md font-medium bg-white text-onyx-black rounded-full hover:bg-candy-orange hover:text-white transition shadow-sm">
               Get started
-<<<<<<< HEAD
-            </button>
-
-=======
             </NuxtLink>
-     
->>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
         </div>
       </div>
 
@@ -166,165 +160,6 @@
             </NuxtLink>
           </nav>
 
-<<<<<<< HEAD
-              <div class="w-full max-w-md mx-auto">
-                  <div class="mb-6 text-center lg:text-left">
-                      <h1 class="text-3xl font-bold text-gray-900 mb-1">Create Account</h1>
-                      <p class="text-gray-500 text-sm">Select your account type to get started.</p>
-                  </div>
-
-                  <div class="flex bg-gray-100 p-1 rounded-md w-full mb-6">
-                      <button 
-                        v-for="accType in accTypeData" 
-                        :key="accType.accType_id" 
-                        @click="selectType(accType)"
-                        type="button"
-                        :class="[
-                          'flex-1 py-2 rounded-md text-sm font-bold transition-all capitalize',
-                        
-                          selectedType === accType.acctype_id
-                          ? 'bg-white text-[#F77934] shadow-sm' 
-                          : 'text-gray-500 hover:text-gray-700'
-                        ]"
-                      >
-                        {{ accType.name }}
-                      </button>
-                  </div>
-
-                  <form @submit.prevent="handleRegister" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Full name</label>
-                          <input v-model="form.full_name" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="text" required placeholder="Juan D. Dela Cruz">
-                      </div>
-
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Email</label>
-                          <input v-model="form.email" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="email" required placeholder="example@gmail.com">
-                      </div>
-
-                      <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1 md:col-span-2">
-                        <label class="text-xs font-bold text-[#F77934] uppercase">Organization Code</label>
-                        <input 
-                          v-model="form.org_code" 
-                          class="w-full px-4 py-2 rounded-md border border-[#F77934] outline-none bg-orange-50/30" 
-                          type="text" 
-                          required 
-                          placeholder="Enter provided code"
-                        >
-                      </div>
-
-                      <div class="flex flex-col gap-1 md:col-span-2">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Birth Date</label>
-                          <input v-model="form.birth_date" type="date" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors text-gray-700">
-                      </div>
-
-                      <div class="flex flex-col gap-1">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Password</label>
-                          <input v-model="form.password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="password" required>
-                      </div>
-
-                      <div class="flex flex-col gap-1">
-                          <label class="text-xs font-bold text-gray-700 uppercase">Confirm</label>
-                          <input v-model="form.confirm_password" class="w-full px-4 py-2 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors" type="password" required>
-                      </div>
-
-                      <button type="submit" class="md:col-span-2 w-full bg-[#F77934] hover:bg-[#e06b2a] text-white py-3 rounded-md font-bold mt-2 transition-colors">
-                          Create Account
-                      </button>
-                  </form>
-
-                  <p class="mt-6 text-center text-sm text-gray-500">
-                      Already have an account? 
-                      <button @click="registerModal = false; loginModal = true" class="font-bold text-[#F77934] hover:underline ml-1">Sign in</button>
-                  </p>
-              </div>
-          </div>
-      </div>
-    </div>
-
-    <div v-if="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div class="relative bg-white w-full max-w-5xl min-h-[600px] rounded-md shadow-2xl overflow-hidden flex">
-            
-            <div class="hidden lg:flex flex-1 relative bg-[url('/bg/bg.png')] bg-cover bg-center items-center justify-center p-12">
-                <div class="absolute inset-0 bg-black/20"></div>
-                <div class="relative z-10 text-center">
-                    <img src="/logo/Logos.png" class="w-20 mx-auto mb-4 brightness-0 invert" alt="FlowVision">
-                    <h1 class="text-4xl font-bold text-white tracking-tight">FlowVision</h1>
-                </div>
-            </div>
-
-            <div class="flex-1 bg-white p-8 md:p-16 flex flex-col justify-center relative">
-              <button @click="loginModal = false" class="absolute top-6 right-8 text-3xl text-gray-400 hover:text-gray-800 transition">
-                  &times;
-              </button>
-
-              <div class="w-full max-w-sm mx-auto">
-                  <div class="mb-8">
-                      <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-                      <p class="text-gray-500 text-sm">Please enter your details to sign in.</p>
-                  </div>
-
-                  <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
-                      <div class="flex flex-col gap-1.5">
-                          <label class="text-sm font-semibold text-gray-700">Email Address</label>
-                          <input 
-                              v-model="login.email" 
-                              type="email" 
-                              required 
-                              placeholder="name@company.com"
-                              class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors"
-                          >
-                      </div>
-
-                      <div class="flex flex-col gap-1.5">
-                          <label class="text-sm font-semibold text-gray-700">Password</label>
-                          <div class="relative w-full">
-                              <input 
-                                  v-model="login.password" 
-                                  :type="showPassword ? 'text' : 'password'" 
-                                  required 
-                                  placeholder="••••••••"
-                                  class="w-full px-4 py-2.5 rounded-md border border-gray-300 outline-none focus:border-[#F77934] transition-colors pr-12"
-                              >
-                              <button 
-                                  type="button"
-                                  @click="showPassword = !showPassword"
-                                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#F77934]"
-                              >
-                                  <span class="text-xs font-bold uppercase">{{ showPassword ? 'Hide' : 'Show' }}</span>
-                              </button>
-                          </div>
-                      </div>
-
-                      <div class="flex items-center justify-between mt-1">
-                          <label class="flex items-center gap-2 cursor-pointer">
-                              <input 
-                                  v-model="login.rememberMe"
-                                  type="checkbox" 
-                                  class="w-4 h-4 rounded-md accent-[#F77934]"
-                              >
-                              <span class="text-sm text-gray-600">Remember me</span>
-                          </label>
-                          <button type="button" class="text-sm font-medium text-[#F77934] hover:underline">
-                              Forgot password?
-                          </button>
-                      </div>
-
-                      <button 
-                          type="submit" 
-                          class="w-full bg-[#F77934] hover:bg-[#e06b2a] text-white py-2.5 rounded-md font-bold mt-4 transition-colors"
-                      >
-                          Sign in
-                      </button>
-                  </form>
-
-                  <p class="mt-8 text-center text-sm text-gray-500">
-                      Don't have an account? 
-                      <button @click="loginModal = false; registerModal = true" class="font-bold text-[#F77934] hover:underline ml-1">Create account</button>
-                  </p>
-              </div>
-            </div>
-=======
           <div class="grid gap-3 pb-3">
             <NuxtLink
               to="/login"
@@ -342,7 +177,6 @@
               Get started
             </NuxtLink>
           </div>
->>>>>>> 8573f678e67d6a3347dba549b6b3e298ed81c1d3
         </div>
       </div>
     </Transition>

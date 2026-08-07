@@ -32,9 +32,6 @@
           primary: ['Afacad', 'sans-serif'],
           dashboard: ['Inter', 'system-ui', 'sans-serif'],
         },
-      fontSize: {
-          'heading': ['1.5rem', {
-            fontWeight: '500',}],
         fontSize: {
           heading: ['1.5rem', {
             fontWeight: '500',
@@ -86,4 +83,3 @@
       },
     },
   }
-}

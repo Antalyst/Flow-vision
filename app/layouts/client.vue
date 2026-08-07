@@ -24,10 +24,11 @@
             <button @click="auth.logout()" class="px-4 py-2 text-sm text-red-500 font-medium transition">Logout</button>
           </template>
         </div>
+      </div>
+    </nav>
 
-  <div class="w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
-  <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
-    :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
+    <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
+      :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 
     <!-- Mobile Top Bar -->
     <div
@@ -154,6 +155,7 @@
 
     <!-- Contextual AI Assistant Overlay -->
     <AiOverlay />
+    </div>
   </div>
 </template>
 
