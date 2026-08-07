@@ -137,6 +137,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       id: c.id,
+      title: title,
       is_group: isGroup,
       group_name: c.group_name,
       avatar_url: c.avatar_url,

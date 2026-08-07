@@ -9,12 +9,6 @@ export interface ConversationParticipant {
 export interface Conversation {
   id: string
   title: string
-  is_group?: boolean
-  group_name?: string
-  avatar_url?: string
-  created_at?: string
-  unread_count?: number
-  has_unread?: boolean
   participants: ConversationParticipant[]
   latest_message?: {
     text: string
@@ -33,15 +27,6 @@ export interface DirectMessage {
   read_by: any
 }
 
-export const parseUtcDate = (dateString: string | undefined | null) => {
-  if (!dateString) return null
-  let formatted = dateString.trim()
-  if (!formatted.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(formatted)) {
-    formatted = formatted.replace(' ', 'T') + 'Z'
-  }
-  return new Date(formatted)
-}
-
 export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: [] as Conversation[],
@@ -53,11 +38,6 @@ export const useChatStore = defineStore('chat', {
     loadingContacts: false,
     subscription: null as any,
   }),
-  getters: {
-    totalUnreadCount: (state) => {
-      return state.conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
-    }
-  },
   actions: {
     async fetchConversations() {
       this.loadingConversations = true
@@ -105,28 +85,10 @@ export const useChatStore = defineStore('chat', {
         })
 
         if (res.success) {
-          const msg = res.data
-          // 1. Push to local active messages if matched
-          if (this.activeConversationId === msg.conversation_id) {
-            const exists = this.messages.find(m => m.id === msg.id)
-            if (!exists) {
-              this.messages.push(msg)
-            }
-          }
-
-          // 2. Update conversation preview instantly and sort
-          const convo = this.conversations.find(c => c.id === msg.conversation_id)
-          if (convo) {
-            convo.latest_message = {
-              text: msg.message_text,
-              created_at: msg.created_at,
-              sender_id: msg.sender_user_id || msg.sender_office_id || ''
-            }
-            this.sortConversations()
-          } else {
-            // New conversation draft just got sent successfully, refresh to load it
+          this.messages.push(res.data)
+          if (!this.activeConversationId) {
             this.activeConversationId = res.conversationId
-            await this.fetchConversations()
+            await this.fetchConversations() // refresh sidebar
           }
         }
         return res
@@ -135,7 +97,6 @@ export const useChatStore = defineStore('chat', {
         throw err
       }
     },
-<<<<<<< HEAD
     async fetchContacts() {
       this.loadingContacts = true
       try {
@@ -158,17 +119,6 @@ export const useChatStore = defineStore('chat', {
         if (res.success) {
           await this.fetchConversations()
           this.activeConversationId = res.conversationId
-=======
-    async createGroup(groupName: string, participantUserIds: string[], participantOfficeIds: string[] = []) {
-      try {
-        const res: any = await $fetch('/api/messages/group/create', {
-          method: 'POST',
-          body: { groupName, participantUserIds, participantOfficeIds }
-        })
-        if (res.success) {
-          await this.fetchConversations()
-          this.setActiveConversation(res.conversationId)
->>>>>>> 65d2c978041c23c92a9c8fd98434330f862d5bef
         }
         return res
       } catch (err) {
@@ -176,7 +126,6 @@ export const useChatStore = defineStore('chat', {
         throw err
       }
     },
-<<<<<<< HEAD
     async updateGroupTitle(conversationId: string, title: string) {
       try {
         const res: any = await $fetch('/api/messages/updateGroup', {
@@ -190,7 +139,8 @@ export const useChatStore = defineStore('chat', {
       } catch (err) {
         console.error('Failed to update group title', err)
         throw err
-=======
+      }
+    },
     async markConversationAsRead(conversationId: string) {
       try {
         const res: any = await $fetch('/api/messages/read', {
@@ -206,14 +156,18 @@ export const useChatStore = defineStore('chat', {
         }
       } catch (err) {
         console.error('Failed to mark conversation as read', err)
->>>>>>> 65d2c978041c23c92a9c8fd98434330f862d5bef
       }
     },
     setActiveConversation(id: string | null) {
       this.activeConversationId = id
       if (id) {
-        this.fetchHistory(id)
         this.markConversationAsRead(id)
+        const convo = this.conversations.find((c: any) => c.id === id)
+        if (convo) {
+          convo.has_unread = false
+          convo.unread_count = 0
+        }
+        this.fetchHistory(id)
       } else {
         this.messages = []
       }
@@ -258,27 +212,16 @@ export const useChatStore = defineStore('chat', {
         sender_id: message.sender_user_id || message.sender_office_id || '',
         read_by: message.read_by || []
       }
-
-      // Update unread status
-      if (this.activeConversationId === message.conversation_id) {
-        this.markConversationAsRead(message.conversation_id)
-      } else {
-        convo.unread_count = (convo.unread_count || 0) + 1
-        convo.has_unread = true
-      }
       
       // 4. Sort conversations
       this.sortConversations()
     },
     sortConversations() {
-      const sorted = [...this.conversations].sort((a, b) => {
-        const dateA = a.latest_message ? parseUtcDate(a.latest_message.created_at) : (a.created_at ? parseUtcDate(a.created_at) : null)
-        const dateB = b.latest_message ? parseUtcDate(b.latest_message.created_at) : (b.created_at ? parseUtcDate(b.created_at) : null)
-        const timeA = dateA ? dateA.getTime() : 0
-        const timeB = dateB ? dateB.getTime() : 0
+      this.conversations.sort((a, b) => {
+        const timeA = a.latest_message ? new Date(a.latest_message.created_at).getTime() : 0
+        const timeB = b.latest_message ? new Date(b.latest_message.created_at).getTime() : 0
         return timeB - timeA
       })
-      this.conversations = sorted
     }
   }
 })
