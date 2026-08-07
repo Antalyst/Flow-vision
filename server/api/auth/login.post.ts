@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const { email, password } = body
 
   const client = createClient(
-    config.public.supabaseUrl, 
+    config.public.supabaseUrl,
     config.supabaseServiceKey
   )
 
@@ -27,6 +27,56 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const db = event.context.db;
+
+  try {
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+    const [rows]: any = await db.query(
+      'SELECT * FROM users WHERE email = ? LIMIT 1',
+      [email]
+    )
+    const user = rows[0]
+    if (!user) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Invalid credentials.',
+      })
+    }
+    const isPasswordValid = await compare(password, user.password)
+
+    if (!isPasswordValid) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Invalid credentials.',
+      })
+    }
+
+    const { password: _, ...safeUser } = user
+    const token = 'generated-session-token'
+
+    setCookie(event, 'auth_user', JSON.stringify(safeUser), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'BoyLupotJv',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    })
+
+    setCookie(event, 'auth_token', token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'BoyLupotJv',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    })
+
+    return {
+      message: 'Login successful',
+      user: safeUser,
+      token: token
+    }
+
+  } catch (error: any) {
   console.log("User found, verifying password...");
   // 2. Verify hashed password
   const isPasswordCorrect = await compare(password, user.password)
@@ -58,6 +108,7 @@ export default defineEventHandler(async (event) => {
     success: true,
     message: 'Login successful',
     user: userWithoutPassword,
-    token: 'session_token_placeholder' 
+    token: 'session_token_placeholder'
   }
+}
 })

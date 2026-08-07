@@ -7,6 +7,7 @@ const generateOfficeCode = (): string =>
   'OFF-' + randomBytes(3).toString('hex').toUpperCase()
 
 export default defineEventHandler(async (event) => {
+
   try {
     const client = await serverSupabaseClient(event)
     const body = await readBody(event)
@@ -18,6 +19,15 @@ export default defineEventHandler(async (event) => {
         message: `Missing required fields: ${!name ? 'name ' : ''}${!org_id ? 'org_id ' : ''}${!user_id ? 'user_id' : ''}`,
       }
     }
+    //   const { data: rows, error } = await (client as any).from('offices').insert({
+    //     name,
+    //     assigned_user: user_id,
+    //     org_id,
+    // }).select('*').single();
+
+    // const [rows] = await db.query(`
+    //         insert into offices (name, assigned_user, org_id, created_at) values (?, ?, ?, ?)
+    //     `, [name, user_id, org_id, created_at]);
 
     const officeCode = (code ?? '').trim() || generateOfficeCode()
 
@@ -30,8 +40,8 @@ export default defineEventHandler(async (event) => {
         name,
         assigned_user: user_id,
         org_id,
-        stage_id:   stage_id ?? null,
-        code:       officeCode,
+        stage_id: stage_id ?? null,
+        code: officeCode,
         created_by: createdBy,
       })
       .select('*')

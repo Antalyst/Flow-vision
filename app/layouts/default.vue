@@ -96,7 +96,7 @@
       <div class="hidden md:block">
         <ul class="flex md:pl-52 gap-8 justify-center">
           <li class="cursor-pointer transition"><nuxt-link to="/">Home</nuxt-link></li>
-          <li class="cursor-pointer transition"><nuxt-link to="/tracking">Tracking</nuxt-link></li>
+          <li class="cursor-pointer transition"><nuxt-link to="/documents">Tracking</nuxt-link></li>
           <li class="cursor-pointer transition"><nuxt-link to="/about">About</nuxt-link></li>
           <li class="cursor-pointer transition"><button @click="openDocForm">Contact</button></li>
         </ul>
@@ -110,7 +110,6 @@
             <NuxtLink to="/register" class="px-5 py-2 text-md font-medium bg-white text-onyx-black rounded-full hover:bg-candy-orange hover:text-white transition shadow-sm">
               Get started
             </NuxtLink>
-     
         </div>
       </div>
 

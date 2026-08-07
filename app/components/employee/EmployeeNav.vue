@@ -19,7 +19,14 @@
           >
             {{ badgeCount > 9 ? '9+' : badgeCount }}
           </span>
+          <span
+            v-if="!minimized && item.to === '/employee/messages' && chatUnreadCount > 0"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-red-500 px-1.5 text-[10px] font-bold text-white"
+          >
+            {{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}
+          </span>
           <div v-if="minimized && item.to === '/employee/notifications' && badgeCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-none"></div>
+          <div v-if="minimized && item.to === '/employee/messages' && chatUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
         </NuxtLink>
       </div>
     </div>
@@ -44,6 +51,8 @@
 </template>
 
 <script setup>
+import { useChatStore } from '~/stores/chat'
+
 const props = defineProps({
   minimized: { type: Boolean, default: false }
 })
@@ -51,6 +60,9 @@ const props = defineProps({
 const { isDark } = useTheme()
 const route = useRoute()
 const { count: badgeCount, refresh: refreshBadge } = useEmployeeNotificationBadge()
+
+const chat = useChatStore()
+const chatUnreadCount = computed(() => chat.totalUnreadCount)
 
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
@@ -77,6 +89,8 @@ const accountItems = [
 
 onMounted(() => {
   refreshBadge()
+  chat.fetchConversations()
+  chat.subscribeToMessages()
 })
 
 watch(() => route.path, () => {
