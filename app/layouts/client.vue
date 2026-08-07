@@ -1,6 +1,18 @@
 <template>
   <div class="flex flex-col h-screen w-full font-primary overflow-hidden">
 
+<<<<<<< HEAD
+=======
+        <div class="flex gap-2">
+          <template v-if="auth.isLoggedIn">
+            <span class="text-sm font-medium self-center">Hi, {{ auth.user?.full_name }}</span>
+            <button @click="auth.logout()" class="px-4 py-2 text-sm text-red-500 font-medium transition">Logout</button>
+          </template>
+        </div>
+      </div>
+    </nav>
+
+>>>>>>> 65d2c978041c23c92a9c8fd98434330f862d5bef
     <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
       :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 

@@ -8,20 +8,30 @@
       
       <div class="space-y-0">
         <NuxtLink v-for="item in mainNavItems" :key="item.to" :to="item.to"
-          class="nav-item w-full"
+          class="nav-item w-full relative"
           :class="[isActive(item.to) ? 'nav-item-active' : '', minimized ? 'justify-center px-0' : '']"
           :title="minimized ? item.label : undefined">
           <Icon :name="item.icon" class="w-5 h-5 flex-none" />
           <span v-if="!minimized" class="truncate">{{ item.label }}</span>
+          
           <span
             v-if="!minimized && item.to === '/client/notifications' && unreadCount > 0"
             class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-candy-orange px-1.5 text-[10px] font-bold text-white"
           >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
           </span>
+
+          <span
+            v-if="!minimized && item.to === '/client/messages' && chatUnreadCount > 0"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-red-500 px-1.5 text-[10px] font-bold text-white"
+          >
+            {{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}
+          </span>
+
           <Icon v-else-if="!minimized && item.badge" name="ph:caret-down" class="w-3 h-3 ml-auto text-gray-400" />
           
           <div v-if="minimized && item.to === '/client/notifications' && unreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-none"></div>
+          <div v-if="minimized && item.to === '/client/messages' && chatUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
         </NuxtLink>
       </div>
     </div>
@@ -75,10 +85,15 @@ const props = defineProps({
   minimized: { type: Boolean, default: false }
 })
 
+import { useChatStore } from '~/stores/chat'
+
 const { isDark } = useTheme()
 const route = useRoute()
 const { count: unreadCount, refresh: refreshUnreadCount } = useClientNotificationBadge()
 const { count: reportUnreadCount, refresh: refreshReportBadge } = useClientReportBadge()
+
+const chat = useChatStore()
+const chatUnreadCount = computed(() => chat.totalUnreadCount)
 
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
@@ -112,6 +127,8 @@ const supportNavItems = [
 onMounted(() => {
   refreshUnreadCount()
   refreshReportBadge()
+  chat.fetchConversations()
+  chat.subscribeToMessages()
 })
 
 watch(() => route.path, () => {

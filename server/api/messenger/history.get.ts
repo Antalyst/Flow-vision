@@ -9,6 +9,7 @@ import { serverSupabaseClient } from '#supabase/server'
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const actorId = getCookie(event, 'user_session')
+  
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })

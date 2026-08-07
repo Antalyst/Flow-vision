@@ -201,7 +201,6 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
   if (officeId) {
     docBaseQuery.eq('current_office_id', officeId)
     docQuery.eq('current_office_id', officeId)
-    eventsQuery.eq('office_id', officeId)
     logsQuery.eq('office_id', officeId)
   }
 
@@ -232,7 +231,11 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
   if (stagesErr) throw createError({ statusCode: 500, message: stagesErr.message })
 
   const docRows = documents ?? []
-  const eventRows = trackingEvents ?? []
+  // Filter events in-memory to prevent UUID/Integer type coercion crashes in PostgreSQL
+  const docIdsAtOffice = new Set(docRows.map(d => String(d.id)))
+  const eventRows = officeId 
+    ? (trackingEvents ?? []).filter(evt => docIdsAtOffice.has(String(evt.document_id)))
+    : (trackingEvents ?? [])
   const officeRows = offices ?? []
   const stepRows = stageSteps ?? []
   const stageRows = stages ?? []

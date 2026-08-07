@@ -13,13 +13,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1. Verify access
-  const participantIds = actor.userRole === 'client' ? [actor.userId] : (actor.officeIds.length > 0 ? actor.officeIds : [actor.userId])
+  const orCondition = `user_id.eq.${actor.userId}${actor.officeIds && actor.officeIds.length > 0 ? `,office_id.in.(${actor.officeIds.join(',')})` : ''}`
   
   const { data: participations, error: partErr } = await client
     .from('conversation_participants')
     .select('id')
     .eq('conversation_id', conversationId)
-    .or(`user_id.in.(${participantIds.join(',')}),office_id.in.(${participantIds.join(',')})`)
+    .or(orCondition)
     
   if (partErr || !participations || participations.length === 0) {
     throw createError({ statusCode: 403, message: 'Forbidden' })

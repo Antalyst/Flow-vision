@@ -5,36 +5,21 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const actor = await resolveActorContextWithOffices(event, client)
 
-  // Determine the IDs we should query for
-  // If employee, they act on behalf of their officeIds.
-  // If client, they act on behalf of their user_id.
-  const participantTypes = []
-  const participantIds = []
+  // Fetch conversations the actor is part of (personal user ID or assigned office IDs)
+  const orCondition = `user_id.eq.${actor.userId}${actor.officeIds && actor.officeIds.length > 0 ? `,office_id.in.(${actor.officeIds.join(',')})` : ''}`
 
-  if (actor.userRole === 'client') {
-    participantTypes.push('user')
-    participantIds.push(actor.userId)
-  } else if (actor.officeIds.length > 0) {
-    participantTypes.push('office')
-    participantIds.push(...actor.officeIds)
-  } else {
-    // Fallback if they are employee without office
-    participantTypes.push('user')
-    participantIds.push(actor.userId)
-  }
-
-  // Fetch conversations the actor is part of
   const { data: participations, error: partErr } = await client
     .from('conversation_participants')
     .select('conversation_id')
-    .in('participant_type', participantTypes)
-    .or(`user_id.in.(${participantIds.join(',')}),office_id.in.(${participantIds.join(',')})`)
+    .or(orCondition)
 
   if (partErr) {
     throw createError({ statusCode: 500, message: partErr.message })
   }
 
-  const conversationIds = (participations || []).map(p => p.conversation_id)
+  const conversationIds = Array.from(
+    new Set((participations || []).map((p) => p.conversation_id))
+  )
 
   if (conversationIds.length === 0) {
     return { success: true, data: [] }
@@ -48,6 +33,9 @@ export default defineEventHandler(async (event) => {
       org_id,
       title,
       created_at,
+      is_group,
+      group_name,
+      avatar_url:group_avatar_url,
       conversation_participants (
         participant_type,
         user_id,
@@ -92,14 +80,48 @@ export default defineEventHandler(async (event) => {
     for (const u of (users || [])) nameMap[u.user_id] = u.full_name || 'User'
   }
 
+  // Define our actor's IDs to filter ourselves out from the conversation participant listings
+  const myIds = new Set<string>()
+  myIds.add(actor.userId)
+  if (actor.officeIds) {
+    for (const id of actor.officeIds) {
+      myIds.add(id)
+    }
+  }
+
   const inbox = (convs || []).map(c => {
-    // Find the "other" participants
-    const others = c.conversation_participants.filter((p: any) => !participantIds.includes(p.user_id) && !participantIds.includes(p.office_id))
-    
+    // Find the "other" participants by excluding our own actor IDs
+    const others = c.conversation_participants.filter((p: any) => {
+      const id = p.office_id || p.user_id
+      return !myIds.has(id)
+    })
+
     // Sort messages to get the latest
     const msgs = c.direct_messages || []
     msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     const latestMessage = msgs.length > 0 ? msgs[0] : null
+
+    // Calculate unread count
+    const unreadMessages = msgs.filter((m: any) => {
+      const senderId = m.sender_office_id || m.sender_user_id
+      if (myIds.has(senderId)) return false // ignore messages sent by ourselves
+
+      let readByArray: string[] = []
+      if (Array.isArray(m.read_by)) {
+        readByArray = m.read_by
+      } else if (typeof m.read_by === 'string') {
+        try {
+          readByArray = JSON.parse(m.read_by)
+        } catch {
+          readByArray = []
+        }
+      }
+
+      // Check if any of our IDs (user ID or assigned office IDs) are in read_by
+      const isRead = readByArray.some((id: string) => myIds.has(id))
+      return !isRead
+    })
+    const unreadCount = unreadMessages.length
 
     const participantsInfo = others.map((p: any) => {
       const id = p.office_id || p.user_id
@@ -110,8 +132,14 @@ export default defineEventHandler(async (event) => {
       }
     })
 
+    const isGroup = c.is_group || false
+    const title = isGroup ? (c.group_name || 'Unnamed Group') : (participantsInfo.map((p: any) => p.name).join(', ') || 'Empty Chat')
+
     return {
       id: c.id,
+      is_group: isGroup,
+      group_name: c.group_name,
+      avatar_url: c.avatar_url,
       participants: participantsInfo,
       latest_message: latestMessage ? {
         text: latestMessage.message_text,
@@ -119,14 +147,13 @@ export default defineEventHandler(async (event) => {
         sender_id: latestMessage.sender_office_id || latestMessage.sender_user_id,
         read_by: latestMessage.read_by || []
       } : null,
-      title: c.title || participantsInfo.map((p: any) => p.name).join(', ') || 'Empty Chat'
     }
   })
 
-  // Sort by latest message
+  // Sort by latest message or creation date if no messages
   inbox.sort((a, b) => {
-    const timeA = a.latest_message ? new Date(a.latest_message.created_at).getTime() : 0
-    const timeB = b.latest_message ? new Date(b.latest_message.created_at).getTime() : 0
+    const timeA = a.latest_message ? new Date(a.latest_message.created_at).getTime() : new Date(a.created_at).getTime()
+    const timeB = b.latest_message ? new Date(b.latest_message.created_at).getTime() : new Date(b.created_at).getTime()
     return timeB - timeA
   })
 
