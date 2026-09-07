@@ -4,15 +4,13 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event);
   const { name, user_id } = body;
-<<<<<<< HEAD
 
   const client = createClient(
     config.public.supabaseUrl,
     config.supabaseServiceKey
   )
-=======
   const db = event.context.db;
->>>>>>> 8d6bf70 (partial changes)
+
 
   if (!name || !user_id) {
     throw createError({

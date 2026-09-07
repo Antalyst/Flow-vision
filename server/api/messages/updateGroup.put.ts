@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
   const { data: participations, error: partErr } = await client
     .from('conversation_participants')
     .select('id')
-    .eq('conversation_id', conversationId)
     .or(`user_id.eq.${actor.userId}${actor.officeIds.length > 0 ? `,office_id.in.(${actor.officeIds.join(',')})` : ''}`)
     .limit(1)
 
