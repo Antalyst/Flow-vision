@@ -75,18 +75,36 @@ export default defineEventHandler(async (event) => {
       `assigned_messenger_id.eq.${actor.userId},` +
       `and(tracking_status.eq.CREATED,assigned_messenger_id.is.null)`
     )
-  } else {
-    // ── Employee / Client / Default — Restricted to their offices ──────────────────────────────
-    // Only documents that originate from or are currently resting in one of
-    // this employee's assigned mini-office branches.
+  } else if (scope === 'INCOMING') {
+    // ── INCOMING: Documents in transit heading to this employee's assigned offices ─
     if (actor.officeIds.length === 0) {
-      // No assigned offices: show only their own uploads in the queue
+      dbQuery = dbQuery.eq('user_id', actor.userId).in('tracking_status', ['IN_TRANSIT', 'PICKED_UP'])
+    } else {
+      const { data: targetSteps } = await client
+        .from('stage_steps')
+        .select('stage_id, step_number, office_id')
+        .in('office_id', actor.officeIds)
+
+      const orConditions: string[] = []
+      const officeList = actor.officeIds.join(',')
+      orConditions.push(`office_id.in.(${officeList})`)
+
+      if (targetSteps && targetSteps.length > 0) {
+        for (const step of targetSteps) {
+          orConditions.push(`and(stage_id.eq.${step.stage_id},current_step.eq.${step.step_number})`)
+        }
+      }
+
+      dbQuery = dbQuery
+        .in('tracking_status', statusFilter.length > 0 ? statusFilter : ['IN_TRANSIT', 'PICKED_UP'])
+        .or(orConditions.join(','))
+    }
+  } else if (scope === 'LOCAL') {
+    // ── LOCAL: Documents at or originating from employee's assigned offices ────────
+    if (actor.officeIds.length === 0) {
       dbQuery = dbQuery.eq('user_id', actor.userId)
     } else {
       const officeList = actor.officeIds.join(',')
-      // Filter on current_office_id first (where the doc physically is now),
-      // then fall back to origin_office_id (where it started) and office_id,
-      // and include their own uploads regardless.
       dbQuery = dbQuery.or(
         `user_id.eq.${actor.userId},` +
         `current_office_id.in.(${officeList}),` +
@@ -95,6 +113,7 @@ export default defineEventHandler(async (event) => {
       )
     }
   }
+  // GLOBAL: No extra office filter, fetches all org docs
 
   const { data: docs, error } = await dbQuery
 
@@ -103,29 +122,38 @@ export default defineEventHandler(async (event) => {
     return { success: false, error: error.message, data: [], summary: {} }
   }
 
-  console.log(`[queue.get.ts] Fetched ${docs?.length || 0} docs for userRole=${actor.userRole}, officeIds=${actor.officeIds.length}`)
+  console.log(`[queue.get.ts] Fetched ${docs?.length || 0} docs for userRole=${actor.userRole}, scope=${scope}, officeIds=${actor.officeIds.length}`)
 
   const rows = docs ?? []
 
   // ── Bulk-resolve stage metadata ───────────────────────────────────────────
   const stageIds = [...new Set(rows.map((d: any) => d.stage_id).filter(Boolean))]
-  let stageById: Record<string, { name: string; total_steps: number }> = {}
+  let stageById: Record<string, { name: string; total_steps: number; stepsByNumber: Record<number, { office_id: string | null }> }> = {}
 
   if (stageIds.length) {
-    const [{ data: stageRows }, { data: stepCounts }] = await Promise.all([
+    const [{ data: stageRows }, { data: stepRows }] = await Promise.all([
       client.from('stages').select('stage_id, name').in('stage_id', stageIds),
-      client.from('stage_steps').select('stage_id').in('stage_id', stageIds),
+      client.from('stage_steps').select('stage_id, step_number, office_id').in('stage_id', stageIds),
     ])
 
-    const countByStage: Record<string, number> = {}
-    for (const s of stepCounts ?? []) {
-      countByStage[String(s.stage_id)] = (countByStage[String(s.stage_id)] ?? 0) + 1
+    const stepsMap: Record<string, { total_steps: number; stepsByNumber: Record<number, { office_id: string | null }> }> = {}
+    for (const s of stepRows ?? []) {
+      const sId = String(s.stage_id)
+      if (!stepsMap[sId]) {
+        stepsMap[sId] = { total_steps: 0, stepsByNumber: {} }
+      }
+      stepsMap[sId].total_steps++
+      if (s.step_number != null) {
+        stepsMap[sId].stepsByNumber[Number(s.step_number)] = { office_id: s.office_id ? String(s.office_id) : null }
+      }
     }
 
     stageById = (stageRows ?? []).reduce((acc: any, s: any) => {
-      acc[String(s.stage_id)] = {
-        name:        s.name,
-        total_steps: countByStage[String(s.stage_id)] ?? 0,
+      const sId = String(s.stage_id)
+      acc[sId] = {
+        name:            s.name,
+        total_steps:     stepsMap[sId]?.total_steps ?? 0,
+        stepsByNumber:   stepsMap[sId]?.stepsByNumber ?? {},
       }
       return acc
     }, {})
@@ -148,9 +176,20 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Bulk-resolve office labels ────────────────────────────────────────────
-  const allOfficeIds = [...new Set(
-    rows.flatMap((d: any) => [d.office_id, d.origin_office_id, d.current_office_id]).filter(Boolean),
-  )]
+  // Collect all direct office IDs and step destination office IDs
+  const targetStepOfficeIds: string[] = []
+  for (const doc of rows) {
+    if (doc.stage_id && doc.current_step != null) {
+      const stageMeta = stageById[String(doc.stage_id)]
+      const stepOffice = stageMeta?.stepsByNumber?.[Number(doc.current_step)]?.office_id
+      if (stepOffice) targetStepOfficeIds.push(stepOffice)
+    }
+  }
+
+  const allOfficeIds = [...new Set([
+    ...rows.flatMap((d: any) => [d.office_id, d.origin_office_id, d.current_office_id]).filter(Boolean),
+    ...targetStepOfficeIds,
+  ])]
   let officeLabelById: Record<string, string> = {}
 
   if (allOfficeIds.length) {
@@ -168,20 +207,26 @@ export default defineEventHandler(async (event) => {
   // ── Enrich rows ───────────────────────────────────────────────────────────
   const enriched = rows.map((doc: any) => {
     const stage = doc.stage_id ? stageById[String(doc.stage_id)] : null
+    const destOfficeId = doc.stage_id && doc.current_step != null
+      ? (stage?.stepsByNumber?.[Number(doc.current_step)]?.office_id ?? doc.office_id ?? null)
+      : (doc.office_id ?? null)
+
     return {
       ...doc,
-      stage_name:      stage?.name ?? null,
-      total_steps:     stage?.total_steps ?? 0,
-      progress_pct:    stage?.total_steps
+      stage_name:              stage?.name ?? null,
+      total_steps:             stage?.total_steps ?? 0,
+      progress_pct:            stage?.total_steps
         ? Math.round((doc.current_step / stage.total_steps) * 100)
         : 0,
-      messenger_name:  doc.assigned_messenger_id
+      messenger_name:          doc.assigned_messenger_id
         ? (messengerNameById[String(doc.assigned_messenger_id)] ?? 'Unknown')
         : null,
-      office_label:    doc.office_id         ? (officeLabelById[String(doc.office_id)]         ?? null) : null,
-      origin_label:    doc.origin_office_id  ? (officeLabelById[String(doc.origin_office_id)]  ?? null) : null,
-      current_label:   doc.current_office_id ? (officeLabelById[String(doc.current_office_id)] ?? null) : null,
-      is_own_upload:   String(doc.user_id) === String(actor.userId),
+      office_label:            doc.office_id         ? (officeLabelById[String(doc.office_id)]         ?? null) : null,
+      origin_label:            doc.origin_office_id  ? (officeLabelById[String(doc.origin_office_id)]  ?? null) : null,
+      current_label:           doc.current_office_id ? (officeLabelById[String(doc.current_office_id)] ?? null) : null,
+      destination_office_id:   destOfficeId,
+      destination_office_name: destOfficeId ? (officeLabelById[String(destOfficeId)] ?? null) : null,
+      is_own_upload:           String(doc.user_id) === String(actor.userId),
     }
   })
 

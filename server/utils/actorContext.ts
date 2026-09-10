@@ -18,7 +18,7 @@ import type { H3Event } from 'h3'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type ScopeParam = 'GLOBAL' | 'LOCAL'
+export type ScopeParam = 'GLOBAL' | 'LOCAL' | 'INCOMING'
 
 export interface ActorContext {
   /** user_id from the session cookie */
@@ -43,12 +43,14 @@ export interface ActorContextWithOffices extends ActorContext {
 
 /**
  * Parse `scope` from the query string and normalise to uppercase.
- * Accepts: 'GLOBAL' | 'LOCAL' | 'global' | 'local'
+ * Accepts: 'GLOBAL' | 'LOCAL' | 'INCOMING' | 'global' | 'local' | 'incoming'
  * Default: 'GLOBAL'
  */
 export function parseScope(raw: string | undefined): ScopeParam {
   const upper = (raw ?? 'GLOBAL').toUpperCase()
-  return upper === 'LOCAL' ? 'LOCAL' : 'GLOBAL'
+  if (upper === 'LOCAL') return 'LOCAL'
+  if (upper === 'INCOMING') return 'INCOMING'
+  return 'GLOBAL'
 }
 
 // ── Core resolvers ────────────────────────────────────────────────────────────
@@ -117,16 +119,23 @@ export async function resolveActorContextWithOffices(
     return { ...base, officeIds: [] }
   }
 
-  if (base.userRole === 'employee_sub_user') {
-    const { data: userRow } = await client
-      .from('users')
-      .select('office_id')
-      .eq('user_id', base.userId)
-      .single()
-    const officeIds = userRow?.office_id ? [String(userRow.office_id)] : []
-    return { ...base, officeIds }
+  const officeIdSet = new Set<string>()
+
+  // 1. Check user profile for directly assigned office_id or current_office_id
+  const { data: userRow } = await client
+    .from('users')
+    .select('office_id, current_office_id')
+    .eq('user_id', base.userId)
+    .maybeSingle()
+
+  if (userRow?.office_id != null && String(userRow.office_id).trim()) {
+    officeIdSet.add(String(userRow.office_id).trim())
+  }
+  if (userRow?.current_office_id != null && String(userRow.current_office_id).trim()) {
+    officeIdSet.add(String(userRow.current_office_id).trim())
   }
 
+  // 2. Fetch offices assigned to this employee via assigned_user
   const { data: officeRows, error: officeErr } = await client
     .from('offices')
     .select('id')
@@ -134,11 +143,15 @@ export async function resolveActorContextWithOffices(
     .eq('assigned_user', base.userId)
 
   if (officeErr) {
-    // Non-fatal: fall back to empty set (employee sees own uploads only in LOCAL)
-    console.warn('[actorContext] Could not resolve office list:', officeErr.message)
-    return { ...base, officeIds: [] }
+    console.warn('[actorContext] Could not resolve assigned offices:', officeErr.message)
+  } else if (officeRows) {
+    for (const o of officeRows) {
+      if (o?.id != null && String(o.id).trim()) {
+        officeIdSet.add(String(o.id).trim())
+      }
+    }
   }
 
-  const officeIds: string[] = (officeRows ?? []).map((o: any) => String(o.id))
-  return { ...base, officeIds }
+  return { ...base, officeIds: Array.from(officeIdSet) }
 }
+

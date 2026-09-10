@@ -42,6 +42,32 @@
       </div>
     </header>
 
+    <!-- ── Inbound Dispatch Banner (Realtime ASN Alert) ───────────────── -->
+    <Transition name="token-fade">
+      <div
+        v-if="latestDispatch"
+        class="flex items-center justify-between gap-4 rounded-none border border-sky-500/30 bg-sky-950/40 px-5 py-3 text-xs text-sky-200"
+      >
+        <div class="flex items-center gap-3">
+          <span class="flex h-7 w-7 items-center justify-center rounded-none bg-sky-500/20 text-sky-400">
+            <Icon name="ph:motorcycle-fill" class="h-4 w-4 animate-bounce" />
+          </span>
+          <div>
+            <span class="font-bold text-sky-400 uppercase tracking-wider text-[10px]">Inbound Dispatch Alert:</span>
+            <span class="ml-1.5 font-semibold">"{{ latestDispatch.document_title || 'Document' }}"</span>
+            <span class="ml-1 text-sky-300/80">is in transit{{ latestDispatch.target_office_name ? ` to ${latestDispatch.target_office_name}` : '' }} (Courier: {{ latestDispatch.messenger_name || 'Courier' }})</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="text-sky-400 hover:text-white"
+          @click="latestDispatch = null"
+        >
+          <Icon name="ph:x-bold" class="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </Transition>
+
     <!-- ── Pipeline Summary Strip ─────────────────────────────────────── -->
     <div
       ref="stripEl"
@@ -209,6 +235,7 @@ import { gsap } from 'gsap'
 import DocumentPreviewDrawer, { type PreviewDocument } from '~/components/documents/DocumentPreviewDrawer.vue'
 import DocumentIssueChatPanel from '~/components/employee/documents/DocumentIssueChatPanel.vue'
 import { useEmployeeSettings } from '~/composables/useEmployeeSettings'
+import { useInboundDispatchRealtime, type InboundDispatchPayload } from '~/composables/useInboundDispatchRealtime'
 
 definePageMeta({ layout: 'employee' })
 
@@ -243,15 +270,12 @@ const {
   ready: settingsReady,
 } = useEmployeeSettings()
 
-
-
 const pipelineColumns = [
   { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-light' },
   { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-light' },
   { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-light' },
   { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-light' },
 ]
-
 
 const allDocs = ref<QueueDoc[]>([])
 const myOffices = ref<OfficeRecord[]>([])
@@ -260,6 +284,13 @@ const loading = ref(false)
 const lastSyncedAt = ref<Date | null>(null)
 const activeDocument = ref<QueueDoc | null>(null)
 const issueChatRef = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
+
+// ── Inbound Dispatch Realtime Subscription (ASN) ───────────────────────────
+const orgIdComputed = computed(() => (auth.user?.org_id ? String(auth.user.org_id) : null))
+const { latestDispatch } = useInboundDispatchRealtime(orgIdComputed, myOfficeIds, (dispatch) => {
+  console.log('[Working] Inbound dispatch alert received via Realtime:', dispatch)
+  refreshQueue(true)
+})
 
 // GSAP refs
 const pageRoot = ref<HTMLElement | null>(null)

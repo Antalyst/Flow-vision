@@ -51,7 +51,7 @@ The query is routed to the `classifyIntent` engine, which parses the hydrated pr
 
 #### 🟣 Branch A: Conversational NLP
 - **Trigger:** General chat, platform support, or conversational follow-ups.
-- **Execution:** Standard conversational response using the `llama-3.1-8b-instant` Groq model.
+- **Execution:** Standard conversational response using the `llama-3.3-70b-versatile` Groq model.
 - **Result:** A helpful, grounded text response adopting a "local helpdesk" persona.
 
 ---
@@ -68,6 +68,6 @@ The Intelligence Engine extends beyond the chat interface and directly powers th
 
 ## 🛠️ Model Configurations & Fallbacks
 
-- The system primarily leverages **Groq's `llama-3.1-8b-instant`** model for rapid intent routing, topology decisions, and conversational responses to ensure blazing-fast execution speeds without hitting severe rate limits.
+- The system primarily leverages **Groq's `llama-3.3-70b-versatile`** model for rapid intent routing, topology decisions, executive digests, and conversational responses to ensure blazing-fast execution speeds without hitting severe rate limits.
 - The intelligence engine enforces strict ID/UUID redaction to ensure internal database keys are never exposed in natural language output.
 - Emojis are purposefully leveraged for clean, scannable hierarchies (e.g., `### ⏱️ Predictive SLA Insights`) to guide the user's eye naturally.

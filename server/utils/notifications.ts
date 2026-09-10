@@ -63,9 +63,13 @@ export interface InboundOfficeNotificationInput {
   orgId: string
   documentId: string
   documentTitle: string
-  messengerName: string
+  messengerName?: string | null
   officeId: string
   officeName?: string | null
+  title?: string
+  message?: string
+  type?: string
+  metadata?: Record<string, unknown>
 }
 
 export interface ClientStatusNotificationInput {
@@ -77,68 +81,206 @@ export interface ClientStatusNotificationInput {
   message?: string | null
 }
 
-type InboundDocumentOfficeFields = {
+export interface ResolvedDestinationOffice {
+  officeId: string | null
+  officeName: string | null
+  stepNumber?: number | null
+}
+
+export type InboundDocumentOfficeFields = {
   current_office_id?: string | null
   office_id?: string | null
   origin_office_id?: string | null
   stage_id?: string | null
   current_step?: number | null
+  tracking_status?: string | null
 }
 
 /**
- * Schema rule: destination office = documents.current_office_id, else documents.office_id.
- * Falls back to origin_office_id, then the next stage_steps office for route-only docs.
+ * Calculates the destination office ID and name for an inbound document notification.
+ * - When status is ARRIVED_AT_OFFICE, targets doc.current_office_id (the current station step),
+ *   rather than evaluating current_step + 1.
+ * - When status is CREATED or current_step is 0/null, next step is Step 1.
+ * - When status is PICKED_UP or IN_TRANSIT, next step is current_step + 1.
+ * - Falls back to documents.office_id only if no stage step is configured,
+ *   explicitly excluding origin_office_id and current_office_id (source offices).
  */
-async function resolveTargetOfficeIdForInboundNotification(
+export async function resolveTargetOfficeIdForInboundNotification(
   db: ReturnType<typeof getServiceSupabase>,
   doc: InboundDocumentOfficeFields,
-): Promise<{ officeId: string | null, officeName: string | null }> {
-  const direct = doc.current_office_id ?? doc.office_id ?? doc.origin_office_id ?? null
-  if (direct) {
-    return { officeId: String(direct), officeName: null }
-  }
+): Promise<ResolvedDestinationOffice> {
+  const trackingStatus = (doc.tracking_status ?? '').toUpperCase()
+  const currentStep = doc.current_step ?? 0
 
-  if (doc.stage_id) {
-    const nextStep = (doc.current_step ?? 0) + 1
-    const { data: stepRow } = await db
-      .from('stage_steps')
-      .select('office_id, offices(name)')
-      .eq('stage_id', doc.stage_id)
-      .eq('step_number', nextStep)
-      .maybeSingle()
+  // 1. If status is ARRIVED_AT_OFFICE, target the office where the document arrived (current station)
+  if (trackingStatus === 'ARRIVED_AT_OFFICE') {
+    if (doc.current_office_id) {
+      const officeId = String(doc.current_office_id)
+      const { data: offRow } = await db
+        .from('offices')
+        .select('name')
+        .eq('id', officeId)
+        .maybeSingle()
 
-    if (stepRow?.office_id) {
-      const officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
-      return { officeId: String(stepRow.office_id), officeName }
+      return { officeId, officeName: offRow?.name ?? null, stepNumber: currentStep }
+    }
+
+    if (doc.stage_id && currentStep > 0) {
+      const { data: stepRow, error: stepErr } = await db
+        .from('stage_steps')
+        .select('office_id, offices(name)')
+        .eq('stage_id', doc.stage_id)
+        .eq('step_number', currentStep)
+        .maybeSingle()
+
+      if (!stepErr && stepRow?.office_id) {
+        const officeName = (stepRow as { offices?: { name?: string } | null }).offices?.name ?? null
+        return { officeId: String(stepRow.office_id), officeName, stepNumber: currentStep }
+      }
     }
   }
 
-  return { officeId: null, officeName: null }
+  // 2. Otherwise (CREATED, PICKED_UP, IN_TRANSIT), calculate forward destination step index
+  let destinationStep = currentStep + 1
+  if (trackingStatus === 'CREATED' || currentStep === 0) {
+    destinationStep = 1
+  }
+
+  // Look up the destination step in stage_steps
+  if (doc.stage_id) {
+    const { data: stepRow, error: stepErr } = await db
+      .from('stage_steps')
+      .select('office_id, offices(name)')
+      .eq('stage_id', doc.stage_id)
+      .eq('step_number', destinationStep)
+      .maybeSingle()
+
+    if (!stepErr && stepRow?.office_id) {
+      const officeName = (stepRow as { offices?: { name?: string } | null }).offices?.name ?? null
+      return { officeId: String(stepRow.office_id), officeName, stepNumber: destinationStep }
+    }
+  }
+
+  // Fallback: if no stage step found, check doc.office_id if distinct from source origin/current office
+  const sourceOfficeId = doc.current_office_id ?? doc.origin_office_id ?? null
+  if (doc.office_id && (!sourceOfficeId || String(doc.office_id) !== String(sourceOfficeId))) {
+    const officeId = String(doc.office_id)
+    const { data: offRow } = await db
+      .from('offices')
+      .select('name')
+      .eq('id', officeId)
+      .maybeSingle()
+
+    return { officeId, officeName: offRow?.name ?? null, stepNumber: destinationStep }
+  }
+
+  return { officeId: null, officeName: null, stepNumber: destinationStep }
 }
 
+/**
+ * Resolves all office IDs assigned to an employee user within an organisation.
+ * Inspects:
+ * 1. users.office_id and users.current_office_id
+ * 2. offices.assigned_user = userId
+ */
 export async function resolveEmployeeAssignedOfficeIds(
   db: ReturnType<typeof getServiceSupabase>,
   orgId: string,
   userId: string,
 ): Promise<string[]> {
-  const { data: officeRows, error } = await db
+  const normalizedUserId = String(userId).trim()
+  const officeIdSet = new Set<string>()
+
+  // 1. Check user profile for directly assigned office_id or current_office_id
+  const { data: userRow, error: userErr } = await db
+    .from('users')
+    .select('office_id, current_office_id')
+    .eq('user_id', normalizedUserId)
+    .maybeSingle()
+
+  if (!userErr && userRow) {
+    if (userRow.office_id != null && String(userRow.office_id).trim()) {
+      officeIdSet.add(String(userRow.office_id).trim())
+    }
+    if (userRow.current_office_id != null && String(userRow.current_office_id).trim()) {
+      officeIdSet.add(String(userRow.current_office_id).trim())
+    }
+  }
+
+  // 2. Check offices assigned to this employee via offices.assigned_user
+  const { data: officeRows, error: officeErr } = await db
     .from('offices')
     .select('id, assigned_user')
     .eq('org_id', orgId)
 
-  if (error) {
-    console.error('[notifications] Failed to resolve employee offices:', error.message, { orgId, userId })
-    return []
+  if (officeErr) {
+    console.error('[notifications] Failed to resolve employee offices:', officeErr.message, { orgId, userId })
+  } else {
+    for (const row of officeRows ?? []) {
+      if (String((row as { assigned_user?: string | number }).assigned_user ?? '') === normalizedUserId) {
+        if ((row as { id?: string }).id != null) {
+          officeIdSet.add(String((row as { id: string }).id).trim())
+        }
+      }
+    }
   }
 
-  const normalizedUserId = String(userId)
-
-  return (officeRows ?? [])
-    .filter((row) => String((row as { assigned_user?: string | number }).assigned_user ?? '') === normalizedUserId)
-    .map((row) => String((row as { id: string }).id))
+  return Array.from(officeIdSet)
 }
 
-/** Notify destination office employees that a messenger claimed an inbound transfer. */
+/**
+ * Broadcast an Advance Shipping Notice (ASN) / Inbound Dispatch Alert
+ * to destination office channels and org logistics via Supabase Realtime REST API.
+ */
+export async function broadcastInboundDispatchRealtime(
+  orgId: string,
+  targetOfficeId: string | number | null,
+  event: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  const config = useRuntimeConfig()
+  const supabaseUrl = String(config.public.supabaseUrl || '').replace(/\/$/, '')
+  const supabaseKey = String(config.supabaseServiceKey || '')
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('[notifications] Realtime broadcast skipped: missing Supabase credentials.')
+    return
+  }
+
+  const normalizedOrgId = String(orgId).trim()
+  const channels = [`org:${normalizedOrgId}:logistics`]
+
+  if (targetOfficeId != null) {
+    const offStr = String(targetOfficeId).trim()
+    if (offStr && offStr !== 'null' && offStr !== 'undefined') {
+      channels.push(`org:${normalizedOrgId}:office:${offStr}`)
+    }
+  }
+
+  const uniqueChannels = Array.from(new Set(channels))
+  const messages = uniqueChannels.map((topic) => ({
+    topic,
+    event,
+    payload,
+  }))
+
+  try {
+    await $fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: { messages },
+    })
+    console.log(`[notifications] Realtime broadcast [${event}] sent to: ${uniqueChannels.join(', ')}`)
+  } catch (broadcastErr: any) {
+    console.warn('[notifications] Supabase Realtime broadcast failed (non-fatal):', broadcastErr?.message || broadcastErr)
+  }
+}
+
+/** Notify destination office employees that a messenger claimed or delivered an inbound transfer, or of a pre-pickup ASN notice. */
 export async function broadcastInboundOfficeNotification(
   input: InboundOfficeNotificationInput,
 ): Promise<string | null> {
@@ -149,8 +291,16 @@ export async function broadcastInboundOfficeNotification(
 
   const destinationLabel = input.officeName ? input.officeName : 'your office'
   const message =
-    `${input.messengerName || 'A messenger'} has accepted the pickup for "${input.documentTitle}" ` +
+    input.message ??
+    `${input.messengerName || 'A courier'} has accepted the pickup for "${input.documentTitle}" ` +
     `and is transferring it to ${destinationLabel}.`
+
+  const title = input.title ?? 'Inbound Document En Route'
+
+  const metadata = {
+    ...(input.metadata || {}),
+    ...(input.type ? { type: input.type } : {}),
+  }
 
   const row = {
     org_id: input.orgId,
@@ -158,11 +308,12 @@ export async function broadcastInboundOfficeNotification(
     document_id: input.documentId,
     target_role: 'employee',
     user_id: null,
-    title: 'Inbound Document Picked Up',
+    title,
     message,
     is_read: false,
     is_claimed: false,
     claimed_by_user_id: null,
+    metadata: Object.keys(metadata).length > 0 ? metadata : null,
   }
 
   const db = getServiceSupabase()
@@ -278,6 +429,106 @@ export async function broadcastComplianceMessageNotification(
   }
 
   return (data as { id: string }).id
+}
+
+export interface DocumentOwnerNotificationInput {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  userId: string | null | undefined
+  title: string
+  message: string
+  trackingStatus?: string | null
+  originOfficeId?: string | null
+  originOfficeName?: string | null
+  targetOfficeId?: string | null
+  targetOfficeName?: string | null
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * Inserts a persistent notification targeting the document owner/uploader (doc.user_id)
+ * and broadcasts a realtime WebSocket event (DOCUMENT_OWNER_UPDATE) to org:<orgId>:user:<doc.user_id>.
+ */
+export async function notifyDocumentOwner(
+  input: DocumentOwnerNotificationInput,
+): Promise<string | null> {
+  if (!input.userId) return null
+  const normalizedUserId = String(input.userId).trim()
+  if (!normalizedUserId || normalizedUserId === 'null' || normalizedUserId === 'undefined') return null
+
+  const row = {
+    org_id: input.orgId,
+    document_id: input.documentId,
+    user_id: normalizedUserId,
+    target_role: 'client',
+    title: input.title,
+    message: input.message,
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Document owner notification insert failed:', error?.message, row)
+  }
+
+  // Realtime Broadcast to owner channel: org:<orgId>:user:<userId>
+  const config = useRuntimeConfig()
+  const supabaseUrl = String(config.public.supabaseUrl || '').replace(/\/$/, '')
+  const supabaseKey = String(config.supabaseServiceKey || '')
+
+  if (supabaseUrl && supabaseKey) {
+    const normalizedOrgId = String(input.orgId).trim()
+    const topic = `org:${normalizedOrgId}:user:${normalizedUserId}`
+    const payload = {
+      type: 'DOCUMENT_OWNER_UPDATE',
+      event: 'DOCUMENT_OWNER_UPDATE',
+      document_id: input.documentId,
+      document_title: input.documentTitle,
+      title: input.title,
+      message: input.message,
+      tracking_status: input.trackingStatus ?? null,
+      origin_office_id: input.originOfficeId ?? null,
+      origin_office_name: input.originOfficeName ?? null,
+      target_office_id: input.targetOfficeId ?? null,
+      target_office_name: input.targetOfficeName ?? null,
+      timestamp: new Date().toISOString(),
+      ...(input.metadata ?? {}),
+    }
+
+    try {
+      await $fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          messages: [
+            {
+              topic,
+              event: 'DOCUMENT_OWNER_UPDATE',
+              payload,
+            },
+          ],
+        },
+      })
+      console.log(`[notifications] Realtime DOCUMENT_OWNER_UPDATE sent to: ${topic}`)
+    } catch (broadcastErr: any) {
+      console.warn('[notifications] Realtime DOCUMENT_OWNER_UPDATE broadcast failed (non-fatal):', broadcastErr?.message || broadcastErr)
+    }
+  }
+
+  return data ? (data as { id: string }).id : null
 }
 
 /** Notify the document creator (client role) when tracking status changes. */
@@ -597,7 +848,6 @@ export async function fetchClientNotifications(
     .from('notifications')
     .select(NOTIFICATION_COLUMNS)
     .eq('org_id', actor.orgId)
-    .ilike('target_role', 'client')
     .eq('user_id', actor.userId)
     .order('created_at', { ascending: false })
     .limit(50)
@@ -634,7 +884,6 @@ export async function markClientNotificationRead(
 
   if (notifErr || !notif) return false
   if (String(notif.org_id) !== String(clientOrgId)) return false
-  if (String(notif.target_role).toLowerCase() !== 'client') return false
   if (String(notif.user_id) !== String(clientUserId)) return false
 
   const { error } = await db
@@ -881,6 +1130,37 @@ export async function claimPickupNotification(
           officeId: destination.officeId,
         })
       }
+
+      const dispatchPayload = {
+        type: 'INCOMING_DISPATCH',
+        event: 'INCOMING_DISPATCH',
+        document_id: doc.id,
+        document_title: doc.title,
+        batch_manifest_id: null,
+        target_office_id: destination.officeId,
+        target_office_name: officeName,
+        next_step: destination.stepNumber ?? (doc.current_step ?? 0) + 1,
+        assigned_messenger_id: userId,
+        messenger_name: userName,
+        tracking_status: 'PICKED_UP',
+        dispatched_at: new Date().toISOString(),
+        notes: officeName
+          ? `${userName} accepted pickup for "${doc.title}" → transferring to ${officeName}.`
+          : `${userName} accepted pickup for "${doc.title}".`,
+      }
+
+      await broadcastInboundDispatchRealtime(
+        String(doc.org_id),
+        destination.officeId,
+        'INCOMING_DISPATCH',
+        dispatchPayload,
+      )
+      await broadcastInboundDispatchRealtime(
+        String(doc.org_id),
+        destination.officeId,
+        'ASN_PROACTIVE_ALERT',
+        dispatchPayload,
+      )
     }
 
     await notifyClientStatusUpdate({

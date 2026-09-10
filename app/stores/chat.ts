@@ -173,6 +173,7 @@ export const useChatStore = defineStore('chat', {
       }
     },
     subscribeToMessages() {
+      if (!import.meta.client) return
       if (this.subscription) return
       const client = useSupabaseClient()
       this.subscription = client.channel('public:direct_messages')
@@ -182,6 +183,7 @@ export const useChatStore = defineStore('chat', {
         .subscribe()
     },
     unsubscribe() {
+      if (!import.meta.client) return
       if (this.subscription) {
         const client = useSupabaseClient()
         client.removeChannel(this.subscription)

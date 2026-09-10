@@ -107,26 +107,42 @@ export default defineEventHandler(async (event) => {
     Make sure to analyze the Predictive SLA Insights and include a dedicated section titled "### ⏱️ Predictive SLA Insights" discussing category bottlenecks or efficiencies.
   `
 
-  try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: `Please write my executive digest for ${officeName ? officeName : 'the entire organization'}.` }
-      ],
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.3,
-    })
+  const primaryModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
+  const candidateModels = Array.from(new Set([primaryModel, 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']))
 
+  let completion: any = null
+  let lastError: any = null
+
+  for (const model of candidateModels) {
+    try {
+      completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: `Please write my executive digest for ${officeName ? officeName : 'the entire organization'}.` }
+        ],
+        model,
+        temperature: 0.3,
+      })
+      if (completion?.choices?.[0]?.message?.content) {
+        break
+      }
+    } catch (error: any) {
+      lastError = error
+      console.warn(`[Dashboard AI] Model ${model} attempt failed:`, error?.message || error)
+    }
+  }
+
+  if (completion?.choices?.[0]?.message?.content) {
     return {
       success: true,
-      narrative: completion.choices[0]?.message?.content?.trim() || 'Digest generation failed.'
+      narrative: completion.choices[0].message.content.trim()
     }
-  } catch (error: any) {
-    console.error('[Dashboard AI] generation failed:', error)
-    return {
-      success: false,
-      narrative: 'I am currently unable to process the executive digest due to a system interruption. Please try again.',
-      debugError: error?.message || String(error)
-    }
+  }
+
+  console.error('[Dashboard AI] generation failed for all candidates:', lastError)
+  return {
+    success: false,
+    narrative: 'I am currently unable to process the executive digest due to a system interruption. Please try again.',
+    debugError: lastError?.message || String(lastError)
   }
 })

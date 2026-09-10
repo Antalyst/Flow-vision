@@ -34,7 +34,12 @@ import { randomUUID } from 'node:crypto'
 import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { broadcastPickupNotification } from '~~/server/utils/notifications'
+import {
+  broadcastPickupNotification,
+  broadcastInboundOfficeNotification,
+  broadcastInboundDispatchRealtime,
+  resolveTargetOfficeIdForInboundNotification,
+} from '~~/server/utils/notifications'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
 
@@ -545,6 +550,61 @@ export default defineEventHandler(async (event) => {
       })
     } catch (notificationErr) {
       console.error('[Upload] Messenger notification broadcast failed:', notificationErr)
+    }
+
+    // Proactive Inbound Advance Shipping Notice (ASN) — Awaiting Courier Pickup
+    try {
+      let destOfficeId = resolvedRouteSteps[0]?.office_id ? String(resolvedRouteSteps[0].office_id) : null
+      let destOfficeName = resolvedRouteSteps[0]?.office_name ?? null
+
+      if (!destOfficeId && (supabaseDoc as any).stage_id) {
+        const dest = await resolveTargetOfficeIdForInboundNotification(client, supabaseDoc as any)
+        destOfficeId = dest.officeId
+        destOfficeName = dest.officeName
+      }
+
+      if (destOfficeId) {
+        const effectiveOrgId = String((supabaseDoc as { org_id?: string }).org_id ?? orgId)
+        const originLabel = resolvedOfficeName ? resolvedOfficeName : 'origin office'
+        await broadcastInboundOfficeNotification({
+          orgId: effectiveOrgId,
+          documentId: supabaseDoc.id,
+          documentTitle: docTitle,
+          officeId: destOfficeId,
+          officeName: destOfficeName,
+          type: 'ASN_PENDING_PICKUP',
+          title: 'Inbound Advance Notice — Awaiting Pickup',
+          message: `"${docTitle}" has been released by ${originLabel} and is waiting for courier pickup.`,
+          metadata: {
+            type: 'ASN_PENDING_PICKUP',
+            origin_office_id: resolvedOriginOfficeId,
+            origin_office_name: resolvedOfficeName,
+            target_step: 1,
+          },
+        })
+
+        await broadcastInboundDispatchRealtime(
+          effectiveOrgId,
+          destOfficeId,
+          'ASN_PENDING_PICKUP',
+          {
+            type: 'ASN_PENDING_PICKUP',
+            event: 'ASN_PENDING_PICKUP',
+            document_id: supabaseDoc.id,
+            document_title: docTitle,
+            origin_office_id: resolvedOriginOfficeId,
+            origin_office_name: resolvedOfficeName,
+            target_office_id: destOfficeId,
+            target_office_name: destOfficeName,
+            step: 1,
+            tracking_status: 'CREATED',
+            dispatched_at: new Date().toISOString(),
+            notes: `Document released by ${originLabel} and awaiting courier pickup.`,
+          },
+        )
+      }
+    } catch (asnErr) {
+      console.warn('[Upload] Pre-pickup ASN alert failed (non-fatal):', asnErr)
     }
 
     // ─────────────────────────────────────────────────────────────────

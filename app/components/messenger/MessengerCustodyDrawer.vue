@@ -107,8 +107,14 @@ export interface CustodyDocument {
   tracking_id: string
   current_step: number
   total_steps: number
+  origin_office_name?: string | null
   destination_office_name?: string | null
+  destination_office_id?: string | null
   route_steps?: Array<{ step_number: number; office_id: string; office_name: string }>
+  created_at?: string
+  priority?: string | null
+  target_date?: string | null
+  target_completion_date?: string | null
 }
 
 const props = defineProps<{

@@ -88,7 +88,7 @@
                 :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 :title="`Org ID: ${auth.user.org_id}`"
               >
-                <Icon name="ph:building-office" class="w-3 h-3 flex-shrink-0" />
+                <Icon name="ph:buildings-light" class="w-3 h-3 flex-shrink-0" />
                 Org {{ auth.user.org_id }}
               </span>
             </div>
@@ -123,7 +123,7 @@
             class="w-full max-w-sm rounded-xl border p-8 text-center"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
-            <Icon name="ph:building-office-slash" class="mx-auto mb-4 w-12 h-12 text-sky-500/60" />
+            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-sky-500/60" />
             <h2 class="text-lg font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">No organisation assigned</h2>
             <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
               Your account hasn't been linked to an organisation yet. Contact your administrator.
@@ -158,6 +158,46 @@
 
     <!-- AI Overlay Chat -->
     <AiOverlay role="employee" scope="LOCAL" theme="orange" />
+
+    <!-- ── Global Toast Notification ──────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="toast-fade">
+        <div
+          v-if="toast.visible"
+          class="fixed bottom-24 right-6 z-[100] flex max-w-md items-center gap-2.5 rounded-none border px-5 py-3.5 text-sm font-semibold shadow-2xl backdrop-blur-md md:bottom-8"
+          :class="[
+            toast.type === 'error'
+              ? 'border-red-500/30 bg-red-950/90 text-red-200'
+              : toast.type === 'warning'
+                ? 'border-amber-500/30 bg-amber-950/90 text-amber-200'
+                : 'border-emerald-500/30 bg-gray-900/95 text-emerald-300',
+          ]"
+          role="status"
+        >
+          <Icon
+            :name="
+              toast.type === 'error'
+                ? 'ph:warning-circle-fill'
+                : toast.type === 'warning'
+                  ? 'ph:warning-fill'
+                  : 'ph:check-circle-fill'
+            "
+            class="h-5 w-5 flex-none"
+            :class="
+              toast.type === 'error'
+                ? 'text-red-400'
+                : toast.type === 'warning'
+                  ? 'text-amber-400'
+                  : 'text-emerald-400'
+            "
+          />
+          <span class="flex-1 text-xs leading-snug">{{ toast.message }}</span>
+          <button type="button" class="ml-2 opacity-60 hover:opacity-100" @click="dismissToast">
+            <Icon name="ph:x-bold" class="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -166,10 +206,13 @@ import { ref, watch, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useRoute } from '#imports'
 import AiOverlay from '~/components/ai/AiOverlay.vue'
+import { useEmployeeToast } from '~/composables/useEmployeeToast'
+import { useInboundDispatchRealtime } from '~/composables/useInboundDispatchRealtime'
 
 const auth = useAuthStore()
 const { isDark } = useTheme()
 const route = useRoute()
+const { toast, dismiss: dismissToast } = useEmployeeToast()
 
 const brandLogo = computed(() => isDark.value ? '/logo/new-logo.png' : '/logo/new-logo-dark.png')
 const mobileMenuOpen = ref(false)
@@ -177,7 +220,7 @@ const isSidebarMinimized = ref(false)
 
 const mobileNavItems = [
   { to: '/employee/dashboard', label: 'Dashboard', icon: 'ph:squares-four-fill' },
-  { to: '/employee/office',    label: 'Office',     icon: 'icomoon-free:office' },
+  { to: '/employee/office',    label: 'Office',     icon: 'ph:buildings-fill' },
   { to: '/employee/working',   label: 'Working',    icon: 'ph:briefcase-fill' },
   { to: '/employee/settings',  label: 'Settings',   icon: 'ph:gear-six-fill' },
 ]
@@ -186,10 +229,36 @@ const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
 watch(() => route.path, () => { mobileMenuOpen.value = false })
 
+// ── Global Realtime Inbound Dispatch Subscription ──────────────────────────
+const layoutOffices = ref([])
+const employeeOfficeIds = computed(() => {
+  const ids = layoutOffices.value.map((o) => o.id)
+  if (auth.user?.office_id) ids.push(auth.user.office_id)
+  if (auth.user?.current_office_id) ids.push(auth.user.current_office_id)
+  if (Array.isArray(auth.user?.officeIds)) ids.push(...auth.user.officeIds)
+  return ids
+})
+const orgIdComputed = computed(() => (auth.user?.org_id ? String(auth.user.org_id) : null))
+
+useInboundDispatchRealtime(orgIdComputed, employeeOfficeIds)
+
+const fetchLayoutOffices = async () => {
+  const orgId = auth.user?.org_id
+  const userId = auth.user?.user_id
+  if (!orgId || !userId) return
+  try {
+    const res = await $fetch('/api/employee/my-offices', { params: { orgId, userId } })
+    layoutOffices.value = res.data ?? []
+  } catch {
+    // silent
+  }
+}
+
 onMounted(() => {
   if (auth.isLoggedIn && !auth.currentOrg) {
     auth.fetchMyOrg()
   }
+  fetchLayoutOffices()
   const { fetchNotifications } = useEmployeeNotifications()
   const { hydrate, applyHandoffPolling } = useEmployeeSettings()
   hydrate()
@@ -206,4 +275,7 @@ onMounted(() => {
 
 .slide-menu-enter-active, .slide-menu-leave-active { transition: transform 0.3s ease; }
 .slide-menu-enter-from, .slide-menu-leave-to { transform: translateX(-100%); }
+
+.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(8px); }
 </style>

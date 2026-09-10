@@ -76,7 +76,7 @@
               class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
               :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
             >
-              <Icon name="ph:building-office" class="w-3 h-3" />
+              <Icon name="ph:buildings-light" class="w-3 h-3" />
               Org {{ auth.user.org_id }}
             </span>
           </div>
@@ -109,7 +109,7 @@
             class="w-full max-w-sm rounded-xl border p-8 text-center"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
-            <Icon name="ph:building-office-slash" class="mx-auto mb-4 w-12 h-12 text-amber-500/60" />
+            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-amber-500/60" />
             <h2 class="text-lg font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">No organisation assigned</h2>
             <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
               Your account hasn't been linked to an organisation yet. Contact your administrator.
