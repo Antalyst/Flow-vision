@@ -461,20 +461,27 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     `;
     
     let decision;
-    try {
-      const decisionCompletion = await groq.chat.completions.create({
-        messages: [
-          { role: 'system', content: decisionPrompt + '\n\n' + systemContext },
-          { role: 'user', content: prompt }
-        ],
-        model: 'llama-3.1-8b-instant',
-        temperature: 0.1,
-        response_format: { type: 'json_object' }
-      });
-      const rawDecision = decisionCompletion.choices[0]?.message?.content || '{}';
-      decision = JSON.parse(rawDecision);
-    } catch (error) {
-      console.error('[TopologyLookup] Decision engine failed:', error);
+    const candidateModels = Array.from(new Set([process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']));
+    for (const model of candidateModels) {
+      try {
+        const decisionCompletion = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: decisionPrompt + '\n\n' + systemContext },
+            { role: 'user', content: prompt }
+          ],
+          model,
+          temperature: 0.1,
+          response_format: { type: 'json_object' }
+        });
+        const rawDecision = decisionCompletion.choices[0]?.message?.content || '{}';
+        decision = JSON.parse(rawDecision);
+        break;
+      } catch (error) {
+        console.warn(`[TopologyLookup] Decision engine attempt with ${model} failed:`, error);
+      }
+    }
+
+    if (!decision) {
       decision = { response_mode: 'timeline_chat', target_stage_id: null, reply_text: "I encountered an error processing the topology." };
     }
 
@@ -727,15 +734,21 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     let summaryText = 'Summary generation failed.';
-    try {
-      const completion = await groq.chat.completions.create({
-        messages: [{ role: 'system', content: systemInstruction }],
-        model: 'llama-3.1-8b-instant',
-        temperature: 0.3,
-      });
-      summaryText = completion.choices[0]?.message?.content?.trim() || summaryText;
-    } catch (e) {
-      console.error('[Document Summary] generation failed:', e);
+    const candidateModels = Array.from(new Set([process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']));
+    for (const model of candidateModels) {
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: 'system', content: systemInstruction }],
+          model,
+          temperature: 0.3,
+        });
+        if (completion.choices[0]?.message?.content?.trim()) {
+          summaryText = completion.choices[0].message.content.trim();
+          break;
+        }
+      } catch (e) {
+        console.warn(`[Document Summary] generation with ${model} failed:`, e);
+      }
     }
 
     let htmlContent = summaryText;

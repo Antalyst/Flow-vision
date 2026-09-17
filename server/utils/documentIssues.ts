@@ -169,59 +169,37 @@ export async function broadcastIssueRealtime(
   payload: Record<string, unknown>,
 ): Promise<void> {
   const config = useRuntimeConfig()
-  const url    = config.public.supabaseUrl as string
-  const key    = config.supabaseServiceKey as string
+  const supabaseUrl = String(config.public.supabaseUrl || '').replace(/\/$/, '')
+  const supabaseKey = String(config.supabaseServiceKey || '')
 
-  if (!url || !key) {
+  if (!supabaseUrl || !supabaseKey) {
     console.warn('[documentIssues] Realtime broadcast skipped — missing Supabase config.')
     return
   }
-
-  const admin = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
 
   const channels = [
     issueRealtimeChannel(orgId, issueId),
     orgLogisticsChannel(orgId),
   ]
 
+  const messages = channels.map((topic) => ({
+    topic,
+    event,
+    payload,
+  }))
+
   try {
-    await Promise.all(
-      channels.map((channelName) =>
-        sendBroadcast(admin, channelName, event, payload),
-      ),
-    )
-  } catch (err) {
-    // Non-fatal — DB writes already succeeded
-    console.warn('[documentIssues] Realtime broadcast failed:', err)
-  }
-}
-
-async function sendBroadcast(
-  admin: SupabaseClient,
-  channelName: string,
-  event: string,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  const channel = admin.channel(channelName, {
-    config: { broadcast: { ack: false, self: true } },
-  })
-
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Realtime subscribe timeout')), 5000)
-
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        clearTimeout(timeout)
-        resolve()
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        clearTimeout(timeout)
-        reject(new Error(`Channel ${channelName} status: ${status}`))
-      }
+    await $fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: { messages },
     })
-  })
-
-  await channel.send({ type: 'broadcast', event, payload })
-  await admin.removeChannel(channel)
+  } catch (err: any) {
+    // Non-fatal — DB writes already succeeded
+    console.warn('[documentIssues] Realtime broadcast failed (non-fatal):', err?.message || err)
+  }
 }

@@ -1,8 +1,11 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import {
+  broadcastInboundDispatchRealtime,
+  broadcastInboundOfficeNotification,
   broadcastOfficeReviewNotification,
   notifyClientStatusUpdate,
+  notifyDocumentOwner,
 } from '~~/server/utils/notifications'
 
 /**
@@ -192,6 +195,24 @@ export default defineEventHandler(async (event) => {
     metadata: { tracking_status: finalStatus, office_name: office.name, is_final_stop: isFinalStop },
   }, client)
 
+  const destinationOfficeId = String(office_id)
+  const destinationOfficeName = office.name
+
+  if (targetDoc.user_id) {
+    const destLabel = destinationOfficeName || 'Destination Office'
+    await notifyDocumentOwner({
+      orgId: messengerOrgId,
+      documentId: targetDoc.id,
+      documentTitle: targetDoc.title,
+      userId: String(targetDoc.user_id),
+      title: `Document Arrived at ${destLabel}`,
+      message: `Your document "${targetDoc.title}" has arrived at ${destLabel} and is currently awaiting station review.`,
+      trackingStatus: finalStatus,
+      targetOfficeId: destinationOfficeId,
+      targetOfficeName: destinationOfficeName,
+    })
+  }
+
   await notifyClientStatusUpdate({
     orgId: messengerOrgId,
     documentId: targetDoc.id,
@@ -204,14 +225,45 @@ export default defineEventHandler(async (event) => {
   })
 
   try {
-    await broadcastOfficeReviewNotification({
+    await broadcastInboundOfficeNotification({
       orgId: messengerOrgId,
       documentId: targetDoc.id,
       documentTitle: targetDoc.title,
-      officeId: String(office_id),
-      officeName: office.name,
       messengerName: actorRow.full_name,
+      officeId: destinationOfficeId,
+      officeName: destinationOfficeName,
+      title: 'Inbound Document — Review Required',
+      message: `${actorRow.full_name} delivered "${targetDoc.title}" to ${destinationOfficeName || 'your office'}. Open the document preview, verify the hard copy, and mark the checkpoint done to release the next pickup.`,
     })
+
+    const dropoffDispatchPayload = {
+      type: 'INCOMING_DISPATCH',
+      event: 'INCOMING_DISPATCH',
+      document_id: targetDoc.id,
+      document_title: targetDoc.title,
+      batch_manifest_id: null,
+      target_office_id: destinationOfficeId,
+      target_office_name: destinationOfficeName,
+      next_step: targetDoc.current_step,
+      assigned_messenger_id: null,
+      messenger_name: actorRow.full_name,
+      tracking_status: 'ARRIVED_AT_OFFICE',
+      dispatched_at: new Date().toISOString(),
+      notes: `${actorRow.full_name} delivered "${targetDoc.title}" to ${destinationOfficeName} — awaiting desk review.`,
+    }
+
+    await broadcastInboundDispatchRealtime(
+      messengerOrgId,
+      destinationOfficeId,
+      'INCOMING_DISPATCH',
+      dropoffDispatchPayload,
+    )
+    await broadcastInboundDispatchRealtime(
+      messengerOrgId,
+      destinationOfficeId,
+      'ASN_PROACTIVE_ALERT',
+      dropoffDispatchPayload,
+    )
   } catch (hookErr) {
     console.warn('[Dropoff] Office review notification failed:', hookErr)
   }

@@ -27,7 +27,9 @@ class RealtimeChannel {
   }
 
   subscribe(): this {
-    this.socket.joinChannel(this)
+    if (import.meta.client && typeof window !== 'undefined') {
+      this.socket.joinChannel(this)
+    }
     return this
   }
 
@@ -77,11 +79,16 @@ class RealtimeSocket {
   }
 
   async removeChannel(channel: RealtimeChannel): Promise<void> {
+    if (!import.meta.client || typeof window === 'undefined') return
     const topic = channel.getTopic()
     this.channels.delete(topic)
     if (this.ws?.readyState === WebSocket.OPEN) {
       const ref = this.nextRef()
-      this.ws.send(JSON.stringify([ref, ref, `realtime:${topic}`, 'phx_leave', {}]))
+      try {
+        this.ws.send(JSON.stringify([ref, ref, `realtime:${topic}`, 'phx_leave', {}]))
+      } catch {
+        // ignore teardown errors
+      }
     }
     if (this.channels.size === 0) {
       this.disconnect()
@@ -89,22 +96,29 @@ class RealtimeSocket {
   }
 
   joinChannel(channel: RealtimeChannel): void {
-    void this.ensureConnected().then(() => {
-      const topic = channel.getTopic()
-      if (channel.isJoined()) return
-      const ref = this.nextRef()
-      this.ws?.send(JSON.stringify([
-        ref,
-        ref,
-        `realtime:${topic}`,
-        'phx_join',
-        {
-          config: { broadcast: { self: false }, presence: { key: '' } },
-          access_token: this.apiKey,
-        },
-      ]))
-      channel.markJoined()
-    })
+    if (!import.meta.client || typeof window === 'undefined') return
+
+    void this.ensureConnected()
+      .then(() => {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+        const topic = channel.getTopic()
+        if (channel.isJoined()) return
+        const ref = this.nextRef()
+        this.ws.send(JSON.stringify([
+          ref,
+          ref,
+          `realtime:${topic}`,
+          'phx_join',
+          {
+            config: { broadcast: { self: false }, presence: { key: '' } },
+            access_token: this.apiKey,
+          },
+        ]))
+        channel.markJoined()
+      })
+      .catch((err) => {
+        console.warn('[useSupabaseClient] Failed to join channel:', err)
+      })
   }
 
   private nextRef(): string {
@@ -113,46 +127,59 @@ class RealtimeSocket {
   }
 
   private async ensureConnected(): Promise<void> {
+    if (!import.meta.client || typeof window === 'undefined' || typeof WebSocket === 'undefined') {
+      return
+    }
     if (this.ws?.readyState === WebSocket.OPEN) return
     if (this.connecting) return this.connecting
 
-    this.connecting = new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(`${this.url}?apikey=${encodeURIComponent(this.apiKey)}&vsn=1.0.0`)
-      this.ws = ws
+    this.connecting = new Promise<void>((resolve) => {
+      try {
+        const ws = new WebSocket(`${this.url}?apikey=${encodeURIComponent(this.apiKey)}&vsn=1.0.0`)
+        this.ws = ws
 
-      ws.onopen = () => {
-        this.heartbeatTimer = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify([null, null, 'phoenix', 'heartbeat', {}]))
+        ws.onopen = () => {
+          this.heartbeatTimer = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify([null, null, 'phoenix', 'heartbeat', {}]))
+            }
+          }, 25_000)
+          resolve()
+        }
+
+        ws.onerror = (e) => {
+          console.warn('[useSupabaseClient] Realtime WebSocket connection failed:', e)
+          // Resolve instead of rejecting to avoid unhandled promise rejections
+          resolve()
+        }
+
+        ws.onclose = () => {
+          if (this.heartbeatTimer) clearInterval(this.heartbeatTimer)
+          this.ws = null
+          this.connecting = null
+          for (const ch of this.channels.values()) {
+            (ch as { joined: boolean }).joined = false
           }
-        }, 25_000)
+        }
+
+        ws.onmessage = (msg) => {
+          try {
+            const data = JSON.parse(String(msg.data)) as unknown[]
+            if (!Array.isArray(data) || data.length < 5) return
+            const [, , topic, event, payload] = data
+            if (event !== 'broadcast' || typeof topic !== 'string') return
+            const channelName = topic.replace(/^realtime:/, '')
+            const channel = this.channels.get(channelName)
+            if (!channel) return
+            const body = payload as { event?: string; payload?: unknown }
+            if (body?.event) channel.handleBroadcast(body.event, body.payload)
+          } catch {
+            // ignore malformed frames
+          }
+        }
+      } catch (err) {
+        console.warn('[useSupabaseClient] Error initializing WebSocket:', err)
         resolve()
-      }
-
-      ws.onerror = () => reject(new Error('Realtime WebSocket connection failed'))
-      ws.onclose = () => {
-        if (this.heartbeatTimer) clearInterval(this.heartbeatTimer)
-        this.ws = null
-        this.connecting = null
-        for (const ch of this.channels.values()) {
-          (ch as { joined: boolean }).joined = false
-        }
-      }
-
-      ws.onmessage = (msg) => {
-        try {
-          const data = JSON.parse(String(msg.data)) as unknown[]
-          if (!Array.isArray(data) || data.length < 5) return
-          const [, , topic, event, payload] = data
-          if (event !== 'broadcast' || typeof topic !== 'string') return
-          const channelName = topic.replace(/^realtime:/, '')
-          const channel = this.channels.get(channelName)
-          if (!channel) return
-          const body = payload as { event?: string; payload?: unknown }
-          if (body?.event) channel.handleBroadcast(body.event, body.payload)
-        } catch {
-          // ignore malformed frames
-        }
       }
     })
 
@@ -160,6 +187,7 @@ class RealtimeSocket {
   }
 
   private disconnect(): void {
+    if (!import.meta.client || typeof window === 'undefined') return
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer)
     this.ws?.close()
     this.ws = null

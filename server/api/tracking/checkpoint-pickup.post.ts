@@ -1,6 +1,11 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { notifyClientStatusUpdate } from '~~/server/utils/notifications'
+import {
+  broadcastInboundDispatchRealtime,
+  broadcastInboundOfficeNotification,
+  notifyClientStatusUpdate,
+  notifyDocumentOwner,
+} from '~~/server/utils/notifications'
 
 /**
  * POST /api/tracking/checkpoint-pickup
@@ -63,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   let docQuery = client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id')
     .eq('org_id', messengerOrgId)
     .eq('tracking_status', 'CREATED')
     .order('created_at', { ascending: true })
@@ -120,6 +125,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const nextStep = (doc.current_step ?? 0) + 1
+  let destOfficeId: string | null = null
   let destOfficeName: string | null = null
 
   if (doc.stage_id) {
@@ -130,7 +136,16 @@ export default defineEventHandler(async (event) => {
       .eq('step_number', nextStep)
       .maybeSingle()
 
-    destOfficeName = (stepRow as { offices?: { name?: string } } | null)?.offices?.name ?? null
+    if (stepRow?.office_id) {
+      destOfficeId = String(stepRow.office_id)
+      destOfficeName = (stepRow as { offices?: { name?: string } } | null)?.offices?.name ?? null
+    }
+  }
+
+  if (!destOfficeId && doc.office_id && String(doc.office_id) !== String(officeId)) {
+    destOfficeId = String(doc.office_id)
+    const { data: offRow } = await client.from('offices').select('name').eq('id', destOfficeId).maybeSingle()
+    if (offRow?.name) destOfficeName = offRow.name
   }
 
   const pickupNote =
@@ -142,7 +157,7 @@ export default defineEventHandler(async (event) => {
     org_id: messengerOrgId,
     status: 'PICKED_UP',
     step_index: doc.current_step ?? 0,
-    office_id: null,
+    office_id: officeId,
     office_name: office.name,
     actor_id: actorId,
     actor_role: 'messenger',
@@ -155,7 +170,7 @@ export default defineEventHandler(async (event) => {
     org_id: messengerOrgId,
     status: 'IN_TRANSIT',
     step_index: nextStep,
-    office_id: null,
+    office_id: destOfficeId,
     office_name: destOfficeName,
     actor_id: actorId,
     actor_role: 'messenger',
@@ -200,6 +215,88 @@ export default defineEventHandler(async (event) => {
     },
   }, client)
 
+  // Claim any open messenger pool pickup notifications for this document
+  await client
+    .from('notifications')
+    .update({
+      is_claimed: true,
+      claimed_by_user_id: actorId,
+      is_read: true,
+    })
+    .eq('document_id', doc.id)
+    .eq('org_id', messengerOrgId)
+    .eq('target_role', 'messenger')
+    .eq('is_claimed', false)
+
+  // 1. Notify Origin Station / Office (Departure Notice)
+  if (officeId) {
+    await broadcastInboundOfficeNotification({
+      orgId: messengerOrgId,
+      documentId: doc.id,
+      documentTitle: doc.title,
+      messengerName: actorRow.full_name,
+      officeId,
+      officeName: office.name,
+      title: 'Document Departed Office',
+      message: `${actorRow.full_name} has picked up "${doc.title}" from ${office.name}.`,
+    })
+
+    await broadcastInboundDispatchRealtime(
+      messengerOrgId,
+      officeId,
+      'OUTGOING_DISPATCH',
+      {
+        type: 'OUTGOING_DISPATCH',
+        event: 'OUTGOING_DISPATCH',
+        document_id: doc.id,
+        document_title: doc.title,
+        batch_manifest_id: null,
+        origin_office_id: officeId,
+        origin_office_name: office.name,
+        target_office_id: destOfficeId,
+        target_office_name: destOfficeName,
+        assigned_messenger_id: actorId,
+        messenger_name: actorRow.full_name,
+        tracking_status: 'IN_TRANSIT',
+        dispatched_at: new Date().toISOString(),
+        notes: `${actorRow.full_name} picked up "${doc.title}" from ${office.name}.`,
+      },
+    )
+  }
+
+  // 2. Notify destination office (Inbound ASN)
+  if (destOfficeId) {
+    await broadcastInboundOfficeNotification({
+      orgId: messengerOrgId,
+      documentId: doc.id,
+      documentTitle: doc.title,
+      messengerName: actorRow.full_name,
+      officeId: destOfficeId,
+      officeName: destOfficeName,
+      type: 'ASN_EN_ROUTE',
+      title: 'Inbound Document En Route',
+      message: `${actorRow.full_name} has picked up "${doc.title}" and is currently in transit to ${destOfficeName || 'your station'}.`,
+    })
+  }
+
+  // 3. Notify client / document owner
+  if (doc.user_id) {
+    const originLabel = office.name ? office.name : 'Office'
+    await notifyDocumentOwner({
+      orgId: messengerOrgId,
+      documentId: doc.id,
+      documentTitle: doc.title,
+      userId: String(doc.user_id),
+      title: `Document Departed ${originLabel}`,
+      message: `${actorRow.full_name} picked up "${doc.title}" from ${office.name || 'origin station'} and it is now in transit${destOfficeName ? ` toward ${destOfficeName}` : ''}.`,
+      trackingStatus: 'IN_TRANSIT',
+      originOfficeId: officeId,
+      originOfficeName: office.name,
+      targetOfficeId: destOfficeId,
+      targetOfficeName: destOfficeName,
+    })
+  }
+
   await notifyClientStatusUpdate({
     orgId: messengerOrgId,
     documentId: doc.id,
@@ -208,6 +305,41 @@ export default defineEventHandler(async (event) => {
     clientUserId: doc.user_id ? String(doc.user_id) : null,
   })
 
+  // 4. Broadcast Realtime dispatch alerts to Destination Office
+  const nowIso = new Date().toISOString()
+  const dispatchPayload = {
+    type: 'INCOMING_DISPATCH',
+    event: 'INCOMING_DISPATCH',
+    document_id: doc.id,
+    document_title: doc.title,
+    batch_manifest_id: null,
+    origin_office_id: officeId,
+    origin_office_name: office.name,
+    target_office_id: destOfficeId,
+    target_office_name: destOfficeName,
+    next_step: nextStep,
+    assigned_messenger_id: actorId,
+    messenger_name: actorRow.full_name,
+    tracking_status: 'IN_TRANSIT',
+    dispatched_at: nowIso,
+    notes: destOfficeName
+      ? `In transit to ${destOfficeName} (Step ${nextStep}).`
+      : `In transit toward Step ${nextStep}.`,
+  }
+
+  await broadcastInboundDispatchRealtime(
+    messengerOrgId,
+    destOfficeId,
+    'INCOMING_DISPATCH',
+    dispatchPayload,
+  )
+  await broadcastInboundDispatchRealtime(
+    messengerOrgId,
+    destOfficeId,
+    'ASN_PROACTIVE_ALERT',
+    dispatchPayload,
+  )
+
   return {
     success: true,
     message: `Picked up "${doc.title}" from ${office.name}. Now IN TRANSIT.`,
@@ -215,9 +347,10 @@ export default defineEventHandler(async (event) => {
       office: { id: office.id, name: office.name, code: office.code },
       document: updatedDoc,
       destination: destOfficeName
-        ? { office_name: destOfficeName, step: nextStep }
-        : { step: nextStep },
+        ? { office_id: destOfficeId, office_name: destOfficeName, step: nextStep }
+        : { office_id: destOfficeId, step: nextStep },
       messenger: { id: actorId, name: actorRow.full_name },
+      dispatch_alert: dispatchPayload,
     },
   }
 })

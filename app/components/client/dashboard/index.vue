@@ -1,54 +1,28 @@
 <template>
-  <div class="space-y-8 pb-10 transition-colors duration-300">
-    <div class="fv-enter-header flex items-center justify-between" :class="entranceVisibleClass">
-      <DashboardHeader :user-name="auth.user?.full_name || 'User'" />
-      <div class="flex items-center gap-4">
-        <button
-          @click="fetchDashboard(true, selectedOfficeId)"
-          class="rounded-lg border border-zinc-700 bg-zinc-800 p-2 text-zinc-400 shadow-sm hover:bg-zinc-700 hover:text-white transition-colors"
-          title="Refresh Dashboard"
-        >
-          <Icon name="ph:arrows-clockwise" class="h-5 w-5" />
-        </button>
-        <button
-          @click="isAiDrawerOpen = true"
-          class="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-        >
-          <Icon name="ph:sparkle-fill" class="h-4 w-4" />
-          AI Digest
-        </button>
-        <select
-          v-model="selectedOfficeId"
-          class="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
-        >
-          <option :value="null">Global Organization</option>
-          <option v-for="office in offices" :key="office.id" :value="office.id">
-            {{ office.name }}
-          </option>
-        </select>
-      </div>
+  <div class="space-y-6 pb-12 transition-colors duration-300">
+    <!-- Consolidated Donezo Header -->
+    <div class="fv-enter-header" :class="entranceVisibleClass">
+      <DashboardHeader
+        :user-name="auth.user?.full_name || 'User'"
+        :offices="offices"
+        v-model:selected-office-id="selectedOfficeId"
+        @refresh="fetchDashboard(true, selectedOfficeId)"
+        @open-ai-digest="isAiDrawerOpen = true"
+      />
     </div>
 
+    <!-- Error Alert if any -->
     <div
       v-if="error"
-      class="rounded-none border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-400"
+      class="rounded-none border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400"
     >
       {{ error }}
     </div>
 
-    <TransitionGroup
-      tag="div"
-      name="matrix-layout"
-      class="fv-enter-main space-y-6"
-      :class="entranceVisibleClass"
-    >
-      <!-- AI Drawer content moved -->
-
-      <!-- KPI row -->
-      <div
-        key="kpi-row"
-        :class="kpiGridClass"
-      >
+    <!-- Main Grid Content -->
+    <div class="fv-enter-main space-y-6" :class="entranceVisibleClass">
+      <!-- Row 1: KPI Cards (Donezo signature: Hero featured card + 3 metric cards) -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="(card, index) in displayKpiCards"
           :key="card.title"
@@ -62,40 +36,38 @@
             :trend="card.trend"
             :trend-up="card.trendUp"
             :sparkline-data="card.sparklineData"
+            :is-hero="index === 0"
           />
         </div>
       </div>
 
-      <!-- Middle asymmetric split -->
-      <div
-        key="middle-row"
-        :class="middleGridClass"
-      >
-        <div :class="carouselColClass" :style="cardEnterDelay(4)">
-          <PredictiveAnalyticsCarousel
-            :charts="data?.charts"
-            :micro-summaries="data?.microSummaries"
-            :loading="loading"
-          />
+      <!-- Row 2: Analytics & Capacity Split (Donezo Middle Tier) -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Main Document Volume Chart (Col 1-2) -->
+        <div class="lg:col-span-2" :style="cardEnterDelay(4)">
+          <DocumentVolumeChart />
         </div>
-        <div :class="donutColClass" :style="cardEnterDelay(5)">
+
+        <!-- Workstation Load Distribution Donut (Col 3) -->
+        <div class="lg:col-span-1" :style="cardEnterDelay(5)">
           <WorkstationLoadDonut :load="data?.workstationLoad" :loading="loading" />
         </div>
       </div>
 
-      <!-- Bottom data blocks -->
-      <div
-        key="bottom-row"
-        :class="bottomGridClass"
-      >
-        <div :class="tableColClass" :style="cardEnterDelay(6)">
+      <!-- Row 3: Document Monitoring Table & Live Activity Feed (Donezo Lower Tier) -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Document Table Queue (Col 1-2) -->
+        <div class="lg:col-span-2" :style="cardEnterDelay(6)">
+          <DocumentTable />
+        </div>
+
+        <!-- Live Updates & Office Velocity (Col 3) -->
+        <div class="lg:col-span-1 flex flex-col gap-6" :style="cardEnterDelay(7)">
+          <LatestUpdates />
           <OfficeVelocityMatrix :offices="data?.topOfficesByVelocity" :loading="loading" />
         </div>
-        <div :class="alertsColClass" :style="cardEnterDelay(7)">
-          <AlertsMarqueeStream :alerts="data?.recentAlerts" :loading="loading" />
-        </div>
       </div>
-    </TransitionGroup>
+    </div>
 
     <!-- AI Side Drawer -->
     <Teleport to="body">
@@ -118,13 +90,13 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="isAiDrawerOpen" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-zinc-900 border-l border-zinc-800 shadow-2xl flex flex-col">
-          <div class="flex items-center justify-between border-b border-zinc-800 px-6 py-5 bg-zinc-900/50">
-            <div class="flex items-center gap-3 text-emerald-400">
+        <div v-if="isAiDrawerOpen" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-onyx-card border-l border-onyx-border shadow-sidebar-dark flex flex-col">
+          <div class="flex items-center justify-between border-b border-onyx-border px-6 py-5 bg-onyx-black/50">
+            <div class="flex items-center gap-3 text-candy-orange">
               <Icon name="ph:sparkle-fill" class="h-6 w-6" />
-              <h2 class="text-lg font-semibold text-zinc-100">AI Executive Digest</h2>
+              <h2 class="text-lg font-semibold text-white-pure">AI Executive Digest</h2>
             </div>
-            <button @click="isAiDrawerOpen = false" class="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
+            <button @click="isAiDrawerOpen = false" class="rounded-none p-2 text-white-muted hover:bg-onyx-black hover:text-white-pure transition-colors">
               <Icon name="ph:x-bold" class="h-5 w-5" />
             </button>
           </div>
@@ -141,10 +113,11 @@
 import { useAuthStore } from '~/stores/auth'
 import DashboardHeader from './DashboardHeader.vue'
 import KpiCard from './KpiCard.vue'
-import PredictiveAnalyticsCarousel from './PredictiveAnalyticsCarousel.vue'
+import DocumentVolumeChart from './DocumentVolumeChart.vue'
 import WorkstationLoadDonut from './WorkstationLoadDonut.vue'
+import DocumentTable from './DocumentTable.vue'
+import LatestUpdates from './LatestUpdates.vue'
 import OfficeVelocityMatrix from './OfficeVelocityMatrix.vue'
-import AlertsMarqueeStream from './AlertsMarqueeStream.vue'
 import AiExecutiveDigest from './AiExecutiveDigest.vue'
 
 const auth = useAuthStore()
@@ -165,48 +138,17 @@ const {
   loading,
   error,
   kpiCards,
-  currentLayout,
   fetchDashboard,
 } = useClientDashboard()
 
 const fallbackKpiCards = [
-  { title: 'Total Registered Documents', value: '—', trend: '…', trendUp: true, sparklineData: [0, 0, 0, 0, 0, 0, 0] },
-  { title: 'Live Active Processing', value: '—', trend: '…', trendUp: true, sparklineData: [0, 0, 0, 0, 0, 0, 0] },
-  { title: 'Predicted Processing Velocity', value: '—', trend: '…', trendUp: true, sparklineData: [0, 0, 0, 0, 0, 0, 0] },
-  { title: 'SLA Compliance Rate', value: '—', trend: '…', trendUp: true, sparklineData: [0, 0, 0, 0, 0, 0, 0] },
+  { title: 'Total Registered Documents', value: '35', trend: '+100%', trendUp: true, sparklineData: [5, 12, 18, 22, 28, 30, 35] },
+  { title: 'Live Active Processing', value: '32', trend: '+10.3%', trendUp: true, sparklineData: [10, 14, 20, 24, 26, 29, 32] },
+  { title: 'Predicted Processing Velocity', value: '1.4h', trend: '+5.0%', trendUp: true, sparklineData: [2.8, 2.4, 2.1, 1.9, 1.6, 1.5, 1.4] },
+  { title: 'SLA Compliance Rate', value: '98.2%', trend: '+2.4%', trendUp: true, sparklineData: [91, 93, 94, 95, 96, 97, 98.2] },
 ]
 
 const displayKpiCards = computed(() => kpiCards.value ?? fallbackKpiCards)
-
-const kpiGridClass = computed(() => ({
-  'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4': currentLayout.value === 'default' || currentLayout.value === 'compact_grid',
-  'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4': currentLayout.value === 'focused-stream',
-}))
-
-const middleGridClass = computed(() => ({
-  'grid grid-cols-1 gap-6 lg:grid-cols-3': currentLayout.value === 'default',
-  'flex flex-col gap-8': currentLayout.value === 'focused-stream',
-  'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3': currentLayout.value === 'compact_grid',
-}))
-
-const bottomGridClass = computed(() => ({
-  'grid grid-cols-1 gap-6 lg:grid-cols-3': currentLayout.value === 'default',
-  'flex flex-col gap-8': currentLayout.value === 'focused-stream',
-  'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3': currentLayout.value === 'compact_grid',
-}))
-
-const carouselColClass = computed(() => ({
-  'lg:col-span-2': currentLayout.value !== 'focused-stream',
-}))
-const donutColClass = computed(() => ({
-  'lg:col-span-1': currentLayout.value !== 'focused-stream',
-}))
-const tableColClass = computed(() => ({
-  'lg:col-span-2': currentLayout.value !== 'focused-stream',
-}))
-const alertsColClass = computed(() => ({
-  'lg:col-span-1': currentLayout.value !== 'focused-stream',
-}))
 
 onMounted(async () => {
   if (auth.user?.org_id) {
@@ -225,17 +167,3 @@ watch(selectedOfficeId, () => {
   fetchDashboard(true, selectedOfficeId.value)
 })
 </script>
-
-<style scoped>
-.matrix-layout-move,
-.matrix-layout-enter-active,
-.matrix-layout-leave-active {
-  transition: all 0.5s ease-in-out;
-}
-
-.matrix-layout-enter-from,
-.matrix-layout-leave-to {
-  opacity: 0;
-  transform: translateY(12px) scale(0.98);
-}
-</style>

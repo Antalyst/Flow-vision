@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, createError, setResponseStatus } from 'h3';
+import { broadcastInboundOfficeNotification, broadcastInboundDispatchRealtime } from '~~/server/utils/notifications';
 
 export default defineEventHandler(async (event) => {
   // 1. Safely read the incoming request body
@@ -82,6 +83,49 @@ export default defineEventHandler(async (event) => {
       document_description || '',
       status
     ]);
+
+    // Optional pre-pickup ASN notice if destinationOfficeId is provided
+    const destinationOfficeId = body.destination_office_id || body.destinationOfficeId || null;
+    const orgId = body.org_id || body.orgId || null;
+
+    if (destinationOfficeId && orgId) {
+      try {
+        await broadcastInboundOfficeNotification({
+          orgId: String(orgId),
+          documentId: String(result.insertId),
+          documentTitle: document_name,
+          officeId: String(destinationOfficeId),
+          type: 'ASN_PENDING_PICKUP',
+          title: 'Inbound Advance Notice — Awaiting Pickup',
+          message: `"${document_name}" has been released by origin office and is waiting for courier pickup.`,
+          metadata: {
+            type: 'ASN_PENDING_PICKUP',
+            origin_office_id: office_id,
+            target_step: 1,
+          },
+        });
+
+        await broadcastInboundDispatchRealtime(
+          String(orgId),
+          String(destinationOfficeId),
+          'ASN_PENDING_PICKUP',
+          {
+            type: 'ASN_PENDING_PICKUP',
+            event: 'ASN_PENDING_PICKUP',
+            document_id: String(result.insertId),
+            document_title: document_name,
+            origin_office_id: office_id,
+            target_office_id: String(destinationOfficeId),
+            step: 1,
+            tracking_status: 'CREATED',
+            dispatched_at: new Date().toISOString(),
+            notes: `Document released by origin office and awaiting courier pickup.`,
+          },
+        );
+      } catch (asnErr) {
+        console.warn('[Documents POST] Pre-pickup ASN notification skipped or failed:', asnErr);
+      }
+    }
 
     // 8. Return 201 Success status with the database insertion ID
     setResponseStatus(event, 201);

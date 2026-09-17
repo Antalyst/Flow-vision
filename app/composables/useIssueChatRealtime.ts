@@ -26,6 +26,7 @@ export function useIssueChatRealtime(
   }
 
   const subscribe = async () => {
+    if (!import.meta.client) return
     await teardown()
 
     const oid = orgId.value
@@ -50,7 +51,9 @@ export function useIssueChatRealtime(
     channelRef.value = channel
   }
 
-  watch([orgId, issueId], () => { subscribe() }, { immediate: true })
+  if (import.meta.client) {
+    watch([orgId, issueId], () => { subscribe() }, { immediate: true })
+  }
 
   onUnmounted(() => { teardown() })
 

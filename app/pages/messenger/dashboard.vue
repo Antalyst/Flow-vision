@@ -21,7 +21,7 @@
         class="inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-sm"
         :class="isDark ? 'border-onyx-border bg-onyx-card text-gray-300' : 'border-gray-200 bg-white text-gray-700'"
       >
-        <Icon name="ph:building-office-light" class="h-4 w-4 text-candy-orange" />
+        <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
         <span class="font-semibold">{{ auth.currentOrg.name }}</span>
       </div>
     </div>
@@ -183,11 +183,14 @@ async function loadCustody(force = false) {
   try {
     const res = await $fetch<{
       success: boolean
-      data: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[] }
+      data?: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[] }
     }>('/api/tracking/custody', { credentials: 'include' })
-    custody.value = res.data ?? { in_transit: [], awaiting_scan: [] }
+    custody.value = {
+      in_transit: Array.isArray(res?.data?.in_transit) ? res.data.in_transit : [],
+      awaiting_scan: Array.isArray(res?.data?.awaiting_scan) ? res.data.awaiting_scan : [],
+    }
   } catch (err) {
-    console.error('[MessengerDashboard] custody load failed:', err)
+    console.warn('[MessengerDashboard] custody load error, defaulting to empty list:', err)
     custody.value = { in_transit: [], awaiting_scan: [] }
   } finally {
     loading.value = false

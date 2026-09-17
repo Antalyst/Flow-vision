@@ -3,7 +3,11 @@ import type { H3Event } from 'h3'
 import { serverSupabaseClient } from '#supabase/server'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { broadcastPickupNotification } from '~~/server/utils/notifications'
+import {
+  broadcastPickupNotification,
+  broadcastInboundOfficeNotification,
+  broadcastInboundDispatchRealtime,
+} from '~~/server/utils/notifications'
 
 const ALLOWED_ROLES = ['client', 'employee'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
@@ -344,6 +348,54 @@ export async function registerMetadataDocument(event: H3Event, body: RegisterDoc
     })
   } catch (notificationErr) {
     console.error('[Register] Messenger notification broadcast failed:', notificationErr)
+  }
+
+  // Proactive Inbound Advance Shipping Notice (ASN) — Awaiting Courier Pickup
+  try {
+    const destOfficeId = resolvedRouteSteps[0]?.office_id ? String(resolvedRouteSteps[0].office_id) : null
+    const destOfficeName = resolvedRouteSteps[0]?.office_name ?? null
+
+    if (destOfficeId) {
+      const originLabel = resolvedOfficeName ? resolvedOfficeName : 'origin office'
+      await broadcastInboundOfficeNotification({
+        orgId,
+        documentId,
+        documentTitle: title,
+        officeId: destOfficeId,
+        officeName: destOfficeName,
+        type: 'ASN_PENDING_PICKUP',
+        title: 'Inbound Advance Notice — Awaiting Pickup',
+        message: `"${title}" has been released by ${originLabel} and is waiting for courier pickup.`,
+        metadata: {
+          type: 'ASN_PENDING_PICKUP',
+          origin_office_id: resolvedOriginOfficeId,
+          origin_office_name: resolvedOfficeName,
+          target_step: 1,
+        },
+      })
+
+      await broadcastInboundDispatchRealtime(
+        orgId,
+        destOfficeId,
+        'ASN_PENDING_PICKUP',
+        {
+          type: 'ASN_PENDING_PICKUP',
+          event: 'ASN_PENDING_PICKUP',
+          document_id: documentId,
+          document_title: title,
+          origin_office_id: resolvedOriginOfficeId,
+          origin_office_name: resolvedOfficeName,
+          target_office_id: destOfficeId,
+          target_office_name: destOfficeName,
+          step: 1,
+          tracking_status: 'CREATED',
+          dispatched_at: new Date().toISOString(),
+          notes: `Document released by ${originLabel} and awaiting courier pickup.`,
+        },
+      )
+    }
+  } catch (asnErr) {
+    console.warn('[Register] Pre-pickup ASN alert failed (non-fatal):', asnErr)
   }
 
   return {

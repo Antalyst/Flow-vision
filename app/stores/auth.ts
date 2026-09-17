@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 interface User {
   user_id: string | number
+  id?: string | number
   full_name: string 
   email: string
   acctype_id: string | number
@@ -9,6 +10,9 @@ interface User {
   age: number
   role: string
   org_id: string | number | null
+  office_id?: string | number | null
+  current_office_id?: string | number | null
+  officeIds?: Array<string | number>
 }
 
 interface org {
@@ -47,6 +51,7 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     isOrg: (state) => state.user?.org_id || null,
     userRole: (state) => state.user?.role || null,
+    currentOfficeId: (state) => state.user?.current_office_id || state.user?.office_id || null,
 
     isLoggedIn: (state) => !!state.token && state.token !== 'null',
     isLoading: (state) => state.loading,

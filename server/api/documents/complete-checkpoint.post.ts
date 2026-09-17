@@ -2,9 +2,11 @@ import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import {
   broadcastPickupNotification,
+  broadcastInboundOfficeNotification,
+  broadcastInboundDispatchRealtime,
   notifyClientStatusUpdate,
 } from '~~/server/utils/notifications'
-import { getRouteContext, isDocumentAtFinalRouteStop, resolveOfficeName } from '~~/server/utils/routeCompletion'
+import { getRouteContext, isDocumentAtFinalRouteStop, resolveOfficeName, resolveRouteOfficeAtStep } from '~~/server/utils/routeCompletion'
 
 /**
  * POST /api/documents/complete-checkpoint
@@ -216,6 +218,54 @@ export default defineEventHandler(async (event) => {
     documentId: doc.id,
     documentTitle: doc.title,
   })
+
+  // Proactive Inbound Advance Shipping Notice (ASN) for next route step — Awaiting Courier Pickup
+  try {
+    const nextStep = currentStep + 1
+    const destination = await resolveRouteOfficeAtStep(client, doc.stage_id, nextStep)
+
+    if (destination.officeId) {
+      const originLabel = officeName ? officeName : 'current station'
+      await broadcastInboundOfficeNotification({
+        orgId,
+        documentId: doc.id,
+        documentTitle: doc.title,
+        officeId: destination.officeId,
+        officeName: destination.officeName,
+        type: 'ASN_PENDING_PICKUP',
+        title: 'Inbound Advance Notice — Awaiting Pickup',
+        message: `"${doc.title}" has been released by ${originLabel} and is waiting for courier pickup.`,
+        metadata: {
+          type: 'ASN_PENDING_PICKUP',
+          origin_office_id: officeId ? String(officeId) : null,
+          origin_office_name: officeName,
+          target_step: nextStep,
+        },
+      })
+
+      await broadcastInboundDispatchRealtime(
+        orgId,
+        destination.officeId,
+        'ASN_PENDING_PICKUP',
+        {
+          type: 'ASN_PENDING_PICKUP',
+          event: 'ASN_PENDING_PICKUP',
+          document_id: doc.id,
+          document_title: doc.title,
+          origin_office_id: officeId ? String(officeId) : null,
+          origin_office_name: officeName,
+          target_office_id: destination.officeId,
+          target_office_name: destination.officeName,
+          step: nextStep,
+          tracking_status: 'ARRIVED_AT_OFFICE',
+          dispatched_at: new Date().toISOString(),
+          notes: `Document released by ${originLabel} and awaiting courier pickup.`,
+        },
+      )
+    }
+  } catch (asnErr) {
+    console.warn('[complete-checkpoint] Pre-pickup ASN alert failed (non-fatal):', asnErr)
+  }
 
   return {
     success: true,

@@ -46,7 +46,7 @@
           class="inline-flex items-center gap-2 rounded-none border px-3.5 py-2 text-sm"
           :class="isDark ? 'bg-onyx-card border-onyx-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
         >
-          <Icon name="ph:building-office-light" class="h-4 w-4 text-candy-orange" />
+          <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
           <span class="font-semibold">{{ auth.currentOrg.name }}</span>
           <span class="font-mono text-xs opacity-50">{{ auth.currentOrg.code }}</span>
         </div>
@@ -341,7 +341,7 @@
 
           <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
             <div class="flex h-10 w-10 items-center justify-center rounded-none bg-gray-100 dark:bg-white/5">
-              <Icon name="ph:building-office-light" class="h-5 w-5" :class="mutedText" />
+              <Icon name="ph:buildings-light" class="h-5 w-5" :class="mutedText" />
             </div>
             <p class="text-xs" :class="mutedText">No offices assigned yet.</p>
             <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:underline">
@@ -470,6 +470,7 @@ import {
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import { useChartTheme } from '~/composables/useChartTheme'
+import { useInboundDispatchRealtime } from '~/composables/useInboundDispatchRealtime'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
@@ -530,6 +531,16 @@ const myOffices      = ref<OfficeRecord[]>([])
 const officesLoading = ref(false)
 const queueSummary   = ref<QueueSummary>({ total: 0, created: 0, picked_up: 0, in_transit: 0, arrived_at_office: 0, completed: 0 })
 const queueLoading   = ref(false)
+
+// ── Inbound Dispatch Realtime Subscription (ASN) ───────────────────────
+const myOfficeIds = computed(() => myOffices.value.map((o) => o.id))
+const orgIdComputed = computed(() => (auth.user?.org_id ? String(auth.user.org_id) : null))
+useInboundDispatchRealtime(orgIdComputed, myOfficeIds, (dispatch) => {
+  console.log('[Dashboard] Inbound dispatch alert received via Realtime:', dispatch)
+  fetchLedger()
+  fetchQueue()
+  fetchPredictiveData()
+})
 
 const predictiveData = ref<{ historical: number[], predicted: (number | null)[] }>({
   historical: [0, 0, 0, 0],
