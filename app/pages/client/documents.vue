@@ -4,8 +4,8 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | Document Ledger',
-  description: 'Search, trace, and manage all historical and active physical documents within your organization.'
+  title: 'FlowVision | All Documents',
+  description: 'Search and manage every document in your organization, past and present.'
 })
 import DocumentsView from '~/components/client/documents/index.vue'
 

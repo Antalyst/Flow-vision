@@ -36,7 +36,7 @@
           <Icon name="ph:desktop-light" class="h-6 w-6 text-candy-orange" />
         </div>
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
+          <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.length }}</p>
         </div>
       </div>
@@ -48,7 +48,7 @@
           <Icon name="ph:user-check-light" class="h-6 w-6 text-emerald-500" />
         </div>
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Assigned</p>
+          <p class="text-[13px] font-bold uppercase tracking-widest text-emerald-500">Assigned</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => t.assigned_user_profile).length }}</p>
         </div>
       </div>
@@ -60,7 +60,7 @@
           <Icon name="ph:user-minus-light" class="h-6 w-6 text-amber-500" />
         </div>
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Unassigned</p>
+          <p class="text-[13px] font-bold uppercase tracking-widest text-amber-500">Unassigned</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => !t.assigned_user_profile).length }}</p>
         </div>
       </div>

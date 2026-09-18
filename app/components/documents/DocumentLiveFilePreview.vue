@@ -17,7 +17,7 @@
       </div>
       <span
         v-if="fileName"
-        class="truncate text-[10px] font-mono uppercase tracking-wide"
+        class="truncate text-[13px] font-mono uppercase tracking-wide"
         :class="isDark ? 'text-white-muted' : 'text-gray-500'"
       >
         {{ fileName }}

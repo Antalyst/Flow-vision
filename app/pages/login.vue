@@ -20,7 +20,7 @@
       <div class="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center px-10 text-center">
         <img src="/logo/new-logo.png" alt="FlowVision" class="mb-5 h-20 w-auto pointer-events-auto">
         <h1 class="font-primary font-extrabold text-white text-3xl tracking-wide">FLOW VISION</h1>
-        <p class="mt-2 font-dashboard text-[11px] font-semibold text-candy-orange">
+        <p class="mt-2 font-dashboard text-[14px] font-semibold text-candy-orange">
           AI-Powered Document Monitoring Framework
         </p>
       </div>
@@ -51,7 +51,7 @@
 
         <form @submit.prevent="handleLogin" class="flex flex-col gap-5">
           <div class="flex flex-col gap-1.5">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Email Address</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Email Address</label>
             <input
               v-model="login.email"
               type="email"
@@ -62,7 +62,7 @@
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Password</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Password</label>
             <div class="relative w-full">
               <input
                 v-model="login.password"
@@ -73,7 +73,7 @@
               >
               <button
                 type="button"
-                class="absolute inset-y-0 right-0 flex items-center px-1 font-dashboard text-[10px] font-semibold uppercase tracking-wide text-white-muted transition hover:text-candy-orange"
+                class="absolute inset-y-0 right-0 flex items-center px-1 font-dashboard text-[13px] font-semibold uppercase tracking-wide text-white-muted transition hover:text-candy-orange"
                 @click="showPassword = !showPassword"
               >
                 {{ showPassword ? 'Hide' : 'Show' }}
@@ -88,9 +88,9 @@
                 type="checkbox"
                 class="h-3.5 w-3.5 rounded border-zinc-300 accent-candy-orange dark:border-onyx-border"
               >
-              <span class="font-dashboard text-[11px] text-neutral-700 dark:text-white-muted">Remember me</span>
+              <span class="font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">Remember me</span>
             </label>
-            <button type="button" class="font-dashboard text-[11px] font-medium text-neutral-700 transition hover:text-candy-orange dark:text-white-muted">
+            <button type="button" class="font-dashboard text-[14px] font-medium text-neutral-700 transition hover:text-candy-orange dark:text-white-muted">
               Forgot Password
             </button>
           </div>
@@ -100,7 +100,7 @@
           </button>
         </form>
 
-        <p class="mt-5 font-dashboard text-[11px] text-neutral-700 dark:text-white-muted">
+        <p class="mt-5 font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">
           Don't Have Account?
           <NuxtLink to="/register" class="font-semibold text-candy-orange transition hover:text-candy-hover">
             Register

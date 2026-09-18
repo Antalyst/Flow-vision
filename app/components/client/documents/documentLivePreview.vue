@@ -2,7 +2,7 @@
   <div class="relative mx-auto aspect-[1/1.414] max-h-[550px] overflow-y-auto rounded-none border border-gray-200 bg-white p-6 text-black shadow-2xl">
     <!-- Top frame badge -->
     <div class="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center">
-      <span class="mt-2 rounded-none bg-gray-900/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+      <span class="mt-2 rounded-none bg-gray-900/90 px-3 py-1 text-[13px] font-bold uppercase tracking-[0.2em] text-white">
         Live Document Preview
       </span>
     </div>
@@ -58,7 +58,7 @@
       
       <div v-if="qrBase64" class="mt-4 flex flex-col items-center gap-2 rounded-none border border-dashed border-candy-orange/40 bg-candy-orange/5 p-4">
         <img :src="qrBase64" class="h-24 w-24 bg-white" alt="Tracking QR Code" />
-        <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Tracking QR Generated</p>
+        <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Tracking QR Generated</p>
       </div>
     </div>
 

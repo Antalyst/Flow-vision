@@ -586,7 +586,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
       { label: 'Busy Desks', value: String(busyCount), tone: 'amber' as const },
       { label: 'Available', value: String(availableCount), tone: 'emerald' as const },
       { label: 'In Transit', value: String(inTransitCount), tone: 'orange' as const },
-      { label: 'Queue Depth', value: String(activeCount), tone: 'zinc' as const },
+      { label: 'Waiting', value: String(activeCount), tone: 'zinc' as const },
     ],
   }
 

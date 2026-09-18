@@ -25,7 +25,7 @@
               Message Protocol
             </h2>
           </div>
-          <span class="rounded-full bg-candy-orange/10 px-4 py-2 font-dashboard text-[10px] font-bold uppercase tracking-[0.18em] text-candy-orange">
+          <span class="rounded-full bg-candy-orange/10 px-4 py-2 font-dashboard text-[13px] font-bold uppercase tracking-[0.18em] text-candy-orange">
             Online
           </span>
         </div>
@@ -113,7 +113,7 @@
         </div>
 
         <div class="mt-8 rounded-card border border-candy-orange/30 bg-candy-orange/10 p-5">
-          <p class="font-dashboard text-[10px] font-bold uppercase tracking-[0.2em] text-candy-orange">
+          <p class="font-dashboard text-[13px] font-bold uppercase tracking-[0.2em] text-candy-orange">
             Regional Offices
           </p>
           <p class="mt-3 font-dashboard text-sm leading-7 text-white-muted">

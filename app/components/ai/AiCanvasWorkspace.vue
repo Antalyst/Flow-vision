@@ -59,7 +59,7 @@
 
         <!-- Recents -->
         <p
-          class="fv-ai-enter-stagger px-5 pb-2 pt-5 text-[10px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
+          class="fv-ai-enter-stagger px-5 pb-2 pt-5 text-[13px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-500"
           :class="enterClass"
           :style="staggerDelay(1, 320)"
         >
@@ -233,7 +233,7 @@
               <!-- User bubble -->
               <div
                 v-if="msg.role === 'user'"
-                class="max-w-[80%] rounded-3xl bg-neutral-100 px-5 py-3 text-[15px] text-neutral-800 dark:bg-white/10 dark:text-neutral-200"
+                class="max-w-[80%] rounded-3xl bg-neutral-100 px-5 py-3 text-[17px] text-neutral-800 dark:bg-white/10 dark:text-neutral-200"
               >
                 <p class="whitespace-pre-line">{{ msg.content }}</p>
               </div>
@@ -249,7 +249,7 @@
 
               <!-- Assistant bubble -->
               <div v-else class="min-w-0 max-w-[85%] space-y-3">
-                <div class="px-1 py-2 text-[15px] leading-relaxed text-neutral-800 dark:text-neutral-200">
+                <div class="px-1 py-2 text-[17px] leading-relaxed text-neutral-800 dark:text-neutral-200">
                   <p class="whitespace-pre-line">
                     <AiTypewriter
                       :text="msg.content"
@@ -273,10 +273,10 @@
                     <Icon :name="msg.documentPayload.type === 'spreadsheet' ? 'ph:grid-nine' : 'ph:file-text'" class="h-5 w-5" />
                   </span>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
+                    <span class="block truncate text-[15px] font-semibold text-neutral-900 dark:text-neutral-100">
                       {{ msg.documentPayload.title }}
                     </span>
-                    <span class="block text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    <span class="block text-[14px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                       View document
                     </span>
                   </span>
@@ -302,10 +302,10 @@
                         <Icon name="ph:file-text" class="h-4 w-4" />
                       </span>
                       <span class="min-w-0 flex-1">
-                        <span class="block truncate text-[13px] font-semibold text-neutral-900 dark:text-neutral-100">
+                        <span class="block truncate text-[15px] font-semibold text-neutral-900 dark:text-neutral-100">
                           {{ doc.title || 'Untitled Document' }}
                         </span>
-                        <span class="block text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
+                        <span class="block text-[14px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">
                           {{ doc.description || 'No description provided.' }}
                         </span>
                       </span>
@@ -316,7 +316,7 @@
                   </button>
                 </div>
 
-                <span class="block px-1 font-mono text-[11px] text-neutral-400 dark:text-neutral-600">{{ msg.timestamp }}</span>
+                <span class="block px-1 font-mono text-[14px] text-neutral-400 dark:text-neutral-600">{{ msg.timestamp }}</span>
               </div>
             </div>
 
@@ -325,7 +325,7 @@
               <AiGeminiLoader class="mt-1 flex-shrink-0" />
               <div class="flex items-center px-1 py-1">
                 <Transition name="think" mode="out-in">
-                  <span :key="thinkingStageText" class="text-[14px] bg-gradient-to-r from-blue-500 via-red-400 to-yellow-500 bg-clip-text text-transparent italic">{{ thinkingStageText }}</span>
+                  <span :key="thinkingStageText" class="text-[16px] bg-gradient-to-r from-blue-500 via-red-400 to-yellow-500 bg-clip-text text-transparent italic">{{ thinkingStageText }}</span>
                 </Transition>
               </div>
             </div>
@@ -347,7 +347,7 @@
                 :disabled="isLoading"
                 rows="1"
                 placeholder="Ask FlowVision anything about your documents…"
-                class="max-h-40 flex-1 resize-none bg-transparent px-4 py-3 text-[15px] text-slate-800 placeholder-neutral-500 focus:outline-none disabled:opacity-50 dark:text-slate-200 dark:placeholder-neutral-400"
+                class="max-h-40 flex-1 resize-none bg-transparent px-4 py-3 text-[17px] text-slate-800 placeholder-neutral-500 focus:outline-none disabled:opacity-50 dark:text-slate-200 dark:placeholder-neutral-400"
                 @keydown.enter.exact.prevent="submitQuery"
               ></textarea>
               <button
@@ -359,7 +359,7 @@
                 <Icon v-else name="ph:arrow-up" class="h-5 w-5" />
               </button>
             </form>
-            <p class="mt-2 text-center text-[11px] text-neutral-500 dark:text-neutral-500">
+            <p class="mt-2 text-center text-[14px] text-neutral-500 dark:text-neutral-500">
               FlowVision Intelligence can make mistakes. Verify important facts.
             </p>
           </div>
@@ -390,7 +390,7 @@
                 </div>
                 <!-- Scope Badge -->
                 <span
-                  class="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  class="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider"
                   :class="props.scope === 'LOCAL'
                     ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
                     : 'bg-neutral-100 text-neutral-600 dark:bg-white/10 dark:text-neutral-400'"
@@ -456,7 +456,7 @@
                   class="border-b border-neutral-200 pb-6"
                   :class="isSpreadsheetCanvas ? 'mb-4' : 'mb-8'"
                 >
-                  <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">
+                  <p class="text-[13px] font-bold uppercase tracking-[0.2em] text-neutral-400 mb-2">
                     {{ isSpreadsheetCanvas ? 'FlowVision Data Matrix' : 'FlowVision Document' }}
                   </p>
                   <h1
@@ -478,7 +478,7 @@
                     ref="canvasBodyRef"
                     class="fv-doc-body leading-relaxed text-neutral-800"
                     :class="[
-                      isSpreadsheetCanvas ? 'fv-doc-body--matrix text-sm' : 'text-[15px]',
+                      isSpreadsheetCanvas ? 'fv-doc-body--matrix text-sm' : 'text-[17px]',
                     ]"
                     v-html="documentPayload.content"
                   ></div>

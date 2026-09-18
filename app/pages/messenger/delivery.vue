@@ -39,7 +39,7 @@
         class="dashboard-card border p-6"
         :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white-pure'"
       >
-        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Active Transit Run</p>
+        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Active Transit Run</p>
         <h1 class="mt-2 text-xl font-bold leading-tight" :class="headingClass">
           {{ trip.title }}
         </h1>
@@ -70,7 +70,7 @@
             class="rounded-xl border p-4 text-center"
             :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-surface'"
           >
-            <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Source Station</p>
+            <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Source Station</p>
             <p class="mt-2 text-sm font-bold" :class="headingClass">
               {{ trip.source_office_name || 'Origin desk' }}
             </p>
@@ -79,14 +79,14 @@
           <div class="flex flex-col items-center justify-center gap-1 px-2">
             <Icon name="ph:arrow-right-bold" class="hidden h-8 w-8 text-candy-orange md:block" />
             <Icon name="ph:arrow-down-bold" class="h-8 w-8 text-candy-orange md:hidden" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">In Transit</p>
+            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">In Transit</p>
           </div>
 
           <div
             class="rounded-xl border-2 border-candy-orange/40 bg-candy-orange/5 p-4 text-center"
             :class="isDark ? 'bg-candy-orange/10' : ''"
           >
-            <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Target Destination</p>
+            <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Target Destination</p>
             <p class="mt-2 text-sm font-bold text-candy-orange">
               {{ trip.destination_office_name || 'Next checkpoint' }}
             </p>

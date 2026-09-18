@@ -1,79 +1,42 @@
 <template>
   <div>
-    <!-- Main Navigation -->
-    <div class="mb-4">
-      <p v-if="!minimized" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
-        :class="isDark ? 'text-gray-500' : 'text-gray-400'">Main Navigation</p>
-      <div v-else class="h-4 border-t border-gray-200 dark:border-onyx-border mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
-      
+    <div v-for="(group, gIndex) in navGroups" :key="group.title" :class="gIndex > 0 ? 'mt-2.5' : ''">
+      <p v-if="!minimized" class="px-4 mb-1 text-[13px] font-bold uppercase tracking-widest"
+        :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ group.title }}</p>
+      <div v-else class="h-3 border-t mb-1 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
+
       <div class="space-y-0">
-        <NuxtLink v-for="item in mainNavItems" :key="item.to" :to="item.to"
-          class="nav-item w-full relative"
-          :class="[isActive(item.to) ? 'nav-item-active' : '', minimized ? 'justify-center px-0' : '']"
+        <NuxtLink v-for="item in group.items" :key="item.to" :to="item.to"
+          class="nav-item w-full relative rounded-lg mx-2"
+          :class="[isActive(item.to) ? 'nav-item-active' : '', minimized ? 'justify-center px-0 mx-0' : 'px-3 py-2']"
           :title="minimized ? item.label : undefined">
           <Icon :name="item.icon" class="w-5 h-5 flex-none" />
           <span v-if="!minimized" class="truncate">{{ item.label }}</span>
-          
+
           <span
             v-if="!minimized && item.to === '/client/notifications' && unreadCount > 0"
-            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-candy-orange px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[13px] font-bold text-white"
           >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
           </span>
 
           <span
             v-if="!minimized && item.to === '/client/messages' && chatUnreadCount > 0"
-            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-red-500 px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[13px] font-bold text-white"
           >
             {{ chatUnreadCount > 9 ? '9+' : chatUnreadCount }}
           </span>
 
-          <Icon v-else-if="!minimized && item.badge" name="ph:caret-down" class="w-3 h-3 ml-auto text-gray-400" />
-          
-          <div v-if="minimized && item.to === '/client/notifications' && unreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-none"></div>
-          <div v-if="minimized && item.to === '/client/messages' && chatUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
-        </NuxtLink>
-      </div>
-    </div>
-
-    <!-- Analytics & Insights -->
-    <div class="mb-4">
-      <p v-if="!minimized" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
-        :class="isDark ? 'text-gray-500' : 'text-gray-400'">Analytics & Insights</p>
-      <div v-else class="h-0 border-t mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
-      
-      <div class="space-y-0">
-        <NuxtLink v-for="item in analyticsNavItems" :key="item.to" :to="item.to"
-          class="nav-item w-full relative"
-          :class="[isActive(item.to) ? 'nav-item-active' : '', minimized ? 'justify-center px-0' : '']"
-          :title="minimized ? item.label : undefined">
-          <Icon :name="item.icon" class="w-5 h-5 flex-none" />
-          <span v-if="!minimized" class="truncate">{{ item.label }}</span>
           <span
             v-if="!minimized && item.to === '/client/reports' && reportUnreadCount > 0"
-            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-sm bg-candy-orange px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[13px] font-bold text-white"
           >
             {{ reportUnreadCount > 9 ? '9+' : reportUnreadCount }}
           </span>
-          
-          <div v-if="minimized && item.to === '/client/reports' && reportUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-none"></div>
-        </NuxtLink>
-      </div>
-    </div>
 
-    <!-- Support -->
-    <div>
-      <p v-if="!minimized" class="px-4 mb-2 text-[10px] font-bold uppercase tracking-widest"
-        :class="isDark ? 'text-gray-500' : 'text-gray-400'">Support</p>
-      <div v-else class="h-0 border-t mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
-
-      <div class="space-y-0">
-        <NuxtLink v-for="item in supportNavItems" :key="item.to" :to="item.to"
-          class="nav-item w-full"
-          :class="[isActive(item.to) ? 'nav-item-active' : '', minimized ? 'justify-center px-0' : '']"
-          :title="minimized ? item.label : undefined">
-          <Icon :name="item.icon" class="w-5 h-5 flex-none" />
-          <span v-if="!minimized" class="truncate">{{ item.label }}</span>
+          <div v-if="minimized && item.to === '/client/notifications' && unreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-full"></div>
+          <div v-if="minimized && item.to === '/client/messages' && chatUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></div>
+          <div v-if="minimized && item.to === '/client/reports' && reportUnreadCount > 0" class="absolute top-2 right-2 w-2 h-2 bg-candy-orange rounded-full"></div>
         </NuxtLink>
       </div>
     </div>
@@ -97,31 +60,57 @@ const chatUnreadCount = computed(() => chat.totalUnreadCount)
 
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 
-const mainNavItems = [
-  { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-light' },
-  { to: '/client/messages', label: 'Messages', icon: 'ph:chat-teardrop-text-light' },
-  { to: '/client/user-management', label: 'User Management', icon: 'ph:users-three-light' },
-  { to: '/client/documents', label: 'Documents', icon: 'ph:files-light', badge: true },
-  { to: '/client/scan', label: 'Scan QR', icon: 'ph:scan-light' },
-  { to: '/client/station', label: 'Office QR', icon: 'ph:qr-code-light' },
-  { to: '/client/activity', label: 'Activity', icon: 'ph:clock-counter-clockwise-light' },
-  { to: '/client/notifications', label: 'Notifications', icon: 'ph:bell-light' },
-  { to: '/client/office', label: 'Office', icon: 'ph:buildings-light', badge: true },
-  { to: '/client/stages', label: 'Stages', icon: 'ph:steps-light' },
-  { to: '/client/current-working', label: 'Current Working', icon: 'ph:briefcase-light' },
-  { to: '/client/ai', label: 'AI', icon: 'ph:brain-light' },
-]
-
-const analyticsNavItems = [
-  { to: '/client/sla-compliance', label: 'SLA Compliance', icon: 'ph:shield-check-light' },
-  { to: '/client/workload-analytics', label: 'Workload Analytics', icon: 'ph:chart-line-up-light' },
-  { to: '/client/reports', label: 'Reports', icon: 'ph:chart-bar-light' },
-]
-
-const supportNavItems = [
-  { to: '/client/feedback', label: 'Feedback', icon: 'ph:chat-circle-text-light' },
-  { to: '/client/help', label: 'Help & Support', icon: 'ph:question-light' },
-  { to: '/client/settings', label: 'Settings', icon: 'ph:gear-six-light' },
+// Grouped by what a non-technical user is trying to do, with "track a document's
+// journey" (the core MVP) surfaced right after the dashboard.
+const navGroups = [
+  {
+    title: 'Overview',
+    items: [
+      { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-light' },
+    ],
+  },
+  {
+    title: 'Track Documents',
+    items: [
+      { to: '/client/current-working', label: 'Live Tracking', icon: 'ph:truck-light' },
+      { to: '/client/documents', label: 'All Documents', icon: 'ph:files-light' },
+      { to: '/client/scan', label: 'Scan & Update', icon: 'ph:scan-light' },
+      { to: '/client/activity', label: 'Activity Log', icon: 'ph:clock-counter-clockwise-light' },
+    ],
+  },
+  {
+    title: 'Delivery Setup',
+    items: [
+      { to: '/client/stages', label: 'Workflow Steps', icon: 'ph:steps-light' },
+      { to: '/client/office', label: 'Branch Offices', icon: 'ph:buildings-light' },
+      { to: '/client/station', label: 'QR Terminals', icon: 'ph:qr-code-light' },
+    ],
+  },
+  {
+    title: 'Team',
+    items: [
+      { to: '/client/messages', label: 'Messages', icon: 'ph:chat-teardrop-text-light' },
+      { to: '/client/user-management', label: 'Team Members', icon: 'ph:users-three-light' },
+      { to: '/client/notifications', label: 'Notifications', icon: 'ph:bell-light' },
+    ],
+  },
+  {
+    title: 'Insights',
+    items: [
+      { to: '/client/sla-compliance', label: 'SLA Compliance', icon: 'ph:shield-check-light' },
+      { to: '/client/workload-analytics', label: 'Team Workload', icon: 'ph:chart-line-up-light' },
+      { to: '/client/reports', label: 'Reports', icon: 'ph:chart-bar-light' },
+      { to: '/client/ai', label: 'AI Insights', icon: 'ph:brain-light' },
+    ],
+  },
+  {
+    title: 'Support',
+    items: [
+      { to: '/client/feedback', label: 'Send Feedback', icon: 'ph:chat-circle-text-light' },
+      { to: '/client/help', label: 'Help & Support', icon: 'ph:question-light' },
+      { to: '/client/settings', label: 'Settings', icon: 'ph:gear-six-light' },
+    ],
+  },
 ]
 
 onMounted(() => {

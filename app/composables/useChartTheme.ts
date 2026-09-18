@@ -19,11 +19,11 @@ export function useChartTheme() {
   const donutBorderColor = computed(() => (isDark.value ? '#111113' : '#FFFFFF'))
 
   const candy = {
-    primary: '#6366F1', // Indigo 500
-    soft: 'rgba(99, 102, 241, 0.1)',
-    medium: 'rgba(99, 102, 241, 0.2)',
-    strong: 'rgba(99, 102, 241, 0.8)',
-    forecast: '#A8A29E', // Stone 400 for neutral projection
+    primary: '#EE4D2D', // Brand accent
+    soft: 'rgba(238, 77, 45, 0.1)',
+    medium: 'rgba(238, 77, 45, 0.2)',
+    strong: 'rgba(238, 77, 45, 0.8)',
+    forecast: 'rgba(238, 77, 45, 0.5)', // Accent, dashed + faded for projected values
   }
 
   function buildCartesianScales() {

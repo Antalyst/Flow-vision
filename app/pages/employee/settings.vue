@@ -33,7 +33,7 @@
         </span>
         <div>
           <h2 class="text-sm font-bold" :class="headingClass">Station Profile</h2>
-          <p class="text-[11px]" :class="mutedClass">Workstation metadata assigned by your organisation.</p>
+          <p class="text-[14px]" :class="mutedClass">Workstation metadata assigned by your organisation.</p>
         </div>
       </div>
 
@@ -62,19 +62,19 @@
           >
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Station Name</p>
+                <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Station Name</p>
                 <p class="mt-1 text-sm font-semibold" :class="headingClass">{{ station.displayName }}</p>
               </div>
               <span
                 v-if="privilegeLabel"
-                class="inline-flex items-center rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                class="inline-flex items-center rounded-none border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide"
                 :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
               >
                 {{ privilegeLabel }}
               </span>
             </div>
             <div class="mt-4 pt-4 border-t" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
-              <p class="text-[10px] font-bold uppercase tracking-widest" :class="mutedClass">
+              <p class="text-[13px] font-bold uppercase tracking-widest" :class="mutedClass">
                 Station ID / Checkpoint Token
               </p>
               <p class="mt-1 break-all font-mono text-xs" :class="headingClass">{{ station.id }}</p>
@@ -110,7 +110,7 @@
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Compliance & Dispatch Alerts</h2>
-            <p class="text-[11px]" :class="mutedClass">Device-level alert behaviour for this employee session.</p>
+            <p class="text-[14px]" :class="mutedClass">Device-level alert behaviour for this employee session.</p>
           </div>
         </div>
 
@@ -150,7 +150,7 @@
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Appearance</h2>
-            <p class="text-[11px]" :class="mutedClass">Customise the visual theme of your workspace.</p>
+            <p class="text-[14px]" :class="mutedClass">Customise the visual theme of your workspace.</p>
           </div>
         </div>
 
@@ -202,7 +202,7 @@
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">Workspace Canvas Preferences</h2>
-            <p class="text-[11px]" :class="mutedClass">Controls the live kanban board at /employee/working.</p>
+            <p class="text-[14px]" :class="mutedClass">Controls the live kanban board at /employee/working.</p>
           </div>
         </div>
 
@@ -252,7 +252,7 @@
                 {{ opt.label }}
               </option>
             </select>
-            <p class="mt-2 text-[11px] leading-relaxed" :class="mutedClass">
+            <p class="mt-2 text-[14px] leading-relaxed" :class="mutedClass">
               Applies to the live working board sync loop and inbound hand-off polling while the portal is open.
             </p>
           </label>

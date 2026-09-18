@@ -6,39 +6,39 @@
     <!-- Header banner -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange"></div>
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Offices Management</h1>
-        <p class="mt-1 text-sm animate-pulse" :class="mutedTextClass">
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange"></div>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Branch Offices</h1>
+        <p class="mt-1 text-sm" :class="mutedTextClass">
           {{ organizationLabel }}
         </p>
       </div>
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
         @click="openCreateDrawer"
       >
         <Icon name="ph:plus-bold" class="h-4 w-4" />
-        Create New Office
+        Add Office
       </button>
     </div>
 
     <!-- Main directory + stats -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
       <article
-        class="overflow-hidden rounded-none border shadow-card lg:col-span-2 transition-all duration-300"
+        class="overflow-hidden rounded-2xl border shadow-card lg:col-span-2 transition-all duration-300"
         :class="surfaceClass"
       >
         <div class="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" :class="borderClass">
           <div>
-            <h2 class="text-base font-semibold">Office Directory</h2>
+            <h2 class="text-base font-semibold">Office List</h2>
             <p class="mt-1 text-xs" :class="mutedTextClass">
               {{ filteredOffices.length }} offices linked to {{ currentOrgName }}
             </p>
           </div>
 
           <div
-            class="flex items-center gap-2 rounded-none border px-3 py-2 transition-all"
+            class="flex items-center gap-2 rounded-xl border px-3 py-2 transition-all"
             :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
           >
             <Icon name="ph:magnifying-glass" class="h-4 w-4" :class="mutedTextClass" />
@@ -85,7 +85,7 @@
                   <div class="flex justify-end gap-2">
                     <button
                       type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:text-candy-orange hover:bg-candy-orange/10"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
                       aria-label="Edit Office"
                       title="Edit Office"
                       @click="openEditDrawer(office)"
@@ -94,7 +94,7 @@
                     </button>
                     <button
                       type="button"
-                      class="inline-flex h-9 w-9 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
                       aria-label="Delete"
                       title="Delete"
                       @click="handleDelete(office.id)"
@@ -117,7 +117,7 @@
 
       <!-- Sidebar Metadata Panel -->
       <aside class="space-y-5">
-        <article class="rounded-none border p-5 shadow-card transition-all duration-300" :class="surfaceClass">
+        <article class="rounded-2xl border p-5 shadow-card transition-all duration-300" :class="surfaceClass">
           <div class="mb-5 flex items-center justify-between gap-3">
             <div>
               <h2 class="text-base font-semibold">Settings</h2>
@@ -126,7 +126,7 @@
             <Icon name="ph:gear-six" class="h-5 w-5 text-candy-orange" />
           </div>
 
-          <div class="flex items-center justify-between rounded-none border p-4" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+          <div class="flex items-center justify-between rounded-xl border p-4" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
             <div>
               <p class="text-sm font-semibold">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</p>
               <p class="mt-1 text-xs" :class="mutedTextClass">Global dashboard theme</p>
@@ -135,19 +135,19 @@
               type="button"
               role="switch"
               :aria-checked="isDark"
-              class="relative h-7 w-12 rounded-none transition focus:outline-none focus:ring-2 focus:ring-[#F47D2F] focus:ring-offset-2"
+              class="relative h-7 w-12 rounded-full transition focus:outline-none focus:ring-2 focus:ring-candy-orange focus:ring-offset-2"
               :class="isDark ? 'bg-candy-orange focus:ring-offset-onyx-black' : 'bg-gray-300 focus:ring-offset-white'"
               @click="toggleTheme"
             >
               <span
-                class="absolute top-1 h-5 w-5 rounded-none bg-white shadow transition"
+                class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition"
                 :class="isDark ? 'left-6' : 'left-1'"
               ></span>
             </button>
           </div>
         </article>
 
-        <article class="rounded-none border p-5 shadow-card transition-all duration-300" :class="surfaceClass">
+        <article class="rounded-2xl border p-5 shadow-card transition-all duration-300" :class="surfaceClass">
           <div class="mb-5 flex items-center justify-between gap-3">
             <div>
               <h2 class="text-base font-semibold">Organization</h2>
@@ -170,8 +170,8 @@
               <dd class="text-sm font-semibold">{{ usersUnderOrg.length }}</dd>
             </div>
             <div class="flex items-center justify-between gap-4">
-              <dt class="text-xs uppercase tracking-wide" :class="mutedTextClass">Workflow</dt>
-              <dd class="text-sm font-semibold">Decoupled</dd>
+              <dt class="text-xs uppercase tracking-wide" :class="mutedTextClass">Routing</dt>
+              <dd class="text-sm font-semibold">Flexible</dd>
             </div>
           </dl>
         </article>
@@ -206,7 +206,7 @@
             </div>
             <button
               type="button"
-              class="inline-flex h-10 w-10 items-center justify-center rounded-none transition hover:text-candy-orange hover:bg-candy-orange/10"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:text-candy-orange hover:bg-candy-orange/10"
               aria-label="Close drawer"
               @click="closeDrawer"
             >
@@ -222,7 +222,7 @@
                 v-model.trim="form.name"
                 type="text"
                 placeholder="e.g. Singapore Operations"
-                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -233,7 +233,7 @@
               <span class="text-sm font-semibold">Assigned User</span>
               <select
                 v-model="form.assigned_user"
-                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               >
@@ -246,19 +246,19 @@
                   {{ user.full_name }}
                 </option>
               </select>
-              <p class="mt-2 text-xs animate-pulse" :class="mutedTextClass">
-                Assignable users are retrieved from the current organization (org_id: {{ currentOrgId }}).
+              <p class="mt-2 text-xs" :class="mutedTextClass">
+                Only people in your organization can be assigned to an office.
               </p>
             </label>
 
             <!-- Guard Info -->
-            <div class="rounded-none border p-4 text-sm" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+            <div class="rounded-xl border p-4 text-sm" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
               <div class="flex items-center gap-2 font-semibold">
                 <Icon name="ph:shield-check" class="h-4 w-4 text-candy-orange" />
-                Security & Data Integrity Guard
+                Good to Know
               </div>
               <p class="mt-2 text-xs leading-5" :class="mutedTextClass">
-                Strict DB schema validation: Office creations default `stage_id` to `NULL`. Assignable users are verified against org ID.
+                New offices aren't linked to a route yet — add one from Workflow Steps once this office is created.
               </p>
             </div>
           </div>
@@ -266,7 +266,7 @@
           <footer class="flex items-center justify-end gap-3 border-t px-5 py-4" :class="borderClass">
             <button
               type="button"
-              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
+              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
               :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
               @click="closeDrawer"
             >
@@ -274,7 +274,7 @@
             </button>
             <button
               type="submit"
-              class="rounded-none bg-[#F47D2F] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#e95a0b] active:scale-[0.98]"
+              class="rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98]"
             >
               {{ drawerMode === 'create' ? 'Create Office' : 'Save Changes' }}
             </button>

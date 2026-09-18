@@ -35,7 +35,7 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-lg font-bold" :class="headingClass">{{ currentOffice.name }}</h2>
-              <span class="rounded-none border px-2 py-0.5 font-mono text-[10px] font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
+              <span class="rounded-none border px-2 py-0.5 font-mono text-[13px] font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
                 {{ currentOffice.code || `OFF-${String(currentOffice.id).padStart(6, '0')}` }}
               </span>
             </div>
@@ -92,7 +92,7 @@
             <span class="flex h-9 w-9 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange">
               <Icon name="ph:desktop-light" class="h-4.5 w-4.5" />
             </span>
-            <span class="font-mono text-[10px] opacity-60">
+            <span class="font-mono text-[13px] opacity-60">
               {{ office.code || `OFF-${String(office.id).padStart(4, '0')}` }}
             </span>
           </div>
@@ -105,13 +105,13 @@
           </p>
 
           <div class="mt-4 pt-3 border-t flex items-center justify-between text-xs" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
-            <span class="inline-flex items-center gap-1 font-medium text-emerald-500 text-[11px]">
+            <span class="inline-flex items-center gap-1 font-medium text-emerald-500 text-[14px]">
               <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Active
             </span>
             <NuxtLink
               :to="`/employee/working`"
-              class="font-semibold text-candy-orange hover:underline text-[11px]"
+              class="font-semibold text-candy-orange hover:underline text-[14px]"
             >
               Inspect Queue →
             </NuxtLink>

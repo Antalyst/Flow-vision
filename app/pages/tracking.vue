@@ -67,7 +67,7 @@
               :key="metric.label"
               class="telemetry-metric-card opacity-0 rounded-xl border border-white/10 bg-black/40 px-4 py-2 backdrop-blur-md shadow-sm"
             >
-              <p class="font-dashboard text-[9px] font-bold uppercase tracking-widest text-gray-500">
+              <p class="font-dashboard text-[12px] font-bold uppercase tracking-widest text-gray-500">
                 {{ metric.label }}
               </p>
               <p class="mt-1 font-dashboard text-lg font-bold text-candy-orange leading-none">
@@ -117,7 +117,7 @@
                 <h3 class="font-primary text-lg font-bold text-white mb-2 shadow-black drop-shadow-md">
                   {{ node.label }}
                 </h3>
-                <p class="inline-flex items-center font-mono text-[10px] font-bold text-candy-orange mb-3 shadow-black drop-shadow-md">
+                <p class="inline-flex items-center font-mono text-[13px] font-bold text-candy-orange mb-3 shadow-black drop-shadow-md">
                   <Icon name="ph:hash-bold" class="mr-1" />{{ node.code }}
                 </p>
                 <p class="max-w-[180px] font-dashboard text-xs leading-relaxed text-gray-300 font-medium shadow-black drop-shadow-md">
@@ -169,12 +169,12 @@
                 <h3 class="font-primary text-sm font-bold text-white group-hover:text-candy-orange transition-colors">
                   {{ event.title }}
                 </h3>
-                <span class="font-mono text-[9px] font-bold uppercase tracking-widest" :class="event.status === 'ACTIVE' ? 'text-candy-orange' : event.status === 'SECURED' ? 'text-gray-400' : 'text-gray-600'">
+                <span class="font-mono text-[12px] font-bold uppercase tracking-widest" :class="event.status === 'ACTIVE' ? 'text-candy-orange' : event.status === 'SECURED' ? 'text-gray-400' : 'text-gray-600'">
                   [{{ event.status }}]
                 </span>
               </div>
               
-              <div class="font-mono text-[10px] text-gray-500 flex flex-col gap-1 mt-1">
+              <div class="font-mono text-[13px] text-gray-500 flex flex-col gap-1 mt-1">
                 <div class="flex justify-between items-center">
                   <span>HASH:</span>
                   <span class="text-gray-300">{{ event.binding }}</span>

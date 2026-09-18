@@ -34,7 +34,7 @@
 
         <span
           v-if="lastSyncedAt"
-          class="text-[10px] font-medium tabular-nums"
+          class="text-[13px] font-medium tabular-nums"
           :class="mutedClass"
         >
           {{ lastSyncedLabel }}
@@ -53,7 +53,7 @@
             <Icon name="ph:motorcycle-fill" class="h-4 w-4 animate-bounce" />
           </span>
           <div>
-            <span class="font-bold text-sky-400 uppercase tracking-wider text-[10px]">Inbound Dispatch Alert:</span>
+            <span class="font-bold text-sky-400 uppercase tracking-wider text-[13px]">Inbound Dispatch Alert:</span>
             <span class="ml-1.5 font-semibold">"{{ latestDispatch.document_title || 'Document' }}"</span>
             <span class="ml-1 text-sky-300/80">is in transit{{ latestDispatch.target_office_name ? ` to ${latestDispatch.target_office_name}` : '' }} (Courier: {{ latestDispatch.messenger_name || 'Courier' }})</span>
           </div>
@@ -76,7 +76,7 @@
     >
       <div class="flex items-center gap-2">
         <span class="h-2 w-2 animate-pulse rounded-none bg-candy-orange" />
-        <span class="font-bold uppercase tracking-widest text-candy-orange text-[10px]">Active Pipeline</span>
+        <span class="font-bold uppercase tracking-widest text-candy-orange text-[13px]">Active Pipeline</span>
       </div>
       <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
       <span :class="mutedClass">{{ visibleDocs.length }} documents</span>
@@ -137,7 +137,7 @@
             </h2>
           </div>
           <span
-            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-none px-1.5 text-[10px] font-bold tabular-nums border"
+            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-none px-1.5 text-[13px] font-bold tabular-nums border"
             :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
           >
             {{ columnDocs(col.id).length }}
@@ -162,13 +162,13 @@
             >
               <div class="flex items-start justify-between gap-2">
                 <span
-                  class="font-mono text-[10px] font-bold uppercase tracking-wide text-candy-orange"
+                  class="font-mono text-[13px] font-bold uppercase tracking-wide text-candy-orange"
                 >
                   {{ truncateId(doc.id) }}
                 </span>
                 <span
                   v-if="doc.total_steps"
-                  class="flex-none rounded-none border px-1.5 py-0.5 text-[9px] font-bold tabular-nums"
+                  class="flex-none rounded-none border px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
                   :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
                 >
                   Step {{ doc.current_step }}/{{ doc.total_steps }}
@@ -180,7 +180,7 @@
 
               <p
                 v-if="doc.messenger_name"
-                class="mt-1.5 truncate text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
+                class="mt-1.5 truncate text-[13px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
               >
                 <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
                 {{ doc.messenger_name }}
@@ -193,7 +193,7 @@
             class="flex flex-col items-center justify-center gap-2 px-3 py-12 text-center"
           >
             <Icon :name="col.icon" class="h-6 w-6 opacity-15" />
-            <p class="text-[10px] font-medium" :class="mutedClass">No documents</p>
+            <p class="text-[13px] font-medium" :class="mutedClass">No documents</p>
           </div>
         </div>
       </section>

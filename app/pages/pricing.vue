@@ -21,7 +21,7 @@
       >
         <span
           v-if="tier.featured"
-          class="mb-6 w-fit rounded-full bg-candy-orange px-4 py-1.5 font-dashboard text-[10px] font-bold uppercase tracking-[0.18em] text-white-pure"
+          class="mb-6 w-fit rounded-full bg-candy-orange px-4 py-1.5 font-dashboard text-[13px] font-bold uppercase tracking-[0.18em] text-white-pure"
         >
           Featured Mesh
         </span>

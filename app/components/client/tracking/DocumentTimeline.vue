@@ -1,125 +1,131 @@
 <template>
-  <div class="space-y-4">
-    <!-- Progress bar -->
-    <div>
-      <div class="flex items-center justify-between mb-1.5">
-        <span class="text-xs font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
-          Route Progress
+  <div class="space-y-6">
+    <!-- Status + progress -->
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
+          :class="statusStyle(summary.tracking_status).badge"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" :class="statusStyle(summary.tracking_status).dot" />
+          {{ STATUS_LABELS[summary.tracking_status] ?? summary.tracking_status }}
         </span>
-        <span class="text-xs font-mono font-bold text-candy-orange">
-          {{ summary.current_step }} / {{ summary.total_steps }} offices
+        <span class="text-xs font-semibold" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+          {{ summary.current_step }} of {{ summary.total_steps }} stops
         </span>
       </div>
-      <div class="h-2 w-full overflow-hidden rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
+
+      <div class="h-2 w-full overflow-hidden rounded-full" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
         <div
-          class="h-full rounded-none bg-gradient-to-r from-candy-orange to-amber-400 transition-all duration-700"
+          class="h-full rounded-full transition-all duration-700"
+          :class="summary.is_complete ? 'bg-success' : 'bg-candy-orange'"
           :style="{ width: `${summary.progress_pct}%` }"
         />
       </div>
-    </div>
 
-    <!-- Status badge -->
-    <div class="flex items-center gap-2">
-      <span
-        class="inline-flex items-center gap-1.5 rounded-none px-3 py-1 text-xs font-bold uppercase tracking-widest"
-        :class="statusStyle(summary.tracking_status).badge"
-      >
-        <span class="h-1.5 w-1.5 rounded-none" :class="statusStyle(summary.tracking_status).dot" />
-        {{ STATUS_LABELS[summary.tracking_status] ?? summary.tracking_status }}
-      </span>
-      <span v-if="summary.is_complete" class="text-xs font-semibold text-emerald-500">
-        All checkpoints cleared ✓
-      </span>
-    </div>
-
-    <!-- Planned route →→→ -->
-    <div v-if="routeSteps.length" class="space-y-1">
-      <p class="text-[10px] font-bold uppercase tracking-widest mb-2" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-        Planned Route
+      <p v-if="summary.is_complete" class="flex items-center gap-1.5 text-xs font-semibold text-success">
+        <Icon name="ph:check-circle-fill" class="h-3.5 w-3.5" />
+        Delivered — every stop is complete.
       </p>
-      <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs font-semibold" :class="isDark ? 'text-gray-400' : 'text-gray-500'">Origin</span>
-        <Icon name="ph:arrow-right-bold" class="h-3 w-3 text-gray-300" />
+    </div>
 
+    <!-- Delivery route (Shopee-style stepper) -->
+    <div v-if="routeSteps.length">
+      <p class="mb-3 text-[13px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+        Delivery Route
+      </p>
+      <div class="flex items-start">
         <template v-for="(step, idx) in routeSteps" :key="step.step_number">
-          <span
-            class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-xs font-semibold transition"
-            :class="routeStepClass(idx + 1)"
-          >
-            <Icon
-              :name="idx + 1 < summary.current_step
-                ? 'ph:check-circle-fill'
-                : idx + 1 === summary.current_step
-                ? 'ph:map-pin-fill'
-                : 'ph:circle'"
-              class="h-3 w-3"
-            />
-            {{ step.office_name }}
-          </span>
-          <Icon
-            v-if="idx < routeSteps.length - 1"
-            name="ph:arrow-right-bold"
-            class="h-3 w-3 text-gray-300"
-          />
+          <div class="flex flex-1 flex-col items-center text-center">
+            <div class="relative flex items-center w-full">
+              <div
+                v-if="idx > 0"
+                class="h-0.5 flex-1"
+                :class="idx <= summary.current_step - 1 ? 'bg-candy-orange' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
+              />
+              <div
+                class="relative z-10 flex h-8 w-8 flex-none items-center justify-center rounded-full border-2 transition-colors"
+                :class="routeStepClass(idx + 1).circle"
+              >
+                <Icon
+                  :name="idx + 1 < summary.current_step
+                    ? 'ph:check-bold'
+                    : idx + 1 === summary.current_step
+                    ? 'ph:map-pin-fill'
+                    : 'ph:circle-fill'"
+                  :class="idx + 1 === summary.current_step + 1 || idx + 1 > summary.current_step
+                    ? 'h-2 w-2'
+                    : 'h-3.5 w-3.5'"
+                />
+              </div>
+              <div
+                v-if="idx < routeSteps.length - 1"
+                class="h-0.5 flex-1"
+                :class="idx + 1 <= summary.current_step - 1 ? 'bg-candy-orange' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
+              />
+            </div>
+            <span
+              class="mt-2 max-w-[88px] truncate text-[14px] font-semibold"
+              :class="routeStepClass(idx + 1).label"
+              :title="step.office_name"
+            >
+              {{ step.office_name }}
+            </span>
+          </div>
         </template>
       </div>
     </div>
 
-    <!-- Event timeline (audit log) -->
-    <div v-if="events.length" class="relative space-y-0 pt-2">
-      <p class="text-[10px] font-bold uppercase tracking-widest mb-3" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-        Activity Log
+    <!-- Activity log -->
+    <div v-if="events.length" class="relative">
+      <p class="mb-3 text-[13px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+        What's Happened So Far
       </p>
 
-      <!-- Vertical connector line -->
-      <div
-        class="absolute left-[15px] top-10 bottom-2 w-px"
-        :class="isDark ? 'bg-white/10' : 'bg-gray-200'"
-      />
-
-      <div
-        v-for="(ev, idx) in events"
-        :key="ev.id"
-        class="relative flex gap-3 pb-4"
-      >
-        <!-- Status icon node -->
+      <div class="relative space-y-0 pt-1">
         <div
-          class="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none border-2 bg-white dark:bg-[#1A1A1A]"
-          :class="statusStyle(ev.status).iconBorder"
-        >
-          <Icon :name="STATUS_ICONS[ev.status] ?? 'ph:circle'" class="h-3.5 w-3.5" :class="statusStyle(ev.status).iconColor" />
-        </div>
+          class="absolute left-[15px] top-9 bottom-2 w-px"
+          :class="isDark ? 'bg-white/10' : 'bg-gray-200'"
+        />
 
-        <!-- Event content -->
-        <div class="flex-1 min-w-0 pt-0.5">
-          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span class="text-xs font-bold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
-              {{ STATUS_LABELS[ev.status] ?? ev.status }}
-            </span>
-            <span v-if="ev.office_name" class="text-[11px] font-semibold" :class="statusStyle(ev.status).textAccent">
-              @ {{ ev.office_name }}
-            </span>
+        <div v-for="ev in events" :key="ev.id" class="relative flex gap-3 pb-4">
+          <div
+            class="relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white dark:bg-[#1A1A1A]"
+            :class="statusStyle(ev.status).iconBorder"
+          >
+            <Icon :name="STATUS_ICONS[ev.status] ?? 'ph:circle'" class="h-3.5 w-3.5" :class="statusStyle(ev.status).iconColor" />
           </div>
 
-          <p class="mt-0.5 text-[11px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-            <span v-if="ev.actor_name">by {{ ev.actor_name }}</span>
-            <span v-if="ev.actor_role" class="ml-1 rounded-none px-1.5 py-0.5 text-[9px] font-bold uppercase"
-              :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'">
-              {{ ev.actor_role }}
-            </span>
-            <span class="ml-2">{{ formatRelative(ev.created_at) }}</span>
-          </p>
+          <div class="min-w-0 flex-1 pt-0.5">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span class="text-xs font-bold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
+                {{ STATUS_LABELS[ev.status] ?? ev.status }}
+              </span>
+              <span v-if="ev.office_name" class="text-[14px] font-semibold" :class="statusStyle(ev.status).textAccent">
+                at {{ ev.office_name }}
+              </span>
+            </div>
 
-          <p v-if="ev.notes" class="mt-1 text-[11px] italic" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-            "{{ ev.notes }}"
-          </p>
+            <p class="mt-0.5 text-[14px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              <span v-if="ev.actor_name">by {{ ev.actor_name }}</span>
+              <span v-if="ev.actor_role" class="ml-1 rounded-full px-1.5 py-0.5 text-[12px] font-bold uppercase"
+                :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'">
+                {{ ev.actor_role }}
+              </span>
+              <span class="ml-2">{{ formatRelative(ev.created_at) }}</span>
+            </p>
+
+            <p v-if="ev.notes" class="mt-1 text-[14px] italic" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              "{{ ev.notes }}"
+            </p>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Empty state -->
     <div v-else class="py-6 text-center text-sm" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-      No tracking events recorded yet.
+      Nothing to show yet — this document hasn't moved.
     </div>
   </div>
 </template>
@@ -155,12 +161,15 @@ interface TrackingSummary {
   progress_pct: number
 }
 
-defineProps<{
+const props = defineProps<{
   events:    TrackingEvent[]
   routeSteps: RouteStep[]
   summary:   TrackingSummary
 }>()
 
+// Shopee-style palette: not-yet-reached stops stay neutral gray, anything the
+// document has passed through or is currently at glows brand-orange, and only
+// a fully completed document turns green.
 const STATUS_LABELS: Record<string, string> = {
   CREATED:           'Registered',
   PICKED_UP:         'Picked Up',
@@ -178,64 +187,54 @@ const STATUS_ICONS: Record<string, string> = {
 }
 
 const statusStyle = (status: string) => {
-  switch (status) {
-    case 'CREATED':
-      return {
-        badge:      'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400',
-        dot:        'bg-gray-400',
-        iconBorder: 'border-gray-300 dark:border-gray-600',
-        iconColor:  'text-gray-400',
-        textAccent: 'text-gray-500',
-      }
-    case 'PICKED_UP':
-      return {
-        badge:      'bg-sky-500/10 text-sky-700 dark:text-sky-400',
-        dot:        'bg-sky-500',
-        iconBorder: 'border-sky-400',
-        iconColor:  'text-sky-500',
-        textAccent: 'text-sky-500',
-      }
-    case 'IN_TRANSIT':
-      return {
-        badge:      'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-        dot:        'bg-amber-500 animate-pulse',
-        iconBorder: 'border-amber-400',
-        iconColor:  'text-amber-500',
-        textAccent: 'text-amber-500',
-      }
-    case 'ARRIVED_AT_OFFICE':
-      return {
-        badge:      'bg-candy-orange/10 text-candy-orange',
-        dot:        'bg-candy-orange',
-        iconBorder: 'border-candy-orange',
-        iconColor:  'text-candy-orange',
-        textAccent: 'text-candy-orange',
-      }
-    case 'COMPLETED':
-      return {
-        badge:      'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-        dot:        'bg-emerald-500',
-        iconBorder: 'border-emerald-400',
-        iconColor:  'text-emerald-500',
-        textAccent: 'text-emerald-500',
-      }
-    default:
-      return {
-        badge:      'bg-gray-100 text-gray-500',
-        dot:        'bg-gray-400',
-        iconBorder: 'border-gray-300',
-        iconColor:  'text-gray-400',
-        textAccent: 'text-gray-400',
-      }
+  if (status === 'COMPLETED') {
+    return {
+      badge:      'bg-success/10 text-success',
+      dot:        'bg-success',
+      iconBorder: 'border-success',
+      iconColor:  'text-success',
+      textAccent: 'text-success',
+    }
+  }
+  if (status === 'CREATED') {
+    return {
+      badge:      'bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400',
+      dot:        'bg-gray-400',
+      iconBorder: 'border-gray-300 dark:border-gray-600',
+      iconColor:  'text-gray-400',
+      textAccent: 'text-gray-500',
+    }
+  }
+  // PICKED_UP, IN_TRANSIT, ARRIVED_AT_OFFICE — all "in motion" states share the brand accent
+  return {
+    badge:      'bg-candy-orange/10 text-candy-orange',
+    dot:        'bg-candy-orange animate-pulse',
+    iconBorder: 'border-candy-orange',
+    iconColor:  'text-candy-orange',
+    textAccent: 'text-candy-orange',
   }
 }
 
 const routeStepClass = (stepNumber: number) => {
-  const { current_step, tracking_status } = (inject('summary') as any) ?? {}
-  // Fallback: use props directly via closure — Vue injects not available here
-  // so we compute based on the step's relation to current_step (passed via summary prop)
-  // This is resolved by the parent passing summary as prop, not inject.
-  return isDark.value ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-500'
+  const { current_step, is_complete } = props.summary
+  if (stepNumber < current_step || (stepNumber === current_step && is_complete)) {
+    return {
+      circle: 'border-candy-orange bg-candy-orange text-white',
+      label: isDark.value ? 'text-white-pure' : 'text-onyx-black',
+    }
+  }
+  if (stepNumber === current_step) {
+    return {
+      circle: 'border-candy-orange bg-candy-orange/10 text-candy-orange',
+      label: 'text-candy-orange',
+    }
+  }
+  return {
+    circle: isDark.value
+      ? 'border-white/15 bg-transparent text-white/20'
+      : 'border-gray-200 bg-transparent text-gray-300',
+    label: isDark.value ? 'text-gray-500' : 'text-gray-400',
+  }
 }
 
 const formatRelative = (dateStr: string) => {

@@ -17,7 +17,7 @@
         <header class="shrink-0 border-b px-5 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Custody Sheet</p>
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Custody Sheet</p>
               <h2 class="mt-1 truncate text-lg font-bold">{{ document.title }}</h2>
             </div>
             <button
@@ -28,21 +28,21 @@
               <Icon name="ph:x-bold" class="h-4 w-4" />
             </button>
           </div>
-          <p class="mt-2 font-mono text-[11px]" :class="mutedClass">ID: {{ document.tracking_id }}</p>
+          <p class="mt-2 font-mono text-[14px]" :class="mutedClass">ID: {{ document.tracking_id }}</p>
         </header>
 
         <div class="flex-1 space-y-5 overflow-y-auto px-5 py-5">
           <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl border p-3" :class="cellClass">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Status</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Status</p>
               <p class="mt-1 text-sm font-semibold">{{ statusLabel }}</p>
             </div>
             <div class="rounded-xl border p-3" :class="cellClass">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Route Step</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Route Step</p>
               <p class="mt-1 text-sm font-semibold">{{ document.current_step }} / {{ document.total_steps || '—' }}</p>
             </div>
             <div class="col-span-2 rounded-xl border p-3" :class="cellClass">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
               <p class="mt-1 text-sm font-semibold">{{ document.destination_office_name || 'Unassigned' }}</p>
             </div>
           </div>
@@ -60,10 +60,10 @@
                   {{ step.step_number }}
                 </span>
                 <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ step.office_name }}</span>
-                <span v-if="step.step_number === document.current_step" class="text-[10px] font-bold uppercase text-candy-orange">
+                <span v-if="step.step_number === document.current_step" class="text-[13px] font-bold uppercase text-candy-orange">
                   Current
                 </span>
-                <span v-else-if="step.step_number < document.current_step" class="text-[10px] font-bold uppercase text-emerald-500">
+                <span v-else-if="step.step_number < document.current_step" class="text-[13px] font-bold uppercase text-emerald-500">
                   Done
                 </span>
               </li>

@@ -103,7 +103,7 @@
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-bold">{{ stage.name }}</h2>
                 <span
-                  class="rounded-none px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  class="rounded-none px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider"
                   :class="stage.scope === 'local'
                     ? isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-200 text-gray-800'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
@@ -166,7 +166,7 @@
                 class="flex items-center gap-2 rounded-none border px-3 py-2 text-sm transition-colors"
                 :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-50'"
               >
-                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-none bg-candy-orange text-[10px] font-bold text-white">
+                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-none bg-candy-orange text-[13px] font-bold text-white">
                   {{ step.step_number }}
                 </div>
                 <span class="font-semibold">{{ formatOfficeName(getOfficeName(step.office_id)) }}</span>
@@ -254,7 +254,7 @@
           <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <div>
               <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Route Template</p>
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Route Template</p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ scopeMode === 'local' ? 'Create Local Route' : 'Create Route' }}
               </h2>
@@ -326,7 +326,7 @@
                 >
                   <div class="min-w-0">
                     <span class="truncate font-semibold">{{ formatOfficeName(office.name) }}</span>
-                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-none border px-1.5 py-0.5 text-[10px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
+                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-none border px-1.5 py-0.5 text-[13px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
                   </div>
                   <Icon name="ph:plus-circle-light" class="h-4 w-4 flex-none text-candy-orange" />
                 </button>
@@ -375,7 +375,7 @@
                   @drop.prevent="handleSeqItemDrop(i)"
                 >
                   <Icon name="ph:dots-six-vertical-light" class="h-4 w-4 flex-none cursor-grab text-candy-orange" />
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-none bg-candy-orange text-[11px] font-bold text-white">
+                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-none bg-candy-orange text-[14px] font-bold text-white">
                     {{ i + 1 }}
                   </div>
                   <span class="flex-1 truncate text-sm font-semibold">{{ cp.name }}</span>

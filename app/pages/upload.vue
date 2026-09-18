@@ -57,7 +57,7 @@
               <Icon name="lucide:fingerprint" class="text-xl" />
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Ingestion User ID</p>
+              <p class="text-[13px] text-slate-500 font-bold uppercase tracking-wider">Ingestion User ID</p>
               <p class="font-mono text-sm text-blue-400 font-bold mt-0.5">{{ userProfile.user_id }}</p>
             </div>
           </div>
@@ -67,7 +67,7 @@
               <Icon name="lucide:building-2" class="text-xl" />
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Source Office ID</p>
+              <p class="text-[13px] text-slate-500 font-bold uppercase tracking-wider">Source Office ID</p>
               <p class="font-mono text-sm text-purple-400 font-bold mt-0.5">{{ userProfile.office_id }}</p>
             </div>
           </div>
@@ -127,7 +127,7 @@
                 </div>
                 <div class="overflow-hidden">
                   <p class="text-xs font-semibold text-slate-300 truncate">{{ selectedFile.name }}</p>
-                  <p class="text-[10px] text-slate-500 mt-0.5">{{ formatFileSize(selectedFile.size) }}</p>
+                  <p class="text-[13px] text-slate-500 mt-0.5">{{ formatFileSize(selectedFile.size) }}</p>
                 </div>
               </div>
               <button 
@@ -158,7 +158,7 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <label for="doc-desc" class="block text-xs font-bold uppercase tracking-wider text-slate-400">Document Description</label>
-              <span class="text-[10px] text-slate-500 font-mono">{{ documentDescription.length }}/500</span>
+              <span class="text-[13px] text-slate-500 font-mono">{{ documentDescription.length }}/500</span>
             </div>
             <textarea 
               id="doc-desc"
@@ -215,7 +215,7 @@
           <div class="flex-grow space-y-1">
             <p class="font-bold text-sm">{{ toast.title }}</p>
             <p class="text-xs text-slate-400 leading-relaxed">{{ toast.message }}</p>
-            <div v-if="toast.details" class="text-[11px] font-mono text-indigo-300 mt-3 bg-slate-950/80 p-3 rounded-lg border border-slate-800 leading-normal">
+            <div v-if="toast.details" class="text-[14px] font-mono text-indigo-300 mt-3 bg-slate-950/80 p-3 rounded-lg border border-slate-800 leading-normal">
               {{ toast.details }}
             </div>
           </div>

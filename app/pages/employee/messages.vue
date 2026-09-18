@@ -172,11 +172,11 @@
                       : 'border-gray-200 dark:border-onyx-border bg-gray-50 dark:bg-onyx-card text-gray-800 dark:text-gray-200 text-left'
                   ]"
                 >
-                  <p v-if="!isOwnMessage(msg)" class="text-[10px] font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
+                  <p v-if="!isOwnMessage(msg)" class="text-[13px] font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
 
                   <p class="whitespace-pre-wrap leading-relaxed">{{ msg.message_text }}</p>
                   <span 
-                    class="mt-1 block text-[10px] opacity-60"
+                    class="mt-1 block text-[13px] opacity-60"
                   >
                     {{ formatTimeOnly(msg.created_at) }}
                   </span>

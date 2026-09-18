@@ -63,7 +63,7 @@
           
           <nav class="flex-1 px-4 overflow-y-auto py-6">
             <div class="mb-4">
-              <p class="px-3 mb-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Citizen Services</p>
+              <p class="px-3 mb-3 text-[13px] font-bold uppercase tracking-wider text-gray-400">Citizen Services</p>
               <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to"
                 class="flex items-center gap-3 px-3 py-3 transition-all duration-200 group mb-1 border-l-2"
                 :class="isActive(item.to)
@@ -122,7 +122,7 @@
         <!-- Navigation -->
         <nav class="flex-1 px-3 overflow-y-auto py-6">
           <div class="mb-4">
-            <p v-if="!isSidebarMinimized" class="px-4 mb-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Citizen Services</p>
+            <p v-if="!isSidebarMinimized" class="px-4 mb-3 text-[13px] font-bold uppercase tracking-wider text-gray-400">Citizen Services</p>
             <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to"
               class="flex items-center gap-3 py-3 transition-all duration-200 group mb-1 relative"
               :class="[
@@ -172,7 +172,7 @@
             ? 'text-candy-orange border-candy-orange'
             : isDark ? 'border-transparent text-gray-500 hover:text-gray-300' : 'border-transparent text-gray-400 hover:text-gray-600'">
           <Icon :name="item.icon" class="w-5 h-5" />
-          <span class="text-[10px] font-semibold">{{ item.label }}</span>
+          <span class="text-[13px] font-semibold">{{ item.label }}</span>
         </NuxtLink>
       </div>
     </nav>

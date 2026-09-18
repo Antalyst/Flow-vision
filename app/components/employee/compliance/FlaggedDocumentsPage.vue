@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-6">
     <header>
-      <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Compliance</p>
+      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Compliance</p>
       <h1 class="mt-1 text-2xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
         Flagged Documents
       </h1>
@@ -55,7 +55,7 @@
                 <p class="mt-0.5 text-xs" :class="mutedText">{{ row.document.id.slice(0, 8) }}…</p>
               </td>
               <td class="px-5 py-4">
-                <span class="inline-flex rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" :class="isDark ? 'border-amber-400/30 bg-amber-400/10 text-amber-400' : 'border-amber-200 bg-amber-50 text-amber-600'">
+                <span class="inline-flex rounded-none border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider" :class="isDark ? 'border-amber-400/30 bg-amber-400/10 text-amber-400' : 'border-amber-200 bg-amber-50 text-amber-600'">
                   {{ row.issue.issue_type || 'Discrepancy' }}
                 </span>
               </td>

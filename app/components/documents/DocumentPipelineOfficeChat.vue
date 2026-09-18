@@ -8,13 +8,13 @@
       :class="isDark ? 'border-white/10 bg-zinc-950' : 'border-gray-200 bg-white'"
     >
       <div class="min-w-0">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
+        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
           Pipeline Desk Message
         </p>
         <p class="mt-1 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
           Direct message to {{ office.name }}
         </p>
-        <p class="mt-0.5 text-[11px]" :class="mutedText">
+        <p class="mt-0.5 text-[14px]" :class="mutedText">
           Regarding document
           <span class="font-mono text-candy-orange">#{{ shortDocId }}</span>
           · Step {{ office.step_number }} checkpoint
@@ -49,7 +49,7 @@
               ? 'bg-candy-orange text-white'
               : isDark ? 'bg-zinc-950 text-gray-100 border border-white/10' : 'bg-zinc-950 text-gray-100'"
           >
-            <p class="text-[10px] font-bold" :class="isOwnMessage(msg) ? 'text-white/80' : 'text-candy-orange'">
+            <p class="text-[13px] font-bold" :class="isOwnMessage(msg) ? 'text-white/80' : 'text-candy-orange'">
               {{ msg.sender_name || 'Unknown' }}
             </p>
             <p class="mt-1 leading-relaxed">{{ msg.message_text }}</p>

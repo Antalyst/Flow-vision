@@ -7,8 +7,8 @@
         <Icon name="ph:caret-right" class="h-3 w-3" />
         <span class="font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Activity</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white' : 'text-gray-900'">Organisation Activity</h1>
-      <p class="mt-1 text-sm" :class="mutedClass">Full audit timeline for your organisation — uploads, scans, and pickups.</p>
+      <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white' : 'text-gray-900'">Activity Log</h1>
+      <p class="mt-1 text-sm" :class="mutedClass">Everything that's happened across your organization — uploads, scans, and pickups.</p>
     </div>
 
     <div class="dashboard-card p-5 sm:p-6">
@@ -19,8 +19,8 @@
 
 <script setup>
 useSeoMeta({
-  title: 'FlowVision | Audit Activity',
-  description: 'Review real-time system interactions, security events, and audit logs across your organization.'
+  title: 'FlowVision | Activity Log',
+  description: 'Review everything that has happened across your organization, in real time.'
 })
 definePageMeta({ layout: 'client' })
 

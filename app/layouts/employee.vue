@@ -16,7 +16,7 @@
         <span class="text-base font-bold tracking-tight text-gray-900 dark:text-white">FlowVision</span>
       </div>
       <div class="flex items-center gap-1">
-        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
           Employee
         </span>
       </div>
@@ -78,13 +78,13 @@
           <!-- Role badge + org scope pill -->
           <div v-if="!isSidebarMinimized" class="flex flex-col gap-2 mb-5">
             <div class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                <span class="w-1.5 h-1.5 rounded-none bg-sky-500"></span>
+              <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-candy-orange"></span>
                 Employee
               </span>
               <span
                 v-if="auth.user?.org_id"
-                class="inline-flex items-center gap-1 rounded-none px-2 py-0.5 text-[10px] font-semibold truncate max-w-[100px]"
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold truncate max-w-[100px]"
                 :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 :title="`Org ID: ${auth.user.org_id}`"
               >
@@ -123,7 +123,7 @@
             class="w-full max-w-sm rounded-xl border p-8 text-center"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
-            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-sky-500/60" />
+            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-candy-orange/60" />
             <h2 class="text-lg font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">No organisation assigned</h2>
             <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
               Your account hasn't been linked to an organisation yet. Contact your administrator.
@@ -139,7 +139,7 @@
 
     <!-- ── Mobile bottom nav ─────────────────────────────────────────── -->
     <nav
-      class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom fixed left-0"
+      class="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom"
       :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
       <div class="flex items-center justify-around px-2 py-2">
@@ -148,10 +148,10 @@
           :key="item.to"
           :to="item.to"
           class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[56px]"
-          :class="isActive(item.to) ? 'text-sky-500' : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'"
+          :class="isActive(item.to) ? 'text-candy-orange' : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'"
         >
           <Icon :name="item.icon" class="w-5 h-5" />
-          <span class="text-[10px] font-semibold">{{ item.label }}</span>
+          <span class="text-xs font-semibold">{{ item.label }}</span>
         </NuxtLink>
       </div>
     </nav>
@@ -164,13 +164,13 @@
       <Transition name="toast-fade">
         <div
           v-if="toast.visible"
-          class="fixed bottom-24 right-6 z-[100] flex max-w-md items-center gap-2.5 rounded-none border px-5 py-3.5 text-sm font-semibold shadow-2xl backdrop-blur-md md:bottom-8"
+          class="fixed bottom-24 right-6 z-[100] flex max-w-md items-center gap-2.5 rounded-xl border px-5 py-3.5 text-sm font-semibold shadow-2xl backdrop-blur-md md:bottom-8"
           :class="[
             toast.type === 'error'
-              ? 'border-red-500/30 bg-red-950/90 text-red-200'
+              ? 'border-danger/30 bg-red-950/90 text-red-200'
               : toast.type === 'warning'
-                ? 'border-amber-500/30 bg-amber-950/90 text-amber-200'
-                : 'border-emerald-500/30 bg-gray-900/95 text-emerald-300',
+                ? 'border-warning/30 bg-amber-950/90 text-amber-200'
+                : 'border-success/30 bg-gray-900/95 text-emerald-300',
           ]"
           role="status"
         >
@@ -185,10 +185,10 @@
             class="h-5 w-5 flex-none"
             :class="
               toast.type === 'error'
-                ? 'text-red-400'
+                ? 'text-danger'
                 : toast.type === 'warning'
-                  ? 'text-amber-400'
-                  : 'text-emerald-400'
+                  ? 'text-warning'
+                  : 'text-success'
             "
           />
           <span class="flex-1 text-xs leading-snug">{{ toast.message }}</span>

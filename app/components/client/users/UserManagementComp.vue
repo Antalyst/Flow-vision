@@ -4,20 +4,20 @@
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">User Management</h1>
-        <p class="mt-1 text-sm animate-pulse" :class="mutedClass">
-          {{ auth.currentOrg?.name || '—' }} · org_id {{ auth.user?.org_id }}
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Team Members</h1>
+        <p class="mt-1 text-sm" :class="mutedClass">
+          {{ auth.currentOrg?.name || '—' }}
         </p>
       </div>
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-none bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:bg-amber-600 active:scale-[0.98]"
+        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition-all duration-200 hover:scale-[1.02] hover:bg-candy-hover active:scale-[0.98]"
         @click="openProvisionDrawer"
       >
         <Icon name="ph:motorcycle-fill" class="h-4 w-4" />
-        Provision Messenger
+        Add Messenger
       </button>
     </div>
 
@@ -26,16 +26,16 @@
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="rounded-none border p-4 transition-all duration-300"
+        class="rounded-2xl border p-4 transition-all duration-300"
         :class="surfaceClass"
       >
         <div class="flex items-center gap-3">
-          <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none" :class="stat.iconBg">
+          <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full" :class="stat.iconBg">
             <Icon :name="stat.icon" class="h-4 w-4" :class="stat.iconColor" />
           </span>
           <div>
             <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ stat.value }}</p>
-            <p class="text-[11px] font-medium" :class="mutedClass">{{ stat.label }}</p>
+            <p class="text-[14px] font-medium" :class="mutedClass">{{ stat.label }}</p>
           </div>
         </div>
       </div>
@@ -43,12 +43,12 @@
 
     <!-- ── Filter tabs + search ────────────────────────────────────────── -->
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex rounded-none border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+      <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
         <button
           v-for="tab in TABS"
           :key="tab.value"
           type="button"
-          class="rounded-none px-4 py-1.5 text-sm font-semibold transition-all duration-200"
+          class="rounded-lg px-4 py-1.5 text-sm font-semibold transition-all duration-200"
           :class="activeTab === tab.value
             ? (isDark ? 'bg-white/10 text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
             : (isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700')"
@@ -57,11 +57,11 @@
           {{ tab.label }}
           <span
             v-if="tabCount(tab.value) > 0"
-            class="ml-1.5 rounded-none px-1.5 py-0.5 text-[10px] font-bold"
+            class="ml-1.5 rounded-full px-1.5 py-0.5 text-[13px] font-bold"
             :class="tab.value === 'messenger'
-              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+              ? 'bg-candy-orange/20 text-candy-orange'
               : tab.value === 'employee'
-              ? 'bg-sky-500/20 text-sky-600 dark:text-sky-400'
+              ? (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')
               : (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')"
           >
             {{ tabCount(tab.value) }}
@@ -70,7 +70,7 @@
       </div>
 
       <div
-        class="flex items-center gap-2 rounded-none border px-3.5 py-2.5 transition-all"
+        class="flex items-center gap-2 rounded-xl border px-3.5 py-2.5 transition-all"
         :class="isDark ? 'border-onyx-border bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-white focus-within:border-candy-orange'"
       >
         <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-shrink-0" :class="mutedClass" />
@@ -84,7 +84,7 @@
     </div>
 
     <!-- ── Member table ────────────────────────────────────────────────── -->
-    <article class="overflow-hidden rounded-none border transition-all duration-300" :class="surfaceClass">
+    <article class="overflow-hidden rounded-2xl border transition-all duration-300" :class="surfaceClass">
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
@@ -104,10 +104,10 @@
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
                 <td class="px-6 py-4" colspan="5">
                   <div class="flex items-center gap-3">
-                    <div class="h-9 w-9 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+                    <div class="h-9 w-9 animate-pulse rounded-full" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
                     <div class="flex-1 space-y-2">
-                      <div class="h-3 w-36 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
-                      <div class="h-2.5 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+                      <div class="h-3 w-36 animate-pulse rounded-md" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
+                      <div class="h-2.5 w-48 animate-pulse rounded-md" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
                     </div>
                   </div>
                 </td>
@@ -126,10 +126,10 @@
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div
-                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none text-sm font-bold"
+                      class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold"
                       :class="member.role === 'messenger'
-                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                        : 'bg-sky-500/10 text-sky-600 dark:text-sky-400'"
+                        ? 'bg-candy-orange/10 text-candy-orange'
+                        : (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')"
                     >
                       {{ initials(member.full_name) }}
                     </div>
@@ -145,10 +145,10 @@
                 <!-- Role badge -->
                 <td class="whitespace-nowrap px-6 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[14px] font-bold uppercase tracking-wider"
                     :class="member.role === 'messenger'
-                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                      : 'bg-sky-500/10 text-sky-600 dark:text-sky-400'"
+                      ? 'bg-candy-orange/10 text-candy-orange'
+                      : (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')"
                   >
                     <Icon
                       :name="member.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'"
@@ -163,15 +163,15 @@
                   <button
                     type="button"
                     :title="member.status === 1 ? 'Click to deactivate' : 'Click to activate'"
-                    class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-semibold transition-all hover:opacity-80"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[14px] font-semibold transition-all hover:opacity-80"
                     :class="member.status === 1
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-success/10 text-success'
                       : 'bg-gray-400/10 text-gray-500 dark:text-gray-400'"
                     @click="handleToggleStatus(member)"
                   >
                     <span
-                      class="h-1.5 w-1.5 rounded-none"
-                      :class="member.status === 1 ? 'bg-emerald-500' : 'bg-gray-400'"
+                      class="h-1.5 w-1.5 rounded-full"
+                      :class="member.status === 1 ? 'bg-success' : 'bg-gray-400'"
                     />
                     {{ member.status === 1 ? 'Active' : 'Inactive' }}
                   </button>
@@ -187,7 +187,7 @@
                   <div class="flex justify-end gap-1">
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-none text-sky-500 transition hover:bg-sky-500/10"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-candy-orange transition hover:bg-candy-orange/10"
                       title="Edit member"
                       @click="openEditDrawer(member)"
                     >
@@ -195,7 +195,7 @@
                     </button>
                     <button
                       type="button"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-red-500/10"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
                       title="Remove member"
                       @click="handleRemove(member)"
                     >
@@ -233,25 +233,20 @@
         <p class="text-xs" :class="mutedClass">
           Showing {{ filteredMembers.length }} of {{ members.length }} members
         </p>
-        <p class="text-xs font-mono" :class="mutedClass">
-          Scoped to org_id {{ auth.user?.org_id }}
-        </p>
       </div>
     </article>
 
     <!-- ── Org scope info card ─────────────────────────────────────────── -->
-    <article class="rounded-none border p-5 transition-all duration-300" :class="surfaceClass">
+    <article class="rounded-2xl border p-5 transition-all duration-300" :class="surfaceClass">
       <div class="flex items-start gap-3">
-        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none bg-candy-orange/10">
+        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange/10">
           <Icon name="ph:shield-check-fill" class="h-5 w-5 text-candy-orange" />
         </span>
         <div class="space-y-1 min-w-0">
-          <p class="font-semibold text-sm" :class="isDark ? 'text-gray-100' : 'text-gray-900'">Cross-Tenant Isolation Enforced</p>
+          <p class="font-semibold text-sm" :class="isDark ? 'text-gray-100' : 'text-gray-900'">Your Organization Only</p>
           <p class="text-xs leading-relaxed" :class="mutedClass">
-            All messenger accounts provisioned here are strictly bound to <strong>org_id {{ auth.user?.org_id }}</strong>
-            ({{ auth.currentOrg?.name ?? '—' }}). The server validates the administrator session on every write
-            operation — the org_id is never read from the request body. Messengers can only access documents,
-            offices, and logs that belong to this organization.
+            Messengers you add here only work within <strong>{{ auth.currentOrg?.name ?? 'your organization' }}</strong>.
+            They can't see or access documents, offices, or activity that belong to another organization.
           </p>
         </div>
       </div>
@@ -279,19 +274,19 @@
             :class="borderClass"
           >
             <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-amber-500">
-                {{ drawerMode === 'edit' ? 'Edit' : 'Provision' }}
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+                {{ drawerMode === 'edit' ? 'Edit' : 'Add' }}
               </p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ drawerMode === 'edit' ? 'Edit Member Account' : 'New Messenger Account' }}
               </h2>
               <p class="mt-0.5 text-xs" :class="mutedClass">
-                Bound to {{ auth.currentOrg?.name }} · org_id {{ auth.user?.org_id }}
+                {{ auth.currentOrg?.name }}
               </p>
             </div>
             <button
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition hover:bg-gray-100 dark:hover:bg-white/5"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-gray-100 dark:hover:bg-white/5"
               @click="closeDrawer"
             >
               <Icon name="ph:x-bold" class="h-4 w-4" />
@@ -301,13 +296,13 @@
           <div class="flex-1 overflow-y-auto px-6 py-6 space-y-5">
             <!-- Role badge (readonly) -->
             <div
-              class="flex items-center gap-3 rounded-none border px-4 py-3"
-              :class="isDark ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-200 bg-amber-50'"
+              class="flex items-center gap-3 rounded-xl border px-4 py-3"
+              :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'"
             >
-              <Icon :name="form.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-amber-500" />
+              <Icon :name="form.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-candy-orange" />
               <div>
-                <p class="text-sm font-bold text-amber-600 dark:text-amber-400">Role: {{ form.role === 'messenger' ? 'Messenger' : 'Employee' }}</p>
-                <p class="text-[11px]" :class="mutedClass">
+                <p class="text-sm font-bold text-candy-orange">Role: {{ form.role === 'messenger' ? 'Messenger' : 'Employee' }}</p>
+                <p class="text-[14px]" :class="mutedClass">
                   {{ drawerMode === 'edit' ? 'Role cannot be changed here.' : 'Fixed — only messenger roles can be provisioned here.' }}
                 </p>
               </div>
@@ -316,13 +311,13 @@
             <!-- Full Name -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                Full Name <span class="text-red-500">*</span>
+                Full Name <span class="text-danger">*</span>
               </span>
               <input
                 v-model.trim="form.full_name"
                 type="text"
                 placeholder="e.g. Juan Dela Cruz"
-                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -331,13 +326,13 @@
             <!-- Email -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                Email Address <span class="text-red-500">*</span>
+                Email Address <span class="text-danger">*</span>
               </span>
               <input
                 v-model.trim="form.email"
                 type="email"
                 placeholder="messenger@yourorg.com"
-                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -347,46 +342,44 @@
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                 {{ drawerMode === 'edit' ? 'New Password' : 'Initial Password' }}
-                <span v-if="drawerMode === 'provision'" class="text-red-500">*</span>
+                <span v-if="drawerMode === 'provision'" class="text-danger">*</span>
               </span>
               <div class="relative mt-2">
                 <input
                   v-model="form.password"
                   :type="showPassword ? 'text' : 'password'"
                   placeholder="Min 8 characters"
-                  class="w-full rounded-none border px-4 py-3 pr-11 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                  class="w-full rounded-xl border px-4 py-3 pr-11 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                   :class="inputClass"
                   minlength="8"
                   :required="drawerMode === 'provision'"
                 />
                 <button
                   type="button"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 rounded-none p-1 transition hover:text-amber-500"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 transition hover:text-candy-orange"
                   :class="mutedClass"
                   @click="showPassword = !showPassword"
                 >
                   <Icon :name="showPassword ? 'ph:eye-slash' : 'ph:eye'" class="h-4 w-4" />
                 </button>
               </div>
-              <p class="mt-1.5 text-[11px]" :class="mutedClass">
+              <p class="mt-1.5 text-[14px]" :class="mutedClass">
                 {{ drawerMode === 'edit' ? 'Leave blank to keep the current password.' : 'Share this with the messenger securely. They can change it after first login.' }}
               </p>
             </label>
 
             <!-- Org scope lock -->
             <div
-              class="rounded-none border p-4 text-sm"
+              class="rounded-xl border p-4 text-sm"
               :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex items-center gap-2 font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                 <Icon name="ph:lock-fill" class="h-4 w-4 text-candy-orange" />
-                Organization Scope Lock
+                Belongs to Your Organization
               </div>
               <p class="mt-2 text-xs leading-5" :class="mutedClass">
-                This account will be <strong>irreversibly bound</strong> to
-                <strong>{{ auth.currentOrg?.name ?? `org_id ${auth.user?.org_id}` }}</strong>.
-                The org_id is set server-side from your administrator session — it cannot be overridden from the
-                client or the request body.
+                This account will only ever belong to <strong>{{ auth.currentOrg?.name ?? 'your organization' }}</strong> —
+                it can't be moved or shared with another organization.
               </p>
               <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <dt :class="mutedClass">Organization</dt>
@@ -397,15 +390,13 @@
                 <dd class="font-mono font-semibold text-right" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                   {{ auth.currentOrg?.code ?? '—' }}
                 </dd>
-                <dt :class="mutedClass">Org ID</dt>
-                <dd class="font-mono font-semibold text-right text-candy-orange">{{ auth.user?.org_id }}</dd>
               </dl>
             </div>
 
             <!-- Error feedback -->
             <div
               v-if="provisionError"
-              class="flex items-start gap-2 rounded-none border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-500"
+              class="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/5 p-4 text-sm text-danger"
             >
               <Icon name="ph:warning-circle-fill" class="mt-0.5 h-4 w-4 flex-shrink-0" />
               {{ provisionError }}
@@ -415,7 +406,7 @@
           <footer class="flex items-center justify-end gap-3 border-t px-6 py-4" :class="borderClass">
             <button
               type="button"
-              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5"
+              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5"
               :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-700'"
               @click="closeDrawer"
             >
@@ -424,7 +415,7 @@
             <button
               type="submit"
               :disabled="saving || !form.full_name || !form.email || (drawerMode === 'provision' && form.password.length < 8) || (drawerMode === 'edit' && form.password && form.password.length < 8)"
-              class="inline-flex items-center gap-2 rounded-none bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="saving" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
               <Icon v-else :name="drawerMode === 'edit' ? 'ph:floppy-disk' : 'ph:motorcycle-fill'" class="h-4 w-4" />
@@ -440,10 +431,10 @@
       <Transition name="toast-fade">
         <div
           v-if="toast.visible"
-          class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-none border px-5 py-4 shadow-2xl text-sm font-semibold"
+          class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 rounded-xl border px-5 py-4 shadow-2xl text-sm font-semibold"
           :class="toast.type === 'success'
-            ? (isDark ? 'bg-emerald-900/90 border-emerald-500/30 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-700')
-            : (isDark ? 'bg-red-900/90 border-red-500/30 text-red-300' : 'bg-red-50 border-red-200 text-red-700')"
+            ? (isDark ? 'bg-emerald-900/90 border-success/30 text-success' : 'bg-emerald-50 border-success/30 text-success')
+            : (isDark ? 'bg-red-900/90 border-danger/30 text-danger' : 'bg-red-50 border-danger/30 text-danger')"
         >
           <Icon
             :name="toast.type === 'success' ? 'ph:check-circle-fill' : 'ph:x-circle-fill'"
@@ -525,22 +516,22 @@ const stats = computed(() => [
     label: 'Employees',
     value: members.value.filter((m) => m.role === 'employee').length,
     icon: 'ph:briefcase-fill',
-    iconBg: 'bg-sky-500/10',
-    iconColor: 'text-sky-500',
+    iconBg: isDark.value ? 'bg-white/10' : 'bg-gray-200',
+    iconColor: isDark.value ? 'text-gray-300' : 'text-gray-600',
   },
   {
     label: 'Messengers',
     value: members.value.filter((m) => m.role === 'messenger').length,
     icon: 'ph:motorcycle-fill',
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-500',
+    iconBg: 'bg-candy-orange/10',
+    iconColor: 'text-candy-orange',
   },
   {
     label: 'Inactive',
     value: members.value.filter((m) => m.status !== 1).length,
     icon: 'ph:prohibit-fill',
-    iconBg: 'bg-red-500/10',
-    iconColor: 'text-red-500',
+    iconBg: 'bg-danger/10',
+    iconColor: 'text-danger',
   },
 ])
 

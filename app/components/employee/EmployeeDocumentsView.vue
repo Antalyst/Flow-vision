@@ -29,7 +29,7 @@
         class="rounded-none border px-4 py-3 backdrop-blur-sm"
         :class="glassSurface"
       >
-        <p class="text-[11px] font-bold uppercase tracking-wider text-candy-orange">{{ kpi.label }}</p>
+        <p class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">{{ kpi.label }}</p>
         <p class="mt-1 text-2xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ kpi.value }}</p>
       </div>
     </div>
@@ -237,7 +237,7 @@
           <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
             <div class="min-w-0">
               <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Document Detail</p>
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Document Detail</p>
               <h2 class="mt-1 truncate text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ selectedDoc.title }}
               </h2>
@@ -267,22 +267,22 @@
             <!-- Meta grid -->
             <div class="grid grid-cols-2 gap-3">
               <div class="rounded-none border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Office</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Office</p>
                 <p class="mt-1 text-sm font-semibold">{{ selectedDoc.office_label || 'Unassigned' }}</p>
               </div>
               <div class="rounded-none border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Registered</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Registered</p>
                 <p class="mt-1 text-sm font-semibold">{{ fmtDate(selectedDoc.created_at) }}</p>
               </div>
               <div class="rounded-none border p-3 col-span-2" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">QR Code</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">QR Code</p>
                 <p class="mt-1 font-mono text-xs">{{ selectedDoc.qr_code_data || '—' }}</p>
               </div>
             </div>
 
             <!-- Description -->
             <div v-if="selectedDoc.description" class="rounded-none border p-4" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange mb-2">Description</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange mb-2">Description</p>
               <p class="text-sm leading-relaxed" :class="mutedText">{{ selectedDoc.description }}</p>
             </div>
           </div>

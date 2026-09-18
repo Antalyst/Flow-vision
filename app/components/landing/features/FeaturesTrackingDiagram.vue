@@ -72,7 +72,7 @@
             :x="node.x"
             :y="node.y - 4"
             text-anchor="middle"
-            class="fill-white text-[11px] font-semibold"
+            class="fill-white text-[14px] font-semibold"
             style="font-family: Inter, system-ui, sans-serif"
           >
             {{ node.label }}
@@ -81,7 +81,7 @@
             :x="node.x"
             :y="node.y + 12"
             text-anchor="middle"
-            class="text-[9px]"
+            class="text-[12px]"
             :class="isLandingDark ? 'fill-neutral-500' : 'fill-zinc-500'"
             style="font-family: Inter, system-ui, sans-serif"
           >

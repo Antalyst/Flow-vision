@@ -17,7 +17,7 @@
       <div class="flex rounded-none border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-inner">
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'pickup'
             ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -102,7 +102,7 @@
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-transparent border border-candy-orange px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-candy-orange"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-transparent border border-candy-orange px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider text-candy-orange"
                 >
                   <Icon name="ph:motorcycle-light" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -140,7 +140,7 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
                     ? 'bg-emerald-500/15 border-emerald-500/20 text-emerald-400'
                     : 'bg-transparent border-candy-orange text-candy-orange'"
@@ -166,7 +166,7 @@
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-none bg-red-500/5 border border-red-500/20 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
+            <div class="mt-3 rounded-none bg-red-500/5 border border-red-500/20 px-4 py-3 text-[14px] font-mono text-red-400 break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -207,7 +207,7 @@
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognised QR</p>
                 <p class="mt-1 text-xs text-white/60">This QR code is not a FlowVision document or office checkpoint.</p>
-                <p class="mt-1 break-all font-mono text-[10px] text-gray-500">{{ rawScan }}</p>
+                <p class="mt-1 break-all font-mono text-[13px] text-gray-500">{{ rawScan }}</p>
               </div>
             </div>
           </div>

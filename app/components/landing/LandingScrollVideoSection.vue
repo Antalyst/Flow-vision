@@ -41,7 +41,7 @@
               class="absolute left-0 top-0 w-full max-w-full opacity-0 lg:max-w-2xl xl:max-w-3xl"
             >
               <div class="rounded-xl border border-white/5 bg-black/40 p-4 shadow-lg backdrop-blur-sm sm:p-5 md:p-6 lg:p-8">
-                <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-candy-orange sm:mb-3 sm:text-xs md:text-sm">
+                <p class="mb-2 text-[13px] font-semibold uppercase tracking-[0.25em] text-candy-orange sm:mb-3 sm:text-xs md:text-sm">
                   Chapter {{ String(chapter.number).padStart(2, '0') }}
                 </p>
                 <h2 class="text-xl font-bold leading-tight tracking-tight text-white-pure sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
@@ -70,13 +70,13 @@
                   class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 lg:inset-x-auto lg:left-0 lg:w-full"
                 >
                   <div class="rounded-xl border border-white/5 bg-black/40 p-3 shadow-lg backdrop-blur-sm sm:p-4 md:p-5 lg:p-6">
-                    <p class="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                    <p class="mb-1 text-[13px] font-semibold uppercase tracking-widest text-zinc-400">
                       {{ chapter.bottomLeft.label }}
                     </p>
                     <h3 class="text-xs font-bold leading-snug text-white-pure sm:text-sm md:text-base lg:text-lg">
                       {{ chapter.bottomLeft.title }}
                     </h3>
-                    <p class="mt-1.5 text-[11px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
+                    <p class="mt-1.5 text-[14px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
                       {{ chapter.bottomLeft.body }}
                     </p>
                   </div>
@@ -91,13 +91,13 @@
                   class="pointer-events-auto absolute inset-x-0 bottom-0 opacity-0 lg:inset-x-auto lg:right-0 lg:w-full"
                 >
                   <div class="rounded-xl border border-white/5 bg-black/40 p-3 shadow-lg backdrop-blur-sm sm:p-4 md:p-5 lg:p-6">
-                    <p class="mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+                    <p class="mb-1 text-[13px] font-semibold uppercase tracking-widest text-zinc-400">
                       {{ chapter.bottomRight.label }}
                     </p>
                     <h3 class="text-xs font-bold leading-snug text-white-pure sm:text-sm md:text-base lg:text-lg">
                       {{ chapter.bottomRight.title }}
                     </h3>
-                    <p class="mt-1.5 text-[11px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
+                    <p class="mt-1.5 text-[14px] leading-relaxed text-zinc-300 sm:mt-2 sm:text-xs md:text-sm">
                       {{ chapter.bottomRight.body }}
                     </p>
                   </div>

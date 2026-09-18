@@ -76,9 +76,9 @@
           </button>
         </form>
         <div class="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <button @click="presetQuestion('What are the requirements for Business Permit?')" class="whitespace-nowrap px-3 py-1 text-[10px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Requirements</button>
-          <button @click="presetQuestion('Where is my document PKG-0x8F2A?')" class="whitespace-nowrap px-3 py-1 text-[10px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Track PKG-0x8F2A</button>
-          <button @click="presetQuestion('How long does a Barangay Clearance take?')" class="whitespace-nowrap px-3 py-1 text-[10px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Processing Time</button>
+          <button @click="presetQuestion('What are the requirements for Business Permit?')" class="whitespace-nowrap px-3 py-1 text-[13px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Requirements</button>
+          <button @click="presetQuestion('Where is my document PKG-0x8F2A?')" class="whitespace-nowrap px-3 py-1 text-[13px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Track PKG-0x8F2A</button>
+          <button @click="presetQuestion('How long does a Barangay Clearance take?')" class="whitespace-nowrap px-3 py-1 text-[13px] uppercase tracking-wider border text-gray-500 hover:text-candy-orange hover:border-candy-orange transition-colors" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">Processing Time</button>
         </div>
       </div>
     </div>

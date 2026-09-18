@@ -14,7 +14,7 @@
   }
 
   body {
-    @apply bg-white-pure text-onyx-black;
+    @apply bg-white-surface text-onyx-black;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
@@ -36,6 +36,15 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400 dark:bg-gray-600;
+  }
+
+  /* Scrollable but no visible track — used where a scrollbar would look cluttered (e.g. sidebar nav) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

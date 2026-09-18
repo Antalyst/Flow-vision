@@ -102,7 +102,7 @@
             >
               {{ metric.value }}
             </p>
-            <p class="mt-1.5 text-[10px] leading-snug text-white-muted">{{ metric.label }}</p>
+            <p class="mt-1.5 text-[13px] leading-snug text-white-muted">{{ metric.label }}</p>
           </div>
         </div>
       </div>

@@ -30,7 +30,7 @@
                 <Icon :name="doc.icon" class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-candy-orange transition-colors" />
               </div>
               <div>
-                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ doc.id }}</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-gray-400">{{ doc.id }}</p>
                 <h3 class="font-bold text-gray-900 dark:text-white leading-tight mt-0.5">{{ doc.title }}</h3>
               </div>
             </div>
@@ -38,13 +38,13 @@
           
           <div class="flex items-center justify-between mt-6">
             <div class="flex flex-col">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Status</span>
-              <span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider w-fit rounded-none border" :class="docBadgeClass(doc.status)">
+              <span class="text-[13px] uppercase tracking-wider text-gray-500 mb-1">Status</span>
+              <span class="px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider w-fit rounded-none border" :class="docBadgeClass(doc.status)">
                 {{ doc.statusLabel }}
               </span>
             </div>
             <div class="flex flex-col text-right">
-              <span class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Last Update</span>
+              <span class="text-[13px] uppercase tracking-wider text-gray-500 mb-1">Last Update</span>
               <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ doc.lastUpdate }}</span>
             </div>
           </div>
@@ -70,7 +70,7 @@
             <div>
               <div class="flex items-center gap-3 mb-1">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ selectedDocument.title }}</h2>
-                <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-none border" :class="docBadgeClass(selectedDocument.status)">
+                <span class="px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider rounded-none border" :class="docBadgeClass(selectedDocument.status)">
                   {{ selectedDocument.statusLabel }}
                 </span>
               </div>
@@ -93,11 +93,11 @@
                 </p>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <span class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Submission Date</span>
+                    <span class="text-[13px] uppercase tracking-wider text-gray-500 block mb-1">Submission Date</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">Oct 12, 2023</span>
                   </div>
                   <div>
-                    <span class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Applicant</span>
+                    <span class="text-[13px] uppercase tracking-wider text-gray-500 block mb-1">Applicant</span>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">Juan Dela Cruz</span>
                   </div>
                 </div>
@@ -106,7 +106,7 @@
                 <div class="w-24 h-24 bg-white border-4 border-gray-900 flex items-center justify-center p-2 rounded-none">
                   <Icon name="ph:qr-code-light" class="w-full h-full text-gray-900" />
                 </div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Scan for Verification</span>
+                <span class="text-[13px] font-bold uppercase tracking-wider text-gray-500">Scan for Verification</span>
               </div>
             </section>
 
@@ -118,7 +118,7 @@
                 <div class="p-4 bg-gray-50 dark:bg-onyx-black/50">
                   <div class="flex items-center gap-2 mb-2">
                     <div class="w-2 h-2 bg-candy-orange animate-pulse rounded-none"></div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-candy-orange">Live Transit Status</p>
+                    <p class="text-[13px] font-bold uppercase tracking-[0.2em] text-candy-orange">Live Transit Status</p>
                   </div>
                   <p class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
                     Document is currently actively transiting the mesh network. Real-time trajectory predicts arrival at next office shortly.
@@ -138,7 +138,7 @@
                       
                       <div class="flex-1 w-full bg-gray-50 dark:bg-onyx-black/40 p-4 border transition-all duration-300 group-hover:border-candy-orange/50 rounded-none"
                            :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange mb-1">{{ node.code }}</p>
+                        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange mb-1">{{ node.code }}</p>
                         <h4 class="text-base font-bold text-gray-900 dark:text-white mb-1">{{ node.label }}</h4>
                         <p class="text-xs text-gray-500 dark:text-gray-400">{{ node.detail }}</p>
                       </div>
@@ -153,7 +153,7 @@
               <div class="mb-4 flex items-center justify-between">
                 <div>
                   <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-widest">Zero-Ambiguity Audit Log</h3>
-                  <p class="text-[10px] uppercase tracking-widest text-gray-500 mt-1">Immutable Ledger</p>
+                  <p class="text-[13px] uppercase tracking-widest text-gray-500 mt-1">Immutable Ledger</p>
                 </div>
                 <Icon name="ph:shield-check-fill" class="w-6 h-6 text-emerald-500" />
               </div>
@@ -167,22 +167,22 @@
                       <div class="w-2.5 h-2.5 rounded-none rotate-45" :class="statusRingClass(log.status)"></div>
                       <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ log.title }}</h4>
                     </div>
-                    <span class="px-2 py-0.5 text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap rounded-none" :class="statusBadgeClass(log.status)">
+                    <span class="px-2 py-0.5 text-[12px] font-bold border uppercase tracking-wider whitespace-nowrap rounded-none" :class="statusBadgeClass(log.status)">
                       {{ log.status }}
                     </span>
                   </div>
                   
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 mt-4 border-t pt-3" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
                     <div>
-                      <p class="text-[9px] uppercase tracking-wider text-gray-500">Identity Binding</p>
+                      <p class="text-[12px] uppercase tracking-wider text-gray-500">Identity Binding</p>
                       <p class="text-xs text-gray-700 dark:text-gray-300 mt-0.5 font-mono truncate pr-2" :title="log.binding">{{ log.binding }}</p>
                     </div>
                     <div>
-                      <p class="text-[9px] uppercase tracking-wider text-gray-500">Telemetry (GPS)</p>
+                      <p class="text-[12px] uppercase tracking-wider text-gray-500">Telemetry (GPS)</p>
                       <p class="text-xs text-gray-700 dark:text-gray-300 mt-0.5 font-mono">{{ log.gps }}</p>
                     </div>
                     <div class="sm:col-span-2">
-                      <p class="text-[9px] uppercase tracking-wider text-gray-500">Network Time</p>
+                      <p class="text-[12px] uppercase tracking-wider text-gray-500">Network Time</p>
                       <p class="text-xs text-gray-700 dark:text-gray-300 mt-0.5 font-mono">{{ log.time }}</p>
                     </div>
                   </div>

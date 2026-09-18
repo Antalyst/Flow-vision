@@ -34,7 +34,7 @@
             <span
               v-for="tag in cap.tags"
               :key="tag"
-              class="rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-neutral-400"
+              class="rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-[13px] font-medium uppercase tracking-wider text-neutral-400"
             >
               {{ tag }}
             </span>
@@ -79,7 +79,7 @@
             <span
               v-for="tag in nlq.tags"
               :key="tag"
-              class="rounded-full border border-candy-orange/30 bg-candy-orange/10 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-candy-orange"
+              class="rounded-full border border-candy-orange/30 bg-candy-orange/10 px-3 py-1 text-[13px] font-medium uppercase tracking-wider text-candy-orange"
             >
               {{ tag }}
             </span>

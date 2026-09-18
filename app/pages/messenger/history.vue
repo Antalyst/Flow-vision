@@ -80,7 +80,7 @@
 
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-[10px] font-bold uppercase tracking-wider" :class="getStatusTextClass(event.status)">
+            <span class="text-[13px] font-bold uppercase tracking-wider" :class="getStatusTextClass(event.status)">
               {{ formatStatus(event.status) }}
             </span>
             <span class="text-xs" :class="mutedClass">&bull; {{ formatTime(event.created_at) }}</span>
@@ -100,7 +100,7 @@
         </div>
 
         <div class="text-right md:min-w-[120px]">
-          <span class="text-[10px] font-mono" :class="isDark ? 'text-zinc-500' : 'text-gray-400'">
+          <span class="text-[13px] font-mono" :class="isDark ? 'text-zinc-500' : 'text-gray-400'">
             ID: {{ event.document?.qr_code_data?.split('-').pop()?.substring(0, 8) || 'N/A' }}
           </span>
         </div>

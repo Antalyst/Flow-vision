@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div>
-      <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+      <p class="px-3 mb-2 text-[13px] font-bold uppercase tracking-widest"
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">Deliveries</p>
       <div class="space-y-0.5">
         <NuxtLink v-for="item in deliveryItems" :key="item.to" :to="item.to"
@@ -11,7 +11,7 @@
           <span class="truncate">{{ item.label }}</span>
           <span
             v-if="item.to === '/messenger/notifications' && badgeCount > 0"
-            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white"
+            class="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[13px] font-bold text-white"
           >
             {{ badgeCount > 9 ? '9+' : badgeCount }}
           </span>
@@ -20,7 +20,7 @@
     </div>
 
     <div>
-      <p class="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest"
+      <p class="px-3 mb-2 text-[13px] font-bold uppercase tracking-widest"
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">Account</p>
       <div class="space-y-0.5">
         <NuxtLink v-for="item in accountItems" :key="item.to" :to="item.to"

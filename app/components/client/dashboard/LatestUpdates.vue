@@ -8,6 +8,7 @@ const activities = ref([
     title: 'Document Updated',
     description: 'Document #2319 SLA updated',
     time: '11:20 AM',
+    day: 'today',
     type: 'update',
     color: 'bg-candy-orange',
     iconColor: 'text-candy-orange',
@@ -17,6 +18,7 @@ const activities = ref([
     title: 'New Client Added',
     description: 'PT. Alpha Indonesia registered',
     time: '11:15 AM',
+    day: 'today',
     type: 'client',
     color: 'bg-blue-500',
     iconColor: 'text-blue-500',
@@ -26,15 +28,17 @@ const activities = ref([
     title: 'Agent Reassigned',
     description: 'Document #2322 moved to Michael Wong',
     time: '11:00 AM',
+    day: 'today',
     type: 'reassign',
     color: 'bg-purple-500',
     iconColor: 'text-purple-500',
   },
   {
     id: 4,
-    title: 'SLA Breach Risk',
+    title: 'Might Miss Deadline',
     description: 'Document #2320 "Login issue"',
-    time: '10:45 AM',
+    time: '4:45 PM',
+    day: 'yesterday',
     type: 'risk',
     color: 'bg-red-500',
     iconColor: 'text-red-500',
@@ -43,7 +47,8 @@ const activities = ref([
     id: 5,
     title: 'Knowledge Base',
     description: 'New article published: "Login Troubleshooting"',
-    time: '10:30 AM',
+    time: '2:30 PM',
+    day: 'yesterday',
     type: 'knowledge',
     color: 'bg-emerald-500',
     iconColor: 'text-emerald-500',
@@ -52,7 +57,8 @@ const activities = ref([
     id: 6,
     title: 'Customer Feedback',
     description: '"Great support response, thanks Sarah!"',
-    time: '10:30 AM',
+    time: 'Monday',
+    day: 'week',
     type: 'feedback',
     color: 'bg-teal-500',
     iconColor: 'text-teal-500',
@@ -60,46 +66,64 @@ const activities = ref([
 ])
 
 const filteredActivities = computed(() => {
-  if (!searchQuery.value.trim()) return activities.value
-  const query = searchQuery.value.toLowerCase().trim()
-  return activities.value.filter(
-    (a) =>
-      a.title.toLowerCase().includes(query) ||
-      a.description.toLowerCase().includes(query),
-  )
+  let rows = activities.value
+
+  if (activeTab.value === 'today') {
+    rows = rows.filter((a) => a.day === 'today')
+  } else if (activeTab.value === 'yesterday') {
+    rows = rows.filter((a) => a.day === 'yesterday')
+  }
+  // 'week' shows everything, today and yesterday included
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    rows = rows.filter(
+      (a) =>
+        a.title.toLowerCase().includes(query) ||
+        a.description.toLowerCase().includes(query),
+    )
+  }
+
+  return rows
+})
+
+const activityCountLabel = computed(() => {
+  if (activeTab.value === 'today') return 'new activities today'
+  if (activeTab.value === 'yesterday') return 'activities yesterday'
+  return 'activities this week'
 })
 </script>
 
 <template>
-  <div class="dashboard-card p-5 flex flex-col h-full">
+  <div class="dashboard-card rounded-2xl p-5 flex flex-col h-full">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Latest Updates</h3>
-      <button class="p-1 rounded-none hover:bg-gray-100 dark:hover:bg-onyx-black/40 transition-colors">
+      <button class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-black/40 transition-colors">
         <Icon name="ph:dots-three-bold" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
       </button>
     </div>
 
     <!-- Tab pills -->
-    <div class="flex bg-gray-100 dark:bg-onyx-black/50 p-1 rounded-none mb-4">
+    <div class="flex bg-gray-100 dark:bg-onyx-black/50 p-1 rounded-xl mb-4">
       <button
         @click="activeTab = 'today'"
         :class="activeTab === 'today' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
       >
         Today
       </button>
       <button
         @click="activeTab = 'yesterday'"
         :class="activeTab === 'yesterday' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
       >
         Yesterday
       </button>
       <button
         @click="activeTab = 'week'"
         :class="activeTab === 'week' ? 'bg-white dark:bg-onyx-card text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'"
-        class="flex-1 py-1.5 rounded-none text-xs font-semibold transition-all"
+        class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
       >
         This week
       </button>
@@ -111,13 +135,13 @@ const filteredActivities = computed(() => {
       <input
         v-model="searchQuery"
         placeholder="Search activities"
-        class="w-full pl-9 pr-3 py-2 text-xs rounded-none bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-candy-orange transition"
+        class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-gray-50 dark:bg-onyx-black/30 border border-gray-200 dark:border-onyx-border text-gray-700 dark:text-gray-300 placeholder:text-gray-400 outline-none focus:border-candy-orange transition"
       />
     </div>
 
     <!-- Activity count -->
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-      <span class="font-bold text-gray-900 dark:text-white">{{ filteredActivities.length }}</span> new activities today
+      <span class="font-bold text-gray-900 dark:text-white">{{ filteredActivities.length }}</span> {{ activityCountLabel }}
     </p>
 
     <!-- Timeline feed -->
@@ -125,7 +149,7 @@ const filteredActivities = computed(() => {
       <div
         v-for="(activity, index) in filteredActivities"
         :key="activity.id"
-        class="flex gap-3 p-2.5 rounded-none hover:bg-gray-50 dark:hover:bg-onyx-black/30 transition-colors cursor-pointer group"
+        class="flex gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-onyx-black/30 transition-colors cursor-pointer group"
       >
         <!-- Timeline dot -->
         <div class="flex flex-col items-center pt-1">
@@ -140,9 +164,9 @@ const filteredActivities = computed(() => {
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold text-gray-900 dark:text-white">{{ activity.title }}</h4>
-            <span class="text-[10px] text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">{{ activity.time }}</span>
+            <span class="text-[13px] text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">{{ activity.time }}</span>
           </div>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ activity.description }}</p>
+          <p class="text-[14px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ activity.description }}</p>
         </div>
       </div>
     </div>

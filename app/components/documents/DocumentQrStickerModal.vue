@@ -15,7 +15,7 @@
         >
           <header class="flex items-start justify-between gap-3 border-b px-5 py-4" :class="borderClass">
             <div>
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Print Sticker</p>
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Print Sticker</p>
               <h2 class="mt-1 text-lg font-bold" :class="headingClass">QR Tracking Label</h2>
               <p class="mt-1 text-xs" :class="mutedClass">
                 Attach this label to the physical hard-copy.
@@ -36,7 +36,7 @@
               class="rounded-xl border p-4 text-center"
               :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-pure'"
             >
-              <p class="mb-1 text-[10px] font-bold uppercase tracking-wider text-candy-orange">Document</p>
+              <p class="mb-1 text-[13px] font-bold uppercase tracking-wider text-candy-orange">Document</p>
               <p class="truncate text-sm font-semibold" :class="headingClass">{{ title }}</p>
               <p v-if="priority" class="mt-1 text-xs" :class="mutedClass">Priority: {{ priority }}</p>
             </div>
@@ -46,7 +46,7 @@
               :class="qrFrameClass"
             >
               <canvas ref="qrCanvas" class="h-48 w-48 rounded-lg bg-white-pure p-2 shadow-sm" />
-              <p class="break-all text-center font-mono text-[11px]" :class="mutedClass">
+              <p class="break-all text-center font-mono text-[14px]" :class="mutedClass">
                 {{ qrPayload }}
               </p>
             </div>

@@ -37,10 +37,10 @@ const chartData = computed(() => {
       {
         data: [l.busy, l.available, l.inTransit, l.idle],
         backgroundColor: [
-          '#6366F1', // Busy (Indigo)
-          'rgba(99, 102, 241, 0.4)', // Available (Soft Indigo)
-          '#A8A29E', // In Transit (Stone)
-          'rgba(168, 162, 158, 0.3)', // Idle (Light Stone)
+          '#EE4D2D', // Busy (brand accent)
+          '#16A34A', // Available (success)
+          '#D6431F', // In Transit (accent hover)
+          'rgba(143, 143, 148, 0.35)', // Waiting (muted)
         ],
         borderColor: donutBorderColor.value,
         borderWidth: 3,
@@ -68,25 +68,25 @@ const totalDesks = computed(() => {
 
 const toneClass: Record<string, string> = {
   amber: 'text-candy-orange',
-  emerald: 'text-candy-orange',
+  emerald: 'text-success',
   orange: 'text-candy-hover',
   zinc: 'text-zinc-500 dark:text-white-muted',
 }
 
 const toneDot: Record<string, string> = {
   amber: 'bg-candy-orange',
-  emerald: 'bg-candy-orange/70',
+  emerald: 'bg-success',
   orange: 'bg-candy-hover',
   zinc: 'bg-white-muted',
 }
 </script>
 
 <template>
-  <div class="relative flex h-full flex-col overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-4">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Office Status</p>
-      <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">Workstation Load Distribution</h3>
-      <p class="mt-0.5 text-xs text-zinc-500 dark:text-white-muted">Busy vs available desks across your org</p>
+      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Office Status</p>
+      <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">Desk Availability</h3>
+      <p class="mt-0.5 text-xs text-zinc-500 dark:text-white-muted">How busy your office desks are right now</p>
     </div>
 
     <div v-if="loading" class="flex flex-1 items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
@@ -107,7 +107,7 @@ const toneDot: Record<string, string> = {
         </ClientOnly>
         <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span class="text-2xl font-bold text-onyx-black dark:text-white-pure">{{ totalDesks }}</span>
-          <span class="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-white-muted">Desks</span>
+          <span class="text-[13px] uppercase tracking-wider text-zinc-500 dark:text-white-muted">Desks</span>
         </div>
       </div>
 
@@ -115,11 +115,11 @@ const toneDot: Record<string, string> = {
         <div
           v-for="item in load?.legend ?? []"
           :key="item.label"
-          class="rounded-none border border-zinc-200 bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-black/60"
+          class="rounded-xl border border-zinc-200 bg-white-surface px-3 py-2.5 transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-black/60"
         >
           <div class="mb-1 flex items-center gap-2">
             <span class="h-2 w-2 rounded-full" :class="toneDot[item.tone]" />
-            <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-white-muted">{{ item.label }}</span>
+            <span class="text-[13px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-white-muted">{{ item.label }}</span>
           </div>
           <p class="text-lg font-bold" :class="toneClass[item.tone]">{{ item.value }}</p>
         </div>

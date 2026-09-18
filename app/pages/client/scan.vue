@@ -1,23 +1,23 @@
 <template>
-  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-none overflow-hidden border shadow-sm relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
+  <div class="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] rounded-2xl overflow-hidden border shadow-sm relative" :class="isDark ? 'bg-onyx-black border-onyx-border' : 'bg-gray-950 border-gray-800'">
 
     <!-- ── Top bar ──────────────────────────────────────────────────────── -->
     <header class="flex items-center justify-between px-4 pt-4 pb-3">
       <NuxtLink
         to="/client/documents"
-        class="inline-flex items-center gap-1.5 rounded-none px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+        class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
       >
         <Icon name="ph:arrow-left-bold" class="h-4 w-4" />
         Back
       </NuxtLink>
 
-      <h1 class="text-sm font-bold text-white">Client Document Scanner</h1>
+      <h1 class="text-sm font-bold text-white">Scan & Update</h1>
 
       <!-- Mode toggle pill -->
-      <div class="flex rounded-none border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-sm">
+      <div class="flex rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-sm">
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-lg px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'pickup'
             ? 'bg-candy-orange text-white shadow-sm'
             : 'text-white/50 hover:text-white/80'"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-lg px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -64,7 +64,7 @@
       <Transition name="result-pop">
         <div
           v-if="scanState !== 'idle'"
-          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-none border bg-black/40 backdrop-blur-xl shadow-sm"
+          class="mt-5 w-full max-w-[360px] overflow-hidden rounded-2xl border bg-black/40 backdrop-blur-xl shadow-sm"
           :class="resultCardClass"
         >
           <!-- Processing -->
@@ -79,11 +79,11 @@
           <!-- SUCCESS ── Pickup -->
           <div v-else-if="scanState === 'success' && mode === 'pickup'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-emerald-500/20">
-                <Icon name="ph:check-circle-fill" class="h-6 w-6 text-emerald-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-success/20">
+                <Icon name="ph:check-circle-fill" class="h-6 w-6 text-success" />
               </span>
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                <p class="text-xs font-bold uppercase tracking-widest text-success">
                   {{ resultData?.checkpoint_only ? 'Origin Checkpoint' : 'Pickup Confirmed' }}
                 </p>
                 <p v-if="resultData?.office?.name" class="mt-1 text-xs text-white/60">
@@ -102,7 +102,7 @@
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-candy-orange"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider text-candy-orange"
                 >
                   <Icon name="ph:motorcycle-fill" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -115,19 +115,19 @@
           <div v-else-if="scanState === 'success' && mode === 'dropoff'" class="p-5">
             <div class="flex items-start gap-3">
               <span
-                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none"
-                :class="resultData?.is_final_stop ? 'bg-emerald-500/20' : 'bg-candy-orange/20'"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                :class="resultData?.is_final_stop ? 'bg-success/20' : 'bg-candy-orange/20'"
               >
                 <Icon
                   :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'"
                   class="h-6 w-6"
-                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-candy-orange'"
+                  :class="resultData?.is_final_stop ? 'text-success' : 'text-candy-orange'"
                 />
               </span>
               <div class="min-w-0 flex-1">
                 <p
                   class="text-xs font-bold uppercase tracking-widest"
-                  :class="resultData?.is_final_stop ? 'text-emerald-400' : 'text-candy-orange'"
+                  :class="resultData?.is_final_stop ? 'text-success' : 'text-candy-orange'"
                 >
                   {{ resultData?.is_final_stop ? 'Arrived at Final Stop' : 'Arrived at Office' }}
                 </p>
@@ -140,9 +140,9 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
-                    ? 'bg-emerald-500/15 border-emerald-500/20 text-emerald-400'
+                    ? 'bg-success/15 border-success/20 text-success'
                     : 'bg-candy-orange/15 border-candy-orange/20 text-candy-orange'"
                 >
                   <Icon :name="resultData?.is_final_stop ? 'ph:check-circle-fill' : 'ph:buildings-fill'" class="h-3.5 w-3.5" />
@@ -155,18 +155,18 @@
           <!-- SECURITY ERROR -->
           <div v-else-if="scanState === 'security-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-red-500/20">
-                <Icon name="ph:shield-warning-fill" class="h-6 w-6 text-red-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-danger/20">
+                <Icon name="ph:shield-warning-fill" class="h-6 w-6 text-danger" />
               </span>
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold uppercase tracking-widest text-red-400">🚫 Security Violation</p>
-                <p class="mt-1 text-sm font-bold text-white">Cross-Org Scan Blocked</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-danger">Not Allowed</p>
+                <p class="mt-1 text-sm font-bold text-white">Wrong Organization</p>
                 <p class="mt-1 text-xs leading-relaxed text-white/60">
-                  This asset belongs to a <strong class="text-red-400">different organisation</strong>. Scanning external checkpoints is strictly prohibited.
+                  This document or checkpoint belongs to a <strong class="text-danger">different organization</strong> and can't be scanned here.
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-none bg-red-500/5 border border-red-500/20 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
+            <div class="mt-3 rounded-lg bg-danger/5 border border-danger/20 px-4 py-3 text-[14px] font-mono text-danger break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -174,7 +174,7 @@
           <!-- ROUTE MISMATCH ERROR -->
           <div v-else-if="scanState === 'route-error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-candy-orange/20">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange/20">
                 <Icon name="ph:warning-fill" class="h-6 w-6 text-candy-orange" />
               </span>
               <div class="min-w-0 flex-1">
@@ -188,11 +188,11 @@
           <!-- GENERIC ERROR -->
           <div v-else-if="scanState === 'error'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-red-500/10">
-                <Icon name="ph:x-circle-fill" class="h-6 w-6 text-red-400" />
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-danger/10">
+                <Icon name="ph:x-circle-fill" class="h-6 w-6 text-danger" />
               </span>
               <div class="min-w-0">
-                <p class="text-xs font-bold uppercase tracking-widest text-red-400">Scan Failed</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-danger">Scan Failed</p>
                 <p class="mt-1 text-xs leading-relaxed text-white/60">{{ errorMessage }}</p>
               </div>
             </div>
@@ -201,13 +201,13 @@
           <!-- UNKNOWN QR -->
           <div v-else-if="scanState === 'unknown'" class="p-5">
             <div class="flex items-start gap-3">
-              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none bg-gray-500/10">
+              <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-500/10">
                 <Icon name="ph:question-fill" class="h-6 w-6 text-gray-400" />
               </span>
               <div class="min-w-0">
-                <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognised QR</p>
-                <p class="mt-1 text-xs text-white/60">This QR code is not a FlowVision document or office checkpoint.</p>
-                <p class="mt-1 break-all font-mono text-[10px] text-gray-500">{{ rawScan }}</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognized Code</p>
+                <p class="mt-1 text-xs text-white/60">This isn't a FlowVision document or office code.</p>
+                <p class="mt-1 break-all font-mono text-[13px] text-gray-500">{{ rawScan }}</p>
               </div>
             </div>
           </div>
@@ -216,7 +216,7 @@
           <div v-if="scanState !== 'processing'" class="border-t border-white/5 px-5 py-3">
             <button
               type="button"
-              class="w-full flex items-center justify-center gap-2 rounded-none bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
+              class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-white/10 active:scale-[0.98]"
               @click="resetScan"
             >
               <Icon name="ph:scan" class="h-4 w-4 text-candy-orange" />
@@ -229,7 +229,7 @@
       <!-- ── Instruction chip when idle ──────────────────────────────────── -->
       <div
         v-if="scanState === 'idle'"
-        class="mt-4 flex items-center gap-2 rounded-none border border-candy-orange/20 bg-candy-orange/5 px-4 py-2.5 text-xs text-candy-orange/80"
+        class="mt-4 flex items-center gap-2 rounded-xl border border-candy-orange/20 bg-candy-orange/5 px-4 py-2.5 text-xs text-candy-orange/80"
       >
         <Icon name="ph:qr-code" class="h-4 w-4 text-candy-orange flex-shrink-0" />
         <span>
@@ -243,8 +243,8 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | Secure Scanning',
-  description: 'Use the secure QR scanner to verify documents, update tracking statuses, and log courier pickups and deliveries.'
+  title: 'FlowVision | Scan & Update',
+  description: 'Scan a document\'s QR code to verify it, update its status, and log pickups and deliveries.'
 })
 import { computed, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
@@ -276,12 +276,12 @@ const scannerKey = ref(0) // bump to force re-mount scanner
 // ── Computed ───────────────────────────────────────────────────────────
 const resultCardClass = computed(() => {
   switch (scanState.value) {
-    case 'security-error': return 'border-red-500/40 bg-red-950/80 shadow-lg shadow-red-500/10'
-    case 'route-error':    return 'border-amber-500/30 bg-amber-950/80 shadow-lg shadow-amber-500/10'
-    case 'error':          return 'border-red-400/20 bg-gray-900'
-    case 'success':        return 'border-emerald-500/30 bg-gray-900 shadow-lg shadow-emerald-500/10'
+    case 'security-error': return 'border-danger/40 bg-red-950/80'
+    case 'route-error':    return 'border-candy-orange/30 bg-orange-950/80'
+    case 'error':          return 'border-danger/20 bg-gray-900'
+    case 'success':        return 'border-success/30 bg-gray-900'
     case 'unknown':        return 'border-white/10 bg-gray-900'
-    default:               return 'border-amber-500/20 bg-gray-900'
+    default:               return 'border-candy-orange/20 bg-gray-900'
   }
 })
 

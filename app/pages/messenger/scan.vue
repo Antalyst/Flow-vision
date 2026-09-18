@@ -17,7 +17,7 @@
       <div class="flex rounded-none border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-inner">
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'pickup'
             ? 'bg-cyan-500 text-black font-extrabold shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-none px-3 py-1 text-[11px] font-bold transition-all"
+          class="rounded-none px-3 py-1 text-[14px] font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-emerald-500 text-black font-extrabold shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -56,7 +56,7 @@
             </span>
             <p class="text-xs font-bold text-white">
               <span
-                class="font-black uppercase tracking-wider text-[11px] mr-1"
+                class="font-black uppercase tracking-wider text-[14px] mr-1"
                 :class="mode === 'pickup' ? 'text-cyan-400' : 'text-emerald-400'"
               >
                 {{ mode === 'pickup' ? 'Pickup Target:' : 'Drop-off Target:' }}
@@ -75,7 +75,7 @@
           <div class="flex items-center gap-2">
             <span
               v-if="focusedDoc.priority"
-              class="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider border"
+              class="px-2 py-0.5 text-[12px] font-extrabold uppercase tracking-wider border"
               :class="getPriorityBadgeClass(focusedDoc.priority)"
             >
               {{ focusedDoc.priority }} SLA
@@ -84,7 +84,7 @@
             <!-- Compact In-Scanner Switcher -->
             <button
               type="button"
-              class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition"
+              class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider transition"
               :class="mode === 'pickup'
                 ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400 hover:text-black'
                 : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-400 hover:text-black'"
@@ -97,7 +97,7 @@
             <!-- Clear Focus -->
             <button
               type="button"
-              class="text-[10px] text-white/50 hover:text-white transition px-1.5 py-0.5 border border-white/10"
+              class="text-[13px] text-white/50 hover:text-white transition px-1.5 py-0.5 border border-white/10"
               title="Clear active focus"
               @click="messengerStore.clearFocus()"
             >
@@ -106,7 +106,7 @@
           </div>
         </div>
 
-        <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[11px] text-white/60 font-mono">
+        <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2 text-[14px] text-white/60 font-mono">
           <span>ID: {{ focusedDoc.tracking_id }}</span>
           <span class="text-amber-400 font-semibold">
             Step {{ focusedDoc.current_step }}/{{ focusedDoc.total_steps || '—' }}
@@ -128,7 +128,7 @@
         </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-none border border-candy-orange bg-candy-orange/10 px-3 py-1.5 text-[11px] font-bold text-candy-orange hover:bg-candy-orange hover:text-black transition active:scale-[0.98]"
+          class="inline-flex items-center gap-1.5 rounded-none border border-candy-orange bg-candy-orange/10 px-3 py-1.5 text-[14px] font-bold text-candy-orange hover:bg-candy-orange hover:text-black transition active:scale-[0.98]"
           @click="showPickerModal = true"
         >
           <Icon name="ph:crosshair-bold" class="h-3.5 w-3.5" />
@@ -211,7 +211,7 @@
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-transparent border border-cyan-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-400"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none bg-transparent border border-cyan-500 px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider text-cyan-400"
                 >
                   <Icon name="ph:motorcycle-light" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -249,7 +249,7 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-none px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
                     ? 'bg-transparent border-emerald-500 text-emerald-400'
                     : 'bg-transparent border-emerald-500 text-emerald-400'"
@@ -303,7 +303,7 @@
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-none bg-transparent border border-red-500 px-4 py-3 text-[11px] font-mono text-red-400 break-all">
+            <div class="mt-3 rounded-none bg-transparent border border-red-500 px-4 py-3 text-[14px] font-mono text-red-400 break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -344,7 +344,7 @@
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognised QR</p>
                 <p class="mt-1 text-xs text-white/60">This QR code is not a FlowVision document or office checkpoint.</p>
-                <p class="mt-1 break-all font-mono text-[10px] text-gray-500">{{ rawScan }}</p>
+                <p class="mt-1 break-all font-mono text-[13px] text-gray-500">{{ rawScan }}</p>
               </div>
             </div>
           </div>
@@ -422,20 +422,20 @@
                 <div class="min-w-0 flex-1 space-y-1">
                   <div class="flex items-center gap-2">
                     <span
-                      class="px-1.5 py-0.5 text-[9px] font-bold uppercase"
+                      class="px-1.5 py-0.5 text-[12px] font-bold uppercase"
                       :class="doc.tracking_status === 'IN_TRANSIT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'"
                     >
                       {{ doc.tracking_status === 'IN_TRANSIT' ? 'Drop-off Needed' : 'Pickup Needed' }}
                     </span>
                     <span
-                      class="px-1.5 py-0.5 text-[9px] font-bold uppercase border"
+                      class="px-1.5 py-0.5 text-[12px] font-bold uppercase border"
                       :class="getPriorityBadgeClass(doc.priority)"
                     >
                       {{ doc.priority || 'Medium' }}
                     </span>
                   </div>
                   <p class="text-xs font-bold text-white truncate">{{ doc.title }}</p>
-                  <p class="text-[10px] text-white/70 font-semibold truncate">
+                  <p class="text-[13px] text-white/70 font-semibold truncate">
                     <span v-if="doc.tracking_status === 'IN_TRANSIT'">
                       Target Destination: <strong class="text-emerald-400">{{ doc.destination_office_name || '—' }}</strong>
                     </span>
@@ -448,13 +448,13 @@
                 <div class="flex items-center flex-shrink-0">
                   <span
                     v-if="messengerStore.isFocused(doc.id)"
-                    class="rounded-none bg-candy-orange px-2 py-1 text-[10px] font-bold text-black"
+                    class="rounded-none bg-candy-orange px-2 py-1 text-[13px] font-bold text-black"
                   >
                     Active
                   </span>
                   <span
                     v-else
-                    class="rounded-none border border-candy-orange/50 px-2 py-1 text-[10px] font-bold text-candy-orange"
+                    class="rounded-none border border-candy-orange/50 px-2 py-1 text-[13px] font-bold text-candy-orange"
                   >
                     Select
                   </span>

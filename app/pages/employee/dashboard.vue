@@ -12,24 +12,24 @@
           <span :class="isDark ? 'text-white' : 'text-gray-800'">Dashboard</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight">
-          Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Employee' }} 👋
+          Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Employee' }}
         </h1>
         <p class="mt-1.5 text-sm" :class="mutedText">
           {{ currentScope === 'LOCAL'
             ? 'Here\'s your personal office workspace at a glance.'
-            : 'Organisation-wide document stream and live analytics.' }}
+            : 'See every document moving across your organization.' }}
         </p>
       </div>
 
       <!-- Right side: scope toggle + org badge -->
       <div class="flex flex-wrap items-center gap-3">
         <!-- Flat scope toggle -->
-        <div class="flex rounded-none border" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
+        <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
           <button
             v-for="opt in scopeOptions"
             :key="opt.value"
             type="button"
-            class="flex items-center gap-2 px-4 py-2 text-xs font-semibold transition-colors"
+            class="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold transition-colors rounded-lg"
             :class="currentScope === opt.value
               ? 'bg-candy-orange text-white'
               : isDark ? 'text-gray-400 hover:bg-onyx-black' : 'text-gray-500 hover:bg-gray-50'"
@@ -43,7 +43,7 @@
         <!-- Org badge -->
         <div
           v-if="auth.currentOrg"
-          class="inline-flex items-center gap-2 rounded-none border px-3.5 py-2 text-sm"
+          class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm"
           :class="isDark ? 'bg-onyx-card border-onyx-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
         >
           <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
@@ -58,33 +58,33 @@
       <Transition name="scope-fade" mode="out-in">
         <div
           :key="currentScope"
-          class="flex items-center gap-4 rounded-none border px-5 py-4 text-sm transition-colors"
+          class="flex items-center gap-4 rounded-2xl border px-5 py-4 text-sm transition-colors"
           :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
         >
-          <div class="flex h-9 w-9 flex-none items-center justify-center rounded-none bg-candy-orange/10">
+          <div class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-candy-orange/10">
             <Icon
               :name="currentScope === 'LOCAL' ? 'ph:buildings-light' : 'ph:globe-hemisphere-west-light'"
               class="h-4.5 w-4.5 text-candy-orange"
             />
           </div>
           <div class="min-w-0 flex-1">
-            <p class="font-bold text-candy-orange text-[10px] uppercase tracking-[0.12em]">
-              {{ currentScope === 'LOCAL' ? 'Office View — Your Station' : 'Org View — Global Pipeline' }}
+            <p class="font-bold text-candy-orange text-xs uppercase tracking-[0.12em]">
+              {{ currentScope === 'LOCAL' ? 'Office View — Your Station' : 'Org View — All Offices' }}
             </p>
             <p class="mt-0.5 text-xs" :class="mutedText">
               {{ currentScope === 'LOCAL'
-                ? `Showing data scoped to your ${myOffices.length} sub-office${myOffices.length === 1 ? '' : 's'} within ${auth.currentOrg?.name || 'your organisation'}.`
-                : `Showing all ${queueSummary.total} in-flight documents across the entire organisation.` }}
+                ? `Showing documents from your ${myOffices.length} office${myOffices.length === 1 ? '' : 's'} in ${auth.currentOrg?.name || 'your organization'}.`
+                : `Showing all ${queueSummary.total} documents currently moving across the organization.` }}
             </p>
           </div>
           <div class="flex items-center gap-2.5">
-            <span class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange">
-              <span class="h-1.5 w-1.5 rounded-none bg-candy-orange" />
+            <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange">
+              <span class="h-1.5 w-1.5 rounded-full bg-candy-orange" />
               Live
             </span>
             <NuxtLink
               :to="`/employee/ai?scope=${currentScope}`"
-              class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-semibold transition-colors hover:bg-candy-orange hover:text-white hover:border-candy-orange"
+              class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-candy-orange hover:text-white hover:border-candy-orange"
               :class="isDark
                 ? 'border-onyx-border bg-onyx-black text-gray-300'
                 : 'border-gray-200 bg-gray-50 text-gray-500'"
@@ -103,20 +103,20 @@
         <div
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="group rounded-none border p-5 transition-colors"
+          class="group rounded-2xl border p-5 transition-colors"
           :class="isDark ? 'bg-onyx-card border-onyx-border hover:bg-onyx-black' : 'bg-white border-gray-200 hover:bg-gray-50'"
         >
           <div class="flex items-start gap-4">
-            <span class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-none bg-opacity-10" :class="[card.iconColor.replace('text-', 'bg-')]">
+            <span class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-opacity-10" :class="[card.iconColor.replace('text-', 'bg-')]">
               <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
             </span>
             <div class="min-w-0">
-              <p class="text-[10px] font-bold uppercase tracking-widest" :class="mutedText">{{ card.label }}</p>
+              <p class="text-xs font-bold uppercase tracking-widest" :class="mutedText">{{ card.label }}</p>
               <p class="mt-1 text-2xl font-bold tracking-tight">
-                <span v-if="ledgerLoading" class="inline-block h-6 w-12 rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                <span v-if="ledgerLoading" class="inline-block h-6 w-12 rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
                 <span v-else>{{ card.value }}</span>
               </p>
-              <p class="mt-0.5 text-[10px] font-medium" :class="card.trendColor">{{ card.trend }}</p>
+              <p class="mt-0.5 text-xs font-medium" :class="card.trendColor">{{ card.trend }}</p>
             </div>
           </div>
         </div>
@@ -124,10 +124,10 @@
     </Transition>
 
     <!-- ── Predictive Workload Chart ──────────────────────────────────── -->
-    <div ref="chartDivEl" class="rounded-none border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
+    <div ref="chartDivEl" class="rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
       <div class="mb-4">
-        <h2 class="text-sm font-bold">Predictive Workload Forecast</h2>
-        <p class="mt-0.5 text-[11px]" :class="mutedText">
+        <h2 class="text-sm font-bold">Document Forecast</h2>
+        <p class="mt-0.5 text-xs" :class="mutedText">
           {{ currentScope === 'LOCAL' ? 'Expected document volume routing to your offices based on historical processing rates.' : 'Org-wide forecasted document pipeline volume.' }}
         </p>
       </div>
@@ -145,12 +145,12 @@
         <div
           v-for="chip in pipelineChips"
           :key="chip.label"
-          class="flex flex-col items-center justify-center gap-1.5 rounded-none border py-4 text-center transition-colors"
+          class="flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-4 text-center transition-colors"
           :class="isDark ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black' : 'border-gray-200 bg-white hover:bg-gray-50'"
         >
-          <span class="h-2 w-2 rounded-none" :class="chip.dot" />
+          <span class="h-2 w-2 rounded-full" :class="chip.dot" />
           <p class="text-2xl font-bold tracking-tight">{{ chip.count }}</p>
-          <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ chip.label }}</p>
+          <p class="text-xs font-bold uppercase tracking-wider" :class="mutedText">{{ chip.label }}</p>
         </div>
       </div>
     </Transition>
@@ -160,7 +160,7 @@
 
       <!-- ── Left Column: Documents (3/5) ───────────────────────── -->
       <section
-        class="rounded-none border lg:col-span-3 flex flex-col overflow-hidden transition-colors"
+        class="rounded-2xl border lg:col-span-3 flex flex-col overflow-hidden transition-colors"
         :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
       >
         <!-- Section header -->
@@ -170,17 +170,17 @@
         >
           <div>
             <h2 class="text-sm font-bold">
-              {{ currentScope === 'LOCAL' ? 'Personal Action Ledger' : 'Organisation Document Stream' }}
+              {{ currentScope === 'LOCAL' ? 'My Documents' : 'All Documents' }}
             </h2>
-            <p class="mt-0.5 text-[11px]" :class="mutedText">
+            <p class="mt-0.5 text-xs" :class="mutedText">
               {{ currentScope === 'LOCAL'
                 ? 'Documents in your offices or uploaded by you'
-                : 'All document transactions across the organisation' }}
+                : 'All document activity across the organization' }}
             </p>
           </div>
           <div class="flex items-center gap-2.5">
             <span
-              class="inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors"
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors"
               :class="currentScope === 'LOCAL'
                 ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
                 : isDark ? 'border-white/20 bg-white/5 text-gray-300' : 'border-gray-300 bg-gray-100 text-gray-600'"
@@ -189,7 +189,7 @@
                 :name="currentScope === 'LOCAL' ? 'ph:shield-check-light' : 'ph:globe-simple-light'"
                 class="h-3 w-3"
               />
-              {{ currentScope === 'LOCAL' ? 'Isolated' : 'Org-Wide' }}
+              {{ currentScope === 'LOCAL' ? 'My Offices' : 'Org-Wide' }}
             </span>
             <NuxtLink
               to="/employee/documents"
@@ -240,7 +240,7 @@
                 <p class="truncate text-sm font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
                   {{ doc.title || 'Untitled Document' }}
                 </p>
-                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0 text-[11px]" :class="mutedText">
+                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0 text-[14px]" :class="mutedText">
                   <span v-if="doc.origin_label || doc.office_label" class="flex items-center gap-1">
                     <Icon name="ph:buildings-light" class="h-3 w-3" />
                     {{ doc.origin_label || doc.office_label }}
@@ -262,7 +262,7 @@
                 </div>
               </div>
               <span
-                class="flex-shrink-0 rounded-none px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                class="flex-shrink-0 rounded-none px-2.5 py-0.5 text-[13px] font-bold uppercase tracking-wide"
                 :class="statusClass(doc.status)"
               >
                 {{ doc.status || '—' }}
@@ -300,7 +300,7 @@
           <div class="mb-4 flex items-center justify-between">
             <div>
               <h2 class="text-sm font-bold">My Sub-Offices</h2>
-              <p class="mt-0.5 text-[11px]" :class="mutedText">Registered branch nodes</p>
+              <p class="mt-0.5 text-[14px]" :class="mutedText">Registered branch nodes</p>
             </div>
             <NuxtLink
               to="/employee/offices"
@@ -328,13 +328,13 @@
                 <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                   {{ office.name }}
                 </p>
-                <p class="font-mono text-[10px]" :class="mutedText">
+                <p class="font-mono text-[13px]" :class="mutedText">
                   {{ office.code || `OFF-${String(office.id).padStart(6, '0')}` }}
                 </p>
               </div>
               <Icon name="ph:qr-code-light" class="h-4 w-4 opacity-30" />
             </div>
-            <p v-if="myOffices.length > 4" class="text-center text-[11px]" :class="mutedText">
+            <p v-if="myOffices.length > 4" class="text-center text-[14px]" :class="mutedText">
               +{{ myOffices.length - 4 }} more
             </p>
           </div>
@@ -373,7 +373,7 @@
                 :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
               >
                 <span
-                  class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-none text-[10px] font-bold border"
+                  class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-none text-[13px] font-bold border"
                   :class="task.priority === 'High'
                     ? 'bg-red-500/10 text-red-500 border-red-500/20'
                     : task.priority === 'Medium'
@@ -386,10 +386,10 @@
                   <p class="truncate text-xs font-medium" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
                     {{ task.title }}
                   </p>
-                  <p class="mt-0.5 text-[10px]" :class="mutedText">Due {{ task.due }}</p>
+                  <p class="mt-0.5 text-[13px]" :class="mutedText">Due {{ task.due }}</p>
                 </div>
                 <span
-                  class="flex-shrink-0 rounded-none px-2 py-0.5 text-[10px] font-semibold"
+                  class="flex-shrink-0 rounded-none px-2 py-0.5 text-[13px] font-semibold"
                   :class="task.status === 'In Progress'
                     ? 'bg-candy-orange/10 text-candy-orange'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
@@ -410,7 +410,7 @@
             <div class="mb-4 flex items-center justify-between">
               <div>
                 <h2 class="text-sm font-bold">Tracking Queue</h2>
-                <p class="mt-0.5 text-[11px]" :class="mutedText">Live org-wide pipeline</p>
+                <p class="mt-0.5 text-[14px]" :class="mutedText">Live org-wide pipeline</p>
               </div>
               <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:underline">
                 Full queue →
@@ -438,7 +438,7 @@
               </div>
 
               <div
-                class="mt-2 rounded-none border px-3 py-2.5 text-center text-[11px] font-semibold text-candy-orange"
+                class="mt-2 rounded-none border px-3 py-2.5 text-center text-[14px] font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 {{ queueSummary.total }} total in-flight documents

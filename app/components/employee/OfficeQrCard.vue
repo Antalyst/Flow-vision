@@ -18,7 +18,7 @@
               {{ office.name }}
             </h3>
           </div>
-          <p class="mt-1 font-mono text-[11px] font-semibold text-candy-orange">
+          <p class="mt-1 font-mono text-[14px] font-semibold text-candy-orange">
             {{ office.code || derivedCode }}
           </p>
         </div>
@@ -58,11 +58,11 @@
           />
           <div v-else class="flex flex-col items-center gap-2">
             <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-candy-orange" />
-            <span class="text-[10px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Generating…</span>
+            <span class="text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Generating…</span>
           </div>
         </div>
 
-        <p class="text-center font-mono text-[10px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+        <p class="text-center font-mono text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
           {{ qrUri }}
         </p>
       </div>
@@ -74,13 +74,13 @@
       >
         <div>
           <p class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ office.doc_count ?? '—' }}</p>
-          <p class="mt-0.5 text-[10px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Documents</p>
+          <p class="mt-0.5 text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Documents</p>
         </div>
         <div>
           <p class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ formatDate(office.created_at) }}
           </p>
-          <p class="mt-0.5 text-[10px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Created</p>
+          <p class="mt-0.5 text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Created</p>
         </div>
       </div>
 

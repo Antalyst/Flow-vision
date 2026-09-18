@@ -32,10 +32,21 @@
           primary: ['Afacad', 'sans-serif'],
           dashboard: ['Inter', 'system-ui', 'sans-serif'],
         },
+        // Bumped up from Tailwind's defaults app-wide — the original scale (12px
+        // body text, etc.) was too small for the client base, many of whom are
+        // 50-60+. Every text-xs/sm/base/... usage across the app inherits this.
         fontSize: {
           heading: ['1.5rem', {
             fontWeight: '500',
           }],
+          xs:   ['0.875rem', { lineHeight: '1.25rem' }],  // was 0.75rem / 12px
+          sm:   ['1rem',     { lineHeight: '1.5rem'  }],  // was 0.875rem / 14px
+          base: ['1.125rem', { lineHeight: '1.75rem' }],  // was 1rem / 16px
+          lg:   ['1.25rem',  { lineHeight: '1.75rem' }],  // was 1.125rem / 18px
+          xl:   ['1.375rem', { lineHeight: '2rem'    }],  // was 1.25rem / 20px
+          '2xl':['1.75rem',  { lineHeight: '2.25rem' }],  // was 1.5rem / 24px
+          '3xl':['2.125rem', { lineHeight: '2.5rem'  }],  // was 1.875rem / 30px
+          '4xl':['2.5rem',   { lineHeight: '2.75rem' }],  // was 2.25rem / 36px
         },
         colors: {
           // --- THE ONYX PALETTE (Dark Context Foundations) ---
@@ -45,13 +56,18 @@
           'onyx-border': '#2A2A2A', // High-end minimalist layout borders
 
           // --- THE CANDY ORANGE PALETTE (Active High-Contrast Accents) ---
-          'candy-orange': '#F47D2F', // Core Primary interactive buttons & glowing badges
-          'candy-hover': '#D96518', // Rich active hover click states
+          'candy-orange': '#EE4D2D', // Core Primary interactive buttons & glowing badges (Shopee-style red-orange)
+          'candy-hover': '#D6431F', // Rich active hover click states
 
           // --- THE WHITE PALETTE (Clean Readable Data Elements) ---
-          'white-pure': '#FFFFFF', // Primary readable text and high-contrast titles
-          'white-surface': '#F9F9F9', // Light readable content zones
-          'white-muted': '#A0A0A0', // Subtitle information text descriptors
+          'white-pure': '#FEFEFE', // Card/surface fills & dark-mode text — softened off pure white
+          'white-surface': '#F6F6F7', // App canvas background — lets white-pure cards lift off the page
+          'white-muted': '#79797e', // Subtitle information text descriptors
+
+          // --- SEMANTIC STATUS COLORS ---
+          success: '#16A34A',
+          warning: '#F59E0B',
+          danger: '#DC2626',
         },
         boxShadow: {
           card: '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',

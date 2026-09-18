@@ -24,9 +24,9 @@ const activeChartIndex = ref(0)
 const slideDirection = ref<'next' | 'prev'>('next')
 
 const slides = [
-  { title: 'Document Traffic Forecast', subtitle: 'Historical volume with 7-day linear projection' },
-  { title: 'Workstation Congestion', subtitle: 'Historical processing avg vs live desk delay' },
-  { title: 'Messenger Dispatch Lag', subtitle: 'Average pickup wait times across the week' },
+  { title: 'Documents Coming In', subtitle: 'Past activity and the next 7 days' },
+  { title: 'Office Busyness', subtitle: 'Normal wait time vs. today\'s wait time' },
+  { title: 'Courier Pickup Times', subtitle: 'How long pickups take, day by day' },
 ]
 
 const commonOptions = computed(() => {
@@ -111,19 +111,43 @@ const trafficChartData = computed(() => {
 const congestionChartData = computed(() => {
   const c = props.charts?.workstationCongestion
   if (!c) return null
+
+  // Skip offices with no measurable data yet so one real outlier isn't
+  // surrounded by a wall of empty bars.
+  const keepIndexes = c.labels
+    .map((_, i) => i)
+    .filter((i) => (c.historicalAvgHours[i] ?? 0) > 0 || (c.currentDelayHours[i] ?? 0) > 0)
+  const labels = keepIndexes.length ? keepIndexes.map((i) => c.labels[i]) : c.labels
+  const historicalAvgHours = keepIndexes.length ? keepIndexes.map((i) => c.historicalAvgHours[i]) : c.historicalAvgHours
+  const currentDelayHours = keepIndexes.length ? keepIndexes.map((i) => c.currentDelayHours[i]) : c.currentDelayHours
+
   return {
     ...commonOptions.value,
     chart: { ...commonOptions.value.chart, type: 'bar' },
-    xAxis: { ...commonOptions.value.xAxis, categories: c.labels },
+    xAxis: {
+      ...commonOptions.value.xAxis,
+      categories: labels,
+      labels: {
+        ...commonOptions.value.xAxis.labels,
+        formatter(this: { value: string }) {
+          const label = String(this.value)
+          return label.length > 14 ? `${label.slice(0, 13)}…` : label
+        },
+      },
+    },
+    plotOptions: {
+      ...commonOptions.value.plotOptions,
+      bar: { borderRadius: 4, borderWidth: 0, pointPadding: 0.12, groupPadding: 0.18, maxPointWidth: 18 },
+    },
     series: [
       {
         name: 'Historical avg (hrs)',
-        data: c.historicalAvgHours,
+        data: historicalAvgHours,
         color: candy.strong
       },
       {
         name: 'Current delay (hrs)',
-        data: c.currentDelayHours,
+        data: currentDelayHours,
         color: 'rgba(160, 160, 160, 0.45)'
       }
     ]
@@ -161,9 +185,9 @@ const messengerChartData = computed(() => {
 const microBlocks = computed(() => {
   const m = props.microSummaries
   return [
-    { label: 'Peak Load Hour', value: m?.peakLoadHour ?? '—', icon: 'ph:clock-fill' },
-    { label: 'Avg Congestion Index', value: m?.avgCongestionIndex?.toFixed(2) ?? '0.00', icon: 'ph:chart-line-up-fill' },
-    { label: 'Bottleneck Risk', value: `${m?.bottleneckRiskRate ?? 0}%`, icon: 'ph:warning-fill' },
+    { label: 'Busiest Hour', value: m?.peakLoadHour ?? '—', icon: 'ph:clock-fill' },
+    { label: 'How Busy, on Average', value: m?.avgCongestionIndex?.toFixed(2) ?? '0.00', icon: 'ph:chart-line-up-fill' },
+    { label: 'Risk of Delay', value: `${m?.bottleneckRiskRate ?? 0}%`, icon: 'ph:warning-fill' },
   ]
 })
 
@@ -184,11 +208,11 @@ function goToSlide(index: number) {
 </script>
 
 <template>
-  <div class="relative flex h-full flex-col overflow-hidden rounded-none border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="mb-6 flex items-start justify-between gap-4">
       <div>
-        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
-          Predictive Analytics · {{ activeChartIndex + 1 }}/{{ slides.length }}
+        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+          Forecast · {{ activeChartIndex + 1 }}/{{ slides.length }}
         </p>
         <h3 class="mt-1 text-sm font-semibold text-onyx-black dark:text-white-pure">
           {{ slides[activeChartIndex]?.title }}
@@ -201,7 +225,7 @@ function goToSlide(index: number) {
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-none border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Previous chart"
           @click="prevSlide"
         >
@@ -209,7 +233,7 @@ function goToSlide(index: number) {
         </button>
         <button
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-none border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 transition hover:border-candy-orange/50 hover:text-candy-orange dark:border-onyx-border dark:text-white-muted"
           aria-label="Next chart"
           @click="nextSlide"
         >
@@ -219,7 +243,7 @@ function goToSlide(index: number) {
     </div>
 
     <div
-      class="relative overflow-hidden rounded-none border border-zinc-200 bg-white-pure/60 p-4 backdrop-blur-md transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-black/40"
+      class="relative overflow-hidden rounded-xl border border-zinc-200 bg-white-pure/60 p-4 backdrop-blur-md transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-black/40"
     >
       <div v-if="loading" class="flex h-[280px] items-center justify-center text-sm text-zinc-500 dark:text-white-muted">
         <Icon name="ph:spinner-gap" class="mr-2 h-5 w-5 animate-spin text-candy-orange" />
@@ -273,11 +297,11 @@ function goToSlide(index: number) {
       <div
         v-for="block in microBlocks"
         :key="block.label"
-        class="rounded-none border border-zinc-200 bg-white-surface px-4 py-3 transition-all duration-300 hover:border-candy-orange/30 dark:border-onyx-border dark:bg-onyx-black/70"
+        class="rounded-xl border border-zinc-200 bg-white-surface px-4 py-3 transition-all duration-300 hover:border-candy-orange/30 dark:border-onyx-border dark:bg-onyx-black/70"
       >
         <div class="mb-1 flex items-center gap-2">
           <Icon :name="block.icon" class="h-3.5 w-3.5 text-candy-orange" />
-          <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-white-muted">{{ block.label }}</span>
+          <span class="text-[13px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-white-muted">{{ block.label }}</span>
         </div>
         <p class="text-lg font-bold text-onyx-black dark:text-white-pure">{{ block.value }}</p>
       </div>

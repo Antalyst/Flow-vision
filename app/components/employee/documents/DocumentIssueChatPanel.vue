@@ -14,7 +14,7 @@
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
         Flag Issue / Incomplete
       </button>
-      <p class="mt-2 text-center text-[11px]" :class="mutedText">
+      <p class="mt-2 text-center text-[14px]" :class="mutedText">
         Report missing signatures, incomplete forms, or damaged hard copies.
       </p>
     </div>
@@ -32,9 +32,9 @@
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
             <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-candy-orange" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
+            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
             <span
-              class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[9px] font-bold uppercase"
+              class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[12px] font-bold uppercase"
               :class="activeIssue.status === 'OPEN'
                 ? 'border-amber-400/40 bg-amber-400/10 text-amber-400'
                 : 'border-green-400/40 bg-green-400/10 text-green-400'"
@@ -46,7 +46,7 @@
           <p class="mt-1 truncate text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ activeIssue.issue_type || activeIssue.title }}
           </p>
-          <p v-if="targetOfficeLabel" class="mt-1 text-[11px]" :class="mutedText">
+          <p v-if="targetOfficeLabel" class="mt-1 text-[14px]" :class="mutedText">
             Messaging: <span class="font-semibold text-candy-orange">{{ targetOfficeLabel }}</span>
           </p>
         </div>
@@ -54,7 +54,7 @@
         <button
           v-if="canResolveIssue"
           type="button"
-          class="inline-flex flex-none items-center gap-1.5 rounded-none border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-[11px] font-semibold text-green-500 transition hover:bg-green-500/20 disabled:opacity-50"
+          class="inline-flex flex-none items-center gap-1.5 rounded-none border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-[14px] font-semibold text-green-500 transition hover:bg-green-500/20 disabled:opacity-50"
           :disabled="resolving"
           @click="handleResolve"
         >
@@ -90,7 +90,7 @@
                   {{ msg.sender_name || 'Unknown' }}
                 </span>
                 <span
-                  class="inline-flex items-center rounded-none px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                  class="inline-flex items-center rounded-none px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide"
                   :class="isOwnMessage(msg)
                     ? 'bg-white/15 text-white'
                     : 'bg-candy-orange/15 text-candy-orange'"
@@ -99,7 +99,7 @@
                 </span>
               </div>
               <p class="text-sm leading-relaxed">{{ msg.message_text }}</p>
-              <p class="mt-2 text-[10px]" :class="isOwnMessage(msg) ? 'text-white/70' : 'text-gray-500'">
+              <p class="mt-2 text-[13px]" :class="isOwnMessage(msg) ? 'text-white/70' : 'text-gray-500'">
                 {{ fmtTime(msg.created_at) }}
               </p>
             </div>
@@ -150,7 +150,7 @@
       >
         <div class="flex items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
+            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
             <h3 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Report Document Issue</h3>
           </div>
           <button
@@ -204,7 +204,7 @@
 
           <div class="block">
             <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-red-500">*</span></span>
-            <p class="mt-1 text-[11px]" :class="mutedText">
+            <p class="mt-1 text-[14px]" :class="mutedText">
               Choose who should receive this compliance thread based on the routing pipeline.
             </p>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
@@ -218,13 +218,13 @@
                   : isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
                 @click="selectChatTarget(target)"
               >
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">
                   {{ target.role === 'origin' ? 'Option A' : 'Option B' }}
                 </p>
                 <p class="mt-1 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                   {{ target.name }}
                 </p>
-                <p class="mt-1 text-[11px]" :class="mutedText">
+                <p class="mt-1 text-[14px]" :class="mutedText">
                   {{ target.role === 'origin'
                     ? 'Contact originating registration office'
                     : 'Contact previous hand-off checkpoint' }}

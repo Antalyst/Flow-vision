@@ -7,7 +7,7 @@
       </div>
       <div class="flex-1 min-w-0">
         <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ displayName }}</p>
-        <p class="text-[11px] truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
+        <p class="text-[14px] truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
       </div>
     </div>
     <button

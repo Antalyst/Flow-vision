@@ -80,7 +80,7 @@
                 class="rounded-none border px-3 py-2"
                 :class="isDark ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50'"
               >
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
                 <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
                   {{ notif.metadata?.pickup_source_name || '—' }}
                 </p>
@@ -89,7 +89,7 @@
                 class="rounded-none border px-3 py-2"
                 :class="isDark ? 'border-zinc-700 bg-zinc-900/50' : 'border-gray-100 bg-gray-50'"
               >
-                <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
                 <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
                   {{ notif.metadata?.destination_office_name || '—' }}
                 </p>

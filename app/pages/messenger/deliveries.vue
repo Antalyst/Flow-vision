@@ -75,17 +75,17 @@
                 🎯
               </span>
               <div>
-                <p class="text-[11px] font-black uppercase tracking-wider text-candy-orange">
+                <p class="text-[14px] font-black uppercase tracking-wider text-candy-orange">
                   Active Delivery Focus
                 </p>
-                <p class="text-[10px] text-white/60">Primary Target for Current Leg</p>
+                <p class="text-[13px] text-white/60">Primary Target for Current Leg</p>
               </div>
             </div>
 
             <div class="flex items-center gap-2">
               <!-- SLA Priority Tag -->
               <span
-                class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider border"
+                class="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] font-extrabold uppercase tracking-wider border"
                 :class="getPriorityBadgeClass(focusedDoc.priority)"
               >
                 <Icon name="ph:fire-simple-fill" class="h-3 w-3" />
@@ -94,7 +94,7 @@
 
               <!-- Status Tag -->
               <span
-                class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border"
+                class="px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider border"
                 :class="focusedDoc.tracking_status === 'IN_TRANSIT'
                   ? 'border-candy-orange bg-candy-orange/10 text-candy-orange'
                   : 'border-amber-500/30 bg-amber-500/10 text-amber-400'"
@@ -105,7 +105,7 @@
               <!-- Change Focus CTA -->
               <button
                 type="button"
-                class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/80 hover:text-white hover:bg-white/10 transition border border-white/20"
+                class="inline-flex items-center gap-1 px-2 py-1 text-[13px] font-bold uppercase tracking-wider text-white/80 hover:text-white hover:bg-white/10 transition border border-white/20"
                 title="Choose another document from manifest"
                 @click="manifestExpanded = true"
               >
@@ -116,7 +116,7 @@
               <!-- Clear Focus Button -->
               <button
                 type="button"
-                class="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/10 transition border border-white/10"
+                class="inline-flex items-center gap-1 px-2 py-1 text-[13px] font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/10 transition border border-white/10"
                 title="Clear current target focus"
                 @click="messengerStore.clearFocus()"
               >
@@ -171,7 +171,7 @@
 
             <!-- Target Destination Station Spotlight -->
             <div class="md:col-span-6 rounded-none border border-candy-orange/40 bg-white/5 p-4">
-              <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
                 Target Destination Station
               </p>
               <div class="mt-1.5 flex items-center gap-2">
@@ -180,7 +180,7 @@
                   {{ focusedDoc.destination_office_name || 'Destination Station Unassigned' }}
                 </p>
               </div>
-              <p v-if="focusedDoc.origin_office_name" class="mt-1 text-[11px] text-white/50">
+              <p v-if="focusedDoc.origin_office_name" class="mt-1 text-[14px] text-white/50">
                 Dispatched from: {{ focusedDoc.origin_office_name }}
               </p>
             </div>
@@ -237,7 +237,7 @@
                 <h3 class="font-bold text-sm" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
                   In-Transit Manifest Queue
                 </h3>
-                <span class="rounded-none bg-candy-orange/20 px-2 py-0.5 text-[11px] font-bold text-candy-orange">
+                <span class="rounded-none bg-candy-orange/20 px-2 py-0.5 text-[14px] font-bold text-candy-orange">
                   {{ allDocs.length }} {{ allDocs.length === 1 ? 'Document' : 'Documents' }}
                 </span>
               </div>
@@ -268,18 +268,18 @@
               <div class="flex flex-wrap items-center gap-2">
                 <span
                   v-if="messengerStore.isFocused(doc.id)"
-                  class="inline-flex items-center gap-1 rounded-none bg-candy-orange px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-black shadow"
+                  class="inline-flex items-center gap-1 rounded-none bg-candy-orange px-2 py-0.5 text-[13px] font-black uppercase tracking-wider text-black shadow"
                 >
                   🎯 Active Focus Target
                 </span>
                 <span
-                  class="rounded-none px-2 py-0.5 text-[10px] font-bold uppercase"
+                  class="rounded-none px-2 py-0.5 text-[13px] font-bold uppercase"
                   :class="doc.tracking_status === 'IN_TRANSIT' ? 'bg-candy-orange/10 text-candy-orange border border-candy-orange/30' : 'bg-amber-500/10 text-amber-500 border border-amber-500/30'"
                 >
                   {{ doc.tracking_status === 'IN_TRANSIT' ? 'In Transit' : 'Awaiting Scan' }}
                 </span>
                 <span
-                  class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase border"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 text-[13px] font-bold uppercase border"
                   :class="getPriorityBadgeClass(doc.priority)"
                 >
                   {{ doc.priority || 'Medium' }} Priority
@@ -291,7 +291,7 @@
               </h4>
 
               <div class="flex flex-wrap items-center gap-3 text-xs" :class="mutedClass">
-                <span class="font-mono text-[11px]">ID: {{ doc.tracking_id }}</span>
+                <span class="font-mono text-[14px]">ID: {{ doc.tracking_id }}</span>
                 <span>•</span>
                 <span>Next Station: <strong class="text-candy-orange">{{ doc.destination_office_name || '—' }}</strong></span>
                 <span>•</span>

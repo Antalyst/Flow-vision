@@ -82,16 +82,16 @@
                 ? 'bg-onyx-black/50 border-onyx-border text-gray-300 placeholder:text-gray-500 focus:border-candy-orange/50'
                 : 'bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-400 focus:border-candy-orange/50'" />
             <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <kbd class="px-1.5 py-0.5 rounded-none text-[10px] font-semibold"
+              <kbd class="px-1.5 py-0.5 rounded-none text-[13px] font-semibold"
                 :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">⌘</kbd>
-              <kbd class="px-1.5 py-0.5 rounded-none text-[10px] font-semibold"
+              <kbd class="px-1.5 py-0.5 rounded-none text-[13px] font-semibold"
                 :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">K</kbd>
             </div>
           </div>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-1 px-0 overflow-y-auto">
+        <nav class="flex-1 px-0 overflow-y-auto scrollbar-hide">
           <SidebarNav :minimized="isSidebarMinimized" />
         </nav>
 
@@ -122,7 +122,7 @@
             ? 'text-candy-orange'
             : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'">
           <Icon :name="item.icon" class="w-5 h-5" />
-          <span class="text-[10px] font-semibold">{{ item.label }}</span>
+          <span class="text-[13px] font-semibold">{{ item.label }}</span>
         </NuxtLink>
       </div>
     </nav>

@@ -99,7 +99,7 @@
               {{ doc.title }}
             </p>
             <span
-              class="flex-shrink-0 rounded-none px-2 py-0.5 text-[10px] font-bold uppercase"
+              class="flex-shrink-0 rounded-none px-2 py-0.5 text-[13px] font-bold uppercase"
               :class="doc.tracking_status === 'IN_TRANSIT'
                 ? 'bg-transparent text-candy-orange'
                 : 'bg-amber-500/10 text-amber-500'"
@@ -107,12 +107,12 @@
               {{ doc.tracking_status === 'IN_TRANSIT' ? 'In Transit' : 'Awaiting Scan' }}
             </span>
           </div>
-          <p class="font-mono text-[10px]" :class="mutedClass">{{ doc.tracking_id }}</p>
+          <p class="font-mono text-[13px]" :class="mutedClass">{{ doc.tracking_id }}</p>
           <div class="flex items-center gap-2 text-xs" :class="mutedClass">
             <Icon name="ph:map-pin-light" class="h-3.5 w-3.5 text-candy-orange" />
             <span class="truncate">Next: {{ doc.destination_office_name || '—' }}</span>
           </div>
-          <p class="text-[11px]" :class="mutedClass">Step {{ doc.current_step }} / {{ doc.total_steps || '—' }}</p>
+          <p class="text-[14px]" :class="mutedClass">Step {{ doc.current_step }} / {{ doc.total_steps || '—' }}</p>
         </button>
       </div>
     </section>

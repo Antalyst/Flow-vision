@@ -2,14 +2,14 @@
   <div class="space-y-5">
     <!-- Filters -->
     <div
-      class="flex flex-wrap items-end gap-3 rounded-none border p-3"
+      class="flex flex-wrap items-end gap-3 rounded-2xl border p-3"
       :class="isDark ? 'border-onyx-border bg-onyx-card/40' : 'border-gray-200 bg-gray-50/80'"
     >
       <div class="min-w-[140px]">
-        <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider" :class="mutedClass">Date range</label>
+        <label class="mb-1 block text-[13px] font-semibold uppercase tracking-wider" :class="mutedClass">Date range</label>
         <select
           v-model="datePreset"
-          class="w-full rounded-none border px-2.5 py-1.5 text-sm outline-none transition focus:ring-1 focus:ring-amber-500/40"
+          class="w-full rounded-xl border px-2.5 py-1.5 text-sm outline-none transition focus:ring-1 focus:ring-candy-orange/40"
           :class="inputClass"
         >
           <option value="day">Today</option>
@@ -20,10 +20,10 @@
       </div>
 
       <div class="min-w-[140px]">
-        <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wider" :class="mutedClass">Action type</label>
+        <label class="mb-1 block text-[13px] font-semibold uppercase tracking-wider" :class="mutedClass">Action type</label>
         <select
           v-model="actionType"
-          class="w-full rounded-none border px-2.5 py-1.5 text-sm outline-none transition focus:ring-1 focus:ring-amber-500/40"
+          class="w-full rounded-xl border px-2.5 py-1.5 text-sm outline-none transition focus:ring-1 focus:ring-candy-orange/40"
           :class="inputClass"
         >
           <option value="all">All</option>
@@ -35,7 +35,7 @@
 
       <button
         type="button"
-        class="rounded-none border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
+        class="rounded-xl border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
         :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
         :disabled="loading"
         @click="fetchLogs"
@@ -46,7 +46,7 @@
 
     <!-- Loading / error -->
     <div v-if="loading" class="py-8 text-center text-sm" :class="mutedClass">Loading activity…</div>
-    <div v-else-if="error" class="rounded-none border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-500">{{ error }}</div>
+    <div v-else-if="error" class="rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">{{ error }}</div>
     <div v-else-if="!logs.length" class="py-10 text-center text-sm" :class="mutedClass">No activity in this range.</div>
 
     <!-- Timeline -->
@@ -57,12 +57,12 @@
         class="relative pb-6 last:pb-0"
       >
         <span
-          class="absolute -left-[1.65rem] top-1 flex h-3 w-3 rounded-none ring-4"
+          class="absolute -left-[1.65rem] top-1 flex h-3 w-3 rounded-full ring-4"
           :class="[dotClass(entry.action_type), isDark ? 'ring-onyx-black' : 'ring-white']"
         />
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <p class="text-sm font-medium" :class="isDark ? 'text-gray-100' : 'text-gray-900'">{{ entry.message }}</p>
-          <time class="text-[11px] tabular-nums whitespace-nowrap" :class="mutedClass">{{ formatWhen(entry.created_at) }}</time>
+          <time class="text-[14px] tabular-nums whitespace-nowrap" :class="mutedClass">{{ formatWhen(entry.created_at) }}</time>
         </div>
         <p class="mt-0.5 text-xs capitalize" :class="mutedClass">
           {{ entry.user_name || 'System' }}

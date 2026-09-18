@@ -4,8 +4,8 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | Team Directory',
-  description: 'Manage employee access, assign courier roles, and control permissions across your entire organizational structure.'
+  title: 'FlowVision | Team Members',
+  description: 'Manage who has access, assign roles, and control permissions across your organization.'
 })
 import UserManagementComp from '~/components/client/users/UserManagementComp.vue'
 

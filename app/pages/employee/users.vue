@@ -34,12 +34,12 @@
       <table class="min-w-full divide-y text-sm" :class="isDark ? 'divide-onyx-border' : 'divide-gray-200'">
         <thead :class="isDark ? 'bg-white/[0.02]' : 'bg-gray-50'">
           <tr>
-            <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Staff Member</th>
-            <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Email Address</th>
-            <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Assigned Desk</th>
-            <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Status</th>
-            <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
-            <th class="px-6 py-4 text-center text-[10px] font-bold uppercase tracking-widest" :class="mutedText">Actions</th>
+            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Staff Member</th>
+            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Email Address</th>
+            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Assigned Desk</th>
+            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Status</th>
+            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
+            <th class="px-6 py-4 text-center text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
@@ -79,7 +79,7 @@
             <td class="px-6 py-4 text-xs" :class="mutedText">{{ user.email }}</td>
             <!-- Assigned desk -->
             <td class="px-6 py-4">
-              <span class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[10px] font-semibold"
+              <span class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[13px] font-semibold"
                 :class="isDark ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange' : 'border-orange-200 bg-orange-50 text-candy-orange'">
                 <Icon name="ph:desktop-light" class="h-3 w-3" />
                 {{ user.offices?.name || 'Unassigned' }}
@@ -88,7 +88,7 @@
             <!-- Status -->
             <td class="px-6 py-4">
               <span
-                class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                class="inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide"
                 :class="user.status === 1
                   ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                   : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'"
@@ -188,7 +188,7 @@
                   class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                 />
-                <p v-if="isEditMode" class="mt-1 text-[11px]" :class="mutedText">Leave blank to keep existing password.</p>
+                <p v-if="isEditMode" class="mt-1 text-[14px]" :class="mutedText">Leave blank to keep existing password.</p>
               </div>
               <div>
                 <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">Assigned Desk / Table</label>

@@ -22,7 +22,7 @@
         >
           <div>
             <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
-            <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">
+            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
             </p>
             <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
@@ -123,7 +123,7 @@
                 
                 <!-- Manual override for AI analysis -->
                 <div class="space-y-3 pt-3 border-t border-candy-orange">
-                  <p class="text-[11px] font-medium text-candy-orange/80">Manual Document Details</p>
+                  <p class="text-[14px] font-medium text-candy-orange/80">Manual Document Details</p>
                   <div>
                     <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
                     <input
@@ -157,7 +157,7 @@
                   <span class="text-sm font-semibold" :class="headingClass">
                     Document Category <span class="text-red-500">*</span>
                   </span>
-                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
                     Classification for SLA predictive analytics.
                   </p>
                 </div>
@@ -173,7 +173,7 @@
                     {{ cat.name }}
                   </option>
                 </select>
-                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[10px] text-amber-500">
+                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[13px] text-amber-500">
                   <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
                 </div>
               </div>
@@ -189,7 +189,7 @@
                   <span class="text-sm font-semibold" :class="headingClass">
                     Routing Pathway <span class="text-red-500">*</span>
                   </span>
-                  <p class="mt-0.5 text-[11px]" :class="mutedClass">
+                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
                     Where the messenger must physically carry this document.
                   </p>
                 </div>
@@ -216,7 +216,7 @@
               </div>
 
               <!-- Route description line -->
-              <p class="mt-2 text-[11px]" :class="mutedClass">
+              <p class="mt-2 text-[14px]" :class="mutedClass">
                 <span v-if="routeTab === 'global'">
                   <Icon name="ph:globe-hemisphere-west-light" class="inline h-3 w-3 text-candy-orange" />
                   Organisation-wide routes created by your Client Admin — available to all offices.
@@ -295,7 +295,7 @@
                         <span
                           v-for="(stop, idx) in getRouteStops(stage.stage_id)"
                           :key="idx"
-                          class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-medium"
+                          class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[13px] font-medium"
                           :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                         >
                           <span class="h-1 w-1 rounded-none bg-transparent" />
@@ -303,7 +303,7 @@
                         </span>
                         <span
                           v-if="getRouteSteps(stage.stage_id).length > 3"
-                          class="inline-flex items-center rounded-none px-2 py-0.5 text-[10px] font-medium text-candy-orange"
+                          class="inline-flex items-center rounded-none px-2 py-0.5 text-[13px] font-medium text-candy-orange"
                         >
                           +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                         </span>
@@ -313,7 +313,7 @@
                     <!-- Right: stop count badge + scope tag -->
                     <div class="flex flex-none flex-col items-end gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[10px] font-bold"
+                        class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[13px] font-bold"
                         :class="routeTab === 'global'
                           ? 'border-blue-400 bg-transparent text-blue-400'
                           : 'border-candy-orange bg-transparent text-candy-orange'"
@@ -321,7 +321,7 @@
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
                       </span>
-                      <span class="text-[10px]" :class="mutedClass">
+                      <span class="text-[13px]" :class="mutedClass">
                         {{ getRouteSteps(stage.stage_id).length }} stop{{ getRouteSteps(stage.stage_id).length !== 1 ? 's' : '' }}
                       </span>
                     </div>
@@ -342,9 +342,9 @@
                   <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
                     <div class="flex items-center gap-2">
                       <Icon name="ph:path-light" class="h-3.5 w-3.5 text-candy-orange" />
-                      <span class="text-[11px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
+                      <span class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
                     </div>
-                    <span class="text-[10px]" :class="mutedClass">
+                    <span class="text-[13px]" :class="mutedClass">
                       {{ selectedTimelineSteps.length + 1 }} stops &middot; Messenger run
                     </span>
                   </div>
@@ -361,12 +361,12 @@
                           <span class="absolute inset-0 animate-ping rounded-none bg-candy-orange opacity-20" />
                         </div>
                         <p
-                          class="mt-2 max-w-[76px] text-center text-[10px] font-bold leading-tight text-candy-orange"
+                          class="mt-2 max-w-[76px] text-center text-[13px] font-bold leading-tight text-candy-orange"
                           style="word-break: break-word"
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-none bg-transparent px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-candy-orange">
+                        <span class="mt-0.5 rounded-none bg-transparent px-1.5 py-0.5 text-[12px] font-bold uppercase tracking-wide text-candy-orange">
                           Origin
                         </span>
                       </div>
@@ -406,7 +406,7 @@
 
                           <!-- Office name -->
                           <p
-                            class="mt-2 max-w-[76px] text-center text-[10px] font-semibold leading-tight"
+                            class="mt-2 max-w-[76px] text-center text-[13px] font-semibold leading-tight"
                             :class="headingClass"
                             style="word-break: break-word"
                           >
@@ -415,7 +415,7 @@
 
                           <!-- Step label -->
                           <span
-                            class="mt-0.5 text-[9px]"
+                            class="mt-0.5 text-[12px]"
                             :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
                           >
                             {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
@@ -426,7 +426,7 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[10px]" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
+                  <div class="border-t px-4 py-2.5 text-[13px]" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
                         <Icon name="ph:buildings-light" class="h-3 w-3 text-candy-orange" />
@@ -501,7 +501,7 @@
                 >
                   <Icon name="ph:qr-code-light" class="h-6 w-6 mb-1" />
                   <span class="text-xs font-semibold">Small</span>
-                  <span class="text-[10px] opacity-70">1x1 in</span>
+                  <span class="text-[13px] opacity-70">1x1 in</span>
                 </button>
                 <button
                   type="button"
@@ -511,7 +511,7 @@
                 >
                   <Icon name="ph:qr-code-light" class="h-7 w-7 mb-1" />
                   <span class="text-xs font-semibold">Medium</span>
-                  <span class="text-[10px] opacity-70">2x2 in</span>
+                  <span class="text-[13px] opacity-70">2x2 in</span>
                 </button>
                 <button
                   type="button"
@@ -521,7 +521,7 @@
                 >
                   <Icon name="ph:qr-code-light" class="h-8 w-8 mb-1" />
                   <span class="text-xs font-semibold">Large</span>
-                  <span class="text-[10px] opacity-70">4x4 in</span>
+                  <span class="text-[13px] opacity-70">4x4 in</span>
                 </button>
               </div>
             </div>
@@ -561,7 +561,7 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-none border px-3 py-1.5 text-[11px] font-semibold text-candy-orange"
+                class="flex min-w-0 items-center gap-1.5 rounded-none border px-3 py-1.5 text-[14px] font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange bg-transparent' : 'border-gray-200 bg-white'"
               >
                 <Icon name="ph:path-light" class="h-3 w-3 flex-none" />

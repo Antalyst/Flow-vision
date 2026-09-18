@@ -53,7 +53,7 @@
               v-for="link in landingNavLinks"
               :key="link.label"
               :to="link.to"
-              class="font-dashboard text-[11px] font-semibold uppercase tracking-wider transition-colors hover:text-candy-orange"
+              class="font-dashboard text-[14px] font-semibold uppercase tracking-wider transition-colors hover:text-candy-orange"
               :class="route.path === link.to ? 'text-candy-orange' : 'text-white-muted'"
             >{{ link.label }}</NuxtLink>
           </div>
@@ -61,13 +61,13 @@
           <div class="ml-auto hidden shrink-0 items-center gap-2 sm:gap-3 md:ml-0 md:flex md:gap-4">
             <NuxtLink
               to="/login"
-              class="font-dashboard text-[10px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange sm:text-[11px]"
+              class="font-dashboard text-[13px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange sm:text-[14px]"
             >
               Sign in
             </NuxtLink>
             <NuxtLink
               to="/register"
-              class="rounded-full bg-candy-orange px-3 py-1 font-dashboard text-[10px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover sm:px-4 sm:py-1.5 sm:text-[11px]"
+              class="rounded-full bg-candy-orange px-3 py-1 font-dashboard text-[13px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover sm:px-4 sm:py-1.5 sm:text-[14px]"
             >
               Get started!
             </NuxtLink>

@@ -20,7 +20,7 @@
       <div class="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center px-10 text-center">
         <img src="/logo/new-logo.png" alt="FlowVision" class="mb-5 h-20 w-auto pointer-events-auto">
         <h1 class="font-primary font-extrabold text-white text-3xl tracking-wide">FLOW VISION</h1>
-        <p class="mt-2 font-dashboard text-[11px] font-semibold text-white-pure">
+        <p class="mt-2 font-dashboard text-[14px] font-semibold text-white-pure">
           AI-Powered Document Monitoring Framework
         </p>
       </div>
@@ -66,17 +66,17 @@
 
         <form @submit.prevent="handleRegister" class="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Full name</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Full name</label>
             <input v-model="form.full_name" :class="inputClass" type="text" required placeholder="Juan D. Dela Cruz">
           </div>
 
           <div class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Email Address</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Email Address</label>
             <input v-model="form.email" :class="inputClass" type="email" required placeholder="Example@gmail.com">
           </div>
 
           <div v-if="selectedTypeName === 'employee'" class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="font-dashboard text-[11px] font-medium text-candy-orange">Organization code</label>
+            <label class="font-dashboard text-[14px] font-medium text-candy-orange">Organization code</label>
             <input
               v-model="form.org_code"
               :class="[inputClass, 'border-candy-orange/50 dark:border-candy-orange/60']"
@@ -88,13 +88,13 @@
 
           <div v-if="selectedTypeName === 'employee'" class="flex items-center gap-2 md:col-span-2">
             <input type="checkbox" id="prevalidationToggle" v-model="requiresEmployeeId" class="h-4 w-4 rounded border-gray-300 text-candy-orange focus:ring-candy-orange dark:border-onyx-border dark:bg-onyx-black dark:ring-offset-onyx-card">
-            <label for="prevalidationToggle" class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted cursor-pointer">
+            <label for="prevalidationToggle" class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted cursor-pointer">
               My organization requires Employee Pre-Validation
             </label>
           </div>
 
           <div v-if="selectedTypeName === 'employee' && requiresEmployeeId" class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="font-dashboard text-[11px] font-medium text-candy-orange">Employee ID Number</label>
+            <label class="font-dashboard text-[14px] font-medium text-candy-orange">Employee ID Number</label>
             <input
               v-model="form.employee_id_number"
               :class="[inputClass, 'border-candy-orange/50 dark:border-candy-orange/60']"
@@ -106,17 +106,17 @@
 
 
           <div class="flex flex-col gap-1.5 md:col-span-2">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Birth date</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Birth date</label>
             <input v-model="form.birth_date" type="date" :class="inputClass">
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Password</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Password</label>
             <input v-model="form.password" :class="inputClass" type="password" required placeholder="Password">
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="font-dashboard text-[11px] font-medium text-neutral-700 dark:text-white-muted">Confirm</label>
+            <label class="font-dashboard text-[14px] font-medium text-neutral-700 dark:text-white-muted">Confirm</label>
             <input v-model="form.confirm_password" :class="inputClass" type="password" required placeholder="Password">
           </div>
 
@@ -125,7 +125,7 @@
           </button>
         </form>
 
-        <p class="mt-5 font-dashboard text-[11px] text-neutral-700 dark:text-white-muted">
+        <p class="mt-5 font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">
           Already Have Account?
           <NuxtLink to="/login" class="font-semibold text-candy-orange transition hover:text-candy-hover">
             Login

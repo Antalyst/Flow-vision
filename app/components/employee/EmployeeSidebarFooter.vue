@@ -1,19 +1,19 @@
 <template>
   <div>
-    <div class="flex items-center gap-3 px-2 py-2 rounded-none transition"
+    <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition"
       :class="[isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50', minimized ? 'justify-center px-0' : '']">
-      <div class="w-9 h-9 rounded-none flex items-center justify-center text-xs font-bold flex-none bg-sky-500/10 text-sky-600 dark:text-sky-400"
+      <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-none bg-candy-orange/10 text-candy-orange"
            :title="minimized ? displayName : undefined">
         {{ initials }}
       </div>
       <div v-if="!minimized" class="flex-1 min-w-0">
         <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ displayName }}</p>
-        <p class="text-[11px] truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
+        <p class="text-xs truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
       </div>
     </div>
     <button
       type="button"
-      class="mt-2 flex items-center rounded-none text-sm font-medium transition-colors text-red-500 hover:bg-red-500/10"
+      class="mt-2 flex items-center rounded-lg text-sm font-medium transition-colors text-danger hover:bg-danger/10"
       :class="minimized ? 'w-full justify-center p-2' : 'w-full gap-2 px-3 py-2'"
       :title="minimized ? 'Log out' : undefined"
       @click="emit('logout')"

@@ -64,28 +64,28 @@ export function useClientDashboard() {
     if (!kpis) return null
     return [
       {
-        title: 'Total Registered Documents',
+        title: 'Total Documents',
         value: kpis.totalDocuments.display,
         trend: kpis.totalDocuments.trend,
         trendUp: kpis.totalDocuments.trendUp,
         sparklineData: kpis.totalDocuments.sparkline,
       },
       {
-        title: 'Live Active Processing',
+        title: 'Currently Processing',
         value: kpis.activeProcessing.display,
         trend: kpis.activeProcessing.trend,
         trendUp: kpis.activeProcessing.trendUp,
         sparklineData: kpis.activeProcessing.sparkline,
       },
       {
-        title: 'Predicted Processing Velocity',
+        title: 'Average Time',
         value: kpis.processingSpeed.display,
         trend: kpis.processingSpeed.trend,
         trendUp: kpis.processingSpeed.trendUp,
         sparklineData: kpis.processingSpeed.sparkline,
       },
       {
-        title: 'SLA Compliance Rate',
+        title: 'On-Time Rate',
         value: kpis.slaCompliance.display,
         trend: kpis.slaCompliance.trend,
         trendUp: kpis.slaCompliance.trendUp,

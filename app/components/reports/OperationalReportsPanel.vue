@@ -23,7 +23,7 @@
         class="rounded-none border p-4"
         :class="panelClass"
       >
-        <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedClass">{{ stat.label }}</p>
+        <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedClass">{{ stat.label }}</p>
         <p class="mt-1 text-xl font-bold" :class="headingClass">{{ stat.value }}</p>
       </div>
     </section>
@@ -74,14 +74,14 @@
           <div class="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p class="text-sm font-semibold" :class="headingClass">{{ report.title }}</p>
-              <p class="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-candy-orange">
+              <p class="mt-0.5 text-[13px] font-bold uppercase tracking-wide text-candy-orange">
                 {{ report.report_type.replace(/_/g, ' ') }}
               </p>
             </div>
-            <span class="text-[10px] tabular-nums" :class="mutedClass">{{ formatDate(report.created_at) }}</span>
+            <span class="text-[13px] tabular-nums" :class="mutedClass">{{ formatDate(report.created_at) }}</span>
           </div>
           <p class="mt-2 text-xs leading-relaxed" :class="mutedClass">{{ report.body }}</p>
-          <p v-if="report.submitter_name" class="mt-2 text-[10px]" :class="mutedClass">
+          <p v-if="report.submitter_name" class="mt-2 text-[13px]" :class="mutedClass">
             Submitted by {{ report.submitter_name }} · {{ report.submitter_role }}
           </p>
         </article>

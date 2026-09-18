@@ -8,7 +8,7 @@
     <div v-if="!minimized" class="flex-1 min-w-0">
       <p class="text-sm font-semibold truncate"
         :class="isDark ? 'text-white' : 'text-gray-900'">{{ displayName }}</p>
-      <p class="text-[11px] truncate"
+      <p class="text-[14px] truncate"
         :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
     </div>
     <Icon v-if="!minimized" name="ph:caret-up-down" class="w-4 h-4 flex-none text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />

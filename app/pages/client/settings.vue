@@ -7,37 +7,37 @@
         <Icon name="ph:caret-right" class="h-3 w-3" />
         <span class="font-medium" :class="headingClass">Settings</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">Account Settings</h1>
-      <p class="mt-1 text-sm" :class="mutedClass">Display layers, notification controls, and session management.</p>
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">Settings</h1>
+      <p class="mt-1 text-sm" :class="mutedClass">Appearance, notifications, and account management.</p>
     </header>
 
-    <div v-if="!settingsReady" class="rounded-none border p-8 text-center text-sm" :class="[panelClass, mutedClass]">
+    <div v-if="!settingsReady" class="rounded-2xl border p-8 text-center text-sm" :class="[panelClass, mutedClass]">
       Loading preferences…
     </div>
 
     <template v-else>
-      <section class="rounded-none border p-6" :class="panelClass">
-        <h2 class="text-sm font-bold" :class="headingClass">Display Layer</h2>
-        <p class="mt-1 text-xs" :class="mutedClass">Switch between light and dark interface surfaces.</p>
-        <div class="mt-4 flex items-center justify-between gap-4 rounded-none border px-4 py-4" :class="innerPanelClass">
+      <section class="rounded-2xl border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Appearance</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Switch how FlowVision looks on your screen.</p>
+        <div class="mt-4 flex items-center justify-between gap-4 rounded-xl border px-4 py-4" :class="innerPanelClass">
           <div>
             <p class="text-sm font-semibold" :class="headingClass">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</p>
-            <p class="text-xs" :class="mutedClass">Flat onyx and white surfaces — no ambient effects.</p>
+            <p class="text-xs" :class="mutedClass">{{ isDark ? 'Easier on the eyes in low light.' : 'Bright and clear for daytime use.' }}</p>
           </div>
           <button
             type="button"
             role="switch"
             :aria-checked="isDark"
-            class="relative h-8 w-14 rounded-none transition"
+            class="relative h-8 w-14 rounded-full transition"
             :class="isDark ? 'bg-candy-orange' : 'bg-gray-300'"
             @click="toggleTheme"
           >
-            <span class="absolute top-1 h-6 w-6 rounded-none bg-white-pure transition" :class="isDark ? 'left-7' : 'left-1'" />
+            <span class="absolute top-1 h-6 w-6 rounded-full bg-white-pure transition" :class="isDark ? 'left-7' : 'left-1'" />
           </button>
         </div>
       </section>
 
-      <section class="rounded-none border p-6" :class="panelClass">
+      <section class="rounded-2xl border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Notification Preferences</h2>
         <div class="mt-4 space-y-3">
           <SettingToggleRow
@@ -64,35 +64,35 @@
         </div>
       </section>
 
-      <section class="rounded-none border p-6" :class="panelClass">
-        <h2 class="text-sm font-bold" :class="headingClass">Organisation</h2>
-        <p class="mt-1 text-xs" :class="mutedClass">Your current organisation ID and details.</p>
-        
-        <div class="mt-4 flex items-center justify-between gap-4 rounded-none border px-4 py-4" :class="innerPanelClass">
+      <section class="rounded-2xl border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Organization</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Your organization's info.</p>
+
+        <div class="mt-4 flex items-center justify-between gap-4 rounded-xl border px-4 py-4" :class="innerPanelClass">
           <div class="min-w-0 flex-1">
             <p class="text-sm font-semibold truncate" :class="headingClass">{{ auth.currentOrg?.name || 'Loading...' }}</p>
             <p class="text-xs font-mono truncate mt-0.5" :class="mutedClass">Code: {{ auth.currentOrg?.code }}</p>
           </div>
           <button
             type="button"
-            class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-none border px-3 py-1.5 text-xs font-semibold transition hover:bg-candy-orange/10 hover:text-candy-orange hover:border-candy-orange/50 active:scale-[0.98]"
+            class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition hover:bg-candy-orange/10 hover:text-candy-orange hover:border-candy-orange/50 active:scale-[0.98]"
             :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
             @click="copyOrgCode"
           >
-            <Icon :name="copiedOrg ? 'ph:check-bold' : 'ph:copy'" class="h-3.5 w-3.5" :class="copiedOrg ? 'text-emerald-500' : ''" />
+            <Icon :name="copiedOrg ? 'ph:check-bold' : 'ph:copy'" class="h-3.5 w-3.5" :class="copiedOrg ? 'text-success' : ''" />
             {{ copiedOrg ? 'Copied!' : 'Copy Code' }}
           </button>
         </div>
       </section>
 
-      <section class="rounded-none border p-6" :class="panelClass">
-        <h2 class="text-sm font-bold" :class="headingClass">Employee Pre-Validation</h2>
-        <p class="mt-1 text-xs" :class="mutedClass">Require employees to be whitelisted via their Employee ID during registration.</p>
+      <section class="rounded-2xl border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">Employee Verification</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Require employees to have an approved ID before they can register.</p>
 
         <div class="mt-4 space-y-3">
           <SettingToggleRow
-            label="Enable Employee ID Validation"
-            description="If enabled, employees must enter an ID matching an uploaded whitelist to register."
+            label="Enable Employee ID Check"
+            description="If enabled, employees must enter an ID that matches your approved list to register."
             :checked="enableEmployeeValidation"
             :disabled="savingValidationStatus"
             @update:checked="onValidationToggle"
@@ -101,29 +101,29 @@
 
         <div v-if="enableEmployeeValidation" class="mt-4 pt-4 border-t" :class="isDark ? 'border-white/5' : 'border-gray-100'">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold" :class="headingClass">Employee Whitelist (CSV)</h3>
+            <h3 class="text-sm font-semibold" :class="headingClass">Approved Employee List (CSV)</h3>
             <button
               v-if="whitelist.length > 0"
               @click="clearWhitelist"
-              class="text-xs font-semibold text-red-500 hover:text-red-400 transition"
+              class="text-xs font-semibold text-danger hover:opacity-80 transition"
               :disabled="loadingWhitelist"
             >
-              Clear Whitelist
+              Clear List
             </button>
           </div>
-          
+
           <div class="flex gap-2 items-center mb-4">
             <input type="file" accept=".csv" @change="onFileChange" class="text-xs" :class="mutedClass" ref="csvFileInput" />
             <button
               @click="uploadCsv"
-              class="rounded-none border bg-candy-orange px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-candy-orange/90 active:scale-[0.98] disabled:opacity-50"
+              class="rounded-xl border bg-candy-orange px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98] disabled:opacity-50"
               :disabled="!selectedFile || uploadingCsv"
             >
               {{ uploadingCsv ? 'Uploading...' : 'Upload CSV' }}
             </button>
           </div>
 
-          <div class="rounded-none border" :class="innerPanelClass">
+          <div class="rounded-xl border" :class="innerPanelClass">
             <div v-if="loadingWhitelist" class="p-4 text-center text-xs" :class="mutedClass">Loading whitelist...</div>
             <div v-else-if="whitelist.length === 0" class="p-4 text-center text-xs" :class="mutedClass">No employees whitelisted.</div>
             <div v-else class="max-h-64 overflow-y-auto">
@@ -148,23 +148,23 @@
         </div>
       </section>
 
-      <section class="rounded-none border p-6" :class="panelClass">
+      <section class="rounded-2xl border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Document Categories</h2>
         <p class="mt-1 text-xs" :class="mutedClass">Manage the categories available when uploading documents.</p>
-        
+
         <div class="mt-4 flex flex-col gap-4">
           <form @submit.prevent="handleAddCategory" class="flex items-center gap-2">
             <input
               v-model="newCategoryName"
               type="text"
               placeholder="e.g. Invoice, Contract"
-              class="flex-1 rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+              class="flex-1 rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
               :class="isDark ? 'border-white/10 bg-onyx-black text-white focus:bg-onyx-black' : 'border-gray-200 bg-white focus:bg-white'"
               :disabled="categoriesStore.loading"
             />
             <button
               type="submit"
-              class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-none border bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:bg-candy-orange/90 active:scale-[0.98] disabled:opacity-50"
+              class="flex-shrink-0 inline-flex items-center gap-1.5 rounded-xl border bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98] disabled:opacity-50"
               :disabled="categoriesStore.loading || !newCategoryName.trim()"
             >
               <Icon v-if="categoriesStore.loading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -173,7 +173,7 @@
             </button>
           </form>
 
-          <div class="flex flex-col rounded-none border" :class="innerPanelClass">
+          <div class="flex flex-col rounded-xl border" :class="innerPanelClass">
             <div v-if="categoriesStore.categories.length === 0" class="px-4 py-4 text-center text-xs" :class="mutedClass">
               No categories created yet.
             </div>
@@ -186,7 +186,7 @@
               <span class="text-sm font-medium" :class="headingClass">{{ category.name }}</span>
               <button
                 type="button"
-                class="text-gray-400 transition hover:text-red-500"
+                class="text-gray-400 transition hover:text-danger"
                 :disabled="categoriesStore.loading"
                 @click="handleDeleteCategory(category.id)"
               >
@@ -197,14 +197,14 @@
         </div>
       </section>
 
-      <section class="rounded-none border p-6" :class="panelClass">
+      <section class="rounded-2xl border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Account</h2>
         <p class="mt-1 text-xs" :class="mutedClass">
           Signed in as <span class="font-medium" :class="headingClass">{{ auth.user?.email }}</span>
         </p>
         <button
           type="button"
-          class="mt-4 inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-500/5 dark:text-red-400"
+          class="mt-4 inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold text-danger transition hover:bg-danger/5"
           :class="innerPanelClass"
           :disabled="isLoggingOut"
           @click="handleLogout"
@@ -218,7 +218,7 @@
 
     <Teleport to="body">
       <Transition name="toast-fade">
-        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-none border px-4 py-3 text-sm font-semibold md:bottom-8" :class="toastClass">
+        <div v-if="toast.visible" class="fixed bottom-24 left-1/2 z-[100] max-w-sm -translate-x-1/2 rounded-xl border px-4 py-3 text-sm font-semibold md:bottom-8" :class="toastClass">
           {{ toast.message }}
         </div>
       </Transition>
@@ -228,8 +228,8 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | Organization Settings',
-  description: 'Configure global system preferences, customize your organization profile, and manage application settings.'
+  title: 'FlowVision | Settings',
+  description: 'Manage your appearance, notifications, organization details, and account.'
 })
 import SettingToggleRow from '~/components/messenger/SettingToggleRow.vue'
 import { useClientSettings } from '~/composables/useClientSettings'
@@ -295,8 +295,8 @@ const mutedClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-5
 const panelClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white'))
 const innerPanelClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-surface'))
 const toastClass = computed(() => toast.type === 'error'
-  ? 'border-red-500/40 text-red-300 bg-onyx-card'
-  : 'border-emerald-500/30 text-emerald-300 bg-onyx-card dark:bg-onyx-card')
+  ? 'border-danger/40 text-danger bg-onyx-card'
+  : 'border-success/40 text-success bg-onyx-card')
 
 async function onDocAlerts(v: boolean) {
   savingDoc.value = true
@@ -423,7 +423,7 @@ async function copyOrgCode() {
   try {
     await navigator.clipboard.writeText(auth.currentOrg.code)
     copiedOrg.value = true
-    showToast('Organisation Code copied to clipboard!')
+    showToast('Organization code copied to clipboard!')
     setTimeout(() => { copiedOrg.value = false }, 2000)
   } catch (err) {
     showToast('Failed to copy code', 'error')

@@ -7,53 +7,63 @@
         <Icon name="ph:caret-right" class="h-3 w-3" />
         <span class="font-medium" :class="headingClass">SLA Compliance</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">Service Level Agreement Tracking</h1>
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">SLA Compliance</h1>
       <p class="mt-1 max-w-2xl text-sm" :class="mutedClass">
-        Each office milestone has a target processing window. Documents exceeding that deadline are marked Overdue.
+        Every stop has a time limit. Documents that go over are marked overdue.
       </p>
     </header>
 
     <div class="grid grid-cols-3 gap-3">
-      <div v-for="chip in summaryChips" :key="chip.label" class="rounded-none border p-4" :class="panelClass">
-        <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedClass">{{ chip.label }}</p>
+      <div v-for="chip in summaryChips" :key="chip.label" class="rounded-xl border p-4" :class="panelClass">
+        <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedClass">{{ chip.label }}</p>
         <p class="mt-1 text-2xl font-bold" :class="chip.tone">{{ chip.value }}</p>
       </div>
     </div>
 
-    <section class="overflow-hidden rounded-none border" :class="panelClass">
+    <section class="overflow-hidden rounded-2xl border" :class="panelClass">
       <div class="flex items-center justify-between border-b px-4 py-3" :class="borderClass">
-        <h2 class="text-sm font-bold" :class="headingClass">Active Document SLA Ledger</h2>
-        <button type="button" class="text-xs font-semibold text-candy-orange" :disabled="loading" @click="loadData">Sync</button>
+        <h2 class="text-sm font-bold" :class="headingClass">Documents Being Tracked</h2>
+        <button type="button" class="text-xs font-semibold text-candy-orange" :disabled="loading" @click="loadData">Refresh</button>
       </div>
 
-      <div v-if="loading" class="p-10 text-center text-sm" :class="mutedClass">Calculating SLA positions…</div>
+      <div v-if="loading" class="p-10 text-center text-sm" :class="mutedClass">Checking document status…</div>
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
-          <thead class="border-b text-[10px] font-bold uppercase tracking-wider" :class="borderClass">
+          <thead class="border-b text-[13px] font-bold uppercase tracking-wider" :class="borderClass">
             <tr :class="mutedClass">
               <th class="px-4 py-3">Document</th>
-              <th class="px-4 py-3">Tracking ID</th>
               <th class="px-4 py-3">Checkpoint</th>
-              <th class="px-4 py-3">Step</th>
-              <th class="px-4 py-3">Hours at Desk</th>
-              <th class="px-4 py-3">SLA Window</th>
+              <th class="px-4 py-3">Time Used</th>
               <th class="px-4 py-3">Status</th>
             </tr>
           </thead>
           <tbody class="divide-y" :class="borderClass">
             <tr v-for="row in rows" :key="row.id" class="transition hover:opacity-90">
               <td class="px-4 py-3 font-semibold" :class="headingClass">{{ row.title }}</td>
-              <td class="px-4 py-3 font-mono text-xs" :class="mutedClass">{{ truncateId(row.tracking_id) }}</td>
-              <td class="px-4 py-3 text-xs" :class="mutedClass">{{ row.checkpoint_label }}</td>
-              <td class="px-4 py-3 text-xs tabular-nums" :class="mutedClass">{{ row.current_step }}/{{ row.total_steps }}</td>
-              <td class="px-4 py-3 text-xs tabular-nums" :class="headingClass">{{ row.hours_at_checkpoint }}h</td>
-              <td class="px-4 py-3 text-xs tabular-nums" :class="mutedClass">{{ row.sla_hours_allowed }}h</td>
+              <td class="px-4 py-3 text-xs" :class="mutedClass">
+                {{ row.checkpoint_label }}
+                <span class="block text-[14px] tabular-nums opacity-70">Step {{ row.current_step }} of {{ row.total_steps }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 w-20 overflow-hidden rounded-full" :class="isDark ? 'bg-white/10' : 'bg-gray-200'">
+                    <div
+                      class="h-full rounded-full"
+                      :class="row.sla_status === 'overdue' ? 'bg-danger' : 'bg-candy-orange'"
+                      :style="{ width: `${Math.min(100, (row.hours_at_checkpoint / row.sla_hours_allowed) * 100)}%` }"
+                    />
+                  </div>
+                  <span class="text-xs tabular-nums whitespace-nowrap" :class="mutedClass">
+                    {{ row.hours_at_checkpoint }}h / {{ row.sla_hours_allowed }}h
+                  </span>
+                </div>
+              </td>
               <td class="px-4 py-3">
                 <span
-                  class="inline-flex rounded-none border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                  class="inline-flex rounded-full border px-2 py-0.5 text-[13px] font-bold uppercase tracking-wide"
                   :class="row.sla_status === 'overdue'
-                    ? 'border-red-500/40 text-red-600 dark:text-red-400'
+                    ? 'border-danger/40 text-danger'
                     : 'border-candy-orange/40 text-candy-orange'"
                 >
                   {{ row.sla_status === 'overdue' ? 'Overdue' : 'In Compliance' }}
@@ -70,7 +80,7 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | SLA Tracking',
+  title: 'FlowVision | SLA Compliance',
   description: 'Track delivery compliance, deadline management, and service level agreement performance for your physical documents.'
 })
 definePageMeta({ layout: 'client' })
@@ -100,7 +110,7 @@ const borderClass = computed(() => (isDark.value ? 'border-onyx-border' : 'borde
 const summaryChips = computed(() => [
   { label: 'Active', value: summary.value.total, tone: headingClass.value },
   { label: 'In Compliance', value: summary.value.in_compliance, tone: 'text-candy-orange' },
-  { label: 'Overdue', value: summary.value.overdue, tone: 'text-red-600 dark:text-red-400' },
+  { label: 'Overdue', value: summary.value.overdue, tone: 'text-danger' },
 ])
 
 const truncateId = (id: string) => (id.length > 16 ? `${id.slice(0, 12)}…` : id)

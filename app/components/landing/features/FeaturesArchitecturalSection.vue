@@ -37,7 +37,7 @@
             <span
               v-for="tag in feature.tags"
               :key="tag"
-              class="rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-neutral-400"
+              class="rounded-full border border-neutral-800 bg-neutral-950 px-3 py-1 text-[13px] font-medium uppercase tracking-wider text-neutral-400"
             >
               {{ tag }}
             </span>

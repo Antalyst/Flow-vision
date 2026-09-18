@@ -21,8 +21,8 @@ const { currentLayout, setLayout } = useDashboardLayout()
 const { isDark, toggleTheme } = useTheme()
 
 const layoutOptions: { id: DashboardLayoutId, label: string }[] = [
-  { id: 'default', label: 'Matrix' },
-  { id: 'focused-stream', label: 'Stream' },
+  { id: 'default', label: 'Grid' },
+  { id: 'focused-stream', label: 'Focused' },
   { id: 'compact_grid', label: 'Compact' },
 ]
 
@@ -40,16 +40,16 @@ const localOfficeId = computed({
   <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between w-full">
     <!-- Left: Title & Subtitle (Donezo greeting hierarchy) -->
     <div>
-      <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange mb-1">Executive Overview</p>
+      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange mb-1">Overview</p>
       <h1 class="text-2xl font-bold tracking-tight text-onyx-black dark:text-white-pure sm:text-3xl">
         Hello, {{ userName }}
       </h1>
       <p class="mt-1 flex items-center gap-2 text-xs sm:text-sm text-zinc-500 dark:text-white-muted">
         <span class="relative flex h-2 w-2">
-          <span class="absolute inline-flex h-full w-full animate-ping rounded-none bg-candy-orange opacity-75"></span>
-          <span class="relative inline-flex h-2 w-2 rounded-none bg-candy-orange"></span>
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-candy-orange opacity-75"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-candy-orange"></span>
         </span>
-        Live organization tracking synced · Monitor routing & velocity with ease.
+        Everything's up to date — here's where your documents stand right now.
       </p>
     </div>
 
@@ -59,7 +59,7 @@ const localOfficeId = computed({
       <div class="relative">
         <select
           v-model="localOfficeId"
-          class="h-9 rounded-none border border-zinc-200 bg-white px-3 pr-8 text-xs font-semibold text-onyx-black shadow-card transition focus:border-candy-orange focus:outline-none dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure cursor-pointer"
+          class="h-9 rounded-xl border border-zinc-200 bg-white px-3 pr-8 text-xs font-semibold text-onyx-black shadow-card transition focus:border-candy-orange focus:outline-none dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure cursor-pointer"
         >
           <option :value="null">Global Organization</option>
           <option v-for="office in offices" :key="office.id" :value="office.id">
@@ -73,7 +73,7 @@ const localOfficeId = computed({
       <button
         type="button"
         @click="$emit('openAiDigest')"
-        class="flex h-9 items-center gap-1.5 rounded-none border border-zinc-200 bg-white px-3 text-xs font-semibold text-onyx-black shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure dark:hover:border-candy-orange dark:hover:text-candy-orange"
+        class="flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-semibold text-onyx-black shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-pure dark:hover:border-candy-orange dark:hover:text-candy-orange"
       >
         <Icon name="ph:sparkle-fill" class="h-3.5 w-3.5 text-candy-orange" />
         <span>AI Digest</span>
@@ -82,7 +82,7 @@ const localOfficeId = computed({
       <!-- Primary CTA: Register Document -->
       <NuxtLink
         to="/client/documents"
-        class="flex h-9 items-center gap-1.5 rounded-none bg-candy-orange px-3.5 text-xs font-semibold text-white-pure shadow-card transition hover:bg-candy-hover"
+        class="flex h-9 items-center gap-1.5 rounded-xl bg-candy-orange px-3.5 text-xs font-semibold text-white-pure shadow-card transition hover:bg-candy-hover"
       >
         <Icon name="ph:plus-bold" class="h-3.5 w-3.5" />
         <span>New Document</span>
@@ -92,19 +92,19 @@ const localOfficeId = computed({
       <button
         type="button"
         @click="$emit('refresh')"
-        class="flex h-9 w-9 items-center justify-center rounded-none border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
+        class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
         title="Refresh Data"
       >
         <Icon name="ph:arrows-clockwise" class="h-4 w-4" />
       </button>
 
       <!-- Layout Switcher -->
-      <div class="flex items-center rounded-none border border-zinc-200 bg-white p-0.5 shadow-card dark:border-onyx-border dark:bg-onyx-card">
+      <div class="flex items-center rounded-xl border border-zinc-200 bg-white p-0.5 shadow-card dark:border-onyx-border dark:bg-onyx-card">
         <button
           v-for="(opt, index) in layoutOptions"
           :key="opt.id"
           type="button"
-          class="flex h-8 items-center gap-1.5 rounded-none px-2.5 text-xs font-semibold transition-all duration-200"
+          class="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-200"
           :class="activeIndex === index
             ? 'bg-candy-orange/10 text-candy-orange dark:bg-candy-orange/15 dark:text-candy-orange'
             : 'text-zinc-500 hover:text-onyx-black dark:text-white-muted dark:hover:text-white-pure'"
@@ -120,7 +120,7 @@ const localOfficeId = computed({
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="flex h-9 w-9 items-center justify-center rounded-none border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
+          class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
           aria-label="Toggle theme"
           @click="toggleTheme"
         >
@@ -129,7 +129,7 @@ const localOfficeId = computed({
 
         <NuxtLink
           to="/client/notifications"
-          class="flex h-9 w-9 items-center justify-center rounded-none border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
+          class="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-card transition hover:border-candy-orange hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-card dark:text-white-muted dark:hover:text-candy-orange"
           title="Notifications"
         >
           <Icon name="ph:bell" class="h-4 w-4" />

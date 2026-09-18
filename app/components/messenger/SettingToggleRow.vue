@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center justify-between gap-4 rounded-none border px-4 py-4"
+    class="flex items-center justify-between gap-4 rounded-xl border px-4 py-4"
     :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-surface'"
   >
     <div class="min-w-0 flex-1">
@@ -15,12 +15,12 @@
       role="switch"
       :aria-checked="checked"
       :disabled="disabled"
-      class="relative h-8 w-14 flex-shrink-0 rounded-none transition focus:outline-none focus:ring-2 focus:ring-candy-orange/40 disabled:opacity-50"
+      class="relative h-8 w-14 flex-shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-candy-orange/40 disabled:opacity-50"
       :class="checked ? 'bg-candy-orange' : (isDark ? 'bg-onyx-border' : 'bg-gray-300')"
       @click="$emit('update:checked', !checked)"
     >
       <span
-        class="absolute top-1 h-6 w-6 rounded-none bg-white-pure transition"
+        class="absolute top-1 h-6 w-6 rounded-full bg-white-pure transition"
         :class="checked ? 'left-7' : 'left-1'"
       />
     </button>

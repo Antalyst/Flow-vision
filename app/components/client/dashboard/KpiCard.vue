@@ -69,7 +69,7 @@ const areaPoints = computed(() => {
 
 <template>
   <div
-    class="group relative flex flex-col justify-between overflow-hidden rounded-none p-5 transition-all"
+    class="group relative flex flex-col justify-between overflow-hidden rounded-2xl p-5 transition-all"
     :class="isHero
       ? 'bg-candy-orange text-white-pure shadow-lg shadow-candy-orange/15 border border-candy-hover'
       : 'bg-white dark:bg-onyx-card border border-zinc-200 dark:border-onyx-border shadow-card hover:border-candy-orange/40 hover:shadow-card-hover'"
@@ -77,13 +77,13 @@ const areaPoints = computed(() => {
     <!-- Header with Title & Arrow Icon (Donezo style) -->
     <div class="relative flex items-center justify-between">
       <span
-        class="text-[10px] font-bold uppercase tracking-widest"
+        class="text-[13px] font-bold uppercase tracking-widest"
         :class="isHero ? 'text-white-pure/90' : 'text-zinc-500 dark:text-white-muted'"
       >
         {{ title }}
       </span>
       <div
-        class="flex h-7 w-7 items-center justify-center rounded-none transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        class="flex h-7 w-7 items-center justify-center rounded-lg transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
         :class="isHero
           ? 'bg-white-pure/20 text-white-pure'
           : 'border border-zinc-200 bg-zinc-50 text-zinc-400 group-hover:border-candy-orange group-hover:text-candy-orange dark:border-onyx-border dark:bg-onyx-black/60 dark:text-white-muted'"
@@ -103,7 +103,7 @@ const areaPoints = computed(() => {
         </p>
         <div class="flex items-center gap-2">
           <span
-            class="inline-flex items-center gap-1 rounded-none px-2 py-0.5 text-xs font-semibold"
+            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
             :class="isHero
               ? 'bg-white-pure/20 text-white-pure'
               : trendUp
@@ -114,7 +114,7 @@ const areaPoints = computed(() => {
             {{ trend }}
           </span>
           <span
-            class="text-[11px]"
+            class="text-[14px]"
             :class="isHero ? 'text-white-pure/80' : 'text-zinc-400 dark:text-white-muted'"
           >
             vs last week
@@ -135,12 +135,12 @@ const areaPoints = computed(() => {
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="0%"
-              :stop-color="isHero ? '#FFFFFF' : trendUp ? '#F47D2F' : '#EF4444'"
+              :stop-color="isHero ? '#FFFFFF' : trendUp ? '#EE4D2D' : '#EF4444'"
               :stop-opacity="isHero ? '0.35' : '0.25'"
             />
             <stop
               offset="100%"
-              :stop-color="isHero ? '#FFFFFF' : trendUp ? '#F47D2F' : '#EF4444'"
+              :stop-color="isHero ? '#FFFFFF' : trendUp ? '#EE4D2D' : '#EF4444'"
               stop-opacity="0"
             />
           </linearGradient>
@@ -149,7 +149,7 @@ const areaPoints = computed(() => {
         <polyline
           :points="polylinePoints"
           fill="none"
-          :stroke="isHero ? '#FFFFFF' : trendUp ? '#F47D2F' : '#EF4444'"
+          :stroke="isHero ? '#FFFFFF' : trendUp ? '#EE4D2D' : '#EF4444'"
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"

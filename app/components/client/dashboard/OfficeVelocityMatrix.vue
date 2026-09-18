@@ -13,21 +13,26 @@ const filteredOffices = computed(() => {
   if (!q) return rows
   return rows.filter((o) => o.name.toLowerCase().includes(q))
 })
+
+const hasCycles = (office: { avgCycleHours: number }) => Number(office.avgCycleHours) > 0
+
+const barWidth = (office: { avgCycleHours: number }) =>
+  hasCycles(office) ? Math.min(100, Math.max(12, 100 - office.avgCycleHours * 8)) : 6
 </script>
 
 <template>
-  <div class="relative flex h-full flex-col overflow-hidden rounded-none border border-neutral-200 bg-white shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
+  <div class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all dark:border-white/10 dark:bg-[#111113]">
     <div class="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-onyx-border">
       <div>
-        <p class="text-[10px] font-bold uppercase tracking-widest text-candy-orange">Velocity Matrix</p>
-        <h3 class="mt-0.5 text-sm font-semibold text-onyx-black dark:text-white-pure">Top Offices by Processing Speed</h3>
+        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Office Speed</p>
+        <h3 class="mt-0.5 text-sm font-semibold text-onyx-black dark:text-white-pure">Fastest Offices</h3>
       </div>
       <div class="relative">
         <Icon name="ph:magnifying-glass" class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500 dark:text-white-muted" />
         <input
           v-model="searchQuery"
           placeholder="Filter offices"
-          class="w-36 rounded-none border border-zinc-200 bg-white-surface py-1.5 pl-8 pr-2 text-xs text-onyx-black outline-none transition focus:border-candy-orange/50 dark:border-onyx-border dark:bg-onyx-black/80 dark:text-white-pure"
+          class="w-36 rounded-xl border border-zinc-200 bg-white-surface py-1.5 pl-8 pr-2 text-xs text-onyx-black outline-none transition focus:border-candy-orange/50 dark:border-onyx-border dark:bg-onyx-black/80 dark:text-white-pure"
         />
       </div>
     </div>
@@ -48,7 +53,7 @@ const filteredOffices = computed(() => {
         class="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white-surface dark:hover:bg-onyx-black/50"
       >
         <div
-          class="flex h-9 w-9 flex-none items-center justify-center rounded-none border border-zinc-200 bg-white-surface text-xs font-bold text-candy-orange dark:border-onyx-border dark:bg-onyx-black"
+          class="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-zinc-200 bg-white-surface text-xs font-bold text-candy-orange dark:border-onyx-border dark:bg-onyx-black"
         >
           {{ String(index + 1).padStart(2, '0') }}
         </div>
@@ -59,15 +64,25 @@ const filteredOffices = computed(() => {
         </div>
 
         <div class="text-right">
-          <p class="text-sm font-bold text-candy-orange">{{ office.velocityLabel }}</p>
-          <p class="text-[10px] uppercase tracking-wide text-zinc-500 dark:text-white-muted">cycle time</p>
+          <p
+            class="text-sm font-bold"
+            :class="hasCycles(office) ? 'text-candy-orange' : 'text-zinc-400 dark:text-white-muted'"
+          >
+            {{ office.velocityLabel }}
+          </p>
+          <p class="text-[13px] uppercase tracking-wide text-zinc-500 dark:text-white-muted">average time</p>
         </div>
 
-        <div class="hidden h-8 w-16 overflow-hidden rounded-none bg-zinc-200 sm:block dark:bg-onyx-black">
-          <div
-            class="h-full rounded-none bg-gradient-to-r from-candy-hover/40 to-candy-orange/80 transition-all duration-500 group-hover:from-candy-orange/60 group-hover:to-candy-orange"
-            :style="{ width: `${Math.min(100, Math.max(12, 100 - office.avgCycleHours * 8))}%` }"
-          />
+        <div class="hidden w-16 flex-none items-center sm:flex">
+          <div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-onyx-border">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              :class="hasCycles(office)
+                ? 'bg-gradient-to-r from-candy-hover to-candy-orange group-hover:from-candy-orange group-hover:to-candy-orange'
+                : 'bg-zinc-300 dark:bg-onyx-border'"
+              :style="{ width: `${barWidth(office)}%` }"
+            />
+          </div>
         </div>
       </div>
     </div>

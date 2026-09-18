@@ -56,12 +56,12 @@
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
           </span>
           <div class="min-w-0">
-            <p class="text-[10px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
+            <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
             <p class="mt-1 text-2xl font-bold">
               <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
               <span v-else>{{ card.value }}</span>
             </p>
-            <p class="mt-0.5 text-[10px]" :class="card.trendColor">{{ card.trend }}</p>
+            <p class="mt-0.5 text-[13px]" :class="card.trendColor">{{ card.trend }}</p>
           </div>
         </div>
       </div>
@@ -82,7 +82,7 @@
           <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
           Describe your intent...
         </span>
-        <span class="rounded-none bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+        <span class="rounded-none bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[13px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
       </button>
 
       <!-- Office filter -->

@@ -38,7 +38,7 @@
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">{{ cat.title }}</h2>
-            <p class="text-[11px]" :class="mutedClass">{{ cat.articlesCount }} articles</p>
+            <p class="text-[14px]" :class="mutedClass">{{ cat.articlesCount }} articles</p>
           </div>
         </div>
         <p class="mt-3 text-xs leading-relaxed" :class="mutedClass">{{ cat.description }}</p>

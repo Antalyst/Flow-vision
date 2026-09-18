@@ -40,19 +40,19 @@
             class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
           >
             <div class="rounded-lg border px-2.5 py-2" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-100 bg-gray-50'">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
               <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
                 {{ item.metadata?.pickup_source_name || '—' }}
               </p>
             </div>
             <div class="rounded-lg border px-2.5 py-2" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-100 bg-gray-50'">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
+              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
               <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
                 {{ item.metadata?.destination_office_name || '—' }}
               </p>
             </div>
           </div>
-          <time class="mt-1 block text-[11px]" :class="mutedClass">{{ formatWhen(item.created_at) }}</time>
+          <time class="mt-1 block text-[14px]" :class="mutedClass">{{ formatWhen(item.created_at) }}</time>
         </div>
         <button
           v-if="isUnclaimedNotification(item.is_claimed)"
