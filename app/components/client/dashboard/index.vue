@@ -40,6 +40,7 @@
             :trend-up="card.trendUp"
             :sparkline-data="card.sparklineData"
             :is-hero="index === 0"
+            :to="kpiLinkFor(card.title)"
           />
         </div>
       </div>
@@ -90,7 +91,7 @@
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isAiDrawerOpen" @click="isAiDrawerOpen = false" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"></div>
+        <div v-if="isAiDrawerOpen" @click="isAiDrawerOpen = false; isDigestPanelOpen = false" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"></div>
       </Transition>
 
       <Transition
@@ -101,23 +102,39 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
       >
-        <div v-if="isAiDrawerOpen" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-onyx-border bg-onyx-card shadow-sidebar-dark md:w-1/2">
-          <div class="flex items-center justify-between border-b border-onyx-border px-6 py-5 bg-onyx-black/50">
+        <div
+          v-if="isAiDrawerOpen"
+          class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l shadow-sidebar-dark transition-[width] duration-300 ease-out"
+          :class="[isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white', isDigestPanelOpen ? 'md:w-[90%] lg:w-[78%] xl:w-[65%]' : 'md:w-1/2']"
+        >
+          <div
+            class="flex items-center justify-between border-b px-6 py-5"
+            :class="isDark ? 'border-onyx-border bg-onyx-black/50' : 'border-gray-200 bg-gray-50'"
+          >
             <div class="flex items-center gap-3">
               <div class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-candy-orange/15 text-candy-orange">
                 <Icon name="ph:sparkle-fill" class="h-5 w-5" />
               </div>
               <div>
-                <h2 class="text-base font-semibold text-white-pure">AI Digest</h2>
-                <p class="text-xs text-white-muted">{{ selectedOfficeName || 'All offices' }} · generated just now</p>
+                <h2 class="text-base font-semibold" :class="isDark ? 'text-white-pure' : 'text-gray-900'">AI Digest</h2>
+                <p class="text-xs" :class="isDark ? 'text-white-muted' : 'text-gray-500'">{{ selectedOfficeName || 'All offices' }} · generated just now</p>
               </div>
             </div>
-            <button @click="isAiDrawerOpen = false" class="rounded-lg p-2 text-white-muted hover:bg-onyx-black hover:text-white-pure transition-colors">
+            <button
+              @click="isAiDrawerOpen = false; isDigestPanelOpen = false"
+              class="rounded-lg p-2 transition-colors"
+              :class="isDark ? 'text-white-muted hover:bg-onyx-black hover:text-white-pure' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'"
+            >
               <Icon name="ph:x-bold" class="h-5 w-5" />
             </button>
           </div>
-          <div class="flex-1 overflow-y-auto px-8 py-7">
-            <AiExecutiveDigest :metrics="data" :office-name="selectedOfficeName" />
+          <div class="flex-1 overflow-hidden px-8 py-7">
+            <AiExecutiveDigest
+              :metrics="data"
+              :office-name="selectedOfficeName"
+              :office-id="selectedOfficeId"
+              @panel-open="isDigestPanelOpen = $event"
+            />
           </div>
         </div>
       </Transition>
@@ -139,10 +156,12 @@ import AiExecutiveDigest from './AiExecutiveDigest.vue'
 const auth = useAuthStore()
 const supabase = useSupabaseClient()
 const { entranceVisibleClass, cardEnterDelay } = useDashboardEntrance()
+const { isDark } = useTheme()
 
 const offices = ref<{ id: string; name: string }[]>([])
 const selectedOfficeId = ref<string | null>(null)
 const isAiDrawerOpen = ref(false)
+const isDigestPanelOpen = ref(false)
 
 const selectedOfficeName = computed(() => {
   if (!selectedOfficeId.value) return undefined
@@ -166,6 +185,22 @@ const fallbackKpiCards = [
 ]
 
 const displayKpiCards = computed(() => kpiCards.value ?? fallbackKpiCards)
+
+// Each KPI card links to the page where a user can see the documents behind the number.
+function kpiLinkFor(title: string) {
+  const officeQuery = selectedOfficeId.value ? { officeId: selectedOfficeId.value } : {}
+  switch (title) {
+    case 'Total Documents':
+      return { path: '/client/documents', query: officeQuery }
+    case 'Currently Processing':
+      return { path: '/client/documents', query: { ...officeQuery, status: 'processing' } }
+    case 'Average Time':
+    case 'On-Time Rate':
+      return { path: '/client/sla-compliance', query: officeQuery }
+    default:
+      return { path: '/client/documents', query: officeQuery }
+  }
+}
 
 onMounted(async () => {
   if (auth.user?.org_id) {

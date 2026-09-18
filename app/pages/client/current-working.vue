@@ -62,11 +62,11 @@
     </div>
 
     <!-- ── Document queue + detail ─────────────────────────────────────── -->
-    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:items-start">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
 
-      <!-- Document list (2/3 width) -->
+      <!-- Document list (1/2 width) -->
       <section
-        class="flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 lg:col-span-2 lg:h-[calc(100vh_-_19rem)] lg:min-h-[420px]"
+        class="flex flex-col overflow-hidden rounded-2xl border transition-all duration-300 lg:h-[calc(100vh_-_19rem)] lg:min-h-[420px]"
         :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
       >
         <!-- Section header -->

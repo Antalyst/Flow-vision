@@ -62,6 +62,17 @@
       </select>
     </div>
 
+    <!-- Active status filter indicator (from a clickable KPI card / AI Digest stat) -->
+    <div v-if="statusFilter !== 'all'" class="flex items-center gap-3 bg-candy-orange/10 border border-candy-orange/20 rounded-xl p-3 text-sm animate-fade-in shadow-sm">
+      <Icon name="ph:funnel-fill" class="h-5 w-5 text-candy-orange" />
+      <span :class="isDark ? 'text-orange-200' : 'text-orange-800'">
+        Filtered to <strong>{{ statusFilter === 'processing' ? 'Currently Processing' : statusFilter }}</strong> documents
+      </span>
+      <button @click="statusFilter = 'all'" class="ml-auto text-candy-orange hover:text-candy-hover font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-full border border-candy-orange/30 transition-colors">
+        Clear Filter
+      </button>
+    </div>
+
     <!-- Active Semantic Search Indicator -->
     <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-xl p-3 text-sm animate-fade-in shadow-sm">
       <Icon name="ph:sparkle-fill" class="h-5 w-5 text-candy-orange" />
@@ -207,6 +218,7 @@ const router = useRouter()
 const isUploadModalOpen = ref(false)
 const activeDocument = ref<DocumentRecord | null>(null)
 const officeFilter = ref<'all' | string>('all')
+const statusFilter = ref<'all' | string>('all')
 
 const isSemanticSearchOpen = ref(false)
 const semanticResults = ref<{ id: string, explanation: string }[] | null>(null)
@@ -234,17 +246,24 @@ const inputClass = computed(() =>
     : 'border-gray-200 bg-white text-onyx-black placeholder:text-gray-400'
 )
 
+const PROCESSING_STATUSES = ['processing', 'in review']
+
 const filteredDocuments = computed(() => {
   return documentStore.documents.filter((doc) => {
     const matchesOffice =
       officeFilter.value === 'all' || String(doc.office_id) === officeFilter.value
-    
+
+    const docStatus = (doc.status || 'Pending').toLowerCase()
+    const matchesStatus =
+      statusFilter.value === 'all' ||
+      (statusFilter.value === 'processing' ? PROCESSING_STATUSES.includes(docStatus) : docStatus === statusFilter.value)
+
     let matchesSemantic = true
     if (semanticResults.value) {
       matchesSemantic = semanticResults.value.some(r => String(r.id) === String(doc.id))
     }
-    
-    return matchesOffice && matchesSemantic
+
+    return matchesOffice && matchesStatus && matchesSemantic
   })
 })
 
@@ -321,5 +340,9 @@ onMounted(async () => {
   }
 
   watch(() => route.query, checkRouteForDocument, { deep: true, immediate: true })
+
+  // Arriving here from a clickable KPI card / AI Digest stat pre-applies its filter.
+  if (route.query.officeId) officeFilter.value = String(route.query.officeId)
+  if (route.query.status) statusFilter.value = String(route.query.status)
 })
 </script>

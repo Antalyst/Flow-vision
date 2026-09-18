@@ -26,6 +26,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  to: {
+    type: [String, Object],
+    default: null,
+  },
 })
 
 const gradientId = computed(() => {
@@ -68,11 +72,16 @@ const areaPoints = computed(() => {
 </script>
 
 <template>
-  <div
+  <component
+    :is="to ? 'NuxtLink' : 'div'"
+    :to="to || undefined"
     class="group relative flex flex-col justify-between overflow-hidden rounded-2xl p-5 transition-all"
-    :class="isHero
-      ? 'bg-candy-orange text-white-pure shadow-lg shadow-candy-orange/15 border border-candy-hover'
-      : 'bg-white dark:bg-onyx-card border border-zinc-200 dark:border-onyx-border shadow-card hover:border-candy-orange/40 hover:shadow-card-hover'"
+    :class="[
+      isHero
+        ? 'bg-candy-orange text-white-pure shadow-lg shadow-candy-orange/15 border border-candy-hover'
+        : 'bg-white dark:bg-onyx-card border border-zinc-200 dark:border-onyx-border shadow-card hover:border-candy-orange/40 hover:shadow-card-hover',
+      to ? 'cursor-pointer' : '',
+    ]"
   >
     <!-- Header with Title & Arrow Icon (Donezo style) -->
     <div class="relative flex items-center justify-between">
@@ -156,5 +165,5 @@ const areaPoints = computed(() => {
         />
       </svg>
     </div>
-  </div>
+  </component>
 </template>
