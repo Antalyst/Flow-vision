@@ -29,6 +29,24 @@ function lastNDays(n: number): string[] {
   return keys
 }
 
+function lastNDaysFrom(anchor: Date, n: number): string[] {
+  const keys: string[] = []
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(anchor)
+    d.setDate(d.getDate() - i)
+    keys.push(d.toISOString().slice(0, 10))
+  }
+  return keys
+}
+
+function dayOfWeekOf(key: string): number {
+  return new Date(`${key}T12:00:00`).getDay()
+}
+
+function monthOf(key: string): number {
+  return new Date(`${key}T12:00:00`).getMonth()
+}
+
 function formatDayLabel(key: string): string {
   const d = new Date(`${key}T12:00:00`)
   return d.toLocaleDateString('en-US', { weekday: 'short' })
@@ -140,6 +158,12 @@ export interface ClientDashboardPayload {
     inTransit: number
     idle: number
     legend: Array<{ label: string, value: string, tone: 'amber' | 'zinc' | 'orange' | 'emerald' }>
+    details: {
+      busyOffices: Array<{ id: string, name: string, docCount: number }>
+      availableOffices: Array<{ id: string, name: string }>
+      inTransitDocs: Array<{ id: string, title: string, originOfficeName: string | null, createdAt: string }>
+      waitingDocs: Array<{ id: string, title: string, officeName: string, createdAt: string }>
+    }
   }
   topOfficesByVelocity: Array<{
     id: string
@@ -173,9 +197,18 @@ export interface ClientDashboardPayload {
       forecastHours: number[]
     }
   }
+  forecastFilterOptions: {
+    availableYears: number[]
+  }
 }
 
-export async function buildClientDashboardPayload(event: H3Event, officeId?: string): Promise<ClientDashboardPayload> {
+export interface ForecastFilters {
+  year?: number
+  month?: number
+  dayOfWeek?: number
+}
+
+export async function buildClientDashboardPayload(event: H3Event, officeId?: string, forecastFilters?: ForecastFilters): Promise<ClientDashboardPayload> {
   const client = await serverSupabaseClient(event)
   const actor = await resolveActorContext(event, client)
 
@@ -194,7 +227,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
   }
 
   const docBaseQuery = db.from('documents').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
-  const docQuery = db.from('documents').select('id, created_at, tracking_status, stage_id, current_office_id, office_id, origin_office_id').eq('org_id', orgId)
+  const docQuery = db.from('documents').select('id, title, created_at, tracking_status, stage_id, current_office_id, office_id, origin_office_id').eq('org_id', orgId)
   const eventsQuery = db.from('document_tracking_events').select('document_id, status, created_at, office_id').eq('org_id', orgId).order('created_at', { ascending: true })
   const logsQuery = db.from('activity_logs').select('id, document_id, action_type, created_at, office_id, message, details').eq('org_id', orgId).order('created_at', { ascending: false }).limit(50)
 
@@ -291,6 +324,35 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
         completedAtByDoc.set(docId, log.created_at)
       }
     }
+  }
+
+  // ── Forecast card filters (Year / Day of Week) — only affect the Forecast
+  // card's 3 charts + its 3 micro-stats below it, nothing else on the dashboard. ──
+  const availableYears = [...new Set(
+    [...createdAtByDoc.values()].map((iso) => new Date(iso).getFullYear()),
+  )].sort((a, b) => b - a)
+
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth()
+  const filterYear = forecastFilters?.year
+  const filterMonth = forecastFilters?.month
+  const filterDow = forecastFilters?.dayOfWeek
+  const isCurrentPeriod = (filterYear === undefined || filterYear === currentYear)
+    && (filterMonth === undefined || filterMonth === currentMonth)
+  const isPastYear = !isCurrentPeriod
+  const effectiveYear = filterYear ?? currentYear
+  const forecastAnchor = isPastYear
+    ? (filterMonth !== undefined
+        ? new Date(effectiveYear, filterMonth + 1, 0, 12, 0, 0)
+        : new Date(effectiveYear, 11, 31, 12, 0, 0))
+    : now
+  const matchesForecastFilter = (iso: string): boolean => {
+    const d = new Date(iso)
+    if (filterYear !== undefined && d.getFullYear() !== filterYear) return false
+    if (filterMonth !== undefined && d.getMonth() !== filterMonth) return false
+    if (filterDow !== undefined && d.getDay() !== filterDow) return false
+    return true
   }
 
   const completionDeltasHours: number[] = []
@@ -406,15 +468,29 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     : slaRate
   const slaTrend = pctChange(slaRate, prevSlaAvg)
 
-  const trafficHistorical = dailyDocCounts14
-  const trafficForecast = linearForecast(rollingAverage(trafficHistorical.slice(-7)), 7)
+  const forecastLast14 = lastNDaysFrom(forecastAnchor, 14)
+  const trafficHistorical = forecastLast14.map((k) => {
+    if (filterDow !== undefined && dayOfWeekOf(k) !== filterDow) return 0
+    if (filterMonth !== undefined && monthOf(k) !== filterMonth) return 0
+    return docsByDay.get(k) ?? 0
+  })
   const forecastDayKeys: string[] = []
-  const base = new Date()
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(base)
-    d.setDate(d.getDate() + i)
-    forecastDayKeys.push(d.toISOString().slice(0, 10))
+  if (!isPastYear) {
+    const base = new Date(forecastAnchor)
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(base)
+      d.setDate(d.getDate() + i)
+      forecastDayKeys.push(d.toISOString().slice(0, 10))
+    }
   }
+  const trafficForecast = isPastYear
+    ? []
+    : linearForecast(rollingAverage(trafficHistorical.slice(-7)), 7).map((v, i) => {
+        const k = forecastDayKeys[i]!
+        if (filterDow !== undefined && dayOfWeekOf(k) !== filterDow) return 0
+        if (filterMonth !== undefined && monthOf(k) !== filterMonth) return 0
+        return v
+      })
 
   const officeNameById = new Map<string, string>()
   for (const office of officeRows) {
@@ -447,7 +523,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     if (arrival) {
       const dwellH = (new Date(completedAtByDoc.get(docId) ?? arrival.arrivedAt).getTime()
         - new Date(arrival.arrivedAt).getTime()) / MS_PER_HOUR
-      if (dwellH > 0) {
+      if (dwellH > 0 && matchesForecastFilter(arrival.arrivedAt)) {
         const oid = arrival.officeId
         if (!historicalDwellByOffice.has(oid)) historicalDwellByOffice.set(oid, [])
         historicalDwellByOffice.get(oid)!.push(dwellH)
@@ -457,9 +533,11 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     if (status === 'ARRIVED_AT_OFFICE' && doc.current_office_id) {
       const oid = String(doc.current_office_id)
       const arrivalAt = arrival?.arrivedAt ?? createdAt
-      const delayH = (Date.now() - new Date(arrivalAt).getTime()) / MS_PER_HOUR
-      if (!currentDelayByOffice.has(oid)) currentDelayByOffice.set(oid, [])
-      currentDelayByOffice.get(oid)!.push(delayH)
+      if (matchesForecastFilter(arrivalAt)) {
+        const delayH = (Date.now() - new Date(arrivalAt).getTime()) / MS_PER_HOUR
+        if (!currentDelayByOffice.has(oid)) currentDelayByOffice.set(oid, [])
+        currentDelayByOffice.get(oid)!.push(delayH)
+      }
     }
   }
 
@@ -496,16 +574,20 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     pickupWaitByDay.get(key)!.push(waitH)
   }
 
-  const messengerDayKeys = lastNDays(7)
+  const messengerDayKeys = forecastLast14.slice(-7)
   const messengerWaitHours = messengerDayKeys.map((k) => {
+    if (filterDow !== undefined && dayOfWeekOf(k) !== filterDow) return 0
+    if (filterMonth !== undefined && monthOf(k) !== filterMonth) return 0
     const vals = pickupWaitByDay.get(k) ?? []
     if (!vals.length) return 0
     return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
   })
-  const messengerForecast = linearForecast(
-    rollingAverage(messengerWaitHours.filter((v) => v > 0).length ? messengerWaitHours : [0, 0, 0]),
-    7,
-  ).map((v) => Math.round(v * 10) / 10)
+  const messengerForecast = isPastYear
+    ? messengerWaitHours.map(() => 0)
+    : linearForecast(
+        rollingAverage(messengerWaitHours.filter((v) => v > 0).length ? messengerWaitHours : [0, 0, 0]),
+        7,
+      ).map((v) => Math.round(v * 10) / 10)
 
   const total = totalDocuments ?? docRows.length
 
@@ -525,7 +607,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
 
   const hourCounts = new Map<number, number>()
   for (const doc of docRows) {
-    if (!doc.created_at) continue
+    if (!doc.created_at || !matchesForecastFilter(doc.created_at)) continue
     const hour = new Date(doc.created_at).getHours()
     hourCounts.set(hour, (hourCounts.get(hour) ?? 0) + 1)
   }
@@ -564,30 +646,73 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     : 0
 
   const busyOfficeIds = new Set<string>()
+  const docsByOfficeArrived = new Map<string, number>()
+  const waitingDocs: Array<{ id: string, title: string, officeName: string, createdAt: string }> = []
+  const inTransitDocs: Array<{ id: string, title: string, originOfficeName: string | null, createdAt: string }> = []
   let inTransitCount = 0
+
   for (const doc of docRows) {
     const status = String(doc.tracking_status ?? '').toUpperCase()
+    const title = String(doc.title ?? 'Untitled Document')
+
     if (status === 'ARRIVED_AT_OFFICE' && doc.current_office_id) {
-      busyOfficeIds.add(String(doc.current_office_id))
+      const oid = String(doc.current_office_id)
+      busyOfficeIds.add(oid)
+      docsByOfficeArrived.set(oid, (docsByOfficeArrived.get(oid) ?? 0) + 1)
+      waitingDocs.push({
+        id: String(doc.id),
+        title,
+        officeName: officeNameById.get(oid) ?? 'Office',
+        createdAt: doc.created_at,
+      })
     }
-    if (status === 'IN_TRANSIT') inTransitCount++
+
+    if (status === 'IN_TRANSIT') {
+      inTransitCount++
+      const originId = doc.origin_office_id
+        ? String(doc.origin_office_id)
+        : (doc.office_id ? String(doc.office_id) : null)
+      inTransitDocs.push({
+        id: String(doc.id),
+        title,
+        originOfficeName: originId ? (officeNameById.get(originId) ?? null) : null,
+        createdAt: doc.created_at,
+      })
+    }
   }
+
   const totalOffices = officeRows.length
   const busyCount = busyOfficeIds.size
   const availableCount = Math.max(0, totalOffices - busyCount)
-  const idleCount = Math.max(0, totalOffices - busyCount - (inTransitCount > 0 ? 1 : 0))
+  const waitingCount = waitingDocs.length
+
+  const busyOfficeDetails = [...busyOfficeIds].map((oid) => ({
+    id: oid,
+    name: officeNameById.get(oid) ?? 'Office',
+    docCount: docsByOfficeArrived.get(oid) ?? 0,
+  }))
+
+  const availableOfficeDetails = officeRows
+    .filter((o) => !busyOfficeIds.has(String(o.id)))
+    .map((o) => ({ id: String(o.id), name: String(o.name ?? o.code ?? 'Office') }))
 
   const workstationLoad = {
     busy: busyCount,
     available: availableCount,
     inTransit: inTransitCount,
-    idle: idleCount,
+    idle: waitingCount,
     legend: [
       { label: 'Busy Desks', value: String(busyCount), tone: 'amber' as const },
       { label: 'Available', value: String(availableCount), tone: 'emerald' as const },
       { label: 'In Transit', value: String(inTransitCount), tone: 'orange' as const },
-      { label: 'Waiting', value: String(activeCount), tone: 'zinc' as const },
+      { label: 'Waiting', value: String(waitingCount), tone: 'zinc' as const },
     ],
+    details: {
+      busyOffices: busyOfficeDetails,
+      availableOffices: availableOfficeDetails,
+      inTransitDocs: inTransitDocs.slice(0, 30),
+      waitingDocs: waitingDocs.slice(0, 30),
+    },
   }
 
   const completedByOffice = new Map<string, number[]>()
@@ -690,7 +815,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     },
     charts: {
       trafficForecast: {
-        labels: last14.map(formatDayLabel),
+        labels: forecastLast14.map(formatDayLabel),
         historical: trafficHistorical,
         forecast: trafficForecast,
         forecastLabels: forecastDayKeys.map(formatDayLabel),
@@ -705,6 +830,9 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
         waitHours: messengerWaitHours,
         forecastHours: messengerForecast,
       },
+    },
+    forecastFilterOptions: {
+      availableYears,
     },
     microSummaries: {
       peakLoadHour,

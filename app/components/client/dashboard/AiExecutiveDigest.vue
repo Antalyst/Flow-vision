@@ -1,109 +1,108 @@
 <template>
-  <div class="flex h-full min-h-0 w-full gap-5">
+  <div class="flex h-full min-h-0 w-full flex-col gap-5">
+    <!-- Clickable KPI strip: click any figure to see the documents behind it, right here in the drawer. Always full-width so cards never squeeze. -->
+    <div v-if="!loading && !error" class="grid flex-none grid-cols-2 gap-3 sm:grid-cols-4">
+      <button
+        v-for="stat in digestStats"
+        :key="stat.key"
+        type="button"
+        class="group flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-all hover:border-candy-orange/40 hover:shadow-card-hover"
+        :class="[
+          isDark ? 'bg-onyx-black/40' : 'bg-gray-50',
+          activeStat === stat.key ? 'border-candy-orange bg-candy-orange/5' : (isDark ? 'border-onyx-border' : 'border-gray-200'),
+        ]"
+        @click="selectStat(stat.key)"
+      >
+        <span class="flex items-center justify-between">
+          <span class="text-[11px] font-bold uppercase tracking-wider" :class="isDark ? 'text-white-muted' : 'text-gray-500'">
+            {{ stat.label }}
+          </span>
+          <Icon
+            name="ph:arrow-up-right-bold"
+            class="h-3 w-3 transition-opacity group-hover:opacity-100 group-hover:text-candy-orange"
+            :class="activeStat === stat.key ? 'opacity-100 text-candy-orange' : 'opacity-0 text-gray-400'"
+          />
+        </span>
+        <span class="text-xl font-extrabold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-gray-900'">
+          {{ stat.value }}
+        </span>
+      </button>
+    </div>
 
-    <!-- Narrative column -->
-    <div class="min-w-0 flex-1 overflow-y-auto pr-1">
-      <div v-if="loading" class="flex flex-col gap-8">
-        <div class="flex items-center gap-2.5 text-sm font-medium text-candy-orange">
-          <Icon name="ph:sparkle-fill" class="h-4 w-4 animate-pulse" />
-          Analyzing your dashboard…
-        </div>
-        <div class="animate-pulse space-y-6">
-          <div class="space-y-3">
-            <div class="h-4 w-1/3 rounded-md" :class="skeletonClass"></div>
-            <div class="h-3 w-full rounded-md" :class="skeletonClass"></div>
-            <div class="h-3 w-5/6 rounded-md" :class="skeletonClass"></div>
-            <div class="h-3 w-4/6 rounded-md" :class="skeletonClass"></div>
+    <div class="flex min-h-0 flex-1 gap-5">
+      <!-- Narrative column -->
+      <div class="min-w-0 flex-1 overflow-y-auto pr-1" :class="{ 'hidden lg:block': activeStat }">
+        <div v-if="loading" class="flex flex-col gap-8">
+          <div class="flex items-center gap-2.5 text-sm font-medium text-candy-orange">
+            <Icon name="ph:sparkle-fill" class="h-4 w-4 animate-pulse" />
+            Analyzing your dashboard…
           </div>
-          <div class="space-y-3">
-            <div class="h-4 w-1/4 rounded-md" :class="skeletonClass"></div>
-            <div class="h-3 w-full rounded-md" :class="skeletonClass"></div>
-            <div class="h-3 w-3/6 rounded-md" :class="skeletonClass"></div>
+          <div class="animate-pulse space-y-6">
+            <div class="space-y-3">
+              <div class="h-4 w-1/3 rounded-md" :class="skeletonClass"></div>
+              <div class="h-3 w-full rounded-md" :class="skeletonClass"></div>
+              <div class="h-3 w-5/6 rounded-md" :class="skeletonClass"></div>
+              <div class="h-3 w-4/6 rounded-md" :class="skeletonClass"></div>
+            </div>
+            <div class="space-y-3">
+              <div class="h-4 w-1/4 rounded-md" :class="skeletonClass"></div>
+              <div class="h-3 w-full rounded-md" :class="skeletonClass"></div>
+              <div class="h-3 w-3/6 rounded-md" :class="skeletonClass"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-else-if="error" class="flex flex-col items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-500 dark:text-red-300">
-        <div class="flex items-center gap-2 font-semibold text-red-600 dark:text-red-200">
-          <Icon name="ph:warning-circle-fill" class="h-4.5 w-4.5" />
-          Couldn't generate the digest
-        </div>
-        <p>{{ error }}</p>
-        <button
-          type="button"
-          class="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-200 transition hover:bg-red-500/10"
-          @click="fetchDigest"
-        >
-          <Icon name="ph:arrow-clockwise-bold" class="h-3.5 w-3.5" />
-          Try again
-        </button>
-      </div>
-
-      <div v-else class="flex flex-col gap-7">
-        <!-- Clickable KPI strip: click any figure to see the documents behind it, right here in the drawer -->
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div v-else-if="error" class="flex flex-col items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-500 dark:text-red-300">
+          <div class="flex items-center gap-2 font-semibold text-red-600 dark:text-red-200">
+            <Icon name="ph:warning-circle-fill" class="h-4.5 w-4.5" />
+            Couldn't generate the digest
+          </div>
+          <p>{{ error }}</p>
           <button
-            v-for="stat in digestStats"
-            :key="stat.key"
             type="button"
-            class="group flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-all hover:border-candy-orange/40 hover:shadow-card-hover"
-            :class="[
-              isDark ? 'bg-onyx-black/40' : 'bg-gray-50',
-              activeStat === stat.key ? 'border-candy-orange bg-candy-orange/5' : (isDark ? 'border-onyx-border' : 'border-gray-200'),
-            ]"
-            @click="selectStat(stat.key)"
+            class="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-200 transition hover:bg-red-500/10"
+            @click="fetchDigest"
           >
-            <span class="flex items-center justify-between">
-              <span class="text-[11px] font-bold uppercase tracking-wider" :class="isDark ? 'text-white-muted' : 'text-gray-500'">
-                {{ stat.label }}
-              </span>
-              <Icon
-                name="ph:arrow-up-right-bold"
-                class="h-3 w-3 transition-opacity group-hover:opacity-100 group-hover:text-candy-orange"
-                :class="activeStat === stat.key ? 'opacity-100 text-candy-orange' : 'opacity-0 text-gray-400'"
-              />
-            </span>
-            <span class="text-xl font-extrabold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-gray-900'">
-              {{ stat.value }}
-            </span>
+            <Icon name="ph:arrow-clockwise-bold" class="h-3.5 w-3.5" />
+            Try again
           </button>
         </div>
 
         <div
+          v-else
           class="ai-digest max-w-none text-[17px] leading-[1.75]"
           :class="{ 'is-dark': isDark }"
           v-html="formattedNarrative"
           @click="handleDigestClick"
         ></div>
       </div>
-    </div>
 
-    <!-- Drill-down panel: the documents behind whichever figure was clicked -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 w-0"
-      enter-to-class="opacity-100 w-full"
-      leave-active-class="transition-all duration-200 ease-in"
-      leave-from-class="opacity-100 w-full"
-      leave-to-class="opacity-0 w-0"
-    >
-      <aside
+      <!-- Drill-down panel: the documents behind whichever figure was clicked -->
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 w-0"
+        enter-to-class="opacity-100 w-full"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 w-full"
+        leave-to-class="opacity-0 w-0"
+      >
+        <aside
         v-if="activeStat"
-        class="flex w-full max-w-[380px] flex-none flex-col overflow-hidden rounded-2xl border"
+        class="flex w-full flex-1 flex-col overflow-hidden rounded-2xl border"
         :class="isDark ? 'border-onyx-border bg-onyx-black/60' : 'border-gray-200 bg-gray-50'"
       >
-        <div class="flex flex-none items-center justify-between border-b px-4 py-3" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
+        <div class="flex flex-none items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
           <div class="min-w-0">
             <button
               v-if="selectedDocId"
               type="button"
-              class="mb-0.5 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-candy-orange"
+              class="mb-1 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-candy-orange"
               @click="closeDocDetail"
             >
               <Icon name="ph:arrow-left-bold" class="h-3 w-3" />
               Back to list
             </button>
-            <h3 class="truncate text-sm font-bold" :class="isDark ? 'text-white-pure' : 'text-gray-900'">
+            <h3 class="truncate text-base font-bold" :class="isDark ? 'text-white-pure' : 'text-gray-900'">
               {{ selectedDocId ? (selectedDocTitle || 'Document') : statLabel(activeStat) }}
             </h3>
             <p v-if="!selectedDocId" class="text-xs" :class="isDark ? 'text-white-muted' : 'text-gray-500'">
@@ -120,44 +119,52 @@
           </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4">
+        <div class="flex-1 overflow-y-auto p-5">
           <!-- List mode -->
           <template v-if="!selectedDocId">
-            <div v-if="panelLoading" class="space-y-3">
-              <div v-for="n in 4" :key="n" class="flex items-center gap-3">
-                <div class="h-8 w-8 flex-none animate-pulse rounded-full" :class="skeletonClass"></div>
-                <div class="flex-1 space-y-1.5">
-                  <div class="h-3 w-32 animate-pulse rounded-md" :class="skeletonClass"></div>
-                  <div class="h-2.5 w-20 animate-pulse rounded-md" :class="skeletonClass"></div>
+            <div v-if="panelLoading" class="space-y-2">
+              <div v-for="n in 6" :key="n" class="flex items-center gap-4 rounded-xl p-3.5" :class="isDark ? 'bg-onyx-card' : 'bg-white'">
+                <div class="h-10 w-10 flex-none animate-pulse rounded-full" :class="skeletonClass"></div>
+                <div class="flex-1 space-y-2">
+                  <div class="h-3 w-1/3 animate-pulse rounded-md" :class="skeletonClass"></div>
+                  <div class="h-2.5 w-1/5 animate-pulse rounded-md" :class="skeletonClass"></div>
                 </div>
               </div>
             </div>
 
-            <div v-else-if="panelDocs.length" class="space-y-1.5">
+            <div v-else-if="panelDocs.length" class="space-y-2">
               <button
                 v-for="doc in panelDocs"
                 :key="doc.id"
                 type="button"
-                class="flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-colors"
-                :class="isDark ? 'hover:bg-white/5' : 'hover:bg-white'"
+                class="flex w-full items-center gap-4 rounded-xl border p-3.5 text-left transition-all"
+                :class="isDark
+                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/40 hover:shadow-card-hover'
+                  : 'border-gray-200 bg-white hover:border-candy-orange/40 hover:shadow-card-hover'"
                 @click="openDocDetail(doc)"
               >
-                <span class="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-full" :class="statusIconBg(doc.tracking_status)">
-                  <Icon :name="STATUS_ICONS[doc.tracking_status] ?? 'ph:file'" class="h-3.5 w-3.5" :class="statusIconColor(doc.tracking_status)" />
+                <span class="flex h-10 w-10 flex-none items-center justify-center rounded-full" :class="statusIconBg(doc.tracking_status)">
+                  <Icon :name="STATUS_ICONS[doc.tracking_status] ?? 'ph:file'" class="h-4 w-4" :class="statusIconColor(doc.tracking_status)" />
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-900'">
+                  <p class="truncate text-sm font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-900'">
                     {{ doc.title || 'Untitled Document' }}
                   </p>
-                  <p class="mt-0.5 text-[11px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
-                    {{ STATUS_LABELS[doc.tracking_status] ?? doc.tracking_status }} · {{ formatDate(doc.created_at) }}
+                  <p class="mt-0.5 text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+                    {{ formatDate(doc.created_at) }}
                   </p>
                 </div>
-                <Icon name="ph:caret-right-bold" class="mt-1 h-3 w-3 flex-none text-gray-400" />
+                <span
+                  class="flex-none rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                  :class="[statusIconBg(doc.tracking_status), statusIconColor(doc.tracking_status)]"
+                >
+                  {{ STATUS_LABELS[doc.tracking_status] ?? doc.tracking_status }}
+                </span>
+                <Icon name="ph:caret-right-bold" class="h-3.5 w-3.5 flex-none text-gray-400" />
               </button>
             </div>
 
-            <div v-else class="flex flex-col items-center gap-2 py-10 text-center">
+            <div v-else class="flex flex-col items-center gap-2 py-16 text-center">
               <Icon name="ph:package-fill" class="h-8 w-8 text-gray-300" />
               <p class="text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">No documents match this figure.</p>
             </div>
@@ -183,7 +190,8 @@
           </template>
         </div>
       </aside>
-    </Transition>
+      </Transition>
+    </div>
   </div>
 </template>
 
