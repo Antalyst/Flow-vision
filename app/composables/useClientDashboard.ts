@@ -12,6 +12,10 @@ export function useClientDashboard() {
 
   const currentLayout = useState<DashboardLayoutId>('client:dashboard-layout', () => 'default')
 
+  const forecastYear = useState<number | null>('client:dashboard-forecast-year', () => null)
+  const forecastMonth = useState<number | null>('client:dashboard-forecast-month', () => null)
+  const forecastDayOfWeek = useState<number | null>('client:dashboard-forecast-dow', () => null)
+
   if (import.meta.client) {
     onMounted(() => {
       const saved = localStorage.getItem(LAYOUT_STORAGE_KEY) as DashboardLayoutId | null
@@ -34,16 +38,23 @@ export function useClientDashboard() {
     loading.value = true
     error.value = null
     try {
+      const query: Record<string, string> = {}
+      if (officeId) query.officeId = officeId
+      if (forecastYear.value !== null) query.forecastYear = String(forecastYear.value)
+      if (forecastMonth.value !== null) query.forecastMonth = String(forecastMonth.value)
+      if (forecastDayOfWeek.value !== null) query.forecastDayOfWeek = String(forecastDayOfWeek.value)
+
       const res = await $fetch<{ success: boolean } & ClientDashboardPayload>(
         '/api/client/dashboard',
-        { 
+        {
           credentials: 'include',
-          query: officeId ? { officeId } : undefined 
+          query: Object.keys(query).length ? query : undefined
         },
       )
       data.value = {
         kpis: res.kpis,
         charts: res.charts,
+        forecastFilterOptions: res.forecastFilterOptions,
         microSummaries: res.microSummaries,
         workstationLoad: res.workstationLoad,
         topOfficesByVelocity: res.topOfficesByVelocity,
@@ -135,6 +146,12 @@ export function useClientDashboard() {
 
   onUnmounted(stopAutoRefresh)
 
+  function setForecastFilters(filters: { year?: number | null, month?: number | null, dayOfWeek?: number | null }) {
+    if ('year' in filters) forecastYear.value = filters.year ?? null
+    if ('month' in filters) forecastMonth.value = filters.month ?? null
+    if ('dayOfWeek' in filters) forecastDayOfWeek.value = filters.dayOfWeek ?? null
+  }
+
   return {
     data,
     loading,
@@ -146,6 +163,10 @@ export function useClientDashboard() {
     startAutoRefresh,
     stopAutoRefresh,
     lastFetchedAt,
+    forecastYear,
+    forecastMonth,
+    forecastDayOfWeek,
+    setForecastFilters,
   }
 }
 

@@ -65,12 +65,62 @@
               />
             </div>
             <span
-              class="mt-2 max-w-[88px] truncate text-[14px] font-semibold"
+              class="mt-2 max-w-[150px] break-words text-[14px] font-semibold leading-tight"
               :class="routeStepClass(idx + 1).label"
               :title="step.office_name"
             >
               {{ step.office_name }}
             </span>
+
+            <div
+              v-if="step.delivered_by || step.arrived_at"
+              class="mt-2.5 flex w-[150px] flex-col overflow-hidden rounded-xl border"
+              :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
+            >
+              <div
+                v-if="step.delivered_by"
+                class="flex items-center justify-center gap-1.5 border-b px-2.5 py-1.5"
+                :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
+              >
+                <Icon name="ph:user-fill" class="h-3 w-3 flex-none text-candy-orange" />
+                <span
+                  class="truncate text-[12.5px] font-bold"
+                  :class="isDark ? 'text-white-pure' : 'text-onyx-black'"
+                >
+                  {{ step.delivered_by }}
+                </span>
+              </div>
+
+              <div class="flex flex-col gap-1 px-2.5 py-2">
+                <div v-if="step.arrived_at" class="flex items-center justify-between gap-2">
+                  <span class="text-[10px] font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+                    In
+                  </span>
+                  <span class="whitespace-nowrap text-[11.5px] font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-600'">
+                    {{ formatStopTime(step.arrived_at) }}
+                  </span>
+                </div>
+
+                <div v-if="step.released_at" class="flex items-center justify-between gap-2">
+                  <span class="text-[10px] font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+                    {{ step.released_status === 'COMPLETED' ? 'Done' : 'Out' }}
+                  </span>
+                  <span
+                    class="whitespace-nowrap text-[11.5px] font-semibold"
+                    :class="step.released_status === 'COMPLETED' ? 'text-success' : (isDark ? 'text-gray-300' : 'text-gray-600')"
+                  >
+                    {{ formatStopTime(step.released_at) }}
+                  </span>
+                </div>
+                <div
+                  v-else-if="step.arrived_at"
+                  class="mt-0.5 flex items-center justify-center gap-1 rounded-full bg-candy-orange/10 py-1 text-[11px] font-bold text-candy-orange"
+                >
+                  <span class="h-1.5 w-1.5 rounded-full bg-candy-orange animate-pulse" />
+                  Still here
+                </div>
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -151,6 +201,11 @@ interface RouteStep {
   office_id: number
   office_name: string
   office_code: string | null
+  delivered_by: string | null
+  arrived_at: string | null
+  released_at: string | null
+  released_by: string | null
+  released_status?: string | null
 }
 
 interface TrackingSummary {
@@ -235,6 +290,13 @@ const routeStepClass = (stepNumber: number) => {
       : 'border-gray-200 bg-transparent text-gray-300',
     label: isDark.value ? 'text-gray-500' : 'text-gray-400',
   }
+}
+
+const formatStopTime = (dateStr: string | null) => {
+  if (!dateStr) return null
+  return new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', hour: 'numeric', minute: '2-digit' })
+    .format(new Date(dateStr))
+    .replace(',', '')
 }
 
 const formatRelative = (dateStr: string) => {

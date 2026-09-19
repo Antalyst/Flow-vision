@@ -49,7 +49,16 @@
       <template v-if="currentLayout === 'default' || currentLayout === 'compact_grid'">
         <div class="grid grid-cols-1 lg:grid-cols-3" :class="currentLayout === 'compact_grid' ? 'gap-3' : 'gap-6'">
           <div class="lg:col-span-2" :style="cardEnterDelay(4)">
-            <PredictiveAnalyticsCarousel :charts="data?.charts" :micro-summaries="data?.microSummaries" :loading="loading" />
+            <PredictiveAnalyticsCarousel
+              :charts="data?.charts"
+              :micro-summaries="data?.microSummaries"
+              :available-years="data?.forecastFilterOptions?.availableYears ?? []"
+              :year="forecastYear"
+              :month="forecastMonth"
+              :day-of-week="forecastDayOfWeek"
+              :loading="loading"
+              @update:filters="updateForecastFilters"
+            />
           </div>
           <div class="lg:col-span-1" :style="cardEnterDelay(5)">
             <WorkstationLoadDonut :load="data?.workstationLoad" :loading="loading" />
@@ -105,7 +114,7 @@
         <div
           v-if="isAiDrawerOpen"
           class="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l shadow-sidebar-dark transition-[width] duration-300 ease-out"
-          :class="[isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white', isDigestPanelOpen ? 'md:w-[90%] lg:w-[78%] xl:w-[65%]' : 'md:w-1/2']"
+          :class="[isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white', isDigestPanelOpen ? 'md:w-[95%] lg:w-[90%] xl:w-[85%]' : 'md:w-1/2']"
         >
           <div
             class="flex items-center justify-between border-b px-6 py-5"
@@ -175,7 +184,16 @@ const {
   kpiCards,
   fetchDashboard,
   currentLayout,
+  forecastYear,
+  forecastMonth,
+  forecastDayOfWeek,
+  setForecastFilters,
 } = useClientDashboard()
+
+function updateForecastFilters(filters: { year?: number | null, month?: number | null, dayOfWeek?: number | null }) {
+  setForecastFilters(filters)
+  fetchDashboard(true, selectedOfficeId.value)
+}
 
 const fallbackKpiCards = [
   { title: 'Total Documents', value: '35', trend: '+100%', trendUp: true, sparklineData: [5, 12, 18, 22, 28, 30, 35] },

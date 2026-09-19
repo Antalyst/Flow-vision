@@ -65,12 +65,68 @@ export default defineEventHandler(async (event) => {
       .eq('stage_id', doc.stage_id)
       .order('step_number', { ascending: true })
 
-    routeSteps = (steps ?? []).map((s: any) => ({
+    const rawSteps = (steps ?? []).map((s: any) => ({
       step_number: s.step_number,
       office_id:   s.office_id,
       office_name: s.offices?.name ?? `Office #${s.office_id}`,
       office_code: s.offices?.code ?? null,
     }))
+
+    // ── Fill in who handled each stop, and when it arrived / moved on ──────
+    // A stop's "arrival" is its ARRIVED_AT_OFFICE event, matched by
+    // step_index (the reliable join key — some flows, e.g. QR drop-off,
+    // write office_id as null but always set step_index to the route step
+    // number). Falls back to office_id/office_name for older rows without
+    // step_index. The very first stop instead uses the CREATED event, since
+    // the document originates there rather than being carried in. A stop's
+    // "release" is whichever PICKED_UP or COMPLETED event for that same
+    // step happens next in the log after its arrival.
+    const eventsAsc = events ?? []
+    const matchesStep = (e: any, step: { step_number: number, office_id: number, office_name: string }) => {
+      if (e.step_index !== null && e.step_index !== undefined) return Number(e.step_index) === step.step_number
+      if (e.office_id !== null && e.office_id !== undefined) return String(e.office_id) === String(step.office_id)
+      return e.office_name === step.office_name
+    }
+
+    routeSteps = rawSteps.map((step) => {
+      let arrivalEvent = eventsAsc.find((e: any) => e.status === 'ARRIVED_AT_OFFICE' && matchesStep(e, step))
+      if (!arrivalEvent && step.step_number === 1) {
+        arrivalEvent = eventsAsc.find((e: any) => e.status === 'CREATED')
+      }
+
+      const arrivedAt = arrivalEvent?.created_at ?? null
+      const deliveredBy = arrivalEvent?.actor_name ?? null
+
+      let releasedAt: string | null = null
+      let releasedBy: string | null = null
+      let releasedStatus: string | null = null
+      if (arrivedAt) {
+        const releaseEvent = eventsAsc.find(
+          (e: any) =>
+            (e.status === 'PICKED_UP' || e.status === 'COMPLETED')
+            && new Date(e.created_at).getTime() >= new Date(arrivedAt).getTime()
+            && matchesStep(e, step),
+        ) ?? eventsAsc.find(
+          (e: any) =>
+            (e.status === 'PICKED_UP' || e.status === 'COMPLETED')
+            && new Date(e.created_at).getTime() > new Date(arrivedAt).getTime(),
+        )
+        if (releaseEvent) {
+          releasedAt = releaseEvent.created_at
+          releasedBy = releaseEvent.actor_name ?? null
+          releasedStatus = releaseEvent.status
+        }
+      }
+
+      return {
+        ...step,
+        delivered_by: deliveredBy,
+        arrived_at: arrivedAt,
+        released_at: releasedAt,
+        released_by: releasedBy,
+        released_status: releasedStatus,
+      }
+    })
   }
 
   // ── Resolve assigned messenger display name ────────────────────────────

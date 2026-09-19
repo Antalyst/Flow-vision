@@ -7,8 +7,61 @@ import type { ClientDashboardPayload } from '~~/server/utils/dashboardAnalytics'
 const props = defineProps<{
   charts: ClientDashboardPayload['charts'] | null | undefined
   microSummaries: ClientDashboardPayload['microSummaries'] | null | undefined
+  availableYears?: number[]
+  year?: number | null
+  month?: number | null
+  dayOfWeek?: number | null
   loading?: boolean
 }>()
+
+const emit = defineEmits<{ (e: 'update:filters', value: { year?: number | null, month?: number | null, dayOfWeek?: number | null }): void }>()
+
+const DAY_OPTIONS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+]
+
+const MONTH_OPTIONS = [
+  { value: 0, label: 'January' },
+  { value: 1, label: 'February' },
+  { value: 2, label: 'March' },
+  { value: 3, label: 'April' },
+  { value: 4, label: 'May' },
+  { value: 5, label: 'June' },
+  { value: 6, label: 'July' },
+  { value: 7, label: 'August' },
+  { value: 8, label: 'September' },
+  { value: 9, label: 'October' },
+  { value: 10, label: 'November' },
+  { value: 11, label: 'December' },
+]
+
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear()
+  const years = new Set(props.availableYears ?? [])
+  years.add(current)
+  return [...years].sort((a, b) => b - a)
+})
+
+function onYearChange(e: Event) {
+  const raw = (e.target as HTMLSelectElement).value
+  emit('update:filters', { year: raw === '' ? null : Number(raw) })
+}
+
+function onMonthChange(e: Event) {
+  const raw = (e.target as HTMLSelectElement).value
+  emit('update:filters', { month: raw === '' ? null : Number(raw) })
+}
+
+function onDayChange(e: Event) {
+  const raw = (e.target as HTMLSelectElement).value
+  emit('update:filters', { dayOfWeek: raw === '' ? null : Number(raw) })
+}
 
 const {
   themeKey,
@@ -40,13 +93,13 @@ const commonOptions = computed(() => {
     title: { text: '' },
     credits: { enabled: false },
     legend: {
-      itemStyle: { color: legendColor.value, fontWeight: 'normal', fontSize: '11px' },
+      itemStyle: { color: legendColor.value, fontWeight: '600', fontSize: '13px' },
       itemHoverStyle: { color: isD ? '#ffffff' : '#000000' }
     },
     tooltip: {
       backgroundColor: tooltip.value.backgroundColor,
       borderColor: tooltip.value.borderColor,
-      style: { color: tooltip.value.bodyColor },
+      style: { color: tooltip.value.bodyColor, fontSize: '13px' },
       borderRadius: 0,
       borderWidth: 1,
       shadow: false,
@@ -56,23 +109,27 @@ const commonOptions = computed(() => {
       gridLineWidth: 0,
       lineColor: gridColor.value,
       tickColor: gridColor.value,
-      labels: { style: { color: tickColor.value, fontSize: '11px' } }
+      labels: { style: { color: tickColor.value, fontSize: '13px', fontWeight: '600' } }
     },
     yAxis: {
       title: { text: '' },
       gridLineColor: gridColor.value,
       gridLineDashStyle: 'Dash',
-      labels: { style: { color: tickColor.value, fontSize: '11px' } }
+      labels: { style: { color: tickColor.value, fontSize: '12px' } }
     },
     plotOptions: {
       series: {
         animation: { duration: 800 },
         marker: { enabled: false, states: { hover: { enabled: true, radius: 4 } } },
         states: { hover: { lineWidthPlus: 0 } },
-        lineWidth: 2
+        lineWidth: 2,
+        dataLabels: {
+          enabled: true,
+          style: { fontSize: '12px', fontWeight: '700', textOutline: 'none', color: tickColor.value }
+        }
       },
-      column: { borderRadius: 0, borderWidth: 0, pointPadding: 0.1 },
-      bar: { borderRadius: 0, borderWidth: 0, pointPadding: 0.1 },
+      column: { borderRadius: 6, borderWidth: 0, pointPadding: 0.12, groupPadding: 0.16 },
+      bar: { borderRadius: 6, borderWidth: 0, pointPadding: 0.1 },
       spline: { lineWidth: 2 }
     }
   }
@@ -83,26 +140,34 @@ const trafficChartData = computed(() => {
   if (!c) return null
   const labels = [...c.labels, ...c.forecastLabels]
   const historical = [...c.historical, ...Array(c.forecast.length).fill(null)]
-  const forecast = [...Array(c.historical.length - 1).fill(null), c.historical[c.historical.length - 1] ?? 0, ...c.forecast]
+  const forecast = [...Array(c.historical.length).fill(null), ...c.forecast]
 
   return {
     ...commonOptions.value,
+    chart: { ...commonOptions.value.chart, type: 'column' },
     xAxis: { ...commonOptions.value.xAxis, categories: labels },
+    plotOptions: {
+      ...commonOptions.value.plotOptions,
+      series: {
+        ...commonOptions.value.plotOptions.series,
+        dataLabels: {
+          ...commonOptions.value.plotOptions.series.dataLabels,
+          formatter(this: { y: number | null }) {
+            return this.y === null || this.y === undefined ? '' : String(this.y)
+          }
+        }
+      }
+    },
     series: [
       {
-        type: 'spline',
-        name: 'Historical',
+        name: 'So Far',
         data: historical,
-        color: candy.primary,
-        zIndex: 2
+        color: candy.primary
       },
       {
-        type: 'spline',
-        name: 'Forecast',
+        name: 'Expected Next 7 Days',
         data: forecast,
-        color: candy.forecast,
-        dashStyle: 'Dash',
-        zIndex: 1
+        color: candy.forecast
       }
     ]
   }
@@ -123,32 +188,42 @@ const congestionChartData = computed(() => {
 
   return {
     ...commonOptions.value,
-    chart: { ...commonOptions.value.chart, type: 'bar' },
+    chart: { ...commonOptions.value.chart, type: 'column' },
     xAxis: {
       ...commonOptions.value.xAxis,
       categories: labels,
       labels: {
         ...commonOptions.value.xAxis.labels,
+        rotation: -20,
         formatter(this: { value: string }) {
           const label = String(this.value)
-          return label.length > 14 ? `${label.slice(0, 13)}…` : label
+          return label.length > 12 ? `${label.slice(0, 11)}…` : label
         },
       },
     },
     plotOptions: {
       ...commonOptions.value.plotOptions,
-      bar: { borderRadius: 4, borderWidth: 0, pointPadding: 0.12, groupPadding: 0.18, maxPointWidth: 18 },
+      series: {
+        ...commonOptions.value.plotOptions.series,
+        dataLabels: {
+          ...commonOptions.value.plotOptions.series.dataLabels,
+          formatter(this: { y: number | null }) {
+            return this.y === null || this.y === undefined ? '' : `${this.y}h`
+          }
+        }
+      },
+      column: { ...commonOptions.value.plotOptions.column, maxPointWidth: 34 },
     },
     series: [
       {
-        name: 'Historical avg (hrs)',
+        name: 'Normal Wait Time',
         data: historicalAvgHours,
         color: candy.strong
       },
       {
-        name: 'Current delay (hrs)',
+        name: "Today's Wait Time",
         data: currentDelayHours,
-        color: 'rgba(160, 160, 160, 0.45)'
+        color: candy.primary
       }
     ]
   }
@@ -159,24 +234,30 @@ const messengerChartData = computed(() => {
   if (!c) return null
   return {
     ...commonOptions.value,
+    chart: { ...commonOptions.value.chart, type: 'column' },
     xAxis: { ...commonOptions.value.xAxis, categories: c.labels },
     plotOptions: {
       ...commonOptions.value.plotOptions,
-      area: { fillOpacity: 0.1, lineWidth: 2, marker: { enabled: false } }
+      series: {
+        ...commonOptions.value.plotOptions.series,
+        dataLabels: {
+          ...commonOptions.value.plotOptions.series.dataLabels,
+          formatter(this: { y: number | null }) {
+            return this.y === null || this.y === undefined ? '' : `${this.y}h`
+          }
+        }
+      }
     },
     series: [
       {
-        type: 'area',
-        name: 'Avg pickup wait (hrs)',
+        name: 'Actual Wait Time',
         data: c.waitHours,
         color: candy.primary
       },
       {
-        type: 'spline',
-        name: 'Projected (hrs)',
+        name: 'Expected Wait Time',
         data: c.forecastHours.slice(0, c.labels.length),
-        color: candy.forecast,
-        dashStyle: 'Dash'
+        color: candy.forecast
       }
     ]
   }
@@ -240,6 +321,37 @@ function goToSlide(index: number) {
           <Icon name="ph:caret-right-bold" class="h-4 w-4" />
         </button>
       </div>
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-2.5">
+      <span class="text-xs font-semibold text-zinc-500 dark:text-white-muted">Show me:</span>
+      <select
+        class="rounded-xl border border-zinc-200 bg-white-pure px-2.5 py-1.5 text-xs font-semibold text-onyx-black outline-none transition focus:border-candy-orange dark:border-onyx-border dark:bg-onyx-black/60 dark:text-white-pure"
+        :value="year ?? ''"
+        aria-label="Filter by year"
+        @change="onYearChange"
+      >
+        <option value="">Every Year</option>
+        <option v-for="y in yearOptions" :key="y" :value="y">{{ y }}</option>
+      </select>
+      <select
+        class="rounded-xl border border-zinc-200 bg-white-pure px-2.5 py-1.5 text-xs font-semibold text-onyx-black outline-none transition focus:border-candy-orange dark:border-onyx-border dark:bg-onyx-black/60 dark:text-white-pure"
+        :value="month ?? ''"
+        aria-label="Filter by month"
+        @change="onMonthChange"
+      >
+        <option value="">Every Month</option>
+        <option v-for="m in MONTH_OPTIONS" :key="m.value" :value="m.value">{{ m.label }}</option>
+      </select>
+      <select
+        class="rounded-xl border border-zinc-200 bg-white-pure px-2.5 py-1.5 text-xs font-semibold text-onyx-black outline-none transition focus:border-candy-orange dark:border-onyx-border dark:bg-onyx-black/60 dark:text-white-pure"
+        :value="dayOfWeek ?? ''"
+        aria-label="Filter by day of the week"
+        @change="onDayChange"
+      >
+        <option value="">Every Day</option>
+        <option v-for="d in DAY_OPTIONS" :key="d.value" :value="d.value">{{ d.label }}s</option>
+      </select>
     </div>
 
     <div
