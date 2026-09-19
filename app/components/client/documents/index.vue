@@ -24,6 +24,15 @@
         </NuxtLink>
         <button
           type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white dark:bg-onyx-card border px-4 py-2 font-medium transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
+          @click="isScannerModalOpen = true"
+        >
+          <Icon name="ph:camera-fill" class="h-4 w-4 text-candy-orange" />
+          Scan Physical Document
+        </button>
+        <button
+          type="button"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           @click="isUploadModalOpen = true"
         >
@@ -180,6 +189,14 @@
       @uploaded="handleUploadSuccess"
     />
 
+    <!-- Scan Physical Document modal -->
+    <DocumentScannerModal
+      :is-open="isScannerModalOpen"
+      role="client"
+      @close="isScannerModalOpen = false"
+      @registered="handleUploadSuccess"
+    />
+
     <!-- Detail preview drawer -->
     <DocumentPreviewDrawer
       :is-open="!!activeDocument"
@@ -205,6 +222,7 @@ import { useStageStore } from '~/stores/stage'
 import { useDocumentStore, type DocumentRecord } from '~/stores/document'
 import DocumentUploadModal from './documentUploadModal.vue'
 import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
+import DocumentScannerModal from '~/components/documents/DocumentScannerModal.vue'
 import SemanticSearchModal from './SemanticSearchModal.vue'
 
 const authStore = useAuthStore()
@@ -216,6 +234,7 @@ const route = useRoute()
 const router = useRouter()
 
 const isUploadModalOpen = ref(false)
+const isScannerModalOpen = ref(false)
 const activeDocument = ref<DocumentRecord | null>(null)
 const officeFilter = ref<'all' | string>('all')
 const statusFilter = ref<'all' | string>('all')

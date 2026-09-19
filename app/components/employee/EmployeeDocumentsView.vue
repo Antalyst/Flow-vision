@@ -11,15 +11,33 @@
         </p>
       </div>
 
-      <button
-        type="button"
-        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
-        @click="isUploadOpen = true"
-      >
-        <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
-        Upload Document
-      </button>
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          :class="isDark ? 'border-white/10 text-white hover:bg-white/5' : 'border-gray-200 text-gray-900 hover:bg-gray-50'"
+          @click="isScannerOpen = true"
+        >
+          <Icon name="ph:camera-fill" class="h-4 w-4 text-candy-orange" />
+          Scan Physical Document
+        </button>
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          @click="isUploadOpen = true"
+        >
+          <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
+          Upload Document
+        </button>
+      </div>
     </div>
+
+    <DocumentScannerModal
+      :is-open="isScannerOpen"
+      role="employee"
+      @close="isScannerOpen = false"
+      @registered="handleScanRegistered"
+    />
 
     <!-- ── KPI Strip ─────────────────────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -377,6 +395,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import DocumentScannerModal from '~/components/documents/DocumentScannerModal.vue'
 
 const auth = useAuthStore()
 const { isDark } = useTheme()
@@ -406,6 +425,7 @@ const docs        = ref<LedgerDoc[]>([])
 const myOffices   = ref<OfficeRecord[]>([])
 const loading     = ref(false)
 const isUploadOpen = ref(false)
+const isScannerOpen = ref(false)
 const uploading   = ref(false)
 const selectedDoc = ref<LedgerDoc | null>(null)
 const search      = ref('')
@@ -503,6 +523,12 @@ const fetchMyOffices = async () => {
     })
     myOffices.value = res.data ?? []
   } catch { /* silent */ }
+}
+
+// ── Scan ───────────────────────────────────────────────────────────────
+const handleScanRegistered = async () => {
+  isScannerOpen.value = false
+  await fetchDocs()
 }
 
 // ── Upload ─────────────────────────────────────────────────────────────

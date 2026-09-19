@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     //.eq('org_id', actor.orgId)
     .limit(300)
 
-  const officeList = 'e3f171' 
+  const officeList = 'e3f171'
   dbQuery = dbQuery.or(
     `user_id.eq.${actor.userId},` +
     `current_office_id.in.(${officeList}),` +
