@@ -21,7 +21,7 @@
               v-model="searchQuery"
               type="text"
               placeholder="Search conversations..."
-              class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition-colors"
+              class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors"
               :class="isDark 
                 ? 'border-onyx-border bg-onyx-black text-white focus:border-candy-orange' 
                 : 'border-gray-200 bg-white text-gray-900 focus:border-candy-orange'"
@@ -43,7 +43,7 @@
               type="button"
               v-for="item in filteredInbox"
               :key="item.id"
-              class="group flex w-full cursor-pointer items-start gap-3 rounded-none p-3 text-left transition-colors border-l-4 border-transparent"
+              class="group flex w-full cursor-pointer items-start gap-3 rounded-xl p-3 text-left transition-colors border-l-4 border-transparent"
               :class="[
                 isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50/80',
                 currentActiveId === item.id 
@@ -52,7 +52,7 @@
               ]"
               @click.prevent="selectConversation(item)"
             >
-              <div class="pointer-events-none flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-candy-orange/20 text-candy-orange"
+              <div class="pointer-events-none flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-candy-orange/20 text-candy-orange"
                 :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
                 <Icon name="ph:files-light" class="pointer-events-none h-5 w-5" />
               </div>
@@ -98,13 +98,13 @@
           <header class="flex shrink-0 items-center gap-4 border-b px-4 py-3"
             :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
             <button
-              class="inline-flex h-8 w-8 items-center justify-center rounded-none sm:hidden"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-lg sm:hidden"
               :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'"
               @click="chat.activeConversationId = null; localDraftTarget = null"
             >
               <Icon name="ph:arrow-left-light" class="h-4 w-4" />
             </button>
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-none border border-candy-orange/20 text-candy-orange"
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-candy-orange/20 text-candy-orange"
               :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
               <Icon name="ph:files-light" class="h-5 w-5" />
             </div>
@@ -124,15 +124,15 @@
                     v-model="editedTitle" 
                     @keyup.enter="saveTitle"
                     @keyup.esc="isEditingTitle = false"
-                    class="border border-candy-orange px-2 py-1 rounded text-sm bg-transparent outline-none"
+                    class="border border-candy-orange px-2 py-1 rounded-lg text-sm bg-transparent outline-none"
                     :class="isDark ? 'text-white' : 'text-gray-900'"
                     autofocus
                   />
-                  <button @click="saveTitle" :disabled="updatingTitle" class="text-candy-orange hover:text-orange-600 ml-1">
+                  <button @click="saveTitle" :disabled="updatingTitle" class="text-candy-orange hover:text-candy-hover ml-1">
                     <Icon v-if="updatingTitle" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
                     <Icon v-else name="ph:check-bold" class="h-4 w-4" />
                   </button>
-                  <button @click="isEditingTitle = false" class="text-gray-400 hover:text-red-500 ml-1">
+                  <button @click="isEditingTitle = false" class="text-gray-400 hover:text-danger ml-1">
                     <Icon name="ph:x-bold" class="h-4 w-4" />
                   </button>
                 </template>
@@ -152,7 +152,7 @@
               Loading history...
             </div>
             <div v-else-if="messages.length === 0" class="flex h-full flex-col items-center justify-center text-gray-400">
-              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-none border"
+              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border"
                 :class="isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-100'">
                 <Icon name="ph:chats-light" class="h-8 w-8" :class="isDark ? 'text-gray-600' : 'text-gray-400'" />
               </div>
@@ -165,7 +165,7 @@
                 :class="['flex w-full', isOwnMessage(msg) ? 'justify-end' : 'justify-start']"
               >
                 <div
-                  class="group relative max-w-[85%] rounded-none border px-4 py-3 text-sm md:max-w-[70%]"
+                  class="group relative max-w-[85%] rounded-2xl border px-4 py-3 text-sm md:max-w-[70%]"
                   :class="[
                     isOwnMessage(msg)
                       ? 'border-candy-orange/30 bg-candy-orange/10 text-gray-900 dark:text-gray-100 text-right' 
@@ -193,7 +193,7 @@
                 v-model="newMessage"
                 rows="1"
                 placeholder="Type a message..."
-                class="max-h-32 min-h-[44px] flex-1 resize-none rounded-none border px-4 py-3 text-sm outline-none transition-colors"
+                class="max-h-32 min-h-[44px] flex-1 resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-colors"
                 :class="isDark 
                   ? 'border-onyx-border bg-onyx-black text-white focus:border-candy-orange' 
                   : 'border-gray-200 bg-white text-gray-900 focus:border-candy-orange'"
@@ -202,7 +202,7 @@
               />
               <button
                 type="submit"
-                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-none bg-candy-orange text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-candy-orange text-white transition-colors hover:bg-candy-hover disabled:opacity-50"
                 :disabled="!newMessage.trim() || sending"
               >
                 <Icon v-if="sending" name="ph:spinner-gap-light" class="h-5 w-5 animate-spin" />
@@ -215,7 +215,7 @@
         <!-- Empty State -->
         <div v-else class="flex h-full w-full flex-col items-center justify-center p-8 text-center"
           :class="isDark ? 'bg-onyx-background' : 'bg-gray-50/50'">
-          <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-none border"
+          <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full border"
             :class="isDark ? 'border-candy-orange/20 bg-candy-orange/10' : 'border-candy-orange/30 bg-candy-orange/5'">
             <Icon name="ph:chats-light" class="h-10 w-10 text-candy-orange" />
           </div>
@@ -283,7 +283,7 @@
           <button
             @click="handleCreateGroup"
             :disabled="!selectedContacts?.length || creatingGroup"
-            class="px-4 py-2 text-sm font-medium rounded bg-[#e87030] text-white hover:bg-[#d86020] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-4 py-2 text-sm font-medium rounded-lg bg-candy-orange text-white hover:bg-candy-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Icon v-if="creatingGroup" name="ph:spinner-gap" class="animate-spin h-4 w-4" />
             Create

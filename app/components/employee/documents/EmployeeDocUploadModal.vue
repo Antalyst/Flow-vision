@@ -21,7 +21,7 @@
           :class="borderClass"
         >
           <div>
-            <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
+            <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
             <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
             </p>
@@ -32,7 +32,7 @@
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-none transition hover:bg-transparent hover:text-candy-orange"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
             aria-label="Close"
             @click="handleClose"
           >
@@ -59,8 +59,8 @@
 
             <!-- 2. Drop zone -->
             <label
-              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-none border-2 border-dashed p-7 text-center transition"
-              :class="isDragging ? 'border-candy-orange bg-transparent' : borderClass"
+              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-7 text-center transition"
+              :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
               @dragover.prevent="isDragging = true"
               @dragleave.prevent="isDragging = false"
               @drop.prevent="handleDrop"
@@ -84,7 +84,7 @@
             <!-- Selected file chip -->
             <div
               v-if="selectedFile"
-              class="flex flex-col gap-3 rounded-none border p-3 text-sm"
+              class="flex flex-col gap-3 rounded-xl border p-3 text-sm"
               :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex min-w-0 items-center justify-between gap-3">
@@ -97,7 +97,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-none text-red-500 transition hover:bg-transparent"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
                   aria-label="Remove file"
                   @click="clearFile"
                 >
@@ -106,15 +106,15 @@
               </div>
               
               <!-- Excel options -->
-              <div v-if="isExcelFile" class="mt-2 rounded-none bg-transparent p-4 border border-candy-orange space-y-4">
+              <div v-if="isExcelFile" class="mt-2 rounded-xl bg-candy-orange/10 p-4 border border-candy-orange/20 space-y-4">
                 <div>
                   <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
                   <div class="flex items-center gap-2">
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
                       <Icon name="ph:table-light" class="h-3.5 w-3.5" />
                       Preview Metadata
                     </button>
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-none bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-[#e95a0b] transition">
+                    <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-candy-hover transition">
                       <Icon name="ph:printer-light" class="h-3.5 w-3.5" />
                       Print Summary
                     </button>
@@ -130,7 +130,7 @@
                       v-model="manualTitle"
                       type="text"
                       placeholder="Enter document title..."
-                      class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
                       :class="inputClass"
                     />
                   </div>
@@ -140,7 +140,7 @@
                       v-model="manualDescription"
                       rows="2"
                       placeholder="Briefly describe the contents..."
-                      class="w-full resize-none rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                      class="w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
                       :class="inputClass"
                     ></textarea>
                   </div>
@@ -155,7 +155,7 @@
               <div class="flex items-center justify-between gap-3">
                 <div>
                   <span class="text-sm font-semibold" :class="headingClass">
-                    Document Category <span class="text-red-500">*</span>
+                    Document Category <span class="text-danger">*</span>
                   </span>
                   <p class="mt-0.5 text-[14px]" :class="mutedClass">
                     Classification for SLA predictive analytics.
@@ -165,7 +165,7 @@
               <div class="mt-2">
                 <select
                   v-model="selectedCategoryId"
-                  class="w-full rounded-none border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange bg-transparent"
+                  class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange bg-transparent"
                   :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
                 >
                   <option value="" disabled>Select a category...</option>
@@ -173,7 +173,7 @@
                     {{ cat.name }}
                   </option>
                 </select>
-                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[13px] text-amber-500">
+                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[13px] text-warning">
                   <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
                 </div>
               </div>
@@ -187,7 +187,7 @@
               <div class="flex items-center justify-between gap-3">
                 <div>
                   <span class="text-sm font-semibold" :class="headingClass">
-                    Routing Pathway <span class="text-red-500">*</span>
+                    Routing Pathway <span class="text-danger">*</span>
                   </span>
                   <p class="mt-0.5 text-[14px]" :class="mutedClass">
                     Where the messenger must physically carry this document.
@@ -196,14 +196,14 @@
 
                 <!-- Dual-scope tab toggle -->
                 <div
-                  class="flex flex-none items-center rounded-none border p-0.5 text-xs"
+                  class="flex flex-none items-center rounded-xl border p-0.5 text-xs"
                   :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
                 >
                   <button
                     v-for="tab in routeTabs"
                     :key="tab.value"
                     type="button"
-                    class="flex items-center gap-1.5 rounded-none px-3 py-1.5 font-semibold transition-all duration-200 select-none"
+                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 select-none"
                     :class="routeTab === tab.value
                       ? 'bg-candy-orange text-white shadow'
                       : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
@@ -236,17 +236,17 @@
                 <!-- No origin warning for local tab -->
                 <div
                   v-if="routeTab === 'local' && !selectedOriginOfficeId"
-                  class="flex items-center gap-2 rounded-none border border-dashed px-4 py-3 text-xs"
+                  class="flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-xs"
                   :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
                 >
-                  <Icon name="ph:warning-light" class="h-4 w-4 text-amber-500" />
+                  <Icon name="ph:warning-light" class="h-4 w-4 text-warning" />
                   Select your origin office first to see local routes.
                 </div>
 
                 <!-- Empty state -->
                 <div
                   v-else-if="!visibleRoutes.length"
-                  class="flex flex-col items-center gap-2 rounded-none border border-dashed px-4 py-5 text-center text-xs"
+                  class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-5 text-center text-xs"
                   :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
                 >
                   <Icon name="ph:path-light" class="h-6 w-6" :class="mutedClass" />
@@ -263,11 +263,11 @@
                   v-for="stage in visibleRoutes"
                   :key="stage.stage_id"
                   type="button"
-                  class="group w-full rounded-none border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange"
+                  class="group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange/40"
                   :class="selectedStageId === String(stage.stage_id)
                     ? isDark
-                      ? 'border-candy-orange bg-transparent  '
-                      : 'border-candy-orange bg-white  '
+                      ? 'border-candy-orange bg-candy-orange/10'
+                      : 'border-candy-orange bg-orange-50'
                     : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
                   @click="selectRoute(stage)"
                 >
@@ -276,7 +276,7 @@
                       <div class="flex items-center gap-2">
                         <!-- Selected checkmark -->
                         <div
-                          class="flex h-4 w-4 flex-none items-center justify-center rounded-none transition-all"
+                          class="flex h-4 w-4 flex-none items-center justify-center rounded-full transition-all"
                           :class="selectedStageId === String(stage.stage_id)
                             ? 'bg-candy-orange'
                             : isDark ? 'border border-white/20' : 'border border-gray-300'"
@@ -295,15 +295,15 @@
                         <span
                           v-for="(stop, idx) in getRouteStops(stage.stage_id)"
                           :key="idx"
-                          class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[13px] font-medium"
+                          class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-medium"
                           :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                         >
-                          <span class="h-1 w-1 rounded-none bg-transparent" />
+                          <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
                           {{ stop }}
                         </span>
                         <span
                           v-if="getRouteSteps(stage.stage_id).length > 3"
-                          class="inline-flex items-center rounded-none px-2 py-0.5 text-[13px] font-medium text-candy-orange"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[13px] font-medium text-candy-orange"
                         >
                           +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                         </span>
@@ -313,10 +313,10 @@
                     <!-- Right: stop count badge + scope tag -->
                     <div class="flex flex-none flex-col items-end gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[13px] font-bold"
+                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-bold"
                         :class="routeTab === 'global'
-                          ? 'border-blue-400 bg-transparent text-blue-400'
-                          : 'border-candy-orange bg-transparent text-candy-orange'"
+                          ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
+                          : 'border-gray-300/40 bg-gray-500/10 text-gray-500 dark:border-gray-500/30 dark:text-gray-400'"
                       >
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
@@ -333,19 +333,19 @@
               <Transition name="route-expand">
                 <div
                   v-if="selectedStageId && selectedTimelineSteps.length"
-                  class="mt-4 overflow-hidden rounded-none border"
+                  class="mt-4 overflow-hidden rounded-2xl border"
                   :class="isDark
-                    ? 'border-candy-orange bg-candy-orange/[0.03]'
-                    : 'border-gray-200 bg-white'"
+                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
+                    : 'border-orange-200 bg-orange-50/60'"
                 >
                   <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-2">
                       <Icon name="ph:path-light" class="h-3.5 w-3.5 text-candy-orange" />
                       <span class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
                     </div>
                     <span class="text-[13px]" :class="mutedClass">
-                      {{ selectedTimelineSteps.length + 1 }} stops &middot; Messenger run
+                      {{ selectedTimelineSteps.length + 1 }} stops
                     </span>
                   </div>
 
@@ -355,10 +355,10 @@
 
                       <!-- ── Origin node (always first) ─────────────── -->
                       <div class="flex flex-col items-center" style="min-width: 80px">
-                        <div class="relative flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange  ">
+                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange">
                           <Icon name="ph:map-pin-light" class="h-5 w-5 text-white" />
                           <!-- Pulse ring -->
-                          <span class="absolute inset-0 animate-ping rounded-none bg-candy-orange opacity-20" />
+                          <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
                         </div>
                         <p
                           class="mt-2 max-w-[76px] text-center text-[13px] font-bold leading-tight text-candy-orange"
@@ -366,7 +366,7 @@
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-none bg-transparent px-1.5 py-0.5 text-[12px] font-bold uppercase tracking-wide text-candy-orange">
+                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-[12px] font-bold uppercase tracking-wide text-candy-orange">
                           Origin
                         </span>
                       </div>
@@ -380,7 +380,7 @@
                         <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
                           <div
                             class="h-px flex-1"
-                            :class="isDark ? 'bg-transparent' : 'bg-transparent'"
+                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
                           />
                           <Icon name="ph:caret-right-light" class="h-3 w-3 flex-none text-candy-orange/50" />
                         </div>
@@ -389,12 +389,12 @@
                         <div class="flex flex-col items-center" style="min-width: 80px">
                           <!-- Circle: final stop gets filled, others get ring -->
                           <div
-                            class="flex h-10 w-10 items-center justify-center rounded-none border-2 transition-all"
+                            class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
                             :class="idx === selectedTimelineSteps.length - 1
-                              ? 'border-candy-orange bg-candy-orange text-white  '
+                              ? 'border-candy-orange bg-candy-orange text-white'
                               : isDark
-                                ? 'border-candy-orange bg-transparent text-candy-orange'
-                                : 'border-candy-orange bg-white text-candy-orange'"
+                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
+                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
                           >
                             <Icon
                               v-if="idx === selectedTimelineSteps.length - 1"
@@ -426,7 +426,7 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[13px]" :class="isDark ? 'border-candy-orange' : 'border-gray-200'">
+                  <div class="border-t px-4 py-2.5 text-[13px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
                         <Icon name="ph:buildings-light" class="h-3 w-3 text-candy-orange" />
@@ -450,20 +450,20 @@
               <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
 
               <!-- Excel specific notice -->
-              <div v-if="isExcelFile" class="mt-2 rounded-none border border-candy-orange bg-transparent px-4 py-3 text-xs text-candy-orange">
+              <div v-if="isExcelFile" class="mt-2 rounded-xl border border-candy-orange/30 bg-candy-orange/10 px-4 py-3 text-xs text-candy-orange">
                 <Icon name="ph:info-light" class="inline h-4 w-4 mr-1 mb-0.5" />
                 <strong>Excel file detected.</strong> A dedicated trailing sheet will be generated containing only the selected QR code size to prevent data corruption.
               </div>
 
               <div class="mt-2 space-y-2">
                 <label
-                  class="flex items-start gap-3 rounded-none border p-3 transition"
+                  class="flex items-start gap-3 rounded-xl border p-3 transition"
                   :class="[
-                    selectedStrategy === 'embedded' ? 'border-candy-orange bg-transparent' : (isDark ? 'border-white/10' : 'border-gray-200'),
+                    selectedStrategy === 'embedded' ? 'border-candy-orange bg-candy-orange/5' : (isDark ? 'border-white/10' : 'border-gray-200'),
                     isExcelFile ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
                   ]"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-[#F47D2F]" :disabled="isExcelFile" />
+                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-candy-orange" :disabled="isExcelFile" />
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
                     <span class="block text-xs" :class="mutedClass">
@@ -473,12 +473,12 @@
                 </label>
 
                 <label
-                  class="flex cursor-pointer items-start gap-3 rounded-none border p-3 transition"
+                  class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
                   :class="selectedStrategy === 'standalone'
-                    ? 'border-candy-orange bg-transparent'
+                    ? 'border-candy-orange bg-candy-orange/5'
                     : isDark ? 'border-white/10' : 'border-gray-200'"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-[#F47D2F]" />
+                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-candy-orange" />
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
                     <span class="block text-xs" :class="mutedClass">
@@ -495,8 +495,8 @@
               <div class="mt-2 grid grid-cols-3 gap-3">
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
-                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 50"
                 >
                   <Icon name="ph:qr-code-light" class="h-6 w-6 mb-1" />
@@ -505,8 +505,8 @@
                 </button>
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
-                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 120"
                 >
                   <Icon name="ph:qr-code-light" class="h-7 w-7 mb-1" />
@@ -515,8 +515,8 @@
                 </button>
                 <button
                   type="button"
-                  class="flex flex-col items-center justify-center rounded-none border p-3 transition"
-                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-transparent text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
                   @click="selectedQrSize = 200"
                 >
                   <Icon name="ph:qr-code-light" class="h-8 w-8 mb-1" />
@@ -529,7 +529,7 @@
             <!-- 6. Error -->
             <p
               v-if="errorMessage"
-              class="rounded-none border border-red-500 bg-transparent px-4 py-3 text-sm text-red-500"
+              class="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
             >
               {{ errorMessage }}
             </p>
@@ -537,7 +537,7 @@
             <!-- 7. AI analysis result -->
             <div
               v-if="aiAnalysis"
-              class="rounded-none border p-4"
+              class="rounded-2xl border p-4"
               :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
             >
               <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
@@ -561,8 +561,8 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-none border px-3 py-1.5 text-[14px] font-semibold text-candy-orange"
-                :class="isDark ? 'border-candy-orange bg-transparent' : 'border-gray-200 bg-white'"
+                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[14px] font-semibold text-candy-orange"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 <Icon name="ph:path-light" class="h-3 w-3 flex-none" />
                 <span class="truncate">{{ selectedRouteName }}</span>
@@ -574,7 +574,7 @@
           <div class="flex items-center gap-3">
             <button
               type="button"
-              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
+              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:bg-black/5 dark:hover:bg-white/5"
               :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
               @click="handleClose"
             >
@@ -582,7 +582,7 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white   transition hover:bg-[#e95a0b] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-candy-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="!canSubmit"
             >
               <Icon v-if="uploading" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />

@@ -19,7 +19,7 @@
       </div>
       <NuxtLink
         to="/employee/documents"
-        class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+        class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover"
       >
         <Icon name="ph:files-light" class="h-4 w-4" />
         View Documents
@@ -29,7 +29,7 @@
     <!-- ── Notification Panel ─────────────────────────────────────────── -->
     <div
       ref="panelEl"
-      class="rounded-none border"
+      class="rounded-2xl border"
       :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
       <!-- Panel header -->
@@ -40,7 +40,7 @@
         <div class="flex items-center gap-2.5">
           <span
             v-if="unreadCount > 0"
-            class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-none bg-candy-orange px-1.5 text-[13px] font-bold text-white"
+            class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[13px] font-bold text-white"
           >
             {{ unreadCount > 99 ? '99+' : unreadCount }}
           </span>
@@ -50,7 +50,7 @@
         </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
           :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
           :disabled="loading"
           @click="refreshAlerts"
@@ -69,7 +69,7 @@
       <!-- Error state -->
       <div
         v-else-if="error"
-        class="m-5 rounded-none border border-red-500/30 bg-red-500/5 px-5 py-4 text-sm text-red-500"
+        class="m-5 rounded-xl border border-danger/30 bg-danger/5 px-5 py-4 text-sm text-danger"
       >
         {{ error }}
       </div>
@@ -79,7 +79,7 @@
         v-else-if="notifications.length === 0"
         class="flex flex-col items-center gap-4 px-6 py-16 text-center"
       >
-        <div class="flex h-16 w-16 items-center justify-center rounded-none border"
+        <div class="flex h-16 w-16 items-center justify-center rounded-full border"
           :class="isDark ? 'border-candy-orange/20 bg-candy-orange/10' : 'border-candy-orange/30 bg-candy-orange/5'">
           <Icon name="ph:bell-slash-light" class="h-8 w-8 text-candy-orange/50" />
         </div>
@@ -105,7 +105,7 @@
           <div class="flex items-start gap-4 min-w-0 flex-1">
             <!-- Icon -->
             <div
-              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-none border mt-0.5"
+              class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border mt-0.5"
               :class="!notif.is_read 
                 ? 'border-candy-orange/20 bg-candy-orange/10' 
                 : isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-100'"
@@ -119,7 +119,7 @@
             <!-- Content -->
             <div class="min-w-0 flex-1">
               <div class="mb-0.5 flex items-center gap-2">
-                <span v-if="!notif.is_read" class="h-2 w-2 flex-shrink-0 rounded-none bg-candy-orange" />
+                <span v-if="!notif.is_read" class="h-2 w-2 flex-shrink-0 rounded-full bg-candy-orange" />
                 <h4 class="truncate text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                   {{ notif.title }}
                 </h4>
@@ -138,7 +138,7 @@
             <NuxtLink
               v-if="notif.document_id"
               :to="`/employee/documents?document=${notif.document_id}`"
-              class="inline-flex items-center justify-center rounded-none border px-4 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange"
+              class="inline-flex items-center justify-center rounded-xl border px-4 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange"
               :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-700'"
             >
               View Document
@@ -146,7 +146,7 @@
             <button
               v-if="isUnreadNotification(notif.is_read)"
               type="button"
-              class="rounded-none bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-50"
+              class="rounded-xl bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-candy-hover disabled:opacity-50"
               :disabled="markingId === notif.id"
               @click="markAsRead(notif.id)"
             >
@@ -154,7 +154,7 @@
             </button>
             <span
               v-else
-              class="inline-flex items-center justify-center gap-1.5 rounded-none border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+              class="inline-flex items-center justify-center gap-1.5 rounded-full border border-success/20 bg-success/10 px-4 py-2 text-xs font-semibold text-success"
             >
               <Icon name="ph:check-circle-light" class="h-3.5 w-3.5" />
               Read

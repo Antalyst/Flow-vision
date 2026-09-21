@@ -11,7 +11,7 @@
     </header>
 
     <div
-      class="overflow-hidden rounded-none border shadow-card"
+      class="overflow-hidden rounded-2xl border shadow-card"
       :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
       <div v-if="loading" class="flex items-center justify-center gap-2 px-6 py-16" :class="mutedText">
@@ -55,7 +55,7 @@
                 <p class="mt-0.5 text-xs" :class="mutedText">{{ row.document.id.slice(0, 8) }}…</p>
               </td>
               <td class="px-5 py-4">
-                <span class="inline-flex rounded-none border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider" :class="isDark ? 'border-amber-400/30 bg-amber-400/10 text-amber-400' : 'border-amber-200 bg-amber-50 text-amber-600'">
+                <span class="inline-flex rounded-full border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider border-warning/30 bg-warning/10 text-warning">
                   {{ row.issue.issue_type || 'Discrepancy' }}
                 </span>
               </td>

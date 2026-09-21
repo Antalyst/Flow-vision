@@ -18,7 +18,7 @@
         v-model="searchQuery"
         type="search"
         placeholder="Search employee workflows (e.g., 'scan qr', 'inbound dispatch', 'flag issue')..."
-        class="w-full rounded-none border py-3.5 pl-12 pr-4 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+        class="w-full rounded-xl border py-3.5 pl-12 pr-4 text-sm outline-none transition-all duration-200 focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
         :class="inputClass"
       />
     </div>
@@ -28,12 +28,12 @@
       <div
         v-for="cat in categories"
         :key="cat.id"
-        class="rounded-none border p-5 transition-all duration-200 hover:border-candy-orange hover:shadow-sm cursor-pointer"
+        class="rounded-2xl border p-5 transition-all duration-200 hover:border-candy-orange hover:shadow-sm cursor-pointer"
         :class="panelClass"
         @click="searchQuery = cat.keyword"
       >
         <div class="flex items-center gap-3">
-          <span class="flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange">
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange/10 text-candy-orange">
             <Icon :name="cat.icon" class="h-5 w-5" />
           </span>
           <div>
@@ -57,7 +57,7 @@
         <article
           v-for="item in filteredArticles"
           :key="item.id"
-          class="rounded-none border p-5 transition-colors"
+          class="rounded-2xl border p-5 transition-colors"
           :class="panelClass"
         >
           <div class="flex items-start gap-3">
@@ -75,7 +75,7 @@
 
       <div
         v-else
-        class="rounded-none border p-8 text-center"
+        class="rounded-2xl border p-8 text-center"
         :class="panelClass"
       >
         <Icon name="ph:seal-question-light" class="mx-auto h-8 w-8 text-candy-orange opacity-50" />

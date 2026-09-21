@@ -14,7 +14,7 @@
 
       <NuxtLink
         to="/employee/offices"
-        class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-orange-600"
+        class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-candy-hover"
       >
         <Icon name="ph:qr-code-light" class="h-4 w-4" />
         Desk QR Management
@@ -24,18 +24,18 @@
     <!-- Office Info Banner -->
     <div
       v-if="currentOffice"
-      class="rounded-none border p-6 transition-colors"
+      class="rounded-2xl border p-6 transition-colors"
       :class="panelClass"
     >
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-4">
-          <span class="flex h-12 w-12 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
+          <span class="flex h-12 w-12 items-center justify-center rounded-full bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
             <Icon name="ph:buildings-light" class="h-6 w-6" />
           </span>
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-lg font-bold" :class="headingClass">{{ currentOffice.name }}</h2>
-              <span class="rounded-none border px-2 py-0.5 font-mono text-[13px] font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
+              <span class="rounded-full border px-2 py-0.5 font-mono text-[13px] font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
                 {{ currentOffice.code || `OFF-${String(currentOffice.id).padStart(6, '0')}` }}
               </span>
             </div>
@@ -48,7 +48,7 @@
         <div class="flex items-center gap-3">
           <NuxtLink
             to="/employee/working"
-            class="inline-flex items-center gap-1.5 rounded-none border px-3 py-2 text-xs font-semibold transition-colors hover:border-candy-orange"
+            class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors hover:border-candy-orange"
             :class="isDark ? 'border-onyx-border text-gray-300 bg-onyx-black' : 'border-gray-200 text-gray-700 bg-gray-50'"
           >
             <Icon name="ph:briefcase-light" class="h-4 w-4 text-candy-orange" />
@@ -56,7 +56,7 @@
           </NuxtLink>
           <NuxtLink
             to="/employee/scan"
-            class="inline-flex items-center gap-1.5 rounded-none border px-3 py-2 text-xs font-semibold transition-colors hover:border-candy-orange"
+            class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors hover:border-candy-orange"
             :class="isDark ? 'border-onyx-border text-gray-300 bg-onyx-black' : 'border-gray-200 text-gray-700 bg-gray-50'"
           >
             <Icon name="ph:scan-light" class="h-4 w-4 text-candy-orange" />
@@ -78,18 +78,18 @@
       </div>
 
       <div v-if="loading" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-none border" :class="panelClass" />
+        <div v-for="n in 3" :key="n" class="h-32 animate-pulse rounded-2xl border" :class="panelClass" />
       </div>
 
       <div v-else-if="myOffices.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div
           v-for="office in myOffices"
           :key="office.id"
-          class="rounded-none border p-5 transition-colors hover:border-candy-orange"
+          class="rounded-2xl border p-5 transition-colors hover:border-candy-orange"
           :class="panelClass"
         >
           <div class="flex items-start justify-between">
-            <span class="flex h-9 w-9 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange">
+            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-candy-orange/10 text-candy-orange">
               <Icon name="ph:desktop-light" class="h-4.5 w-4.5" />
             </span>
             <span class="font-mono text-[13px] opacity-60">
@@ -105,8 +105,8 @@
           </p>
 
           <div class="mt-4 pt-3 border-t flex items-center justify-between text-xs" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
-            <span class="inline-flex items-center gap-1 font-medium text-emerald-500 text-[14px]">
-              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span class="inline-flex items-center gap-1 font-medium text-success text-[14px]">
+              <span class="h-1.5 w-1.5 rounded-full bg-success" />
               Active
             </span>
             <NuxtLink
@@ -121,7 +121,7 @@
 
       <div
         v-else
-        class="rounded-none border p-12 text-center"
+        class="rounded-2xl border p-12 text-center"
         :class="panelClass"
       >
         <Icon name="ph:buildings-light" class="mx-auto h-10 w-10 text-candy-orange opacity-40" />
@@ -131,7 +131,7 @@
         </p>
         <NuxtLink
           to="/employee/offices"
-          class="mt-4 inline-flex items-center gap-1.5 rounded-none bg-candy-orange px-4 py-2 text-xs font-semibold text-white hover:bg-orange-600"
+          class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-candy-orange px-4 py-2 text-xs font-semibold text-white hover:bg-candy-hover"
         >
           <Icon name="ph:plus-light" class="h-3.5 w-3.5" />
           Register Desk

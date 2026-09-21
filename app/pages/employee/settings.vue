@@ -20,7 +20,7 @@
     <!-- ── Station Profile ────────────────────────────────────────────── -->
     <section
       ref="section1El"
-      class="rounded-none border overflow-hidden"
+      class="rounded-2xl border overflow-hidden"
       :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
       <!-- Section header -->
@@ -28,7 +28,7 @@
         class="flex items-center gap-3 border-b px-6 py-4"
         :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
       >
-        <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-transparent ring-1 ring-candy-orange/20">
           <Icon name="ph:buildings-light" class="h-4.5 w-4.5 text-candy-orange" />
         </span>
         <div>
@@ -39,12 +39,12 @@
 
       <div class="p-6">
         <div v-if="profileLoading" class="space-y-3">
-          <div v-for="n in 2" :key="n" class="h-20 animate-pulse rounded-none" :class="skeletonClass" />
+          <div v-for="n in 2" :key="n" class="h-20 animate-pulse rounded-xl" :class="skeletonClass" />
         </div>
 
         <div
           v-else-if="profileError"
-          class="rounded-none border border-red-500 bg-red-500/5 px-5 py-4 text-sm text-red-500"
+          class="rounded-xl border border-danger bg-danger/5 px-5 py-4 text-sm text-danger"
         >
           {{ profileError }}
         </div>
@@ -57,7 +57,7 @@
           <article
             v-for="station in stationCards"
             :key="station.id"
-            class="rounded-none border px-5 py-4 transition-colors"
+            class="rounded-xl border px-5 py-4 transition-colors"
             :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-surface'"
           >
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -67,7 +67,7 @@
               </div>
               <span
                 v-if="privilegeLabel"
-                class="inline-flex items-center rounded-none border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide"
+                class="inline-flex items-center rounded-full border px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide"
                 :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
               >
                 {{ privilegeLabel }}
@@ -87,7 +87,7 @@
     <!-- Loading preferences -->
     <div
       v-if="!settingsReady"
-      class="rounded-none border px-6 py-10 text-center text-sm"
+      class="rounded-2xl border px-6 py-10 text-center text-sm"
       :class="[panelClass, mutedClass]"
     >
       <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
@@ -98,14 +98,14 @@
       <!-- ── Compliance & Dispatch Alerts ──────────────────────────────── -->
       <section
         ref="section2El"
-        class="rounded-none border overflow-hidden"
+        class="rounded-2xl border overflow-hidden"
         :class="panelClass"
       >
         <div
           class="flex items-center gap-3 border-b px-6 py-4"
           :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
-          <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-transparent ring-1 ring-candy-orange/20">
             <Icon name="ph:bell-ringing-light" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
@@ -138,14 +138,14 @@
 
       <!-- ── Appearance Preferences ──────────────────────────────── -->
       <section
-        class="rounded-none border overflow-hidden mb-6"
+        class="rounded-2xl border overflow-hidden mb-6"
         :class="panelClass"
       >
         <div
           class="flex items-center gap-3 border-b px-6 py-4"
           :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
-          <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-transparent ring-1 ring-candy-orange/20">
             <Icon name="ph:paint-brush-broad-light" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
@@ -162,11 +162,11 @@
             </div>
             <button
               @click="toggleTheme"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-none border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-candy-orange focus:ring-offset-2"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-candy-orange focus:ring-offset-2"
               :class="isDark ? 'bg-candy-orange' : 'bg-gray-200'"
             >
               <span
-                class="pointer-events-none relative inline-block h-5 w-5 transform rounded-none bg-white shadow ring-0 transition duration-200 ease-in-out"
+                class="pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                 :class="isDark ? 'translate-x-5' : 'translate-x-0'"
               >
                 <span
@@ -190,14 +190,14 @@
       <!-- ── Workspace Canvas Preferences ──────────────────────────────── -->
       <section
         ref="section3El"
-        class="rounded-none border overflow-hidden"
+        class="rounded-2xl border overflow-hidden"
         :class="panelClass"
       >
         <div
           class="flex items-center gap-3 border-b px-6 py-4"
           :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
         >
-          <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+          <span class="flex h-9 w-9 items-center justify-center rounded-full bg-transparent ring-1 ring-candy-orange/20">
             <Icon name="ph:kanban-light" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
@@ -213,14 +213,14 @@
               Default Pipeline View
             </p>
             <div
-              class="inline-flex items-center gap-0.5 rounded-none border p-1"
+              class="inline-flex items-center gap-0.5 rounded-xl border p-1"
               :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-surface'"
             >
               <button
                 v-for="opt in pipelineViewOptions"
                 :key="opt.value"
                 type="button"
-                class="rounded-none px-4 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50"
+                class="rounded-lg px-4 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50"
                 :class="defaultPipelineView === opt.value
                   ? 'bg-candy-orange text-white  '
                   : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800')"
@@ -239,7 +239,7 @@
             </span>
             <select
               :value="autoRefreshMode"
-              class="w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+              class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
               :class="inputClass"
               :disabled="savingRefresh"
               @change="onRefreshModeChange(($event.target as HTMLSelectElement).value as AutoRefreshMode)"
@@ -265,7 +265,7 @@
       <Transition name="toast-fade">
         <div
           v-if="toast.visible"
-          class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2.5 rounded-none border px-5 py-3.5 text-sm font-semibold  md:bottom-8"
+          class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2.5 rounded-xl border px-5 py-3.5 text-sm font-semibold md:bottom-8"
           :class="toastClass"
           role="status"
         >
@@ -361,13 +361,13 @@ const stationCards = computed(() =>
 const toastClass = computed(() => {
   switch (toast.type) {
     case 'warning':
-      return 'border-amber-500/40 bg-amber-50 text-amber-800 dark:bg-onyx-card dark:text-amber-300'
+      return 'border-warning/40 bg-warning/10 text-warning dark:bg-onyx-card'
     case 'error':
-      return 'border-red-500/40 bg-red-50 text-red-800 dark:bg-onyx-card dark:text-red-300'
+      return 'border-danger/40 bg-danger/10 text-danger dark:bg-onyx-card'
     default:
       return isDark.value
-        ? 'border-emerald-500/30 bg-onyx-card text-emerald-300'
-        : 'border-emerald-200 bg-white text-emerald-700'
+        ? 'border-success/30 bg-onyx-card text-success'
+        : 'border-success/30 bg-white text-success'
   }
 })
 

@@ -10,7 +10,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <!-- Title -->
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           Documents scoped to your sub-office branches.
@@ -22,7 +22,7 @@
         <!-- Scan QR Button -->
         <NuxtLink
           to="/employee/scan"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-white dark:bg-onyx-card border px-4 py-2 text-sm font-semibold transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white dark:bg-onyx-card border px-4 py-2 text-sm font-semibold transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
         >
           <Icon name="ph:qr-code-bold" class="h-4 w-4" />
@@ -32,7 +32,7 @@
         <!-- Upload -->
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-[#F47D2F] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           @click="isUploadOpen = true"
         >
           <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -48,17 +48,17 @@
         <div
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="flex items-start gap-4 rounded-none border p-5 shadow-card transition-all"
+          class="flex items-start gap-4 rounded-2xl border p-5 shadow-card transition-all"
           :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
           :style="{ transitionDelay: `${i * 40}ms` }"
         >
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none" :class="card.iconBg">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" :class="card.iconBg">
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
           </span>
           <div class="min-w-0">
             <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
             <p class="mt-1 text-2xl font-bold">
-              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+              <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
               <span v-else>{{ card.value }}</span>
             </p>
             <p class="mt-0.5 text-[13px]" :class="card.trendColor">{{ card.trend }}</p>
@@ -70,25 +70,25 @@
     <!-- D. Filter & Search Bar                                            -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <div
-      class="flex flex-col gap-3 rounded-none border p-4 shadow-card sm:flex-row sm:items-center"
+      class="flex flex-col gap-3 rounded-2xl border p-4 shadow-card sm:flex-row sm:items-center"
       :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
       <button
         @click="isSemanticSearchOpen = true"
-        class="flex flex-1 items-center justify-between gap-2 rounded-none border px-4 py-2 transition-all text-left"
+        class="flex flex-1 items-center justify-between gap-2 rounded-xl border px-4 py-2 transition-all text-left"
         :class="isDark ? 'border-onyx-border bg-onyx-black/40 hover:border-candy-orange hover:bg-white/5' : 'border-gray-200 bg-gray-50 hover:border-candy-orange hover:bg-white'"
       >
         <span class="flex items-center gap-2" :class="mutedText">
           <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
           Describe your intent...
         </span>
-        <span class="rounded-none bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[13px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+        <span class="rounded-full bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[13px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
       </button>
 
       <!-- Office filter -->
       <select
         v-model="officeFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
         :class="inputClass"
       >
         <option value="all">All My Offices</option>
@@ -99,7 +99,7 @@
       <!-- Status filter -->
       <select
         v-model="statusFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Statuses</option>
@@ -112,7 +112,7 @@
       <!-- Tracking filter -->
       <select
         v-model="trackingFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Tracking</option>
@@ -126,12 +126,12 @@
     </div>
 
     <!-- Active Semantic Search Indicator -->
-    <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-none p-3 text-sm animate-fade-in shadow-sm">
+    <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-xl p-3 text-sm animate-fade-in shadow-sm">
       <Icon name="ph:sparkle-fill" class="h-5 w-5 text-candy-orange" />
       <span :class="isDark ? 'text-amber-200' : 'text-amber-800'">
         Showing <strong>{{ filtered.length }}</strong> results for "<span class="italic">{{ semanticQuery }}</span>"
       </span>
-      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-[#D96518] font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-none border border-amber-200 dark:border-candy-orange/30 transition-colors">
+      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-candy-hover font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-full border border-amber-200 dark:border-candy-orange/30 transition-colors">
         Clear Filter
       </button>
     </div>
@@ -140,7 +140,7 @@
     <!-- E. Documents Table                                                -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <article
-      class="overflow-hidden rounded-none border shadow-card"
+      class="overflow-hidden rounded-2xl border shadow-card"
       :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
     >
       <!-- Table header row -->
@@ -173,11 +173,11 @@
             <template v-if="loading">
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
                 <td class="px-5 py-4">
-                  <div class="h-4 w-48 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                  <div class="mt-1 h-3 w-32 animate-pulse rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+                  <div class="h-4 w-48 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="mt-1 h-3 w-32 animate-pulse rounded-md" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
                 </td>
                 <td v-for="k in 6" :key="k" class="px-5 py-4">
-                  <div class="h-4 w-20 animate-pulse rounded-none" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+                  <div class="h-4 w-20 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
                 </td>
               </tr>
             </template>
@@ -200,7 +200,7 @@
                   <div class="flex items-start gap-2">
                     <div
                       v-if="doc.is_own_upload"
-                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-none bg-candy-orange/15"
+                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
                       title="Your upload"
                     >
                       <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
@@ -212,7 +212,7 @@
                       </p>
                     </div>
                   </div>
-                  <div v-if="getSemanticExplanation(doc.id)" class="mt-3 text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-candy-orange/10 p-2.5 rounded-none flex gap-2 items-start border border-amber-100 dark:border-candy-orange/20">
+                  <div v-if="getSemanticExplanation(doc.id)" class="mt-3 text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-candy-orange/10 p-2.5 rounded-lg flex gap-2 items-start border border-amber-100 dark:border-candy-orange/20">
                     <Icon name="ph:sparkle-fill" class="h-4 w-4 shrink-0 mt-0.5 text-candy-orange" />
                     <span class="leading-relaxed">{{ getSemanticExplanation(doc.id) }}</span>
                   </div>
@@ -221,7 +221,7 @@
                 <!-- Current office -->
                 <td class="whitespace-nowrap px-5 py-4 text-xs">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold"
                     :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
                   >
                     <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
@@ -237,7 +237,7 @@
                 <!-- Source badge -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="doc.is_own_upload
                       ? 'bg-candy-orange/10 text-candy-orange border-candy-orange/20'
                       : isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
@@ -249,10 +249,10 @@
                 <!-- Tracking status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="trackingClass(doc.tracking_status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
                     {{ trackingLabel(doc.tracking_status) }}
                   </span>
                 </td>
@@ -265,10 +265,10 @@
                 <!-- Approval status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="statusClass(doc.status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
                     {{ doc.status || 'Pending' }}
                   </span>
                 </td>
@@ -278,7 +278,7 @@
             <!-- Empty -->
             <tr v-else>
               <td colspan="7" class="px-5 py-16 text-center">
-                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-none bg-candy-orange/10">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-candy-orange/10">
                   <Icon name="ph:file-dashed" class="h-8 w-8 text-candy-orange" />
                 </div>
                 <p class="font-bold">No documents found.</p>
@@ -287,7 +287,7 @@
                 </p>
                 <button
                   type="button"
-                  class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-[#F47D2F] px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-[#D96518] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+                  class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
                   @click="isUploadOpen = true"
                 >
                   <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -444,8 +444,8 @@ const kpiCards = computed(() => [
     label: 'My Uploads',
     value: docs.value.filter((d) => d.is_own_upload).length,
     icon: 'ph:user-fill',
-    iconBg: 'bg-blue-500/10',
-    iconColor: 'text-blue-400',
+    iconBg: 'bg-candy-orange/10',
+    iconColor: 'text-candy-orange',
     trend: 'Registered by you',
     trendColor: isDark.value ? 'text-gray-500' : 'text-gray-400',
   },
@@ -453,19 +453,19 @@ const kpiCards = computed(() => [
     label: 'In Transit',
     value: docs.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length,
     icon: 'ph:van-fill',
-    iconBg: 'bg-purple-500/10',
-    iconColor: 'text-purple-400',
+    iconBg: 'bg-candy-orange/10',
+    iconColor: 'text-candy-orange',
     trend: 'Moving now',
-    trendColor: 'text-purple-400',
+    trendColor: 'text-candy-orange',
   },
   {
     label: 'Completed',
     value: docs.value.filter((d) => d.tracking_status === 'COMPLETED').length,
     icon: 'ph:check-circle-fill',
-    iconBg: 'bg-green-500/10',
-    iconColor: 'text-green-400',
+    iconBg: 'bg-success/10',
+    iconColor: 'text-success',
     trend: 'Fully delivered',
-    trendColor: 'text-green-400',
+    trendColor: 'text-success',
   },
 ])
 
@@ -503,22 +503,23 @@ const formatOfficeName = (val?: string) => {
 // ── Badge helpers ─────────────────────────────────────────────────────
 const statusClass = (s: string) => {
   switch ((s || 'Pending').toLowerCase()) {
-    case 'approved':   return 'text-green-500 border-green-500/30 bg-green-500/10'
-    case 'rejected':   return 'text-red-500 border-red-500/30 bg-red-500/10'
-    case 'processing': return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-    case 'in review':  return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-    default:           return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
+    case 'approved':   return 'text-success border-success/30 bg-success/10'
+    case 'rejected':   return 'text-danger border-danger/30 bg-danger/10'
+    case 'processing':
+    case 'in review':  return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
+    case 'pending':
+    default:           return 'text-warning border-warning/30 bg-warning/10'
   }
 }
 
 const trackingClass = (s?: string) => {
   switch (s) {
-    case 'COMPLETED':         return 'text-green-500 border-green-500/30 bg-green-500/10'
-    case 'IN_TRANSIT':        return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-    case 'PICKED_UP':         return 'text-purple-400 border-purple-400/30 bg-purple-400/10'
-    case 'ARRIVED_AT_OFFICE': return 'text-teal-400 border-teal-400/30 bg-teal-400/10'
-    case 'DISCREPANCY_REPORTED': return 'text-amber-400 border-amber-400/30 bg-amber-400/10'
-    default:                  return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
+    case 'COMPLETED':         return 'text-success border-success/30 bg-success/10'
+    case 'IN_TRANSIT':
+    case 'PICKED_UP':
+    case 'ARRIVED_AT_OFFICE': return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
+    case 'DISCREPANCY_REPORTED': return 'text-danger border-danger/30 bg-danger/10'
+    default:                  return (isDark.value ? 'text-gray-400 border-white/10 bg-white/5' : 'text-gray-500 border-gray-200 bg-gray-100')
   }
 }
 

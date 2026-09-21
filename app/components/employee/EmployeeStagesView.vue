@@ -4,7 +4,7 @@
     <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Local Route Builder</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           Build custom routing sequences assigned to your local office branches
@@ -13,12 +13,12 @@
 
       <div class="flex items-center gap-2">
         <!-- Scope toggle -->
-        <div class="flex items-center rounded-none border p-1 text-xs font-semibold" :class="glassSurface">
+        <div class="flex items-center rounded-xl border p-1 text-xs font-semibold" :class="glassSurface">
           <button
             v-for="opt in scopeOptions"
             :key="opt.value"
             type="button"
-            class="rounded-none px-3 py-1.5 transition-colors"
+            class="rounded-lg px-3 py-1.5 transition-colors"
             :class="scopeMode === opt.value
               ? 'bg-candy-orange text-white'
               : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800'"
@@ -30,7 +30,7 @@
 
         <button
           type="button"
-          class="inline-flex min-h-11 items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none"
+          class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover focus:outline-none"
           @click="openDrawer"
         >
           <Icon name="ph:plus-light" class="h-4 w-4" />
@@ -42,7 +42,7 @@
     <!-- ── Scope Info Bar ────────────────────────────────────────────── -->
     <div class="flex flex-wrap items-center gap-3">
       <div
-        class="inline-flex items-center gap-2.5 rounded-none border px-4 py-2 text-sm"
+        class="inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm"
         :class="glassSurface"
       >
         <Icon name="ph:shield-check-light" class="h-4 w-4 text-candy-orange" />
@@ -60,7 +60,7 @@
           v-for="office in myOffices"
           :key="office.id"
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-colors"
           :class="activeOfficeFilter === String(office.id)
             ? 'border-candy-orange text-candy-orange'
             : isDark ? 'border-white/10 text-gray-400 hover:border-candy-orange hover:text-candy-orange' : 'border-gray-200 text-gray-500 hover:border-candy-orange hover:text-candy-orange'"
@@ -77,7 +77,7 @@
       <div
         v-for="n in 3"
         :key="n"
-        class="h-32 animate-pulse rounded-none border"
+        class="h-32 animate-pulse rounded-2xl border"
         :class="isDark ? 'bg-white/5 border-white/5' : 'bg-gray-100 border-gray-200'"
       />
     </div>
@@ -87,7 +87,7 @@
       <article
         v-for="stage in filteredStages"
         :key="stage.stage_id"
-        class="overflow-hidden rounded-none border transition-colors duration-200"
+        class="overflow-hidden rounded-2xl border transition-colors duration-200"
         :class="[cardSurface, isDropTarget === stage.stage_id ? 'border-candy-orange' : '']"
         @dragover.prevent="isDropTarget = stage.stage_id"
         @dragleave="isDropTarget = null"
@@ -96,14 +96,14 @@
         <!-- Stage header -->
         <header class="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" :class="borderClass">
           <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-none bg-candy-orange text-sm font-bold text-white">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange text-sm font-bold text-white">
               {{ stage.step_number }}
             </div>
             <div>
               <div class="flex items-center gap-2">
                 <h2 class="text-base font-bold">{{ stage.name }}</h2>
                 <span
-                  class="rounded-none px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider"
+                  class="rounded-full px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider"
                   :class="stage.scope === 'local'
                     ? isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-200 text-gray-800'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
@@ -122,7 +122,7 @@
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
               :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'"
               title="Move up"
               @click="moveStage(stage.stage_id, -1)"
@@ -132,7 +132,7 @@
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
               :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'"
               title="Move down"
               @click="moveStage(stage.stage_id, 1)"
@@ -142,8 +142,7 @@
             <button
               v-if="stage.scope === 'local'"
               type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600"
-              :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-danger/10"
               title="Delete route"
               @click="handleDeleteStage(stage.stage_id)"
             >
@@ -163,10 +162,10 @@
           <div class="flex flex-wrap items-center gap-2">
             <template v-for="(step, i) in getSteps(stage.stage_id)" :key="`${step.office_id}-${i}`">
               <div
-                class="flex items-center gap-2 rounded-none border px-3 py-2 text-sm transition-colors"
+                class="flex items-center gap-2 rounded-full border px-3 py-2 text-sm transition-colors"
                 :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-50'"
               >
-                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-none bg-candy-orange text-[13px] font-bold text-white">
+                <div class="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-candy-orange text-[13px] font-bold text-white">
                   {{ step.step_number }}
                 </div>
                 <span class="font-semibold">{{ formatOfficeName(getOfficeName(step.office_id)) }}</span>
@@ -174,8 +173,7 @@
                 <button
                   v-if="stage.scope === 'local'"
                   type="button"
-                  class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600"
-                  :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-200'"
+                  class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-danger transition-colors hover:bg-danger/10"
                   @click="removeStepFromStage(stage.stage_id, step.office_id, i)"
                 >
                   <Icon name="ph:x-light" class="h-3 w-3" />
@@ -192,7 +190,7 @@
 
             <div
               v-if="!getSteps(stage.stage_id).length"
-              class="rounded-none border border-dashed p-4 text-center text-sm w-full"
+              class="rounded-2xl border border-dashed p-4 text-center text-sm w-full"
               :class="[isDark ? 'border-white/10' : 'border-gray-200', mutedText]"
             >
               Drag an office here or use "Add to Route" from the sidebar.
@@ -205,10 +203,10 @@
     <!-- ── Empty State ────────────────────────────────────────────────── -->
     <div
       v-else
-      class="flex min-h-[280px] flex-col items-center justify-center rounded-none border border-dashed px-6 text-center"
+      class="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center"
       :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50'"
     >
-      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-none border" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
+      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
         <Icon name="ph:path-light" class="h-8 w-8" :class="mutedText" />
       </div>
       <p class="font-bold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">No route templates</p>
@@ -219,7 +217,7 @@
         <button
           v-if="scopeMode === 'local' && !myOffices.length"
           type="button"
-          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-candy-hover"
           @click="openTableDrawer"
         >
           <Icon name="ph:desk-light" class="h-4 w-4" />
@@ -228,7 +226,7 @@
         <button
           v-if="myOffices.length || scopeMode !== 'local'"
           type="button"
-          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-candy-hover"
           @click="openDrawer"
         >
           <Icon name="ph:plus-light" class="h-4 w-4" />
@@ -253,7 +251,7 @@
           <!-- Drawer header -->
           <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <div>
-              <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
+              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
               <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Route Template</p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ scopeMode === 'local' ? 'Create Local Route' : 'Create Route' }}
@@ -262,7 +260,7 @@
                 {{ scopeMode === 'local' ? 'Assigned to your selected office branch' : 'Organisation-wide routing' }}
               </p>
             </div>
-            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeDrawer">
               <Icon name="ph:x-light" class="h-4 w-4" />
             </button>
           </header>
@@ -273,13 +271,13 @@
             <!-- Route name -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                Route Name <span class="text-red-500">*</span>
+                Route Name <span class="text-danger">*</span>
               </span>
               <input
                 v-model.trim="stageForm.name"
                 type="text"
                 placeholder="e.g. HR Document Review"
-                class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
                 :class="inputClass"
                 required
               />
@@ -288,12 +286,12 @@
             <!-- Owning office (mandatory — sets office_id) -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                Owning Office <span class="text-red-500">*</span>
+                Owning Office <span class="text-danger">*</span>
               </span>
               <p class="mt-0.5 text-xs" :class="mutedText">This route will be assigned to the selected local office</p>
               <select
                 v-model="stageForm.office_id"
-                class="mt-2 w-full rounded-none border px-3 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
+                class="mt-2 w-full rounded-xl border px-3 py-3 text-sm outline-none transition-colors focus:border-candy-orange"
                 :class="inputClass"
                 required
               >
@@ -318,7 +316,7 @@
                   :key="office.id"
                   type="button"
                   draggable="true"
-                  class="flex w-full items-center justify-between gap-3 rounded-none border px-3 py-2.5 text-left text-sm transition-colors hover:border-candy-orange"
+                  class="flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors hover:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50'"
                   @click="addCheckpoint(office)"
                   @dragstart="drawerDragOffice = office"
@@ -326,14 +324,14 @@
                 >
                   <div class="min-w-0">
                     <span class="truncate font-semibold">{{ formatOfficeName(office.name) }}</span>
-                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-none border px-1.5 py-0.5 text-[13px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
+                    <span v-if="isMyOffice(office.id)" class="ml-2 rounded-full border px-1.5 py-0.5 text-[13px] font-bold" :class="isDark ? 'border-onyx-border bg-white/10 text-gray-200' : 'border-gray-200 bg-white text-gray-700'">Mine</span>
                   </div>
                   <Icon name="ph:plus-circle-light" class="h-4 w-4 flex-none text-candy-orange" />
                 </button>
 
                 <div
                   v-if="!allOffices.length"
-                  class="rounded-none border border-dashed p-4 text-center text-xs"
+                  class="rounded-2xl border border-dashed p-4 text-center text-xs"
                   :class="[isDark ? 'border-onyx-border' : 'border-gray-200', mutedText]"
                 >
                   No offices found in your organisation.
@@ -354,7 +352,7 @@
               </div>
 
               <div
-                class="min-h-32 space-y-2 rounded-none border p-3 transition-colors"
+                class="min-h-32 space-y-2 rounded-2xl border p-3 transition-colors"
                 :class="[
                   isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50',
                   isDropZoneActive ? 'border-candy-orange' : '',
@@ -367,7 +365,7 @@
                   v-for="(cp, i) in selectedCheckpoints"
                   :key="`${cp.id}-${i}`"
                   draggable="true"
-                  class="flex items-center gap-3 rounded-none border p-3 transition-colors"
+                  class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
                   :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
                   @dragstart="dragIndex = i"
                   @dragend="dragIndex = null"
@@ -375,18 +373,18 @@
                   @drop.prevent="handleSeqItemDrop(i)"
                 >
                   <Icon name="ph:dots-six-vertical-light" class="h-4 w-4 flex-none cursor-grab text-candy-orange" />
-                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-none bg-candy-orange text-[14px] font-bold text-white">
+                  <div class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-candy-orange text-[14px] font-bold text-white">
                     {{ i + 1 }}
                   </div>
                   <span class="flex-1 truncate text-sm font-semibold">{{ cp.name }}</span>
                   <div class="flex items-center gap-1">
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === 0" @click="moveCheckpoint(i, i - 1)">
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === 0" @click="moveCheckpoint(i, i - 1)">
                       <Icon name="ph:caret-up-light" class="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === selectedCheckpoints.length - 1" @click="moveCheckpoint(i, i + 1)">
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg transition-colors" :class="isDark ? 'hover:bg-white/10 hover:text-white' : 'hover:bg-gray-100 hover:text-gray-900'" :disabled="i === selectedCheckpoints.length - 1" @click="moveCheckpoint(i, i + 1)">
                       <Icon name="ph:caret-down-light" class="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-none text-red-500 transition-colors hover:text-red-600" :class="isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'" @click="removeCheckpoint(i)">
+                    <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-lg text-danger transition-colors hover:bg-danger/10" @click="removeCheckpoint(i)">
                       <Icon name="ph:x-light" class="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -394,7 +392,7 @@
 
                 <div
                   v-if="!selectedCheckpoints.length"
-                  class="rounded-none border border-dashed p-6 text-center text-xs"
+                  class="rounded-2xl border border-dashed p-6 text-center text-xs"
                   :class="[isDark ? 'border-onyx-border' : 'border-gray-200', mutedText]"
                 >
                   Drop or click offices above to build the route.
@@ -407,7 +405,7 @@
           <footer class="flex justify-end gap-3 border-t px-6 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <button
               type="button"
-              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition-colors"
+              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors"
               :class="isDark ? 'border-onyx-border text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
               @click="closeDrawer"
             >
@@ -416,7 +414,7 @@
             <button
               type="submit"
               :disabled="!stageForm.name || !stageForm.office_id || creating"
-              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="creating" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
               {{ creating ? 'Creating…' : 'Create Route' }}
@@ -441,25 +439,25 @@
         >
           <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <div>
-              <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
+              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create Desk</h2>
             </div>
-            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeTableDrawer">
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="closeTableDrawer">
               <Icon name="ph:x-light" class="h-4 w-4" />
             </button>
           </header>
 
           <div class="flex-1 space-y-6 overflow-y-auto px-6 py-6">
             <label class="block">
-              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Desk/Table Name <span class="text-red-500">*</span></span>
-              <input v-model.trim="tableForm.name" type="text" placeholder="e.g. Reception Desk" class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange" :class="inputClass" required />
+              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Desk/Table Name <span class="text-danger">*</span></span>
+              <input v-model.trim="tableForm.name" type="text" placeholder="e.g. Reception Desk" class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors focus:border-candy-orange" :class="inputClass" required />
             </label>
           </div>
 
           <footer class="border-t px-6 py-5" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-gray-50'">
             <div class="flex items-center justify-end gap-3">
-              <button type="button" class="rounded-none px-5 py-2.5 text-sm font-semibold transition-colors border border-transparent" :class="isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'" @click="closeTableDrawer">Cancel</button>
-              <button type="submit" :disabled="creatingTable" class="inline-flex min-h-[44px] items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none disabled:opacity-50">
+              <button type="button" class="rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors border border-transparent" :class="isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'" @click="closeTableDrawer">Cancel</button>
+              <button type="submit" :disabled="creatingTable" class="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover focus:outline-none disabled:opacity-50">
                 <Icon v-if="creatingTable" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
                 <Icon v-else name="ph:check-light" class="h-4 w-4" />
                 Create

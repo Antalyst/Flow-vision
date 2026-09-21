@@ -20,10 +20,10 @@
 
       <!-- Live indicator -->
       <div
-        class="inline-flex items-center gap-2 rounded-none border px-4 py-2.5 text-xs font-semibold"
+        class="inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold"
         :class="isDark ? 'border-onyx-border bg-onyx-card text-gray-300' : 'border-gray-200 bg-white text-gray-700'"
       >
-        <span class="h-2 w-2 animate-pulse rounded-none bg-candy-orange" />
+        <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
         Live feed
       </div>
     </div>
@@ -31,7 +31,7 @@
     <!-- ── Timeline Card ──────────────────────────────────────────────── -->
     <div
       ref="cardEl"
-      class="rounded-none border overflow-hidden"
+      class="rounded-2xl border overflow-hidden"
       :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
       <!-- Card header strip -->
@@ -39,7 +39,7 @@
         class="flex items-center gap-3 border-b px-6 py-4"
         :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
       >
-        <span class="flex h-9 w-9 items-center justify-center rounded-none bg-transparent ring-1 ring-candy-orange/20">
+        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-transparent ring-1 ring-candy-orange/20">
           <Icon name="ph:activity-light" class="h-4.5 w-4.5 text-candy-orange" />
         </span>
         <div>

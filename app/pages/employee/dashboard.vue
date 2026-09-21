@@ -206,7 +206,7 @@
             <div
               v-for="n in 5"
               :key="n"
-              class="h-14 rounded-none"
+              class="h-14 rounded-xl"
               :class="isDark ? 'bg-white/5' : 'bg-gray-100'"
             />
           </div>
@@ -225,15 +225,15 @@
               :class="isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50/80'"
             >
               <span
-                class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-none"
+                class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
                 :class="doc.is_own_upload
                   ? 'bg-candy-orange/10'
-                  : isDark ? 'bg-purple-500/10' : 'bg-purple-50'"
+                  : isDark ? 'bg-white/10' : 'bg-gray-100'"
               >
                 <Icon
                   :name="doc.is_own_upload ? 'ph:upload-simple-light' : 'ph:buildings-light'"
                   class="h-4 w-4"
-                  :class="doc.is_own_upload ? 'text-candy-orange' : 'text-purple-500'"
+                  :class="doc.is_own_upload ? 'text-candy-orange' : (isDark ? 'text-gray-300' : 'text-gray-500')"
                 />
               </span>
               <div class="min-w-0 flex-1">
@@ -248,13 +248,13 @@
                   <span>{{ formatDate(doc.created_at) }}</span>
                   <span
                     class="font-medium"
-                    :class="doc.is_own_upload ? 'text-candy-orange' : 'text-purple-500'"
+                    :class="doc.is_own_upload ? 'text-candy-orange' : (isDark ? 'text-gray-400' : 'text-gray-500')"
                   >
                     {{ doc.is_own_upload ? 'You uploaded' : 'Routed in' }}
                   </span>
                   <span
                     v-if="doc.tracking_status && doc.tracking_status !== 'CREATED'"
-                    class="rounded-none px-1.5 py-0.5 font-semibold"
+                    class="rounded-full px-1.5 py-0.5 font-semibold"
                     :class="trackingBadge(doc.tracking_status)"
                   >
                     {{ doc.tracking_status?.replace('_', ' ') }}
@@ -262,7 +262,7 @@
                 </div>
               </div>
               <span
-                class="flex-shrink-0 rounded-none px-2.5 py-0.5 text-[13px] font-bold uppercase tracking-wide"
+                class="flex-shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold uppercase tracking-wide"
                 :class="statusClass(doc.status)"
               >
                 {{ doc.status || '—' }}
@@ -276,7 +276,7 @@
             :key="'empty'"
             class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center"
           >
-            <div class="flex h-14 w-14 items-center justify-center rounded-none bg-candy-orange/10 border border-candy-orange/20">
+            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
               <Icon name="ph:clipboard-text-light" class="h-7 w-7 text-candy-orange/50" />
             </div>
             <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
@@ -294,7 +294,7 @@
 
         <!-- My Sub-Offices -->
         <div
-          class="rounded-none border p-5 transition-colors"
+          class="rounded-2xl border p-5 transition-colors"
           :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
         >
           <div class="mb-4 flex items-center justify-between">
@@ -311,17 +311,17 @@
           </div>
 
           <div v-if="officesLoading" class="space-y-2">
-            <div v-for="n in 2" :key="n" class="h-10 rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+            <div v-for="n in 2" :key="n" class="h-10 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
           </div>
 
           <div v-else-if="myOffices.length" class="space-y-2">
             <div
               v-for="office in myOffices.slice(0, 4)"
               :key="office.id"
-              class="flex items-center gap-3 rounded-none border p-3 transition-colors"
+              class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
               :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
             >
-              <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-none bg-candy-orange/10">
+              <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange/10">
                 <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
               </span>
               <div class="min-w-0 flex-1">
@@ -340,7 +340,7 @@
           </div>
 
           <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
-            <div class="flex h-10 w-10 items-center justify-center rounded-none bg-gray-100 dark:bg-white/5">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-white/5">
               <Icon name="ph:buildings-light" class="h-5 w-5" :class="mutedText" />
             </div>
             <p class="text-xs" :class="mutedText">No offices assigned yet.</p>
@@ -356,7 +356,7 @@
           <div
             v-if="currentScope === 'LOCAL'"
             key="tasks"
-            class="flex-1 rounded-none border p-5 transition-colors"
+            class="flex-1 rounded-2xl border p-5 transition-colors"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
             <div class="mb-4 flex items-center justify-between">
@@ -369,16 +369,16 @@
               <div
                 v-for="task in tasks"
                 :key="task.id"
-                class="flex items-center gap-3 rounded-none border p-3 transition-colors"
+                class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
                 :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
               >
                 <span
-                  class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-none text-[13px] font-bold border"
+                  class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold border"
                   :class="task.priority === 'High'
-                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                    ? 'bg-danger/10 text-danger border-danger/20'
                     : task.priority === 'Medium'
-                      ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                      : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'"
+                      ? 'bg-warning/10 text-warning border-warning/20'
+                      : 'bg-success/10 text-success border-success/20'"
                 >
                   {{ task.priority[0] }}
                 </span>
@@ -389,7 +389,7 @@
                   <p class="mt-0.5 text-[13px]" :class="mutedText">Due {{ task.due }}</p>
                 </div>
                 <span
-                  class="flex-shrink-0 rounded-none px-2 py-0.5 text-[13px] font-semibold"
+                  class="flex-shrink-0 rounded-full px-2 py-0.5 text-[13px] font-semibold"
                   :class="task.status === 'In Progress'
                     ? 'bg-candy-orange/10 text-candy-orange'
                     : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
@@ -404,7 +404,7 @@
           <div
             v-else
             key="queue-stats"
-            class="flex-1 rounded-none border p-5 transition-colors"
+            class="flex-1 rounded-2xl border p-5 transition-colors"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
             <div class="mb-4 flex items-center justify-between">
@@ -418,17 +418,17 @@
             </div>
 
             <div v-if="queueLoading" class="space-y-2">
-              <div v-for="n in 4" :key="n" class="h-10 rounded-none" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+              <div v-for="n in 4" :key="n" class="h-10 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
             </div>
 
             <div v-else class="space-y-2.5">
               <div
                 v-for="stat in queueStats"
                 :key="stat.label"
-                class="flex items-center gap-3 rounded-none border p-3"
+                class="flex items-center gap-3 rounded-xl border p-3"
                 :class="isDark ? 'border-onyx-border bg-white/[0.02]' : 'border-gray-100 bg-gray-50'"
               >
-                <span class="h-2.5 w-2.5 flex-none rounded-none" :class="stat.dot" />
+                <span class="h-2.5 w-2.5 flex-none rounded-full" :class="stat.dot" />
                 <span class="flex-1 text-xs font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
                   {{ stat.label }}
                 </span>
@@ -438,7 +438,7 @@
               </div>
 
               <div
-                class="mt-2 rounded-none border px-3 py-2.5 text-center text-[14px] font-semibold text-candy-orange"
+                class="mt-2 rounded-xl border px-3 py-2.5 text-center text-[14px] font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 {{ queueSummary.total }} total in-flight documents
@@ -618,17 +618,17 @@ const kpiCards = computed(() => {
       {
         label: 'My Uploads', value: String(own),
         trend: 'uploaded by you', trendColor: mutedText.value,
-        icon: 'ph:upload-simple-light', iconColor: 'text-emerald-500',
+        icon: 'ph:upload-simple-light', iconColor: 'text-success',
       },
       {
         label: 'Pending', value: String(pending),
-        trend: 'awaiting action', trendColor: pending > 0 ? 'text-amber-500' : mutedText.value,
-        icon: 'ph:clock-countdown-light', iconColor: 'text-amber-500',
+        trend: 'awaiting action', trendColor: pending > 0 ? 'text-warning' : mutedText.value,
+        icon: 'ph:clock-countdown-light', iconColor: 'text-warning',
       },
       {
         label: 'In Transit', value: String(transit),
-        trend: 'currently moving', trendColor: transit > 0 ? 'text-blue-400' : mutedText.value,
-        icon: 'ph:package-light', iconColor: 'text-blue-400',
+        trend: 'currently moving', trendColor: transit > 0 ? 'text-candy-orange' : mutedText.value,
+        icon: 'ph:package-light', iconColor: 'text-candy-orange',
       },
     ]
   }
@@ -643,38 +643,38 @@ const kpiCards = computed(() => {
     },
     {
       label: 'In Transit', value: String(in_transit),
-      trend: 'with messengers', trendColor: in_transit > 0 ? 'text-blue-400' : mutedText.value,
-      icon: 'ph:truck-light', iconColor: 'text-blue-400',
+      trend: 'with messengers', trendColor: in_transit > 0 ? 'text-candy-orange' : mutedText.value,
+      icon: 'ph:truck-light', iconColor: 'text-candy-orange',
     },
     {
       label: 'At Office', value: String(arrived_at_office),
-      trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-teal-500' : mutedText.value,
-      icon: 'ph:buildings-light', iconColor: 'text-teal-500',
+      trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-candy-orange' : mutedText.value,
+      icon: 'ph:buildings-light', iconColor: 'text-candy-orange',
     },
     {
       label: 'Completed', value: String(completed),
-      trend: 'fully delivered', trendColor: completed > 0 ? 'text-emerald-500' : mutedText.value,
-      icon: 'ph:check-circle-light', iconColor: 'text-emerald-500',
+      trend: 'fully delivered', trendColor: completed > 0 ? 'text-success' : mutedText.value,
+      icon: 'ph:check-circle-light', iconColor: 'text-success',
     },
   ]
 })
 
 // Pipeline chips for GLOBAL view
 const pipelineChips = computed(() => [
-  { label: 'Created',   count: queueSummary.value.created,           dot: 'bg-candy-orange' },
-  { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
-  { label: 'In Transit',count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
-  { label: 'At Office', count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
-  { label: 'Completed', count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
+  { label: 'Created',   count: queueSummary.value.created,           dot: isDark.value ? 'bg-gray-500' : 'bg-gray-300' },
+  { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-candy-orange' },
+  { label: 'In Transit',count: queueSummary.value.in_transit,        dot: 'bg-candy-orange' },
+  { label: 'At Office', count: queueSummary.value.arrived_at_office, dot: 'bg-candy-orange' },
+  { label: 'Completed', count: queueSummary.value.completed,         dot: 'bg-success' },
 ])
 
 // Queue stats list for right panel
 const queueStats = computed(() => [
-  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: 'bg-candy-orange' },
-  { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
-  { label: 'In Transit',                    count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
-  { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
-  { label: 'Completed',                     count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
+  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: isDark.value ? 'bg-gray-500' : 'bg-gray-300' },
+  { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-candy-orange' },
+  { label: 'In Transit',                    count: queueSummary.value.in_transit,        dot: 'bg-candy-orange' },
+  { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-candy-orange' },
+  { label: 'Completed',                     count: queueSummary.value.completed,         dot: 'bg-success' },
 ])
 
 // Static tasks (LOCAL view only)
@@ -692,21 +692,21 @@ const formatDate = (value: string) =>
 
 const statusClass = (s: string | null) => {
   switch ((s ?? '').toLowerCase()) {
-    case 'approved':   return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-    case 'pending':    return 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-    case 'rejected':   return 'bg-red-500/10 text-red-600 dark:text-red-400'
-    case 'processing': return 'bg-blue-500/10 text-blue-500'
+    case 'approved':   return 'bg-success/10 text-success'
+    case 'pending':    return 'bg-warning/10 text-warning'
+    case 'rejected':   return 'bg-danger/10 text-danger'
+    case 'processing': return 'bg-candy-orange/10 text-candy-orange'
     default:           return isDark.value ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'
   }
 }
 
 const trackingBadge = (s: string) => {
   switch (s) {
-    case 'COMPLETED':         return 'bg-emerald-500/10 text-emerald-500'
-    case 'IN_TRANSIT':        return 'bg-blue-500/10 text-blue-400'
-    case 'ARRIVED_AT_OFFICE': return 'bg-teal-500/10 text-teal-400'
-    case 'PICKED_UP':         return 'bg-purple-500/10 text-purple-400'
-    default:                  return 'bg-candy-orange/10 text-candy-orange'
+    case 'COMPLETED':         return 'bg-success/10 text-success'
+    case 'IN_TRANSIT':
+    case 'ARRIVED_AT_OFFICE':
+    case 'PICKED_UP':         return 'bg-candy-orange/10 text-candy-orange'
+    default:                  return isDark.value ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'
   }
 }
 

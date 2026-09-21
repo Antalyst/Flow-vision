@@ -8,7 +8,7 @@
     <div v-if="canReportDiscrepancy" class="px-6 py-4">
       <button
         type="button"
-        class="group flex w-full items-center justify-center gap-2.5 rounded-none border-2 border-candy-orange/40 bg-candy-orange/10 px-4 py-3.5 text-sm font-bold text-candy-orange shadow-lg shadow-candy-orange/10 transition-all duration-300 hover:border-candy-orange hover:bg-candy-orange hover:text-white hover:shadow-candy-orange/30 active:scale-[0.98]"
+        class="group flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-candy-orange/40 bg-candy-orange/10 px-4 py-3.5 text-sm font-bold text-candy-orange transition-colors duration-200 hover:border-candy-orange hover:bg-candy-orange hover:text-white active:scale-[0.98]"
         @click="openReportForm"
       >
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -34,12 +34,12 @@
             <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-candy-orange" />
             <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
             <span
-              class="inline-flex items-center gap-1 rounded-none border px-2 py-0.5 text-[12px] font-bold uppercase"
+              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-bold uppercase"
               :class="activeIssue.status === 'OPEN'
-                ? 'border-amber-400/40 bg-amber-400/10 text-amber-400'
-                : 'border-green-400/40 bg-green-400/10 text-green-400'"
+                ? 'border-warning/40 bg-warning/10 text-warning'
+                : 'border-success/40 bg-success/10 text-success'"
             >
-              <span class="h-1.5 w-1.5 rounded-none bg-current" :class="activeIssue.status === 'OPEN' ? 'animate-pulse' : ''" />
+              <span class="h-1.5 w-1.5 rounded-full bg-current" :class="activeIssue.status === 'OPEN' ? 'animate-pulse' : ''" />
               {{ activeIssue.status === 'OPEN' ? 'Flagged' : activeIssue.status }}
             </span>
           </div>
@@ -54,7 +54,7 @@
         <button
           v-if="canResolveIssue"
           type="button"
-          class="inline-flex flex-none items-center gap-1.5 rounded-none border border-green-500/30 bg-green-500/10 px-3 py-1.5 text-[14px] font-semibold text-green-500 transition hover:bg-green-500/20 disabled:opacity-50"
+          class="inline-flex flex-none items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-1.5 text-[14px] font-semibold text-success transition hover:bg-success/20 disabled:opacity-50"
           :disabled="resolving"
           @click="handleResolve"
         >
@@ -78,9 +78,9 @@
             :class="isOwnMessage(msg) ? 'justify-end' : 'justify-start'"
           >
             <div
-              class="max-w-[82%] rounded-none px-4 py-3 shadow-sm"
+              class="max-w-[82%] rounded-2xl px-4 py-3 shadow-sm"
               :class="isOwnMessage(msg)
-                ? 'bg-candy-orange text-white shadow-candy-orange/20'
+                ? 'bg-candy-orange text-white'
                 : isDark
                   ? 'bg-zinc-950 text-gray-100 border border-white/10'
                   : 'bg-zinc-950 text-gray-100'"
@@ -90,7 +90,7 @@
                   {{ msg.sender_name || 'Unknown' }}
                 </span>
                 <span
-                  class="inline-flex items-center rounded-none px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide"
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide"
                   :class="isOwnMessage(msg)
                     ? 'bg-white/15 text-white'
                     : 'bg-candy-orange/15 text-candy-orange'"
@@ -118,7 +118,7 @@
         @submit.prevent="sendMessage"
       >
         <div
-          class="flex items-end gap-2 rounded-none border p-2 transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
+          class="flex items-end gap-2 rounded-xl border p-2 transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
           :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-zinc-50'"
         >
           <textarea
@@ -130,7 +130,7 @@
           />
           <button
             type="submit"
-            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-none bg-candy-orange text-white shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-candy-orange text-white transition hover:bg-candy-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             :disabled="!draftMessage.trim() || sending"
             aria-label="Send message"
           >
@@ -155,7 +155,7 @@
           </div>
           <button
             type="button"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-none transition"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition"
             :class="isDark ? 'hover:bg-white/5' : 'hover:bg-gray-100'"
             @click="showReportForm = false"
           >
@@ -165,10 +165,10 @@
 
         <form class="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5" @submit.prevent="submitReport">
           <label class="block">
-            <span class="text-sm font-semibold text-candy-orange">Issue Type <span class="text-red-500">*</span></span>
+            <span class="text-sm font-semibold text-candy-orange">Issue Type <span class="text-danger">*</span></span>
             <select
               v-model="reportForm.issue_type"
-              class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             >
@@ -178,22 +178,22 @@
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold">Problem Details <span class="text-red-500">*</span></span>
+            <span class="text-sm font-semibold">Problem Details <span class="text-danger">*</span></span>
             <textarea
               v-model="reportForm.details"
               rows="3"
               placeholder="Describe what is wrong with the physical hard copy…"
-              class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             />
           </label>
 
           <label class="block">
-            <span class="text-sm font-semibold">Reporting Office <span class="text-red-500">*</span></span>
+            <span class="text-sm font-semibold">Reporting Office <span class="text-danger">*</span></span>
             <select
               v-model="reportForm.reported_by_office_id"
-              class="mt-2 w-full rounded-none border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+              class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
               :class="inputClass"
               required
             >
@@ -203,7 +203,7 @@
           </label>
 
           <div class="block">
-            <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-red-500">*</span></span>
+            <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-danger">*</span></span>
             <p class="mt-1 text-[14px]" :class="mutedText">
               Choose who should receive this compliance thread based on the routing pipeline.
             </p>
@@ -212,7 +212,7 @@
                 v-for="target in chatTargets"
                 :key="target.id"
                 type="button"
-                class="rounded-none border p-3 text-left transition"
+                class="rounded-xl border p-3 text-left transition"
                 :class="reportForm.target_office_id === target.id
                   ? 'border-candy-orange bg-candy-orange/10 ring-2 ring-candy-orange/30'
                   : isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
@@ -232,19 +232,19 @@
               </button>
             </div>
             <p v-if="loadingTargets" class="mt-2 text-xs" :class="mutedText">Resolving pipeline offices…</p>
-            <p v-else-if="!chatTargets.length" class="mt-2 text-xs text-amber-500">
+            <p v-else-if="!chatTargets.length" class="mt-2 text-xs text-warning">
               No routing offices found. Ensure this document has an origin office assigned.
             </p>
           </div>
 
-          <p v-if="reportError" class="rounded-none border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-500">
+          <p v-if="reportError" class="rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
             {{ reportError }}
           </p>
 
           <div class="mt-auto flex justify-end gap-3 pt-2">
             <button
               type="button"
-              class="rounded-none border px-4 py-2.5 text-sm font-semibold transition"
+              class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition"
               :class="isDark ? 'border-white/10 text-gray-300' : 'border-gray-200 text-gray-700'"
               @click="showReportForm = false"
             >
@@ -252,7 +252,7 @@
             </button>
             <button
               type="submit"
-              class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover disabled:opacity-50"
               :disabled="reporting || !canSubmitReport"
             >
               <Icon v-if="reporting" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />

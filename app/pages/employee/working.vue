@@ -23,7 +23,7 @@
 
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-none border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+          class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
           :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
           :disabled="loading"
           @click="refreshQueue(true)"
@@ -46,21 +46,21 @@
     <Transition name="token-fade">
       <div
         v-if="latestDispatch"
-        class="flex items-center justify-between gap-4 rounded-none border border-sky-500/30 bg-sky-950/40 px-5 py-3 text-xs text-sky-200"
+        class="flex items-center justify-between gap-4 rounded-xl border border-candy-orange/30 bg-candy-orange/10 px-5 py-3 text-xs text-gray-200"
       >
         <div class="flex items-center gap-3">
-          <span class="flex h-7 w-7 items-center justify-center rounded-none bg-sky-500/20 text-sky-400">
+          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-candy-orange/20 text-candy-orange">
             <Icon name="ph:motorcycle-fill" class="h-4 w-4 animate-bounce" />
           </span>
           <div>
-            <span class="font-bold text-sky-400 uppercase tracking-wider text-[13px]">Inbound Dispatch Alert:</span>
+            <span class="font-bold text-candy-orange uppercase tracking-wider text-[13px]">Inbound Dispatch Alert:</span>
             <span class="ml-1.5 font-semibold">"{{ latestDispatch.document_title || 'Document' }}"</span>
-            <span class="ml-1 text-sky-300/80">is in transit{{ latestDispatch.target_office_name ? ` to ${latestDispatch.target_office_name}` : '' }} (Courier: {{ latestDispatch.messenger_name || 'Courier' }})</span>
+            <span class="ml-1 text-gray-300/80">is in transit{{ latestDispatch.target_office_name ? ` to ${latestDispatch.target_office_name}` : '' }} (Courier: {{ latestDispatch.messenger_name || 'Courier' }})</span>
           </div>
         </div>
         <button
           type="button"
-          class="text-sky-400 hover:text-white"
+          class="text-candy-orange hover:text-white"
           @click="latestDispatch = null"
         >
           <Icon name="ph:x-bold" class="h-3.5 w-3.5" />
@@ -71,11 +71,11 @@
     <!-- ── Pipeline Summary Strip ─────────────────────────────────────── -->
     <div
       ref="stripEl"
-      class="flex flex-wrap items-center gap-4 rounded-none border px-5 py-3.5 text-xs"
+      class="flex flex-wrap items-center gap-4 rounded-xl border px-5 py-3.5 text-xs"
       :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
     >
       <div class="flex items-center gap-2">
-        <span class="h-2 w-2 animate-pulse rounded-none bg-candy-orange" />
+        <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
         <span class="font-bold uppercase tracking-widest text-candy-orange text-[13px]">Active Pipeline</span>
       </div>
       <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
@@ -100,7 +100,7 @@
       <div
         v-for="n in 4"
         :key="n"
-        class="min-h-[320px] animate-pulse rounded-none border"
+        class="min-h-[320px] animate-pulse rounded-2xl border"
         :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
       />
     </div>
@@ -113,13 +113,13 @@
       <section
         v-for="(col, colIdx) in pipelineColumns"
         :key="col.id"
-        class="flex min-h-[280px] flex-col rounded-none border overflow-hidden transition-all duration-200"
+        class="flex min-h-[280px] flex-col rounded-2xl border overflow-hidden transition-all duration-200"
         :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
       >
         <!-- Column accent strip -->
         <div
           class="h-0.5 w-full"
-          :class="colIdx === 0 ? 'bg-candy-orange' : colIdx === 1 ? 'bg-blue-500' : colIdx === 2 ? 'bg-amber-500' : 'bg-emerald-500'"
+          :class="colIdx === 0 ? (isDark ? 'bg-gray-600' : 'bg-gray-300') : colIdx === 3 ? 'bg-success' : 'bg-candy-orange'"
         />
         <!-- Column header -->
         <div
@@ -130,14 +130,14 @@
             <Icon
               :name="col.icon"
               class="h-3.5 w-3.5 flex-none"
-              :class="colIdx === 0 ? 'text-candy-orange' : colIdx === 1 ? 'text-blue-500' : colIdx === 2 ? 'text-amber-500' : 'text-emerald-500'"
+              :class="colIdx === 0 ? mutedClass : colIdx === 3 ? 'text-success' : 'text-candy-orange'"
             />
             <h2 class="truncate text-xs font-bold uppercase tracking-wider" :class="headingClass">
               {{ col.label }}
             </h2>
           </div>
           <span
-            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-none px-1.5 text-[13px] font-bold tabular-nums border"
+            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[13px] font-bold tabular-nums border"
             :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
           >
             {{ columnDocs(col.id).length }}
@@ -151,7 +151,7 @@
               v-for="doc in columnDocs(col.id)"
               :key="doc.id"
               type="button"
-              class="group w-full rounded-none border px-3 py-2.5 text-left transition-colors duration-200"
+              class="group w-full rounded-xl border px-3 py-2.5 text-left transition-colors duration-200"
               :class="[
                 isDark
                   ? 'border-onyx-border bg-onyx-card hover:border-candy-orange'
@@ -168,7 +168,7 @@
                 </span>
                 <span
                   v-if="doc.total_steps"
-                  class="flex-none rounded-none border px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
+                  class="flex-none rounded-full border px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
                   :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
                 >
                   Step {{ doc.current_step }}/{{ doc.total_steps }}
@@ -180,7 +180,7 @@
 
               <p
                 v-if="doc.messenger_name"
-                class="mt-1.5 truncate text-[13px] text-amber-600 dark:text-amber-400 flex items-center gap-1"
+                class="mt-1.5 truncate text-[13px] text-candy-orange flex items-center gap-1"
               >
                 <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
                 {{ doc.messenger_name }}
