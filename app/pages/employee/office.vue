@@ -6,10 +6,10 @@
           <Icon name="ph:buildings-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span class="font-medium" :class="headingClass">Office Station</span>
+          <span class="font-medium" :class="headingClass">My Office</span>
         </div>
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">Office Station &amp; Desks</h1>
-        <p class="mt-1 text-sm" :class="mutedClass">Intake station, sub-desks, and live checkpoint queues for your assigned office.</p>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="headingClass">My Office &amp; Desks</h1>
+        <p class="mt-1 text-sm" :class="mutedClass">The desks and live document queues for your assigned office.</p>
       </div>
 
       <NuxtLink
@@ -35,12 +35,12 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-lg font-bold" :class="headingClass">{{ currentOffice.name }}</h2>
-              <span class="rounded-full border px-2 py-0.5 font-mono text-[13px] font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
+              <span class="rounded-full border px-2 py-0.5 font-mono text-xs font-bold text-candy-orange border-candy-orange/30 bg-candy-orange/10">
                 {{ currentOffice.code || `OFF-${String(currentOffice.id).padStart(6, '0')}` }}
               </span>
             </div>
             <p class="mt-0.5 text-xs" :class="mutedClass">
-              Assigned to {{ auth.user?.full_name || 'You' }} · Primary processing node
+              Assigned to {{ auth.user?.full_name || 'You' }} · Primary office
             </p>
           </div>
         </div>
@@ -70,10 +70,10 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between border-b pb-2" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
         <h3 class="text-xs font-bold uppercase tracking-wider text-candy-orange">
-          Registered Desks &amp; Counters ({{ myOffices.length }})
+          Registered Desks ({{ myOffices.length }})
         </h3>
         <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:underline">
-          View All Plaque Cards →
+          View All QR Codes →
         </NuxtLink>
       </div>
 
@@ -92,7 +92,7 @@
             <span class="flex h-9 w-9 items-center justify-center rounded-full bg-candy-orange/10 text-candy-orange">
               <Icon name="ph:desktop-light" class="h-4.5 w-4.5" />
             </span>
-            <span class="font-mono text-[13px] opacity-60">
+            <span class="font-mono text-xs opacity-60">
               {{ office.code || `OFF-${String(office.id).padStart(4, '0')}` }}
             </span>
           </div>
@@ -101,17 +101,17 @@
             {{ office.name }}
           </p>
           <p class="mt-0.5 text-xs truncate" :class="mutedClass">
-            Station intake desk
+            Intake desk
           </p>
 
           <div class="mt-4 pt-3 border-t flex items-center justify-between text-xs" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
-            <span class="inline-flex items-center gap-1 font-medium text-success text-[14px]">
+            <span class="inline-flex items-center gap-1 font-medium text-success text-sm">
               <span class="h-1.5 w-1.5 rounded-full bg-success" />
               Active
             </span>
             <NuxtLink
               :to="`/employee/working`"
-              class="font-semibold text-candy-orange hover:underline text-[14px]"
+              class="font-semibold text-candy-orange hover:underline text-sm"
             >
               Inspect Queue →
             </NuxtLink>
@@ -127,7 +127,7 @@
         <Icon name="ph:buildings-light" class="mx-auto h-10 w-10 text-candy-orange opacity-40" />
         <p class="mt-3 font-semibold text-sm" :class="headingClass">No Desks Configured</p>
         <p class="mt-1 text-xs max-w-sm mx-auto" :class="mutedClass">
-          You haven't registered any desk nodes or intake stations under your office yet.
+          You haven't registered any desks under your office yet.
         </p>
         <NuxtLink
           to="/employee/offices"

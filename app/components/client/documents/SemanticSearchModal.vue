@@ -6,8 +6,8 @@
         class="fixed inset-0 z-[100] flex items-start justify-center pt-24 pb-4 px-4 bg-black/40 backdrop-blur-xl"
         @click.self="$emit('close')"
       >
-        <div 
-          class="w-full max-w-2xl overflow-hidden rounded-none border shadow-2xl transition-all"
+        <div
+          class="w-full max-w-2xl overflow-hidden rounded-2xl border shadow-2xl transition-all"
           :class="isDark ? 'bg-onyx-black/80 border-white/10' : 'bg-white/80 border-gray-200'"
         >
           <!-- Search Input -->
@@ -33,7 +33,7 @@
             <button v-else-if="query" @click="query = ''" class="ml-3 text-gray-400 hover:text-gray-600 transition">
               <Icon name="ph:x-circle-fill" class="h-5 w-5" />
             </button>
-            <div class="ml-3 rounded-none px-2 py-0.5 text-xs font-semibold hidden sm:block"
+            <div class="ml-3 rounded-lg px-2 py-0.5 text-xs font-semibold hidden sm:block"
                  :class="isDark ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'">
               ENTER
             </div>
@@ -41,24 +41,24 @@
 
           <!-- Quick instructions / Loading state -->
           <div v-if="isSearching" class="p-8 text-center">
-            <div class="w-12 h-12 rounded-none bg-candy-orange/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <div class="w-12 h-12 rounded-full bg-candy-orange/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <Icon name="ph:brain-fill" class="h-6 w-6 text-candy-orange" />
             </div>
-            <h3 class="text-lg font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Analyzing Intent</h3>
-            <p class="text-sm mt-1" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
-              Scanning documents using semantic search...
+            <h3 class="text-lg font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">Looking...</h3>
+            <p class="text-sm mt-1" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
+              Looking through your documents for a match...
             </p>
           </div>
 
           <div v-else-if="!hasSearched" class="p-6">
-            <h3 class="text-sm font-medium mb-3 uppercase tracking-wider" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
-              Natural Discovery
+            <h3 class="text-sm font-medium mb-3 uppercase tracking-wider" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
+              Try asking
             </h3>
             <div class="space-y-3">
-              <div 
-                v-for="suggestion in suggestions" 
+              <div
+                v-for="suggestion in suggestions"
                 :key="suggestion"
-                class="flex items-center gap-3 p-3 rounded-none cursor-pointer transition-colors"
+                class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
                 :class="isDark ? 'hover:bg-white/5 text-gray-300' : 'hover:bg-gray-50 text-gray-700'"
                 @click="query = suggestion; handleSearch()"
               >
@@ -97,10 +97,10 @@ const hasSearched = ref(false)
 const error = ref('')
 
 const suggestions = [
-  "Find the Q3 financial report",
-  "Show me documents uploaded by John",
-  "Any marketing assets from last month?",
-  "Urgent pending files that need approval"
+  "Which documents are overdue?",
+  "Show me everything from the Budget Office",
+  "What was uploaded this week?",
+  "Find documents waiting for approval"
 ]
 
 watch(() => props.isOpen, (val) => {

@@ -10,7 +10,7 @@
           <span class="h-1.5 w-1.5 rounded-full" :class="statusStyle(summary.tracking_status).dot" />
           {{ STATUS_LABELS[summary.tracking_status] ?? summary.tracking_status }}
         </span>
-        <span class="text-xs font-semibold" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+        <span class="text-xs font-semibold" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
           {{ summary.current_step }} of {{ summary.total_steps }} stops
         </span>
       </div>
@@ -31,7 +31,7 @@
 
     <!-- Delivery route (Shopee-style stepper) -->
     <div v-if="routeSteps.length">
-      <p class="mb-3 text-[13px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+      <p class="mb-3 text-sm font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
         Delivery Route
       </p>
       <div class="flex items-start">
@@ -65,7 +65,7 @@
               />
             </div>
             <span
-              class="mt-2 max-w-[150px] break-words text-[14px] font-semibold leading-tight"
+              class="mt-2 max-w-[150px] break-words text-sm font-semibold leading-tight"
               :class="routeStepClass(idx + 1).label"
               :title="step.office_name"
             >
@@ -84,29 +84,29 @@
               >
                 <Icon name="ph:user-fill" class="h-3 w-3 flex-none text-candy-orange" />
                 <span
-                  class="truncate text-[12.5px] font-bold"
+                  class="truncate text-sm font-bold"
                   :class="isDark ? 'text-white-pure' : 'text-onyx-black'"
                 >
                   {{ step.delivered_by }}
                 </span>
               </div>
 
-              <div class="flex flex-col gap-1 px-2.5 py-2">
-                <div v-if="step.arrived_at" class="flex items-center justify-between gap-2">
-                  <span class="text-[10px] font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              <div class="flex flex-col gap-1.5 px-2.5 py-2">
+                <div v-if="step.arrived_at" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
                     In
                   </span>
-                  <span class="whitespace-nowrap text-[11.5px] font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-600'">
+                  <span class="text-xs font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-600'">
                     {{ formatStopTime(step.arrived_at) }}
                   </span>
                 </div>
 
-                <div v-if="step.released_at" class="flex items-center justify-between gap-2">
-                  <span class="text-[10px] font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+                <div v-if="step.released_at" class="flex flex-col gap-0.5">
+                  <span class="text-xs font-bold uppercase tracking-wide" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
                     {{ step.released_status === 'COMPLETED' ? 'Done' : 'Out' }}
                   </span>
                   <span
-                    class="whitespace-nowrap text-[11.5px] font-semibold"
+                    class="text-xs font-semibold"
                     :class="step.released_status === 'COMPLETED' ? 'text-success' : (isDark ? 'text-gray-300' : 'text-gray-600')"
                   >
                     {{ formatStopTime(step.released_at) }}
@@ -114,7 +114,7 @@
                 </div>
                 <div
                   v-else-if="step.arrived_at"
-                  class="mt-0.5 flex items-center justify-center gap-1 rounded-full bg-candy-orange/10 py-1 text-[11px] font-bold text-candy-orange"
+                  class="mt-0.5 flex items-center justify-center gap-1 rounded-full bg-candy-orange/10 py-1 text-xs font-bold text-candy-orange"
                 >
                   <span class="h-1.5 w-1.5 rounded-full bg-candy-orange animate-pulse" />
                   Still here
@@ -128,7 +128,7 @@
 
     <!-- Activity log -->
     <div v-if="events.length" class="relative">
-      <p class="mb-3 text-[13px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+      <p class="mb-3 text-sm font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
         What's Happened So Far
       </p>
 
@@ -151,21 +151,21 @@
               <span class="text-xs font-bold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
                 {{ STATUS_LABELS[ev.status] ?? ev.status }}
               </span>
-              <span v-if="ev.office_name" class="text-[14px] font-semibold" :class="statusStyle(ev.status).textAccent">
+              <span v-if="ev.office_name" class="text-sm font-semibold" :class="statusStyle(ev.status).textAccent">
                 at {{ ev.office_name }}
               </span>
             </div>
 
-            <p class="mt-0.5 text-[14px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <p class="mt-0.5 text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
               <span v-if="ev.actor_name">by {{ ev.actor_name }}</span>
-              <span v-if="ev.actor_role" class="ml-1 rounded-full px-1.5 py-0.5 text-[12px] font-bold uppercase"
+              <span v-if="ev.actor_role" class="ml-1 rounded-full px-1.5 py-0.5 text-sm font-bold uppercase"
                 :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'">
                 {{ ev.actor_role }}
               </span>
               <span class="ml-2">{{ formatRelative(ev.created_at) }}</span>
             </p>
 
-            <p v-if="ev.notes" class="mt-1 text-[14px] italic" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <p v-if="ev.notes" class="mt-1 text-sm italic" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
               "{{ ev.notes }}"
             </p>
           </div>
@@ -174,7 +174,7 @@
     </div>
 
     <!-- Empty state -->
-    <div v-else class="py-6 text-center text-sm" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+    <div v-else class="py-6 text-center text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
       Nothing to show yet — this document hasn't moved.
     </div>
   </div>

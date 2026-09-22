@@ -11,40 +11,48 @@
     <Transition name="drawer-slide">
       <form
         v-if="isOpen"
-        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full max-w-5xl flex-col border-l "
-        :class="surfaceClass"
+        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l transition-[width,max-width] duration-300"
+        :class="[surfaceClass, selectedFile ? 'lg:w-[70%] lg:max-w-none' : 'max-w-2xl']"
         @submit.prevent="handlePrintAndSubmit"
       >
         <!-- ── Header ──────────────────────────────────────────────────── -->
         <header
           class="flex items-start justify-between gap-4 border-b px-6 py-5"
-          :class="borderClass"
+          :class="[borderClass, isDark ? 'bg-gradient-to-b from-white/[0.02] to-transparent' : 'bg-gradient-to-b from-gray-50/50 to-transparent']"
         >
           <div>
-            <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
-            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+            <span
+              class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-candy-orange"
+              :class="isDark ? 'bg-candy-orange/15' : 'bg-candy-orange/10'"
+            >
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
-            </p>
-            <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
+            </span>
+            <h2 class="mt-2.5 text-xl font-bold" :class="headingClass">Upload Document</h2>
             <p class="mt-0.5 text-xs" :class="mutedClass">
-              AI-analyzed, then split-stored across Supabase and blob storage.
+              AI reads the file and fills in the details automatically.
             </p>
           </div>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+            class="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+            :class="isDark ? 'bg-white/5' : 'bg-gray-100'"
             aria-label="Close"
             @click="handleClose"
           >
-            <Icon name="ph:x-light" class="h-4 w-4" :class="headingClass" />
+            <Icon name="ph:x-bold" class="h-4 w-4" :class="headingClass" />
           </button>
         </header>
 
         <!-- ── Body ───────────────────────────────────────────────────── -->
-        <div class="flex flex-1 flex-col gap-5 overflow-hidden px-6 py-5 lg:flex-row">
+        <!-- Single column until a file is picked (nothing to preview yet); -->
+        <!-- opens into a two-column layout with the live preview once one is. -->
+        <div
+          class="flex flex-1 flex-col gap-5 overflow-hidden px-6 py-5"
+          :class="[selectedFile ? 'lg:flex-row' : '', isDark ? 'bg-onyx-black' : 'bg-white-surface']"
+        >
 
-          <!-- ── LEFT: live document preview ──────────────────────────── -->
-          <div class="w-full overflow-y-auto lg:w-7/12">
+          <!-- ── LEFT: live document preview (only once a file exists) ─── -->
+          <div v-if="selectedFile" class="w-full overflow-y-auto lg:h-full lg:w-7/12">
             <DocumentLivePreview
               :file="selectedFile"
               :tracking-id="currentTrackingId"
@@ -52,181 +60,179 @@
             />
           </div>
 
-          <!-- ── RIGHT: form fields ────────────────────────────────────── -->
-          <div class="w-full space-y-5 overflow-y-auto lg:w-5/12">
+          <!-- ── Form fields ─────────────────────────────────────────── -->
+          <div
+            class="w-full space-y-4 overflow-y-auto"
+            :class="selectedFile ? 'lg:w-5/12' : 'mx-auto max-w-xl'"
+          >
 
-            <!-- 1. Auto-detected Origin Office (hidden from user, handled by system) -->
-
-            <!-- 2. Drop zone -->
-            <label
-              class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-7 text-center transition"
-              :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
-              @dragover.prevent="isDragging = true"
-              @dragleave.prevent="isDragging = false"
-              @drop.prevent="handleDrop"
-            >
-              <Icon name="ph:cloud-arrow-up-light" class="h-9 w-9 text-candy-orange" />
-              <div>
-                <p class="text-sm font-semibold" :class="headingClass">
-                  {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
-                </p>
-                <p class="mt-1 text-xs" :class="mutedClass">PDF, DOCX, XLSX, TXT, CSV supported</p>
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 1. DOCUMENT FILE                                          -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div class="rounded-2xl border p-5" :class="cardClass">
+              <div class="mb-3.5 flex items-start gap-2.5">
+                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">1</span>
+                <div>
+                  <p class="text-sm font-semibold" :class="headingClass">Document File</p>
+                  <p class="mt-0.5 text-xs" :class="mutedClass">Word or Excel — swap it any time before saving.</p>
+                </div>
               </div>
+
               <input
+                id="upload-file-input"
                 ref="fileInput"
                 type="file"
                 class="hidden"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
+                accept=".doc,.docx,.xls,.xlsx,.csv"
                 @change="handleFileChange"
               />
-            </label>
 
-            <!-- Selected file chip -->
-            <div
-              v-if="selectedFile"
-              class="flex flex-col gap-3 rounded-xl border p-3 text-sm"
-              :class="isDark ? 'border-white/10 bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
-            >
-              <div class="flex min-w-0 items-center justify-between gap-3">
-                <div class="flex items-center gap-3 min-w-0">
-                  <Icon name="ph:file-text-light" class="h-5 w-5 flex-none text-candy-orange" />
-                  <div class="min-w-0">
-                    <p class="truncate font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
-                    <p class="text-xs" :class="mutedClass">{{ formatSize(selectedFile.size) }}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
-                  aria-label="Remove file"
-                  @click="clearFile"
-                >
-                  <Icon name="ph:trash-light" class="h-4 w-4" />
-                </button>
-              </div>
-              
-              <!-- Excel options -->
-              <div v-if="isExcelFile" class="mt-2 rounded-xl bg-candy-orange/10 p-4 border border-candy-orange/20 space-y-4">
+              <!-- Drop zone -->
+              <label
+                v-if="!selectedFile"
+                for="upload-file-input"
+                class="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-7 text-center transition"
+                :class="isDragging ? 'border-candy-orange bg-candy-orange/10' : borderClass"
+                @dragover.prevent="isDragging = true"
+                @dragleave.prevent="isDragging = false"
+                @drop.prevent="handleDrop"
+              >
+                <Icon name="ph:cloud-arrow-up-light" class="h-9 w-9 text-candy-orange" />
                 <div>
-                  <p class="text-xs font-semibold text-candy-orange mb-2">Excel File Detected</p>
-                  <div class="flex items-center gap-2">
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-onyx-black px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-white/10 hover:border-candy-orange transition" @click="previewExcel = !previewExcel">
-                      <Icon name="ph:table-light" class="h-3.5 w-3.5" />
-                      Preview Metadata
-                    </button>
-                    <button type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-candy-orange text-white px-3 py-1.5 text-xs font-medium hover:bg-candy-hover transition">
-                      <Icon name="ph:printer-light" class="h-3.5 w-3.5" />
-                      Print Summary
-                    </button>
-                  </div>
+                  <p class="text-sm font-semibold" :class="headingClass">Drop a file here or click to browse</p>
+                  <p class="mt-1 text-xs" :class="mutedClass">Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) supported</p>
                 </div>
-                
-                <!-- Manual override for AI analysis -->
-                <div class="space-y-3 pt-3 border-t border-candy-orange">
-                  <p class="text-[14px] font-medium text-candy-orange/80">Manual Document Details</p>
-                  <div>
-                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
-                    <input
-                      v-model="manualTitle"
-                      type="text"
-                      placeholder="Enter document title..."
-                      class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
-                      :class="inputClass"
-                    />
+              </label>
+
+              <!-- Selected file chip -->
+              <div v-else class="flex flex-col gap-3">
+                <div
+                  class="flex min-w-0 items-center justify-between gap-3 rounded-xl border px-3.5 py-3"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black/60' : 'border-gray-200 bg-gray-50'"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <span class="flex h-9 w-9 flex-none items-center justify-center rounded-lg" :class="isDark ? 'bg-candy-orange/15' : 'bg-candy-orange/10'">
+                      <Icon name="ph:file-text-light" class="h-4 w-4 text-candy-orange" />
+                    </span>
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-semibold" :class="headingClass">{{ selectedFile.name }}</p>
+                      <p class="text-xs" :class="mutedClass">
+                        {{ formatSize(selectedFile.size) }} ·
+                        <label for="upload-file-input" class="cursor-pointer underline-offset-2 hover:text-candy-orange hover:underline">Replace file</label>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label class="block text-xs font-semibold mb-1" :class="headingClass">Description</label>
-                    <textarea
-                      v-model="manualDescription"
-                      rows="2"
-                      placeholder="Briefly describe the contents..."
-                      class="w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
-                      :class="inputClass"
-                    ></textarea>
+                  <button
+                    type="button"
+                    class="inline-flex h-8 w-8 flex-none items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
+                    aria-label="Remove file"
+                    @click="clearFile"
+                  >
+                    <Icon name="ph:trash-light" class="h-4 w-4" />
+                  </button>
+                </div>
+
+                <!-- Excel options -->
+                <div v-if="isExcelFile" class="rounded-xl border p-4 space-y-4" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+                  <p class="flex items-center gap-1.5 text-xs font-semibold" :class="headingClass">
+                    <Icon name="ph:info-light" class="h-3.5 w-3.5 text-candy-orange" />
+                    Excel file detected — previewed on the left.
+                  </p>
+
+                  <!-- Manual override for AI analysis -->
+                  <div class="space-y-3 border-t pt-3" :class="borderClass">
+                    <p class="text-sm font-semibold" :class="headingClass">Manual Document Details</p>
+                    <div>
+                      <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
+                      <input
+                        v-model="manualTitle"
+                        type="text"
+                        placeholder="Enter document title..."
+                        class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                        :class="inputClass"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold mb-1" :class="headingClass">Description</label>
+                      <textarea
+                        v-model="manualDescription"
+                        rows="2"
+                        placeholder="Briefly describe the contents..."
+                        class="w-full resize-none rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                        :class="inputClass"
+                      ></textarea>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
-            <!-- 2.5 DOCUMENT CATEGORY PICKER                              -->
+            <!-- 2. DOCUMENT CATEGORY PICKER                               -->
             <!-- ══════════════════════════════════════════════════════════ -->
-            <div>
-              <div class="flex items-center justify-between gap-3">
+            <div class="rounded-2xl border p-5" :class="cardClass">
+              <div class="mb-3 flex items-start gap-2.5">
+                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">2</span>
                 <div>
-                  <span class="text-sm font-semibold" :class="headingClass">
+                  <p class="text-sm font-semibold" :class="headingClass">
                     Document Category <span class="text-danger">*</span>
-                  </span>
-                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
-                    Classification for SLA predictive analytics.
+                  </p>
+                  <p class="mt-0.5 text-xs" :class="mutedClass">
+                    What kind of document is this?
                   </p>
                 </div>
               </div>
-              <div class="mt-2">
+              <div class="relative">
                 <select
                   v-model="selectedCategoryId"
-                  class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange bg-transparent"
-                  :class="isDark ? 'border-white/10 text-white' : 'border-gray-200 text-gray-900'"
+                  class="w-full appearance-none rounded-xl border px-3.5 py-2.5 pr-9 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-200 bg-white text-gray-900'"
                 >
                   <option value="" disabled>Select a category...</option>
                   <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id" :class="isDark ? 'bg-onyx-black text-white' : 'bg-white text-gray-900'">
                     {{ cat.name }}
                   </option>
                 </select>
-                <div v-if="!categoriesStore.categories.length" class="mt-1 text-[13px] text-warning">
+                <Icon name="ph:caret-down-bold" class="pointer-events-none absolute right-3.5 top-1/2 h-3 w-3 -translate-y-1/2" :class="mutedClass" />
+                <div v-if="!categoriesStore.categories.length" class="mt-1.5 text-xs text-warning">
                   <Icon name="ph:warning-light" class="inline h-3 w-3" /> No categories found. Please ask an admin to create them.
                 </div>
               </div>
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
-            <!-- 3. ROUTING PATHWAY PICKER                                 -->
+            <!-- 3. DELIVERY ROUTE PICKER                                  -->
             <!-- ══════════════════════════════════════════════════════════ -->
-            <div>
-              <!-- Section label + scope tab toggle -->
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <span class="text-sm font-semibold" :class="headingClass">
-                    Routing Pathway <span class="text-danger">*</span>
-                  </span>
-                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
-                    Where the messenger must physically carry this document.
-                  </p>
+            <div class="rounded-2xl border p-5" :class="cardClass">
+              <div class="mb-3.5 flex items-start justify-between gap-3">
+                <div class="flex items-start gap-2.5">
+                  <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">3</span>
+                  <div>
+                    <p class="text-sm font-semibold" :class="headingClass">
+                      Delivery Route <span class="text-danger">*</span>
+                    </p>
+                    <p class="mt-0.5 text-xs" :class="mutedClass">
+                      Which offices this document needs to pass through.
+                    </p>
+                  </div>
                 </div>
 
-                <!-- Dual-scope tab toggle -->
-                <div
-                  class="flex flex-none items-center rounded-xl border p-0.5 text-xs"
-                  :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
-                >
+                <!-- Scope segmented control -->
+                <div class="flex flex-none gap-0.5 rounded-lg p-0.5" :class="isDark ? 'bg-white/5' : 'bg-gray-100'">
                   <button
                     v-for="tab in routeTabs"
                     :key="tab.value"
                     type="button"
-                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 select-none"
+                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
                     :class="routeTab === tab.value
-                      ? 'bg-candy-orange text-white shadow'
-                      : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
+                      ? (isDark ? 'bg-onyx-border text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm')
+                      : (isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700')"
                     @click="routeTab = tab.value"
                   >
-                    <Icon :name="tab.icon" class="h-3 w-3" />
                     {{ tab.label }}
                   </button>
                 </div>
               </div>
-
-              <!-- Route description line -->
-              <p class="mt-2 text-[14px]" :class="mutedClass">
-                <span v-if="routeTab === 'global'">
-                  <Icon name="ph:globe-hemisphere-west-light" class="inline h-3 w-3 text-candy-orange" />
-                  Organisation-wide routes created by your Client Admin — available to all offices.
-                </span>
-                <span v-else>
-                  <Icon name="ph:buildings-light" class="inline h-3 w-3 text-candy-orange" />
-                  Custom routes built specifically for
-                  <span class="font-semibold text-candy-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
-                </span>
-              </p>
 
               <!-- Route cards list -->
               <div
@@ -295,7 +301,7 @@
                         <span
                           v-for="(stop, idx) in getRouteStops(stage.stage_id)"
                           :key="idx"
-                          class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-medium"
+                          class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium"
                           :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                         >
                           <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
@@ -303,7 +309,7 @@
                         </span>
                         <span
                           v-if="getRouteSteps(stage.stage_id).length > 3"
-                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[13px] font-medium text-candy-orange"
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-candy-orange"
                         >
                           +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                         </span>
@@ -313,7 +319,7 @@
                     <!-- Right: stop count badge + scope tag -->
                     <div class="flex flex-none flex-col items-end gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-bold"
+                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold"
                         :class="routeTab === 'global'
                           ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
                           : 'border-gray-300/40 bg-gray-500/10 text-gray-500 dark:border-gray-500/30 dark:text-gray-400'"
@@ -321,7 +327,7 @@
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
                       </span>
-                      <span class="text-[13px]" :class="mutedClass">
+                      <span class="text-xs" :class="mutedClass">
                         {{ getRouteSteps(stage.stage_id).length }} stop{{ getRouteSteps(stage.stage_id).length !== 1 ? 's' : '' }}
                       </span>
                     </div>
@@ -334,17 +340,15 @@
                 <div
                   v-if="selectedStageId && selectedTimelineSteps.length"
                   class="mt-4 overflow-hidden rounded-2xl border"
-                  :class="isDark
-                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
-                    : 'border-orange-200 bg-orange-50/60'"
+                  :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'"
                 >
                   <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="borderClass">
                     <div class="flex items-center gap-2">
                       <Icon name="ph:path-light" class="h-3.5 w-3.5 text-candy-orange" />
-                      <span class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
+                      <span class="text-sm font-semibold" :class="headingClass">Route Preview</span>
                     </div>
-                    <span class="text-[13px]" :class="mutedClass">
+                    <span class="text-xs" :class="mutedClass">
                       {{ selectedTimelineSteps.length + 1 }} stops
                     </span>
                   </div>
@@ -355,18 +359,17 @@
 
                       <!-- ── Origin node (always first) ─────────────── -->
                       <div class="flex flex-col items-center" style="min-width: 80px">
-                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange">
                           <Icon name="ph:map-pin-light" class="h-5 w-5 text-white" />
-                          <!-- Pulse ring -->
-                          <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
                         </div>
                         <p
-                          class="mt-2 max-w-[76px] text-center text-[13px] font-bold leading-tight text-candy-orange"
+                          class="mt-2 max-w-[76px] text-center text-xs font-semibold leading-tight"
+                          :class="headingClass"
                           style="word-break: break-word"
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-[12px] font-bold uppercase tracking-wide text-candy-orange">
+                        <span class="mt-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-candy-orange" :class="isDark ? 'bg-white/5' : 'bg-gray-100'">
                           Origin
                         </span>
                       </div>
@@ -380,21 +383,21 @@
                         <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
                           <div
                             class="h-px flex-1"
-                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
+                            :class="isDark ? 'bg-white/10' : 'bg-gray-300'"
                           />
-                          <Icon name="ph:caret-right-light" class="h-3 w-3 flex-none text-candy-orange/50" />
+                          <Icon name="ph:caret-right-light" class="h-3 w-3 flex-none" :class="mutedClass" />
                         </div>
 
                         <!-- Step node -->
                         <div class="flex flex-col items-center" style="min-width: 80px">
-                          <!-- Circle: final stop gets filled, others get ring -->
+                          <!-- Circle: final stop gets filled, others get a neutral outline -->
                           <div
                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
                             :class="idx === selectedTimelineSteps.length - 1
                               ? 'border-candy-orange bg-candy-orange text-white'
                               : isDark
-                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
-                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
+                                ? 'border-white/15 bg-white/5 text-gray-400'
+                                : 'border-gray-300 bg-white text-gray-500'"
                           >
                             <Icon
                               v-if="idx === selectedTimelineSteps.length - 1"
@@ -406,7 +409,7 @@
 
                           <!-- Office name -->
                           <p
-                            class="mt-2 max-w-[76px] text-center text-[13px] font-semibold leading-tight"
+                            class="mt-2 max-w-[76px] text-center text-xs font-semibold leading-tight"
                             :class="headingClass"
                             style="word-break: break-word"
                           >
@@ -415,7 +418,7 @@
 
                           <!-- Step label -->
                           <span
-                            class="mt-0.5 text-[12px]"
+                            class="mt-0.5 text-xs"
                             :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
                           >
                             {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
@@ -426,11 +429,11 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[13px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="border-t px-4 py-2.5 text-xs" :class="borderClass">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
-                        <Icon name="ph:buildings-light" class="h-3 w-3 text-candy-orange" />
-                        <strong class="text-candy-orange">{{ selectedOriginOfficeName || '—' }}</strong>
+                        <Icon name="ph:buildings-light" class="h-3 w-3" />
+                        <strong :class="headingClass">{{ selectedOriginOfficeName || '—' }}</strong>
                       </span>
                       <Icon name="ph:arrow-right-light" class="h-3 w-3" />
                       <span>{{ selectedTimelineSteps.length }} office{{ selectedTimelineSteps.length !== 1 ? 's' : '' }} in route</span>
@@ -445,84 +448,103 @@
               </Transition>
             </div>
 
-            <!-- 4. QR Code Placement Strategy -->
-            <div>
-              <span class="text-sm font-semibold" :class="headingClass">QR Code Placement Strategy</span>
-
-              <!-- Excel specific notice -->
-              <div v-if="isExcelFile" class="mt-2 rounded-xl border border-candy-orange/30 bg-candy-orange/10 px-4 py-3 text-xs text-candy-orange">
-                <Icon name="ph:info-light" class="inline h-4 w-4 mr-1 mb-0.5" />
-                <strong>Excel file detected.</strong> A dedicated trailing sheet will be generated containing only the selected QR code size to prevent data corruption.
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 4. QR CODE PLACEMENT                                      -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div class="rounded-2xl border p-5" :class="cardClass">
+              <div class="mb-3.5 flex items-start gap-2.5">
+                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">4</span>
+                <div>
+                  <p class="text-sm font-semibold" :class="headingClass">QR Code Placement</p>
+                  <p v-if="isExcelFile" class="mt-0.5 text-xs" :class="mutedClass">Excel file detected — added on a separate page.</p>
+                </div>
               </div>
 
-              <div class="mt-2 space-y-2">
-                <label
-                  class="flex items-start gap-3 rounded-xl border p-3 transition"
+              <div class="space-y-2">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200"
                   :class="[
-                    selectedStrategy === 'embedded' ? 'border-candy-orange bg-candy-orange/5' : (isDark ? 'border-white/10' : 'border-gray-200'),
+                    selectedStrategy === 'embedded'
+                      ? 'border-candy-orange bg-candy-orange/10'
+                      : isDark ? 'border-onyx-border hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40',
                     isExcelFile ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
                   ]"
+                  :disabled="isExcelFile"
+                  @click="selectedStrategy = 'embedded'"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="embedded" class="mt-1 accent-candy-orange" :disabled="isExcelFile" />
+                  <span
+                    class="flex h-[17px] w-[17px] flex-none items-center justify-center rounded-full"
+                    :class="selectedStrategy === 'embedded' ? 'bg-candy-orange' : (isDark ? 'border border-white/20' : 'border border-gray-300')"
+                  >
+                    <Icon v-if="selectedStrategy === 'embedded'" name="ph:check-bold" class="h-2.5 w-2.5 text-white" />
+                  </span>
                   <span>
-                    <span class="block text-sm font-semibold" :class="headingClass">Embed with Document Content</span>
+                    <span class="block text-sm font-semibold" :class="headingClass">On the Document Itself</span>
                     <span class="block text-xs" :class="mutedClass">
-                      Prints tracking metadata directly alongside the document data.
+                      {{ isExcelFile ? 'Not available for spreadsheet files.' : "Prints the QR code directly on the file's pages." }}
                     </span>
                   </span>
-                </label>
+                </button>
 
-                <label
-                  class="flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition"
+                <button
+                  type="button"
+                  class="flex w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200"
                   :class="selectedStrategy === 'standalone'
-                    ? 'border-candy-orange bg-candy-orange/5'
-                    : isDark ? 'border-white/10' : 'border-gray-200'"
+                    ? 'border-candy-orange bg-candy-orange/10'
+                    : isDark ? 'border-onyx-border hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
+                  @click="selectedStrategy = 'standalone'"
                 >
-                  <input v-model="selectedStrategy" type="radio" value="standalone" class="mt-1 accent-candy-orange" />
+                  <span
+                    class="flex h-[17px] w-[17px] flex-none items-center justify-center rounded-full"
+                    :class="selectedStrategy === 'standalone' ? 'bg-candy-orange' : (isDark ? 'border border-white/20' : 'border border-gray-300')"
+                  >
+                    <Icon v-if="selectedStrategy === 'standalone'" name="ph:check-bold" class="h-2.5 w-2.5 text-white" />
+                  </span>
                   <span>
-                    <span class="block text-sm font-semibold" :class="headingClass">Standalone Tracking Trailer Page</span>
+                    <span class="block text-sm font-semibold" :class="headingClass">On a Separate Page</span>
                     <span class="block text-xs" :class="mutedClass">
-                      Keeps document pages clean and appends a dedicated tracking sheet.
+                      Keeps the original file untouched and adds one extra page for the QR code.
                     </span>
                   </span>
-                </label>
+                </button>
               </div>
-            </div>
 
-            <!-- 5. Standalone QR size -->
-            <div v-if="selectedStrategy === 'standalone'" class="block">
-              <span class="text-sm font-semibold" :class="headingClass">Trailer QR Print Size</span>
-              <div class="mt-2 grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
-                  @click="selectedQrSize = 50"
-                >
-                  <Icon name="ph:qr-code-light" class="h-6 w-6 mb-1" />
-                  <span class="text-xs font-semibold">Small</span>
-                  <span class="text-[13px] opacity-70">1x1 in</span>
-                </button>
-                <button
-                  type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
-                  @click="selectedQrSize = 120"
-                >
-                  <Icon name="ph:qr-code-light" class="h-7 w-7 mb-1" />
-                  <span class="text-xs font-semibold">Medium</span>
-                  <span class="text-[13px] opacity-70">2x2 in</span>
-                </button>
-                <button
-                  type="button"
-                  class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
-                  :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-white/10 text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
-                  @click="selectedQrSize = 200"
-                >
-                  <Icon name="ph:qr-code-light" class="h-8 w-8 mb-1" />
-                  <span class="text-xs font-semibold">Large</span>
-                  <span class="text-[13px] opacity-70">4x4 in</span>
-                </button>
+              <!-- Standalone QR size -->
+              <div v-if="selectedStrategy === 'standalone'" class="mt-4 border-t pt-4" :class="borderClass">
+                <p class="mb-2 text-xs font-semibold" :class="headingClass">QR Code Size</p>
+                <div class="grid grid-cols-3 gap-2.5">
+                  <button
+                    type="button"
+                    class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                    :class="selectedQrSize === 50 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-onyx-border text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                    @click="selectedQrSize = 50"
+                  >
+                    <Icon name="ph:qr-code-light" class="h-6 w-6 mb-1" />
+                    <span class="text-xs font-semibold">Small</span>
+                    <span class="text-xs opacity-70">1x1 in</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                    :class="selectedQrSize === 120 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-onyx-border text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                    @click="selectedQrSize = 120"
+                  >
+                    <Icon name="ph:qr-code-light" class="h-7 w-7 mb-1" />
+                    <span class="text-xs font-semibold">Medium</span>
+                    <span class="text-xs opacity-70">2x2 in</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="flex flex-col items-center justify-center rounded-xl border p-3 transition"
+                    :class="selectedQrSize === 200 ? 'border-candy-orange bg-candy-orange/10 text-candy-orange' : (isDark ? 'border-onyx-border text-gray-400 hover:border-white/30' : 'border-gray-200 text-gray-500 hover:border-gray-300')"
+                    @click="selectedQrSize = 200"
+                  >
+                    <Icon name="ph:qr-code-light" class="h-8 w-8 mb-1" />
+                    <span class="text-xs font-semibold">Large</span>
+                    <span class="text-xs opacity-70">4x4 in</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -561,7 +583,7 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[14px] font-semibold text-candy-orange"
+                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 <Icon name="ph:path-light" class="h-3 w-3 flex-none" />
@@ -678,7 +700,6 @@ const isExcelFile = computed(() => {
   const name = selectedFile.value.name.toLowerCase()
   return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')
 })
-const previewExcel = ref(false)
 
 // Force standalone strategy for Excel files
 watch(isExcelFile, (isExcel) => {
@@ -778,20 +799,17 @@ const canSubmit = computed(
 
 // ── Theming ───────────────────────────────────────────────────────────
 const surfaceClass = computed(() =>
-  isDark.value ? 'bg-[#111111] border-white/10' : 'border-gray-200 bg-white'
+  isDark.value ? 'bg-onyx-black border-onyx-border' : 'border-gray-200 bg-white-pure'
 )
 const borderClass  = computed(() => isDark.value ? 'border-white/10' : 'border-gray-200')
 const mutedClass   = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const headingClass = computed(() => isDark.value ? 'text-white' : 'text-gray-900')
+const cardClass    = computed(() => isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure')
+const stepBadgeClass = computed(() => isDark.value ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600')
 const inputClass   = computed(() =>
   isDark.value
     ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
-)
-const optionStyle = computed(() =>
-  isDark.value
-    ? { backgroundColor: '#1A1A1A', color: '#ffffff' }
-    : { backgroundColor: '#ffffff', color: '#121212' }
 )
 
 // ── Watch isOpen — fetch stages + offices ─────────────────────────────
@@ -812,21 +830,46 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+
+const isValidDocumentFile = (file: File | null | undefined): boolean => {
+  if (!file) return false
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  return ALLOWED_EXTENSIONS.includes(ext)
+}
+
 const handleFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0] || null
+  if (!file) {
+    clearFile()
+    return
+  }
+
+  if (!isValidDocumentFile(file)) {
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    clearFile()
+    return
+  }
+
   selectedFile.value = file
-  currentTrackingId.value = file ? generateTrackingId() : ''
+  currentTrackingId.value = generateTrackingId()
   errorMessage.value = ''
 }
 
 const handleDrop = (e: DragEvent) => {
   isDragging.value = false
   const file = e.dataTransfer?.files?.[0]
-  if (file) {
-    selectedFile.value = file
-    currentTrackingId.value = generateTrackingId()
-    errorMessage.value = ''
+  if (!file) return
+
+  if (!isValidDocumentFile(file)) {
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    clearFile()
+    return
   }
+
+  selectedFile.value = file
+  currentTrackingId.value = generateTrackingId()
+  errorMessage.value = ''
 }
 
 const clearFile = () => {

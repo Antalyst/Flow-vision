@@ -17,7 +17,7 @@
       <div class="flex rounded-xl border border-white/10 bg-white/5 backdrop-blur-md p-1 shadow-sm">
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[14px] font-bold transition-all"
+          class="rounded-lg px-3 py-1 text-sm font-bold transition-all"
           :class="mode === 'pickup'
             ? 'bg-candy-orange text-white shadow-sm'
             : 'text-white/50 hover:text-white/80'"
@@ -27,7 +27,7 @@
         </button>
         <button
           type="button"
-          class="rounded-lg px-3 py-1 text-[14px] font-bold transition-all"
+          class="rounded-lg px-3 py-1 text-sm font-bold transition-all"
           :class="mode === 'dropoff'
             ? 'bg-candy-orange text-white shadow'
             : 'text-white/50 hover:text-white/80'"
@@ -102,7 +102,7 @@
                 </p>
                 <div
                   v-if="resultData?.document"
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider text-candy-orange"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-candy-orange/15 border border-candy-orange/20 px-3 py-1.5 text-sm font-bold uppercase tracking-wider text-candy-orange"
                 >
                   <Icon name="ph:motorcycle-fill" class="h-3.5 w-3.5" />
                   IN TRANSIT
@@ -140,7 +140,7 @@
                   </span>
                 </p>
                 <div
-                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold uppercase tracking-wider border"
+                  class="mt-2.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-wider border"
                   :class="resultData?.is_final_stop
                     ? 'bg-success/15 border-success/20 text-success'
                     : 'bg-candy-orange/15 border-candy-orange/20 text-candy-orange'"
@@ -166,7 +166,7 @@
                 </p>
               </div>
             </div>
-            <div class="mt-3 rounded-lg bg-danger/5 border border-danger/20 px-4 py-3 text-[14px] font-mono text-danger break-all">
+            <div class="mt-3 rounded-lg bg-danger/5 border border-danger/20 px-4 py-3 text-sm font-mono text-danger break-all">
               {{ errorMessage }}
             </div>
           </div>
@@ -207,7 +207,7 @@
               <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-gray-400">Unrecognized Code</p>
                 <p class="mt-1 text-xs text-white/60">This isn't a FlowVision document or office code.</p>
-                <p class="mt-1 break-all font-mono text-[13px] text-gray-500">{{ rawScan }}</p>
+                <p class="mt-1 break-all font-mono text-sm text-gray-500">{{ rawScan }}</p>
               </div>
             </div>
           </div>

@@ -137,6 +137,17 @@ export default defineEventHandler(async (event) => {
   const fileName = fileItem.filename || 'unnamed'
   const mimeType = fileItem.type    || 'application/octet-stream'
 
+  // Validate allowed file types (Word & Excel only)
+  const fileExt = fileName.split('.').pop()?.toLowerCase() || ''
+  const ALLOWED_DOCUMENT_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+
+  if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(fileExt)) {
+    throw createError({
+      statusCode: 400,
+      message: 'INVALID_FILE_TYPE: Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.',
+    })
+  }
+
   // ─────────────────────────────────────────────────────────────────────
   // Step 4 — Role-Specific Office Validation
   // ─────────────────────────────────────────────────────────────────────

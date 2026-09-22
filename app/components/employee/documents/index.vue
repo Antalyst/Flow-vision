@@ -11,9 +11,9 @@
       <!-- Title -->
       <div>
         <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Management</h1>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Documents</h1>
         <p class="mt-1 text-sm" :class="mutedText">
-          Documents scoped to your sub-office branches.
+          Documents from the offices assigned to you.
         </p>
       </div>
 
@@ -32,7 +32,7 @@
         <!-- Upload -->
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           @click="isUploadOpen = true"
         >
           <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -49,19 +49,19 @@
           v-for="(card, i) in kpiCards"
           :key="card.label"
           class="flex items-start gap-4 rounded-2xl border p-5 shadow-card transition-all"
-          :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
+          :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
           :style="{ transitionDelay: `${i * 40}ms` }"
         >
           <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" :class="card.iconBg">
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
           </span>
           <div class="min-w-0">
-            <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
+            <p class="text-xs font-bold uppercase tracking-wider" :class="mutedText">{{ card.label }}</p>
             <p class="mt-1 text-2xl font-bold">
               <span v-if="loading" class="inline-block h-6 w-12 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
               <span v-else>{{ card.value }}</span>
             </p>
-            <p class="mt-0.5 text-[13px]" :class="card.trendColor">{{ card.trend }}</p>
+            <p class="mt-0.5 text-xs" :class="card.trendColor">{{ card.trend }}</p>
           </div>
         </div>
       </div>
@@ -69,236 +69,201 @@
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- D. Filter & Search Bar                                            -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <div
-      class="flex flex-col gap-3 rounded-2xl border p-4 shadow-card sm:flex-row sm:items-center"
-      :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
-    >
-      <button
-        @click="isSemanticSearchOpen = true"
-        class="flex flex-1 items-center justify-between gap-2 rounded-xl border px-4 py-2 transition-all text-left"
-        :class="isDark ? 'border-onyx-border bg-onyx-black/40 hover:border-candy-orange hover:bg-white/5' : 'border-gray-200 bg-gray-50 hover:border-candy-orange hover:bg-white'"
-      >
-        <span class="flex items-center gap-2" :class="mutedText">
-          <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
-          Describe your intent...
-        </span>
-        <span class="rounded-full bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[13px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
-      </button>
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          @click="isSemanticSearchOpen = true"
+          class="flex flex-1 items-center justify-between gap-2 rounded-xl border px-4 py-2.5 shadow-card transition-all text-left"
+          :class="isDark ? 'border-onyx-border bg-onyx-card hover:border-candy-orange' : 'border-gray-200 bg-white-pure hover:border-candy-orange'"
+        >
+          <span class="flex items-center gap-2" :class="mutedText">
+            <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
+            Describe your intent...
+          </span>
+          <span class="rounded-full bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-xs font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+        </button>
 
-      <!-- Office filter -->
-      <select
-        v-model="officeFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
-        :class="inputClass"
-      >
-        <option value="all">All My Offices</option>
-        <option value="own">My Uploads Only</option>
-        <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ o.name }}</option>
-      </select>
+        <!-- Office filter -->
+        <select
+          v-model="officeFilter"
+          class="rounded-xl border px-3 py-2.5 text-sm shadow-card outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
+          :class="inputClass"
+        >
+          <option value="all">All My Offices</option>
+          <option value="own">My Uploads Only</option>
+          <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ o.name }}</option>
+        </select>
 
-      <!-- Status filter -->
-      <select
-        v-model="statusFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
-        :class="inputClass"
-      >
-        <option value="all">All Statuses</option>
-        <option value="Pending">Pending</option>
-        <option value="Processing">Processing</option>
-        <option value="Approved">Approved</option>
-        <option value="Rejected">Rejected</option>
-      </select>
+        <!-- Tracking filter -->
+        <select
+          v-model="trackingFilter"
+          class="rounded-xl border px-3 py-2.5 text-sm shadow-card outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+          :class="inputClass"
+        >
+          <option value="all">All Tracking</option>
+          <option value="CREATED">Created</option>
+          <option value="PICKED_UP">Picked Up</option>
+          <option value="IN_TRANSIT">In Transit</option>
+          <option value="ARRIVED_AT_OFFICE">At Office</option>
+          <option value="DISCREPANCY_REPORTED">Flagged</option>
+          <option value="COMPLETED">Completed</option>
+        </select>
+      </div>
 
-      <!-- Tracking filter -->
-      <select
-        v-model="trackingFilter"
-        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
-        :class="inputClass"
-      >
-        <option value="all">All Tracking</option>
-        <option value="CREATED">Created</option>
-        <option value="PICKED_UP">Picked Up</option>
-        <option value="IN_TRANSIT">In Transit</option>
-        <option value="ARRIVED_AT_OFFICE">At Office</option>
-        <option value="DISCREPANCY_REPORTED">Flagged</option>
-        <option value="COMPLETED">Completed</option>
-      </select>
+      <!-- Status quick filter pills -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-for="s in statusPills"
+          :key="s.value"
+          type="button"
+          class="rounded-full px-4 py-2 text-sm font-semibold shadow-card transition-colors"
+          :class="statusFilter === s.value
+            ? 'bg-candy-orange text-white'
+            : isDark ? 'bg-onyx-card text-gray-300 hover:text-white' : 'bg-white-pure text-gray-600 hover:text-gray-900'"
+          @click="statusFilter = s.value"
+        >
+          {{ s.label }}
+        </button>
+      </div>
     </div>
 
     <!-- Active Semantic Search Indicator -->
-    <div v-if="semanticResults" class="flex items-center gap-3 bg-amber-50 dark:bg-candy-orange/10 border border-amber-200 dark:border-candy-orange/20 rounded-xl p-3 text-sm animate-fade-in shadow-sm">
+    <div v-if="semanticResults" class="flex items-center gap-3 bg-candy-orange/10 border border-candy-orange/20 rounded-xl p-3 text-sm animate-fade-in shadow-sm">
       <Icon name="ph:sparkle-fill" class="h-5 w-5 text-candy-orange" />
-      <span :class="isDark ? 'text-amber-200' : 'text-amber-800'">
+      <span :class="isDark ? 'text-candy-orange/90' : 'text-candy-hover'">
         Showing <strong>{{ filtered.length }}</strong> results for "<span class="italic">{{ semanticQuery }}</span>"
       </span>
-      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-candy-hover font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-full border border-amber-200 dark:border-candy-orange/30 transition-colors">
+      <button @click="semanticResults = null" class="ml-auto text-candy-orange hover:text-candy-hover font-medium text-xs bg-white dark:bg-candy-orange/20 px-3 py-1.5 rounded-full border border-candy-orange/30 transition-colors">
         Clear Filter
       </button>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <!-- E. Documents Table                                                -->
+    <!-- E. Documents List                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <article
-      class="overflow-hidden rounded-2xl border shadow-card"
-      :class="isDark ? 'border-onyx-border bg-[#1A1A1A]' : 'border-gray-200 bg-white'"
-    >
-      <!-- Table header row -->
-      <div class="flex items-center justify-between border-b px-5 py-4" :class="borderClass">
-        <div>
-          <h2 class="text-base font-bold">
-            Office Documents
-          </h2>
-          <p class="mt-0.5 text-xs" :class="mutedText">
-            {{ filtered.length }} document{{ filtered.length === 1 ? '' : 's' }} found
-          </p>
+    <div>
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-base font-bold">Office Documents</h2>
+        <p class="text-xs" :class="mutedText">
+          {{ filtered.length }} document{{ filtered.length === 1 ? '' : 's' }} found
+        </p>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div v-if="loading" class="mt-3 space-y-3">
+        <div
+          v-for="n in 5" :key="n"
+          class="rounded-2xl border p-4 shadow-card"
+          :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
+        >
+          <div class="h-4 w-48 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+          <div class="mt-2 h-3 w-32 animate-pulse rounded-md" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
         </div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-left text-sm">
-          <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
-            <tr>
-              <th class="px-5 py-3 text-xs font-semibold uppercase tracking-wide">Document</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Office</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Origin</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Source</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Tracking</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Date</th>
-              <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Loading skeleton -->
-            <template v-if="loading">
-              <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
-                <td class="px-5 py-4">
-                  <div class="h-4 w-48 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                  <div class="mt-1 h-3 w-32 animate-pulse rounded-md" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
-                </td>
-                <td v-for="k in 6" :key="k" class="px-5 py-4">
-                  <div class="h-4 w-20 animate-pulse rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                </td>
-              </tr>
-            </template>
-
-            <!-- Rows -->
-            <template v-else-if="filtered.length">
-              <tr
-                v-for="doc in filtered"
-                :key="doc.id"
-                class="cursor-pointer border-t transition-colors duration-150"
-                :class="[
-                  borderClass,
-                  isDark ? 'hover:bg-white/[0.03]' : 'hover:bg-gray-50',
-                  activeDocument?.id === doc.id ? 'bg-candy-orange/5 ring-1 ring-inset ring-candy-orange/30' : '',
-                ]"
-                @click="openDocumentPreview(doc)"
+      <!-- Cards -->
+      <div v-else-if="filtered.length" class="mt-3 space-y-3">
+        <div
+          v-for="doc in filtered"
+          :key="doc.id"
+          class="cursor-pointer rounded-2xl border p-4 shadow-card transition-colors duration-150"
+          :class="[
+            isDark ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/30' : 'border-gray-200 bg-white-pure hover:border-candy-orange/30',
+            activeDocument?.id === doc.id ? 'ring-1 ring-inset ring-candy-orange/30' : '',
+          ]"
+          @click="openDocumentPreview(doc)"
+        >
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <!-- Title + desc -->
+            <div class="flex min-w-0 flex-1 items-start gap-2">
+              <div
+                v-if="doc.is_own_upload"
+                class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
+                title="Your upload"
               >
-                <!-- Document title + desc -->
-                <td class="min-w-72 px-5 py-4">
-                  <div class="flex items-start gap-2">
-                    <div
-                      v-if="doc.is_own_upload"
-                      class="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
-                      title="Your upload"
-                    >
-                      <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
-                    </div>
-                    <div class="min-w-0">
-                      <p class="font-semibold">{{ doc.title }}</p>
-                      <p class="mt-0.5 line-clamp-1 max-w-xs text-xs" :class="mutedText">
-                        {{ doc.description || '—' }}
-                      </p>
-                    </div>
-                  </div>
-                  <div v-if="getSemanticExplanation(doc.id)" class="mt-3 text-xs font-medium text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-candy-orange/10 p-2.5 rounded-lg flex gap-2 items-start border border-amber-100 dark:border-candy-orange/20">
-                    <Icon name="ph:sparkle-fill" class="h-4 w-4 shrink-0 mt-0.5 text-candy-orange" />
-                    <span class="leading-relaxed">{{ getSemanticExplanation(doc.id) }}</span>
-                  </div>
-                </td>
-
-                <!-- Current office -->
-                <td class="whitespace-nowrap px-5 py-4 text-xs">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold"
-                    :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
-                  >
-                    <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
-                    {{ formatOfficeName(doc.office_label || doc.current_label) || 'Unassigned' }}
-                  </span>
-                </td>
-
-                <!-- Origin office -->
-                <td class="whitespace-nowrap px-5 py-4 text-xs" :class="mutedText">
-                  {{ formatOfficeName(doc.origin_label) }}
-                </td>
-
-                <!-- Source badge -->
-                <td class="whitespace-nowrap px-5 py-4">
-                  <span
-                    class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold"
-                    :class="doc.is_own_upload
-                      ? 'bg-candy-orange/10 text-candy-orange border-candy-orange/20'
-                      : isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
-                  >
-                    {{ doc.is_own_upload ? 'My Upload' : 'Routed In' }}
-                  </span>
-                </td>
-
-                <!-- Tracking status -->
-                <td class="whitespace-nowrap px-5 py-4">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
-                    :class="trackingClass(doc.tracking_status)"
-                  >
-                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
-                    {{ trackingLabel(doc.tracking_status) }}
-                  </span>
-                </td>
-
-                <!-- Date -->
-                <td class="whitespace-nowrap px-5 py-4 text-xs" :class="mutedText">
-                  {{ fmtDate(doc.created_at) }}
-                </td>
-
-                <!-- Approval status -->
-                <td class="whitespace-nowrap px-5 py-4">
-                  <span
-                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
-                    :class="statusClass(doc.status)"
-                  >
-                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
-                    {{ doc.status || 'Pending' }}
-                  </span>
-                </td>
-              </tr>
-            </template>
-
-            <!-- Empty -->
-            <tr v-else>
-              <td colspan="7" class="px-5 py-16 text-center">
-                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-candy-orange/10">
-                  <Icon name="ph:file-dashed" class="h-8 w-8 text-candy-orange" />
-                </div>
-                <p class="font-bold">No documents found.</p>
-                <p class="mt-1 text-xs" :class="mutedText">
-                  Upload a document from your office or adjust your search filters.
+                <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
+              </div>
+              <Icon v-else name="ph:file-text-light" class="mt-0.5 h-5 w-5 flex-none text-gray-400" />
+              <div class="min-w-0">
+                <p class="font-semibold">{{ doc.title }}</p>
+                <p class="mt-0.5 line-clamp-1 text-xs" :class="mutedText">
+                  {{ doc.description || '—' }}
                 </p>
-                <button
-                  type="button"
-                  class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
-                  @click="isUploadOpen = true"
-                >
-                  <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
-                  Upload Document
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+
+            <!-- Status + tracking badges -->
+            <div class="flex flex-none flex-col items-end gap-1.5">
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                :class="statusClass(doc.status)"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
+                {{ doc.status || 'Pending' }}
+              </span>
+              <span
+                class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                :class="trackingClass(doc.tracking_status)"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.tracking_status === 'IN_TRANSIT' ? 'animate-pulse' : ''" />
+                {{ trackingLabel(doc.tracking_status) }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="getSemanticExplanation(doc.id)" class="mt-3 flex items-start gap-2 rounded-lg border border-candy-orange/20 bg-candy-orange/10 p-2.5 text-xs font-medium text-candy-hover dark:text-candy-orange/90">
+            <Icon name="ph:sparkle-fill" class="h-4 w-4 shrink-0 mt-0.5 text-candy-orange" />
+            <span class="leading-relaxed">{{ getSemanticExplanation(doc.id) }}</span>
+          </div>
+
+          <!-- Meta row -->
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <span
+              class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold"
+              :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
+            >
+              <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
+              {{ formatOfficeName(doc.office_label || doc.current_label) || 'Unassigned' }}
+            </span>
+            <span v-if="formatOfficeName(doc.origin_label) !== '—'" :class="mutedText">
+              from {{ formatOfficeName(doc.origin_label) }}
+            </span>
+            <span
+              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-semibold"
+              :class="doc.is_own_upload
+                ? 'bg-candy-orange/10 text-candy-orange border-candy-orange/20'
+                : isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-100 border-gray-200 text-gray-600'"
+            >
+              {{ doc.is_own_upload ? 'My Upload' : 'Routed In' }}
+            </span>
+            <span class="ml-auto" :class="mutedText">{{ fmtDate(doc.created_at) }}</span>
+          </div>
+        </div>
       </div>
-    </article>
+
+      <!-- Empty -->
+      <div
+        v-else
+        class="mt-3 rounded-2xl border p-16 text-center shadow-card"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
+      >
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-candy-orange/10">
+          <Icon name="ph:file-dashed" class="h-8 w-8 text-candy-orange" />
+        </div>
+        <p class="font-bold">No documents found.</p>
+        <p class="mt-1 text-xs" :class="mutedText">
+          Upload a document from your office or adjust your search filters.
+        </p>
+        <button
+          type="button"
+          class="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          @click="isUploadOpen = true"
+        >
+          <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
+          Upload Document
+        </button>
+      </div>
+    </div>
 
     <!-- Document preview drawer -->
     <DocumentPreviewDrawer
@@ -395,9 +360,10 @@ const loading       = ref(false)
 const isUploadOpen  = ref(false)
 const activeDocument = ref<LedgerDoc | null>(null)
 const issueChatRef   = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
-const officeFilter  = ref<string>('all')
+// Pre-filter from a deep link (e.g. the dashboard's KPI cards): ?office=own, ?tracking=IN_TRANSIT
+const officeFilter  = ref<string>(String(route.query.office ?? 'all'))
 const statusFilter  = ref<string>('all')
-const trackingFilter = ref<string>('all')
+const trackingFilter = ref<string>(String(route.query.tracking ?? 'all'))
 
 const isSemanticSearchOpen = ref(false)
 const semanticResults = ref<{ id: string, explanation: string }[] | null>(null)
@@ -415,19 +381,21 @@ function getSemanticExplanation(docId: string | number) {
 }
 
 // ── Theming ───────────────────────────────────────────────────────────
-const glassSurface = computed(() =>
-  isDark.value ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-white'
-)
-const cardSurface = computed(() =>
-  isDark.value ? 'border-white/10 bg-[#1A1A1A] shadow-xl shadow-black/30' : 'border-gray-200 bg-white shadow-card'
-)
-const borderClass  = computed(() => isDark.value ? 'border-white/5' : 'border-gray-100')
 const mutedText    = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 const inputClass   = computed(() =>
   isDark.value
     ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
 )
+
+// ── Status quick filter pills ──────────────────────────────────────────
+const statusPills = [
+  { value: 'all', label: 'All' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Processing', label: 'Processing' },
+  { value: 'Approved', label: 'Approved' },
+  { value: 'Rejected', label: 'Rejected' },
+]
 
 // ── KPI cards ─────────────────────────────────────────────────────────
 const kpiCards = computed(() => [
@@ -447,7 +415,7 @@ const kpiCards = computed(() => [
     iconBg: 'bg-candy-orange/10',
     iconColor: 'text-candy-orange',
     trend: 'Registered by you',
-    trendColor: isDark.value ? 'text-gray-500' : 'text-gray-400',
+    trendColor: isDark.value ? 'text-gray-400' : 'text-white-muted',
   },
   {
     label: 'In Transit',

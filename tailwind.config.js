@@ -62,7 +62,7 @@
           // --- THE WHITE PALETTE (Clean Readable Data Elements) ---
           'white-pure': '#FEFEFE', // Card/surface fills & dark-mode text — softened off pure white
           'white-surface': '#F6F6F7', // App canvas background — lets white-pure cards lift off the page
-          'white-muted': '#79797e', // Subtitle information text descriptors
+          'white-muted': '#68686f', // Subtitle information text descriptors — WCAG AA (4.5:1+) against both white-surface and white-pure
 
           // --- SEMANTIC STATUS COLORS ---
           success: '#16A34A',

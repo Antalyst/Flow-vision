@@ -4,7 +4,7 @@
     <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <div class="mb-3 h-1 w-14 rounded-none bg-candy-orange" />
+        <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">My Office Documents</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           Documents registered in or routed through your sub-offices
@@ -14,7 +14,7 @@
       <div class="flex items-center gap-3">
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
           :class="isDark ? 'border-white/10 text-white hover:bg-white/5' : 'border-gray-200 text-gray-900 hover:bg-gray-50'"
           @click="isScannerOpen = true"
         >
@@ -23,7 +23,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-[#e95a0b] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition-all duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange/50"
           @click="isUploadOpen = true"
         >
           <Icon name="ph:upload-simple-bold" class="h-4 w-4" />
@@ -44,22 +44,22 @@
       <div
         v-for="kpi in kpiCards"
         :key="kpi.label"
-        class="rounded-none border px-4 py-3 backdrop-blur-sm"
+        class="rounded-2xl border px-4 py-3 backdrop-blur-sm"
         :class="glassSurface"
       >
-        <p class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">{{ kpi.label }}</p>
+        <p class="text-sm font-bold uppercase tracking-wider text-candy-orange">{{ kpi.label }}</p>
         <p class="mt-1 text-2xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ kpi.value }}</p>
       </div>
     </div>
 
     <!-- ── Filter Bar ────────────────────────────────────────────────── -->
     <div
-      class="flex flex-col gap-3 rounded-none border p-4 backdrop-blur-sm sm:flex-row sm:items-center"
+      class="flex flex-col gap-3 rounded-2xl border p-4 backdrop-blur-sm sm:flex-row sm:items-center"
       :class="glassSurface"
     >
       <!-- Search -->
       <div
-        class="flex flex-1 items-center gap-2 rounded-none border px-3 py-2.5 transition-all"
+        class="flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 transition-all"
         :class="isDark ? 'border-white/10 bg-onyx-black/40 focus-within:border-candy-orange' : 'border-gray-200 bg-gray-50 focus-within:border-candy-orange'"
       >
         <Icon name="ph:magnifying-glass" class="h-4 w-4 flex-none" :class="mutedText" />
@@ -74,7 +74,7 @@
       <!-- Office filter -->
       <select
         v-model="officeFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-56"
         :class="inputClass"
       >
         <option value="all">All My Offices</option>
@@ -91,7 +91,7 @@
       <!-- Status filter -->
       <select
         v-model="statusFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        class="rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
         :class="inputClass"
       >
         <option value="all">All Statuses</option>
@@ -104,7 +104,7 @@
 
     <!-- ── Documents Table ───────────────────────────────────────────── -->
     <article
-      class="overflow-hidden rounded-none border shadow-card backdrop-blur-sm"
+      class="overflow-hidden rounded-2xl border shadow-card backdrop-blur-sm"
       :class="cardSurface"
     >
       <!-- Table header -->
@@ -155,7 +155,7 @@
                   <div class="flex items-center gap-2">
                     <div
                       v-if="doc.is_own_upload"
-                      class="flex h-5 w-5 flex-none items-center justify-center rounded-none bg-candy-orange/15"
+                      class="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-candy-orange/15"
                       title="Your upload"
                     >
                       <Icon name="ph:user-fill" class="h-2.5 w-2.5 text-candy-orange" />
@@ -172,7 +172,7 @@
                 <!-- Office -->
                 <td class="whitespace-nowrap px-5 py-4 text-xs">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold"
                     :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'"
                   >
                     <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
@@ -183,7 +183,7 @@
                 <!-- Source badge -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1 rounded-none px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
                     :class="doc.is_own_upload
                       ? 'bg-candy-orange/10 text-candy-orange border border-candy-orange/20'
                       : isDark ? 'bg-white/5 border border-white/10 text-gray-400' : 'bg-gray-100 border border-gray-200 text-gray-600'"
@@ -195,10 +195,10 @@
                 <!-- Tracking -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="trackingClass(doc.tracking_status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" />
                     {{ doc.tracking_status || 'CREATED' }}
                   </span>
                 </td>
@@ -211,10 +211,10 @@
                 <!-- Status -->
                 <td class="whitespace-nowrap px-5 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold"
+                    class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                     :class="statusClass(doc.status)"
                   >
-                    <span class="h-1.5 w-1.5 rounded-none bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''" />
                     {{ doc.status || 'Pending' }}
                   </span>
                 </td>
@@ -254,13 +254,13 @@
         >
           <header class="flex items-start justify-between gap-4 border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
             <div class="min-w-0">
-              <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
-              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Document Detail</p>
+              <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
+              <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Document Detail</p>
               <h2 class="mt-1 truncate text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ selectedDoc.title }}
               </h2>
             </div>
-            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="selectedDoc = null">
+            <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="selectedDoc = null">
               <Icon name="ph:x-bold" class="h-4 w-4" />
             </button>
           </header>
@@ -268,14 +268,14 @@
           <div class="flex-1 space-y-5 overflow-y-auto px-6 py-6">
             <!-- Badges -->
             <div class="flex flex-wrap gap-2">
-              <span class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold" :class="trackingClass(selectedDoc.tracking_status)">
-                <span class="h-1.5 w-1.5 rounded-none bg-current" />{{ selectedDoc.tracking_status || 'CREATED' }}
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold" :class="trackingClass(selectedDoc.tracking_status)">
+                <span class="h-1.5 w-1.5 rounded-full bg-current" />{{ selectedDoc.tracking_status || 'CREATED' }}
               </span>
-              <span class="inline-flex items-center gap-1.5 rounded-none border px-3 py-1 text-xs font-semibold" :class="statusClass(selectedDoc.status)">
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold" :class="statusClass(selectedDoc.status)">
                 {{ selectedDoc.status || 'Pending' }}
               </span>
               <span
-                class="inline-flex items-center gap-1 rounded-none px-3 py-1 text-xs font-semibold"
+                class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
                 :class="selectedDoc.is_own_upload ? 'bg-candy-orange/10 border border-candy-orange/20 text-candy-orange' : isDark ? 'bg-white/5 border border-white/10 text-gray-400' : 'bg-gray-100 border border-gray-200 text-gray-600'"
               >
                 {{ selectedDoc.is_own_upload ? 'My Upload' : 'Routed In' }}
@@ -284,23 +284,23 @@
 
             <!-- Meta grid -->
             <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-none border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Office</p>
+              <div class="rounded-xl border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
+                <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">Office</p>
                 <p class="mt-1 text-sm font-semibold">{{ selectedDoc.office_label || 'Unassigned' }}</p>
               </div>
-              <div class="rounded-none border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Registered</p>
+              <div class="rounded-xl border p-3" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
+                <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">Registered</p>
                 <p class="mt-1 text-sm font-semibold">{{ fmtDate(selectedDoc.created_at) }}</p>
               </div>
-              <div class="rounded-none border p-3 col-span-2" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">QR Code</p>
+              <div class="rounded-xl border p-3 col-span-2" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
+                <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">QR Code</p>
                 <p class="mt-1 font-mono text-xs">{{ selectedDoc.qr_code_data || '—' }}</p>
               </div>
             </div>
 
             <!-- Description -->
-            <div v-if="selectedDoc.description" class="rounded-none border p-4" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange mb-2">Description</p>
+            <div v-if="selectedDoc.description" class="rounded-xl border p-4" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
+              <p class="text-xs font-bold uppercase tracking-wider text-candy-orange mb-2">Description</p>
               <p class="text-sm leading-relaxed" :class="mutedText">{{ selectedDoc.description }}</p>
             </div>
           </div>
@@ -320,14 +320,14 @@
           class="fixed inset-0 z-[90] flex items-center justify-center p-4"
           @click.self="isUploadOpen = false"
         >
-          <div class="w-full max-w-md rounded-none border shadow-2xl" :class="isDark ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'bg-white border-gray-200'">
+          <div class="w-full max-w-md rounded-2xl border shadow-2xl" :class="isDark ? 'bg-[#111111]/95 backdrop-blur-xl border-white/10' : 'bg-white border-gray-200'">
             <header class="flex items-center justify-between border-b px-6 py-5" :class="isDark ? 'border-white/10' : 'border-gray-200'">
               <div>
-                <div class="mb-1 h-0.5 w-8 rounded-none bg-candy-orange" />
+                <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
                 <h3 class="text-lg font-bold">Upload Document</h3>
                 <p class="mt-0.5 text-xs" :class="mutedText">Registered under your selected office</p>
               </div>
-              <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-none transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="isUploadOpen = false">
+              <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition" :class="isDark ? 'text-gray-400 hover:bg-white/5' : 'text-gray-400 hover:bg-gray-100'" @click="isUploadOpen = false">
                 <Icon name="ph:x-bold" class="h-4 w-4" />
               </button>
             </header>
@@ -338,7 +338,7 @@
                 <span class="text-sm font-semibold text-candy-orange">Origin Office <span class="text-red-500">*</span></span>
                 <select
                   v-model="uploadForm.origin_office_id"
-                  class="mt-2 w-full rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                  class="mt-2 w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                   :class="inputClass"
                   required
                 >
@@ -351,7 +351,7 @@
               <label class="block">
                 <span class="text-sm font-semibold">Document File <span class="text-red-500">*</span></span>
                 <div
-                  class="mt-2 flex flex-col items-center justify-center gap-2 rounded-none border-2 border-dashed px-4 py-8 text-center transition cursor-pointer"
+                  class="mt-2 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition cursor-pointer"
                   :class="[
                     isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/50',
                     uploadFile ? 'border-candy-orange/40 bg-candy-orange/5' : '',
@@ -364,20 +364,20 @@
                   <p class="text-sm font-semibold" :class="uploadFile ? 'text-candy-orange' : isDark ? 'text-gray-200' : 'text-gray-700'">
                     {{ uploadFile ? uploadFile.name : 'Drop file here or click to browse' }}
                   </p>
-                  <p class="text-xs" :class="mutedText">PDF, DOCX, PNG — max 10 MB</p>
-                  <input ref="fileInputRef" type="file" class="hidden" accept=".pdf,.docx,.doc,.png,.jpg" @change="handleFileChange" />
+                  <p class="text-xs" :class="mutedText">Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) supported</p>
+                  <input ref="fileInputRef" type="file" class="hidden" accept=".doc,.docx,.xls,.xlsx,.csv" @change="handleFileChange" />
                 </div>
               </label>
             </div>
 
             <footer class="flex justify-end gap-3 border-t px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
-              <button type="button" class="rounded-none border px-4 py-2.5 text-sm font-semibold transition" :class="isDark ? 'border-white/10 text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'" @click="isUploadOpen = false">
+              <button type="button" class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition" :class="isDark ? 'border-white/10 text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'" @click="isUploadOpen = false">
                 Cancel
               </button>
               <button
                 type="button"
                 :disabled="!uploadForm.origin_office_id || !uploadFile || uploading"
-                class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-[#e95a0b] disabled:cursor-not-allowed disabled:opacity-50"
+                class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-candy-orange/25 transition hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
                 @click="handleUpload"
               >
                 <Icon v-if="uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
@@ -488,7 +488,7 @@ const trackingClass = (s?: string) => {
   switch (s) {
     case 'COMPLETED':         return 'text-green-500 border-green-500/30 bg-green-500/10'
     case 'IN_TRANSIT':        return 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-    case 'PICKED_UP':         return 'text-purple-400 border-purple-400/30 bg-purple-400/10'
+    case 'PICKED_UP':         return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
     case 'ARRIVED_AT_OFFICE': return 'text-teal-400 border-teal-400/30 bg-teal-400/10'
     default:                  return 'text-candy-orange border-candy-orange/30 bg-candy-orange/10'
   }
@@ -534,13 +534,39 @@ const handleScanRegistered = async () => {
 // ── Upload ─────────────────────────────────────────────────────────────
 const triggerFileInput = () => fileInputRef.value?.click()
 
+const uploadError = ref('')
+const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+
+const isValidDocFile = (file: File | null | undefined): boolean => {
+  if (!file) return false
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  return ALLOWED_EXTENSIONS.includes(ext)
+}
+
 const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
-  uploadFile.value = target.files?.[0] ?? null
+  const file = target.files?.[0] ?? null
+  if (file && !isValidDocFile(file)) {
+    uploadError.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) files are allowed.'
+    alert('Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) files are allowed.')
+    uploadFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
+    return
+  }
+  uploadError.value = ''
+  uploadFile.value = file
 }
 
 const handleFileDrop = (e: DragEvent) => {
-  uploadFile.value = e.dataTransfer?.files?.[0] ?? null
+  const file = e.dataTransfer?.files?.[0] ?? null
+  if (file && !isValidDocFile(file)) {
+    uploadError.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) files are allowed.'
+    alert('Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) files are allowed.')
+    uploadFile.value = null
+    return
+  }
+  uploadError.value = ''
+  uploadFile.value = file
 }
 
 const handleUpload = async () => {

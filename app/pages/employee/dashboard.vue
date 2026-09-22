@@ -3,157 +3,95 @@
 
     <!-- ── Page Header ───────────────────────────────────────────────── -->
     <div ref="headerEl" class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-      <!-- Breadcrumb + Greeting -->
       <div>
-        <div class="mb-3 flex items-center gap-2 text-xs font-medium" :class="mutedText">
-          <Icon name="ph:squares-four-light" class="h-3.5 w-3.5 text-candy-orange" />
-          <span>Employee Portal</span>
-          <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span :class="isDark ? 'text-white' : 'text-gray-800'">Dashboard</span>
-        </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight">
           Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Employee' }}
         </h1>
-        <p class="mt-1.5 text-sm" :class="mutedText">
-          {{ currentScope === 'LOCAL'
-            ? 'Here\'s your personal office workspace at a glance.'
-            : 'See every document moving across your organization.' }}
-        </p>
+        <p class="mt-1.5 text-sm" :class="mutedText">Here's your workspace at a glance.</p>
       </div>
 
-      <!-- Right side: scope toggle + org badge -->
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- Flat scope toggle -->
-        <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
-          <button
-            v-for="opt in scopeOptions"
-            :key="opt.value"
-            type="button"
-            class="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold transition-colors rounded-lg"
-            :class="currentScope === opt.value
-              ? 'bg-candy-orange text-white'
-              : isDark ? 'text-gray-400 hover:bg-onyx-black' : 'text-gray-500 hover:bg-gray-50'"
-            @click="setScope(opt.value)"
-          >
-            <Icon :name="opt.icon" class="h-4 w-4" />
-            {{ opt.label }}
-          </button>
-        </div>
-
-        <!-- Org badge -->
-        <div
-          v-if="auth.currentOrg"
-          class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm"
-          :class="isDark ? 'bg-onyx-card border-onyx-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
-        >
-          <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
-          <span class="font-semibold">{{ auth.currentOrg.name }}</span>
-          <span class="font-mono text-xs opacity-50">{{ auth.currentOrg.code }}</span>
-        </div>
+      <div
+        v-if="primaryOfficeLabel"
+        class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm"
+        :class="isDark ? 'bg-onyx-card border-onyx-border text-gray-300' : 'bg-white border-gray-200 text-gray-700'"
+      >
+        <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
+        <span class="font-semibold">{{ primaryOfficeLabel }}</span>
       </div>
     </div>
 
-    <!-- ── Scope Context Banner ───────────────────────────────────────── -->
-    <div ref="bannerEl">
-      <Transition name="scope-fade" mode="out-in">
-        <div
-          :key="currentScope"
-          class="flex items-center gap-4 rounded-2xl border px-5 py-4 text-sm transition-colors"
-          :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
-        >
-          <div class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-candy-orange/10">
-            <Icon
-              :name="currentScope === 'LOCAL' ? 'ph:buildings-light' : 'ph:globe-hemisphere-west-light'"
-              class="h-4.5 w-4.5 text-candy-orange"
-            />
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="font-bold text-candy-orange text-xs uppercase tracking-[0.12em]">
-              {{ currentScope === 'LOCAL' ? 'Office View — Your Station' : 'Org View — All Offices' }}
-            </p>
-            <p class="mt-0.5 text-xs" :class="mutedText">
-              {{ currentScope === 'LOCAL'
-                ? `Showing documents from your ${myOffices.length} office${myOffices.length === 1 ? '' : 's'} in ${auth.currentOrg?.name || 'your organization'}.`
-                : `Showing all ${queueSummary.total} documents currently moving across the organization.` }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold uppercase tracking-wider border-candy-orange/30 text-candy-orange">
-              <span class="h-1.5 w-1.5 rounded-full bg-candy-orange" />
-              Live
-            </span>
-            <NuxtLink
-              :to="`/employee/ai?scope=${currentScope}`"
-              class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-candy-orange hover:text-white hover:border-candy-orange"
-              :class="isDark
-                ? 'border-onyx-border bg-onyx-black text-gray-300'
-                : 'border-gray-200 bg-gray-50 text-gray-500'"
-            >
-              <Icon name="ph:sparkle-light" class="h-3 w-3" />
-              Ask AI
-            </NuxtLink>
-          </div>
-        </div>
-      </Transition>
+    <!-- ── Office Banner ─────────────────────────────────────────────── -->
+    <div
+      ref="bannerEl"
+      class="flex flex-col gap-4 rounded-2xl border px-5 py-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
+      :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+    >
+      <p class="text-sm font-semibold">{{ officeBannerText }}</p>
+      <NuxtLink
+        to="/employee/ai"
+        class="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover"
+      >
+        <Icon name="ph:sparkle-light" class="h-4 w-4" />
+        Ask AI a Question
+      </NuxtLink>
     </div>
 
     <!-- ── KPI Cards ─────────────────────────────────────────────────── -->
-    <Transition name="scope-fade" mode="out-in">
-      <div ref="kpiEl" :key="`kpi-${currentScope}`" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div
-          v-for="(card, i) in kpiCards"
-          :key="card.label"
-          class="group rounded-2xl border p-5 transition-colors"
-          :class="isDark ? 'bg-onyx-card border-onyx-border hover:bg-onyx-black' : 'bg-white border-gray-200 hover:bg-gray-50'"
-        >
-          <div class="flex items-start gap-4">
-            <span class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-opacity-10" :class="[card.iconColor.replace('text-', 'bg-')]">
-              <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
-            </span>
-            <div class="min-w-0">
-              <p class="text-xs font-bold uppercase tracking-widest" :class="mutedText">{{ card.label }}</p>
-              <p class="mt-1 text-2xl font-bold tracking-tight">
-                <span v-if="ledgerLoading" class="inline-block h-6 w-12 rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
-                <span v-else>{{ card.value }}</span>
-              </p>
-              <p class="mt-0.5 text-xs font-medium" :class="card.trendColor">{{ card.trend }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- ── Predictive Workload Chart ──────────────────────────────────── -->
-    <div ref="chartDivEl" class="rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
-      <div class="mb-4">
-        <h2 class="text-sm font-bold">Document Forecast</h2>
-        <p class="mt-0.5 text-xs" :class="mutedText">
-          {{ currentScope === 'LOCAL' ? 'Expected document volume routing to your offices based on historical processing rates.' : 'Org-wide forecasted document pipeline volume.' }}
+    <div ref="kpiEl" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <NuxtLink
+        v-for="card in kpiCards"
+        :key="card.label"
+        :to="card.to"
+        class="group relative rounded-2xl border p-5 transition-colors"
+        :class="isDark ? 'bg-onyx-card border-onyx-border hover:bg-onyx-black' : 'bg-white border-gray-200 hover:bg-gray-50'"
+      >
+        <Icon
+          name="ph:arrow-up-right-bold"
+          class="absolute right-4 top-4 h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100"
+          :class="mutedText"
+        />
+        <Icon :name="card.icon" class="h-7 w-7 text-candy-orange" />
+        <p class="mt-4 text-3xl font-bold tracking-tight">
+          <span v-if="ledgerLoading" class="inline-block h-8 w-12 rounded-md" :class="isDark ? 'bg-white/10' : 'bg-gray-200'" />
+          <span v-else>{{ card.value }}</span>
         </p>
-      </div>
-      <div class="h-64 w-full">
-        <Line v-if="chartData.datasets.length" :data="chartData" :options="chartOptions" ref="chartRef" />
-      </div>
+        <p class="mt-1 text-xs font-medium" :class="mutedText">{{ card.label }}</p>
+      </NuxtLink>
     </div>
 
-    <!-- ── GLOBAL only: Pipeline Status Bar ──────────────────────────── -->
-    <Transition name="scope-slide">
-      <div
-        v-if="currentScope === 'GLOBAL'"
-        class="grid grid-cols-2 gap-3 sm:grid-cols-5"
-      >
-        <div
-          v-for="chip in pipelineChips"
-          :key="chip.label"
-          class="flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-4 text-center transition-colors"
-          :class="isDark ? 'border-onyx-border bg-onyx-card hover:bg-onyx-black' : 'border-gray-200 bg-white hover:bg-gray-50'"
-        >
-          <span class="h-2 w-2 rounded-full" :class="chip.dot" />
-          <p class="text-2xl font-bold tracking-tight">{{ chip.count }}</p>
-          <p class="text-xs font-bold uppercase tracking-wider" :class="mutedText">{{ chip.label }}</p>
+    <!-- ── Document Forecast Chart ──────────────────────────────────── -->
+    <div ref="chartDivEl" class="rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-sm font-bold">Document Activity</h2>
+          <p class="mt-0.5 text-xs" :class="mutedText">Documents created in your offices, by day.</p>
+        </div>
+        <div class="flex flex-none items-center gap-2">
+          <label for="forecast-start" class="text-xs font-medium" :class="mutedText">From</label>
+          <input
+            id="forecast-start"
+            v-model="forecastStart"
+            type="date"
+            :max="forecastEnd"
+            class="rounded-lg border px-2.5 py-1.5 text-xs outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+            :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-200 bg-white text-gray-900'"
+          />
+          <label for="forecast-end" class="text-xs font-medium" :class="mutedText">to</label>
+          <input
+            id="forecast-end"
+            v-model="forecastEnd"
+            type="date"
+            :min="forecastStart"
+            :max="todayStr"
+            class="rounded-lg border px-2.5 py-1.5 text-xs outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+            :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-200 bg-white text-gray-900'"
+          />
         </div>
       </div>
-    </Transition>
+      <div class="h-64 w-full">
+        <Bar v-if="chartData.datasets.length" :data="chartData" :options="chartOptions" :plugins="[barValueLabelPlugin]" ref="chartRef" />
+      </div>
+    </div>
 
     <!-- ── Main Two-Column Layout ─────────────────────────────────────── -->
     <div ref="mainGridEl" class="grid grid-cols-1 gap-5 lg:grid-cols-5">
@@ -163,158 +101,79 @@
         class="rounded-2xl border lg:col-span-3 flex flex-col overflow-hidden transition-colors"
         :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
       >
-        <!-- Section header -->
-        <div
-          class="flex items-center justify-between border-b px-6 py-4"
-          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
-        >
-          <div>
-            <h2 class="text-sm font-bold">
-              {{ currentScope === 'LOCAL' ? 'My Documents' : 'All Documents' }}
-            </h2>
-            <p class="mt-0.5 text-xs" :class="mutedText">
-              {{ currentScope === 'LOCAL'
-                ? 'Documents in your offices or uploaded by you'
-                : 'All document activity across the organization' }}
-            </p>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <span
-              class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors"
-              :class="currentScope === 'LOCAL'
-                ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
-                : isDark ? 'border-white/20 bg-white/5 text-gray-300' : 'border-gray-300 bg-gray-100 text-gray-600'"
-            >
-              <Icon
-                :name="currentScope === 'LOCAL' ? 'ph:shield-check-light' : 'ph:globe-simple-light'"
-                class="h-3 w-3"
-              />
-              {{ currentScope === 'LOCAL' ? 'My Offices' : 'Org-Wide' }}
-            </span>
-            <NuxtLink
-              to="/employee/documents"
-              class="text-xs font-semibold text-candy-orange transition-colors hover:underline"
-            >
-              View all →
-            </NuxtLink>
-          </div>
+        <div class="border-b px-6 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
+          <h2 class="text-sm font-bold">My Documents</h2>
+          <p class="mt-0.5 text-xs" :class="mutedText">Documents in your office, or uploaded by you.</p>
         </div>
 
         <!-- Loading skeleton -->
         <Transition name="scope-fade" mode="out-in">
-          <div v-if="ledgerLoading" :key="'loading'" class="flex-1 space-y-3 p-5">
-            <div
-              v-for="n in 5"
-              :key="n"
-              class="h-14 rounded-xl"
-              :class="isDark ? 'bg-white/5' : 'bg-gray-100'"
-            />
+          <div v-if="ledgerLoading" key="loading" class="flex-1 space-y-3 p-5">
+            <div v-for="n in 5" :key="n" class="h-16 rounded-2xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
           </div>
 
           <!-- Ledger rows -->
-          <div
-            v-else-if="ledger.length"
-            :key="`rows-${currentScope}`"
-            class="flex-1 overflow-y-auto divide-y"
-            :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'"
-          >
+          <div v-else-if="ledger.length" key="rows" class="flex-1 space-y-3 overflow-y-auto p-5">
             <div
               v-for="doc in ledger.slice(0, 12)"
               :key="doc.id"
-              class="flex items-start gap-4 px-6 py-4 transition-colors"
-              :class="isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50/80'"
+              class="flex items-center gap-4 rounded-2xl border p-4 transition-colors"
+              :class="isDark ? 'border-onyx-border hover:bg-white/[0.025]' : 'border-gray-100 hover:bg-gray-50/80'"
             >
               <span
-                class="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-                :class="doc.is_own_upload
-                  ? 'bg-candy-orange/10'
-                  : isDark ? 'bg-white/10' : 'bg-gray-100'"
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                :class="isDark ? 'bg-white/10' : 'bg-gray-100'"
               >
-                <Icon
-                  :name="doc.is_own_upload ? 'ph:upload-simple-light' : 'ph:buildings-light'"
-                  class="h-4 w-4"
-                  :class="doc.is_own_upload ? 'text-candy-orange' : (isDark ? 'text-gray-300' : 'text-gray-500')"
-                />
+                <Icon name="ph:file-text-light" class="h-5 w-5" :class="isDark ? 'text-gray-300' : 'text-gray-500'" />
               </span>
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-800'">
                   {{ doc.title || 'Untitled Document' }}
                 </p>
-                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0 text-[14px]" :class="mutedText">
-                  <span v-if="doc.origin_label || doc.office_label" class="flex items-center gap-1">
-                    <Icon name="ph:buildings-light" class="h-3 w-3" />
-                    {{ doc.origin_label || doc.office_label }}
-                  </span>
-                  <span>{{ formatDate(doc.created_at) }}</span>
-                  <span
-                    class="font-medium"
-                    :class="doc.is_own_upload ? 'text-candy-orange' : (isDark ? 'text-gray-400' : 'text-gray-500')"
-                  >
-                    {{ doc.is_own_upload ? 'You uploaded' : 'Routed in' }}
-                  </span>
-                  <span
-                    v-if="doc.tracking_status && doc.tracking_status !== 'CREATED'"
-                    class="rounded-full px-1.5 py-0.5 font-semibold"
-                    :class="trackingBadge(doc.tracking_status)"
-                  >
-                    {{ doc.tracking_status?.replace('_', ' ') }}
-                  </span>
-                </div>
+                <p class="mt-0.5 text-xs" :class="mutedText">
+                  {{ formatDate(doc.created_at) }}<span v-if="doc.is_own_upload"> · you uploaded</span>
+                </p>
               </div>
-              <span
-                class="flex-shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold uppercase tracking-wide"
-                :class="statusClass(doc.status)"
-              >
-                {{ doc.status || '—' }}
+              <span class="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold" :class="docStatusMeta(doc).class">
+                {{ docStatusMeta(doc).label }}
               </span>
             </div>
           </div>
 
           <!-- Empty state -->
-          <div
-            v-else
-            :key="'empty'"
-            class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center"
-          >
+          <div v-else key="empty" class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
             <div class="flex h-14 w-14 items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
               <Icon name="ph:clipboard-text-light" class="h-7 w-7 text-candy-orange/50" />
             </div>
-            <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
-              {{ currentScope === 'LOCAL' ? 'No documents in your personal ledger.' : 'No documents in the organisation yet.' }}
-            </p>
-            <p class="text-xs max-w-[220px]" :class="mutedText">
-              {{ currentScope === 'LOCAL' ? 'Upload a document from one of your offices to get started.' : 'Documents will appear here once uploaded.' }}
-            </p>
+            <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No documents in your office yet.</p>
+            <p class="text-xs max-w-[220px]" :class="mutedText">Upload a document from one of your offices to get started.</p>
           </div>
         </Transition>
+
+        <div class="px-6 pb-6 pt-2">
+          <NuxtLink
+            to="/employee/documents"
+            class="inline-flex items-center justify-center rounded-xl border px-6 py-3 text-sm font-semibold text-candy-orange transition-colors hover:bg-candy-orange/10"
+            :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
+          >
+            View All Documents
+          </NuxtLink>
+        </div>
       </section>
 
       <!-- ── Right Column (2/5) ──────────────────────────────────────── -->
       <div class="lg:col-span-2 flex flex-col gap-5">
 
         <!-- My Sub-Offices -->
-        <div
-          class="rounded-2xl border p-5 transition-colors"
-          :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
-        >
-          <div class="mb-4 flex items-center justify-between">
-            <div>
-              <h2 class="text-sm font-bold">My Sub-Offices</h2>
-              <p class="mt-0.5 text-[14px]" :class="mutedText">Registered branch nodes</p>
-            </div>
-            <NuxtLink
-              to="/employee/offices"
-              class="text-xs font-semibold text-candy-orange transition-colors hover:underline"
-            >
-              Manage →
-            </NuxtLink>
+        <div class="rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
+          <h2 class="text-sm font-bold">My Sub-Offices</h2>
+          <p class="mt-0.5 text-sm" :class="mutedText">Branches registered under you</p>
+
+          <div v-if="officesLoading" class="mt-4 space-y-2">
+            <div v-for="n in 2" :key="n" class="h-12 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
           </div>
 
-          <div v-if="officesLoading" class="space-y-2">
-            <div v-for="n in 2" :key="n" class="h-10 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
-          </div>
-
-          <div v-else-if="myOffices.length" class="space-y-2">
+          <div v-else-if="myOffices.length" class="mt-4 space-y-2">
             <div
               v-for="office in myOffices.slice(0, 4)"
               :key="office.id"
@@ -324,128 +183,83 @@
               <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange/10">
                 <Icon name="ph:buildings-light" class="h-4 w-4 text-candy-orange" />
               </span>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                  {{ office.name }}
-                </p>
-                <p class="font-mono text-[13px]" :class="mutedText">
-                  {{ office.code || `OFF-${String(office.id).padStart(6, '0')}` }}
-                </p>
-              </div>
-              <Icon name="ph:qr-code-light" class="h-4 w-4 opacity-30" />
+              <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                {{ office.name }}
+              </p>
             </div>
-            <p v-if="myOffices.length > 4" class="text-center text-[14px]" :class="mutedText">
+            <p v-if="myOffices.length > 4" class="text-center text-sm" :class="mutedText">
               +{{ myOffices.length - 4 }} more
             </p>
           </div>
 
-          <div v-else class="flex flex-col items-center gap-3 py-6 text-center">
+          <div v-else class="mt-4 flex flex-col items-center gap-3 py-6 text-center">
             <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-white/5">
               <Icon name="ph:buildings-light" class="h-5 w-5" :class="mutedText" />
             </div>
             <p class="text-xs" :class="mutedText">No offices assigned yet.</p>
-            <NuxtLink to="/employee/offices" class="text-xs font-semibold text-candy-orange hover:underline">
-              Register one →
-            </NuxtLink>
           </div>
         </div>
 
-        <!-- LOCAL: Tasks / GLOBAL: Queue Stats -->
-        <Transition name="scope-fade" mode="out-in">
-          <!-- LOCAL view: Tasks -->
-          <div
-            v-if="currentScope === 'LOCAL'"
-            key="tasks"
-            class="flex-1 rounded-2xl border p-5 transition-colors"
-            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
-          >
-            <div class="mb-4 flex items-center justify-between">
-              <h2 class="text-sm font-bold">Assigned Tasks</h2>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:underline">
-                View all →
-              </NuxtLink>
-            </div>
-            <div class="space-y-2.5">
-              <div
-                v-for="task in tasks"
-                :key="task.id"
-                class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
-                :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
+        <!-- Assigned Tasks -->
+        <div class="flex flex-1 flex-col rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
+          <h2 class="text-sm font-bold">Assigned Tasks</h2>
+          <p class="mt-0.5 text-sm" :class="mutedText">
+            <span v-if="queueLoading">Loading…</span>
+            <span v-else-if="queueItems.length">{{ queueItems.length }} document{{ queueItems.length !== 1 ? 's' : '' }} need your attention</span>
+            <span v-else>Nothing needs your attention right now.</span>
+          </p>
+
+          <!-- Loading skeleton -->
+          <div v-if="queueLoading" class="mt-4 space-y-2">
+            <div v-for="n in 3" :key="n" class="h-14 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
+          </div>
+
+          <!-- Task rows -->
+          <div v-else-if="queueItems.length" class="mt-4 flex-1 space-y-2 overflow-y-auto">
+            <div
+              v-for="doc in queueItems.slice(0, 5)"
+              :key="doc.id"
+              class="flex items-center gap-3 rounded-xl border p-3 transition-colors"
+              :class="isDark ? 'border-onyx-border hover:bg-white/[0.03]' : 'border-gray-100 hover:bg-gray-50'"
+            >
+              <span
+                class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+                :class="isDark ? 'bg-white/10' : 'bg-gray-100'"
               >
-                <span
-                  class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold border"
-                  :class="task.priority === 'High'
-                    ? 'bg-danger/10 text-danger border-danger/20'
-                    : task.priority === 'Medium'
-                      ? 'bg-warning/10 text-warning border-warning/20'
-                      : 'bg-success/10 text-success border-success/20'"
-                >
-                  {{ task.priority[0] }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-xs font-medium" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
-                    {{ task.title }}
-                  </p>
-                  <p class="mt-0.5 text-[13px]" :class="mutedText">Due {{ task.due }}</p>
-                </div>
-                <span
-                  class="flex-shrink-0 rounded-full px-2 py-0.5 text-[13px] font-semibold"
-                  :class="task.status === 'In Progress'
-                    ? 'bg-candy-orange/10 text-candy-orange'
-                    : isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
-                >
-                  {{ task.status }}
-                </span>
+                <Icon name="ph:file-text-light" class="h-4 w-4" :class="isDark ? 'text-gray-300' : 'text-gray-500'" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-xs font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                  {{ doc.title || 'Untitled Document' }}
+                </p>
+                <p class="mt-0.5 truncate text-xs" :class="mutedText">
+                  {{ doc.current_label || doc.stage_name || formatDate(doc.created_at) }}
+                </p>
               </div>
+              <span class="flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-bold" :class="docStatusMeta(doc).class">
+                {{ docStatusMeta(doc).label }}
+              </span>
             </div>
           </div>
 
-          <!-- GLOBAL view: Tracking queue stats -->
-          <div
-            v-else
-            key="queue-stats"
-            class="flex-1 rounded-2xl border p-5 transition-colors"
-            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
-          >
-            <div class="mb-4 flex items-center justify-between">
-              <div>
-                <h2 class="text-sm font-bold">Tracking Queue</h2>
-                <p class="mt-0.5 text-[14px]" :class="mutedText">Live org-wide pipeline</p>
-              </div>
-              <NuxtLink to="/employee/working" class="text-xs font-semibold text-candy-orange hover:underline">
-                Full queue →
-              </NuxtLink>
+          <!-- Empty state (all caught up) -->
+          <div v-else class="mt-4 flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 border border-success/20">
+              <Icon name="ph:check-circle-light" class="h-5 w-5 text-success" />
             </div>
-
-            <div v-if="queueLoading" class="space-y-2">
-              <div v-for="n in 4" :key="n" class="h-10 rounded-xl" :class="isDark ? 'bg-white/5' : 'bg-gray-100'" />
-            </div>
-
-            <div v-else class="space-y-2.5">
-              <div
-                v-for="stat in queueStats"
-                :key="stat.label"
-                class="flex items-center gap-3 rounded-xl border p-3"
-                :class="isDark ? 'border-onyx-border bg-white/[0.02]' : 'border-gray-100 bg-gray-50'"
-              >
-                <span class="h-2.5 w-2.5 flex-none rounded-full" :class="stat.dot" />
-                <span class="flex-1 text-xs font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">
-                  {{ stat.label }}
-                </span>
-                <span class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                  {{ stat.count }}
-                </span>
-              </div>
-
-              <div
-                class="mt-2 rounded-xl border px-3 py-2.5 text-center text-[14px] font-semibold text-candy-orange"
-                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
-              >
-                {{ queueSummary.total }} total in-flight documents
-              </div>
-            </div>
+            <p class="text-xs" :class="mutedText">You're all caught up.</p>
           </div>
-        </Transition>
+
+          <div class="mt-4">
+            <NuxtLink
+              to="/employee/working"
+              class="inline-flex items-center justify-center rounded-xl border px-6 py-3 text-sm font-semibold text-candy-orange transition-colors hover:bg-candy-orange/10"
+              :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
+            >
+              See What's On Your Desk
+            </NuxtLink>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -454,35 +268,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { gsap } from 'gsap'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
-  Filler,
 } from 'chart.js'
-import { Line } from 'vue-chartjs'
+import { Bar } from 'vue-chartjs'
 import { useChartTheme } from '~/composables/useChartTheme'
 import { useInboundDispatchRealtime } from '~/composables/useInboundDispatchRealtime'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 definePageMeta({ layout: 'employee' })
 
 const auth = useAuthStore()
 const { isDark } = useTheme()
-const { candy, buildCartesianScales, buildLegendPlugin, buildTooltipPlugin, watchChartTheme } = useChartTheme()
+const { candy, buildCartesianScales, buildTooltipPlugin, watchChartTheme } = useChartTheme()
 
 // ── Types ──────────────────────────────────────────────────────────────
-type Scope = 'LOCAL' | 'GLOBAL'
-
 interface LedgerDoc {
   id: string
   title: string | null
@@ -492,6 +302,7 @@ interface LedgerDoc {
   office_label?: string | null
   origin_label?: string | null
   current_label?: string | null
+  stage_name?: string | null
   is_own_upload: boolean
   created_at: string
 }
@@ -502,34 +313,12 @@ interface OfficeRecord {
   code?: string
 }
 
-interface QueueSummary {
-  total: number
-  created: number
-  picked_up: number
-  in_transit: number
-  arrived_at_office: number
-  completed: number
-}
-
-// ── Scope state ────────────────────────────────────────────────────────
-const currentScope = ref<Scope>('LOCAL')
-
-const scopeOptions: { value: Scope; label: string; icon: string }[] = [
-  { value: 'LOCAL',  label: 'Office View',  icon: 'ph:buildings-light' },
-  { value: 'GLOBAL', label: 'Org View',     icon: 'ph:globe-hemisphere-west-light' },
-]
-
-const setScope = (scope: Scope) => {
-  if (currentScope.value === scope) return
-  currentScope.value = scope
-}
-
 // ── Data state ─────────────────────────────────────────────────────────
 const ledger         = ref<LedgerDoc[]>([])
 const ledgerLoading  = ref(false)
 const myOffices      = ref<OfficeRecord[]>([])
 const officesLoading = ref(false)
-const queueSummary   = ref<QueueSummary>({ total: 0, created: 0, picked_up: 0, in_transit: 0, arrived_at_office: 0, completed: 0 })
+const queueItems     = ref<LedgerDoc[]>([])
 const queueLoading   = ref(false)
 
 // ── Inbound Dispatch Realtime Subscription (ASN) ───────────────────────
@@ -542,12 +331,18 @@ useInboundDispatchRealtime(orgIdComputed, myOfficeIds, (dispatch) => {
   fetchPredictiveData()
 })
 
-const predictiveData = ref<{ historical: number[], predicted: (number | null)[] }>({
-  historical: [0, 0, 0, 0],
-  predicted: [null, null, null, 0, 0, 0, 0]
-})
+const predictiveData = ref<{ labels: string[]; values: number[] }>({ labels: [], values: [] })
 
-// ── Predictive Chart ───────────────────────────────────────────────────
+// ── Document Activity date-range filter ─────────────────────────────────
+const todayStr = new Date().toISOString().slice(0, 10)
+const defaultStartDate = new Date()
+defaultStartDate.setDate(defaultStartDate.getDate() - 6)
+const forecastStart = ref<string>(defaultStartDate.toISOString().slice(0, 10))
+const forecastEnd   = ref<string>(todayStr)
+
+watch([forecastStart, forecastEnd], () => fetchPredictiveData())
+
+// ── Document Activity Chart (bar) ───────────────────────────────────────
 const chartRef = ref(null)
 
 watchChartTheme(() => chartRef.value?.chart)
@@ -555,42 +350,54 @@ watchChartTheme(() => chartRef.value?.chart)
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
   plugins: {
-    legend: { display: true, position: 'top', align: 'end', ...buildLegendPlugin() },
+    legend: { display: false },
     tooltip: { ...buildTooltipPlugin() },
   },
   scales: buildCartesianScales(),
   elements: {
-    line: { tension: 0.4, borderWidth: 2 },
-    point: { radius: 3, hitRadius: 10, hoverRadius: 5 },
+    bar: { borderRadius: 8 },
   },
 }))
 
 const chartData = computed(() => {
-  const labels = ['6h ago', '4h ago', '2h ago', 'Now', 'In 2h (Est)', 'In 4h (Est)', 'In 6h (Est)']
-  
+  const labels = predictiveData.value.labels.map((iso) =>
+    new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${iso}T00:00:00`))
+  )
+
   return {
     labels,
     datasets: [
       {
-        label: 'Historical Volume',
-        data: predictiveData.value.historical,
-        borderColor: candy.primary,
-        backgroundColor: candy.soft,
-        fill: true,
+        label: 'Documents',
+        data: predictiveData.value.values,
+        backgroundColor: candy.primary,
+        maxBarThickness: 48,
       },
-      {
-        label: 'Predicted Incoming',
-        data: predictiveData.value.predicted,
-        borderColor: candy.forecast,
-        borderDash: [5, 5],
-        fill: false,
-      }
-    ]
+    ],
   }
 })
 
+// Draws the value above each bar, matching the design's on-bar labels.
+const barValueLabelPlugin = {
+  id: 'barValueLabel',
+  afterDatasetsDraw(chart: any) {
+    const { ctx } = chart
+    ctx.save()
+    ctx.font = '600 12px Geist, sans-serif'
+    ctx.fillStyle = isDark.value ? '#FFFFFF' : '#121212'
+    ctx.textAlign = 'center'
+    chart.data.datasets.forEach((dataset: any, i: number) => {
+      const meta = chart.getDatasetMeta(i)
+      meta.data.forEach((bar: any, index: number) => {
+        const value = dataset.data[index]
+        if (value === null || value === undefined) return
+        ctx.fillText(String(value), bar.x, bar.y - 6)
+      })
+    })
+    ctx.restore()
+  },
+}
 
 // ── GSAP refs ──────────────────────────────────────────────────────────
 const pageRoot  = ref<HTMLElement | null>(null)
@@ -603,86 +410,32 @@ const chartDivEl = ref<HTMLElement | null>(null)
 // ── Theming ────────────────────────────────────────────────────────────
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
 
-// ── Computed KPI cards (scope-aware, data-driven) ──────────────────────
-const kpiCards = computed(() => {
-  if (currentScope.value === 'LOCAL') {
-    const own     = ledger.value.filter((d) => d.is_own_upload).length
-    const pending = ledger.value.filter((d) => (d.status ?? '').toLowerCase() === 'pending').length
-    const transit = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
-    return [
-      {
-        label: 'Office Docs', value: String(ledger.value.length),
-        trend: 'in your offices', trendColor: 'text-candy-orange',
-        icon: 'ph:files-light', iconColor: 'text-candy-orange',
-      },
-      {
-        label: 'My Uploads', value: String(own),
-        trend: 'uploaded by you', trendColor: mutedText.value,
-        icon: 'ph:upload-simple-light', iconColor: 'text-success',
-      },
-      {
-        label: 'Pending', value: String(pending),
-        trend: 'awaiting action', trendColor: pending > 0 ? 'text-warning' : mutedText.value,
-        icon: 'ph:clock-countdown-light', iconColor: 'text-warning',
-      },
-      {
-        label: 'In Transit', value: String(transit),
-        trend: 'currently moving', trendColor: transit > 0 ? 'text-candy-orange' : mutedText.value,
-        icon: 'ph:package-light', iconColor: 'text-candy-orange',
-      },
-    ]
-  }
-
-  // GLOBAL view
-  const { total, in_transit, arrived_at_office, completed } = queueSummary.value
-  return [
-    {
-      label: 'Total Org Docs', value: String(total),
-      trend: 'across organisation', trendColor: 'text-candy-orange',
-      icon: 'ph:files-light', iconColor: 'text-candy-orange',
-    },
-    {
-      label: 'In Transit', value: String(in_transit),
-      trend: 'with messengers', trendColor: in_transit > 0 ? 'text-candy-orange' : mutedText.value,
-      icon: 'ph:truck-light', iconColor: 'text-candy-orange',
-    },
-    {
-      label: 'At Office', value: String(arrived_at_office),
-      trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-candy-orange' : mutedText.value,
-      icon: 'ph:buildings-light', iconColor: 'text-candy-orange',
-    },
-    {
-      label: 'Completed', value: String(completed),
-      trend: 'fully delivered', trendColor: completed > 0 ? 'text-success' : mutedText.value,
-      icon: 'ph:check-circle-light', iconColor: 'text-success',
-    },
-  ]
+// ── Office labels (real data) ───────────────────────────────────────────
+const primaryOfficeLabel = computed(() => {
+  if (myOffices.value.length === 1) return myOffices.value[0].name
+  if (myOffices.value.length > 1) return `${myOffices.value.length} Offices`
+  return auth.currentOrg?.name ?? ''
 })
 
-// Pipeline chips for GLOBAL view
-const pipelineChips = computed(() => [
-  { label: 'Created',   count: queueSummary.value.created,           dot: isDark.value ? 'bg-gray-500' : 'bg-gray-300' },
-  { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-candy-orange' },
-  { label: 'In Transit',count: queueSummary.value.in_transit,        dot: 'bg-candy-orange' },
-  { label: 'At Office', count: queueSummary.value.arrived_at_office, dot: 'bg-candy-orange' },
-  { label: 'Completed', count: queueSummary.value.completed,         dot: 'bg-success' },
-])
+const officeBannerText = computed(() => {
+  if (myOffices.value.length === 0) return 'Showing documents from your account.'
+  if (myOffices.value.length === 1) return `Showing documents from your office — ${myOffices.value[0].name}.`
+  return `Showing documents from your ${myOffices.value.length} offices — ${myOffices.value.map((o) => o.name).join(', ')}.`
+})
 
-// Queue stats list for right panel
-const queueStats = computed(() => [
-  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: isDark.value ? 'bg-gray-500' : 'bg-gray-300' },
-  { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-candy-orange' },
-  { label: 'In Transit',                    count: queueSummary.value.in_transit,        dot: 'bg-candy-orange' },
-  { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-candy-orange' },
-  { label: 'Completed',                     count: queueSummary.value.completed,         dot: 'bg-success' },
-])
+// ── Computed KPI cards (data-driven, real ledger data) ──────────────────
+const kpiCards = computed(() => {
+  const own     = ledger.value.filter((d) => d.is_own_upload).length
+  const waiting = ledger.value.filter((d) => !d.tracking_status || d.tracking_status === 'CREATED').length
+  const moving  = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
 
-// Static tasks (LOCAL view only)
-const tasks = [
-  { id: 1, title: 'Review subsidy application batch #221', priority: 'High',   due: 'Today',    status: 'In Progress' },
-  { id: 2, title: 'Verify identification docs — Q3',       priority: 'Medium', due: 'Tomorrow', status: 'Pending' },
-  { id: 3, title: 'Update SLA tracking records',           priority: 'Low',    due: 'Jun 18',   status: 'Pending' },
-]
+  return [
+    { label: 'Documents in Your Office', value: String(ledger.value.length), icon: 'ph:buildings-light',       to: '/employee/documents' },
+    { label: 'Uploaded by You',          value: String(own),                 icon: 'ph:upload-simple-light',   to: '/employee/documents?office=own' },
+    { label: 'Waiting for Pickup',       value: String(waiting),             icon: 'ph:clock-countdown-light', to: '/employee/documents?tracking=CREATED' },
+    { label: 'Currently Moving',         value: String(moving),              icon: 'ph:truck-light',           to: '/employee/documents?tracking=IN_TRANSIT' },
+  ]
+})
 
 // ── Helpers ────────────────────────────────────────────────────────────
 const formatDate = (value: string) =>
@@ -690,24 +443,14 @@ const formatDate = (value: string) =>
     ? new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(value))
     : '—'
 
-const statusClass = (s: string | null) => {
-  switch ((s ?? '').toLowerCase()) {
-    case 'approved':   return 'bg-success/10 text-success'
-    case 'pending':    return 'bg-warning/10 text-warning'
-    case 'rejected':   return 'bg-danger/10 text-danger'
-    case 'processing': return 'bg-candy-orange/10 text-candy-orange'
-    default:           return isDark.value ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'
-  }
-}
-
-const trackingBadge = (s: string) => {
-  switch (s) {
-    case 'COMPLETED':         return 'bg-success/10 text-success'
-    case 'IN_TRANSIT':
-    case 'ARRIVED_AT_OFFICE':
-    case 'PICKED_UP':         return 'bg-candy-orange/10 text-candy-orange'
-    default:                  return isDark.value ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'
-  }
+// Single status pill per document — 3-tier language: gray (n/a here), orange (in progress), green (done).
+const docStatusMeta = (doc: LedgerDoc) => {
+  const status = (doc.status ?? '').toLowerCase()
+  if (status === 'rejected') return { label: 'Rejected', class: 'bg-danger/10 text-danger' }
+  if (status === 'approved') return { label: 'Approved', class: 'bg-success/10 text-success' }
+  if (doc.tracking_status === 'COMPLETED') return { label: 'Completed', class: 'bg-success/10 text-success' }
+  if (!doc.tracking_status || doc.tracking_status === 'CREATED') return { label: 'Waiting', class: 'bg-candy-orange/10 text-candy-orange' }
+  return { label: 'On the Way', class: 'bg-candy-orange/10 text-candy-orange' }
 }
 
 // ── Data fetching ──────────────────────────────────────────────────────
@@ -715,7 +458,7 @@ const fetchLedger = async () => {
   ledgerLoading.value = true
   try {
     const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/employee/ledger', {
-      params: { scope: currentScope.value, limit: 30 },
+      params: { scope: 'LOCAL', limit: 30 },
     })
     ledger.value = res.data ?? []
   } catch (err) {
@@ -743,25 +486,10 @@ const fetchOffices = async () => {
   }
 }
 
-const fetchQueue = async () => {
-  if (currentScope.value !== 'GLOBAL') return
-  queueLoading.value = true
-  try {
-    const res = await $fetch<{ success: boolean; summary: QueueSummary }>('/api/tracking/queue', {
-      params: { scope: 'GLOBAL', limit: 1 },
-    })
-    if (res.summary) queueSummary.value = res.summary
-  } catch (err) {
-    console.error('[EmployeeDashboard] queue fetch error:', err)
-  } finally {
-    queueLoading.value = false
-  }
-}
-
 const fetchPredictiveData = async () => {
   try {
-    const res = await $fetch<{ success: boolean; data: any }>('/api/employee/predictive-workload', {
-      params: { scope: currentScope.value }
+    const res = await $fetch<{ success: boolean; data: { labels: string[]; values: number[] } }>('/api/employee/predictive-workload', {
+      params: { start: forecastStart.value, end: forecastEnd.value }
     })
     if (res.data) {
       predictiveData.value = res.data
@@ -771,12 +499,20 @@ const fetchPredictiveData = async () => {
   }
 }
 
-const reloadScopedData = async () => {
-  await Promise.all([
-    fetchLedger(),
-    fetchQueue(),
-    fetchPredictiveData()
-  ])
+// Active work items across the employee's offices — same feed /employee/working uses,
+// filtered to non-completed statuses so this card only shows what still needs action.
+const fetchQueue = async () => {
+  queueLoading.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/tracking/queue', {
+      params: { scope: 'LOCAL', status: 'CREATED,PICKED_UP,IN_TRANSIT,ARRIVED_AT_OFFICE', limit: 50 },
+    })
+    queueItems.value = res.data ?? []
+  } catch (err) {
+    console.error('[EmployeeDashboard] queue fetch error:', err)
+  } finally {
+    queueLoading.value = false
+  }
 }
 
 // ── GSAP Entrance Animation ────────────────────────────────────────────
@@ -822,14 +558,11 @@ const runEntranceAnimation = () => {
   }
 }
 
-// ── Watchers ───────────────────────────────────────────────────────────
-watch(currentScope, () => reloadScopedData())
-
 // ── Lifecycle ──────────────────────────────────────────────────────────
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
   runEntranceAnimation()
-  await Promise.all([fetchLedger(), fetchOffices(), fetchPredictiveData()])
+  await Promise.all([fetchLedger(), fetchOffices(), fetchQueue(), fetchPredictiveData()])
 })
 </script>
 
@@ -838,9 +571,4 @@ onMounted(async () => {
 .scope-fade-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .scope-fade-enter-from   { opacity: 0; transform: translateY(6px); }
 .scope-fade-leave-to     { opacity: 0; transform: translateY(-4px); }
-
-.scope-slide-enter-active { transition: all 0.28s cubic-bezier(0.16,1,0.3,1); }
-.scope-slide-leave-active { transition: all 0.18s ease; }
-.scope-slide-enter-from   { opacity: 0; transform: translateY(-8px); max-height: 0; }
-.scope-slide-leave-to     { opacity: 0; transform: translateY(-4px); }
 </style>

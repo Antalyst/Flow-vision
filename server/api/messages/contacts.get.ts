@@ -10,12 +10,28 @@ export default defineEventHandler(async (event) => {
     .from('offices')
     .select('id, name')
     .eq('org_id', actor.orgId)
-  
+
   if (officesErr) {
     throw createError({ statusCode: 500, message: officesErr.message })
   }
 
+  // Fetch all people in the same org too — a "contact" isn't just an office.
+  const { data: users, error: usersErr } = await client
+    .from('users')
+    .select('user_id, full_name')
+    .eq('org_id', actor.orgId)
+
+  if (usersErr) {
+    throw createError({ statusCode: 500, message: usersErr.message })
+  }
+
   const contacts = [
+    ...(users || []).map((u: any) => ({
+      id: u.user_id,
+      type: 'user',
+      name: u.full_name || 'User',
+      role: 'user'
+    })),
     ...(offices || []).map((o: any) => ({
       id: o.id,
       type: 'office',
@@ -24,9 +40,10 @@ export default defineEventHandler(async (event) => {
     }))
   ]
 
-  // Exclude current actor's own office if applicable
+  // Exclude the actor themself and their own office(s)
   const filteredContacts = contacts.filter(c => {
     if (c.type === 'office' && actor.officeIds.includes(c.id)) return false
+    if (c.type === 'user' && String(c.id) === String(actor.userId)) return false
     return true
   })
 

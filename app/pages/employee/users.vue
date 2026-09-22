@@ -8,11 +8,11 @@
           <Icon name="ph:users-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span :class="isDark ? 'text-white' : 'text-gray-800'">Internal Staff</span>
+          <span :class="isDark ? 'text-white' : 'text-gray-800'">Team Members</span>
         </div>
-        <h1 class="text-3xl font-bold tracking-tight leading-tight">Internal Desk Staff</h1>
+        <h1 class="text-3xl font-bold tracking-tight leading-tight">Team Members</h1>
         <p class="mt-1.5 text-sm" :class="mutedText">
-          Manage internal staff accounts assigned to specific office desks and tables.
+          Manage staff accounts assigned to your office desks.
         </p>
       </div>
       <button
@@ -34,12 +34,12 @@
       <table class="min-w-full divide-y text-sm" :class="isDark ? 'divide-onyx-border' : 'divide-gray-200'">
         <thead :class="isDark ? 'bg-white/[0.02]' : 'bg-gray-50'">
           <tr>
-            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Staff Member</th>
-            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Email Address</th>
-            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Assigned Desk</th>
-            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Status</th>
-            <th class="px-6 py-4 text-left text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
-            <th class="px-6 py-4 text-center text-[13px] font-bold uppercase tracking-widest" :class="mutedText">Actions</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Staff Member</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Email Address</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Assigned Desk</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Status</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
+            <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-widest" :class="mutedText">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
@@ -56,7 +56,7 @@
                   <Icon name="ph:users-light" class="h-7 w-7 text-candy-orange/60" />
                 </div>
                 <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No internal staff found</p>
-                <p class="text-xs" :class="mutedText">Add a staff member to assign them to a desk node.</p>
+                <p class="text-xs" :class="mutedText">Add a staff member to assign them to a desk.</p>
               </div>
             </td>
           </tr>
@@ -79,7 +79,7 @@
             <td class="px-6 py-4 text-xs" :class="mutedText">{{ user.email }}</td>
             <!-- Assigned desk -->
             <td class="px-6 py-4">
-              <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold"
+              <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
                 :class="isDark ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange' : 'border-orange-200 bg-orange-50 text-candy-orange'">
                 <Icon name="ph:desktop-light" class="h-3 w-3" />
                 {{ user.offices?.name || 'Unassigned' }}
@@ -88,7 +88,7 @@
             <!-- Status -->
             <td class="px-6 py-4">
               <span
-                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-bold uppercase tracking-wide"
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
                 :class="user.status === 1
                   ? 'bg-success/10 text-success border border-success/20'
                   : 'bg-danger/10 text-danger border border-danger/20'"
@@ -186,23 +186,23 @@
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                 />
-                <p v-if="isEditMode" class="mt-1 text-[14px]" :class="mutedText">Leave blank to keep existing password.</p>
+                <p v-if="isEditMode" class="mt-1 text-sm" :class="mutedText">Leave blank to keep existing password.</p>
               </div>
               <div>
-                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">Assigned Desk / Table</label>
+                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">Assigned Desk</label>
                 <select
                   v-model="form.office_id"
                   required
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
                 >
-                  <option value="" disabled>Select a desk node…</option>
+                  <option value="" disabled>Select a desk…</option>
                   <option v-for="table in tables" :key="table.id" :value="table.id">
                     {{ table.name }} ({{ table.code }})
                   </option>
                 </select>
                 <p v-if="!tables.length" class="mt-1 text-xs text-warning">
-                  No desks registered yet. Create a desk node in the Office Ledger first.
+                  No desks registered yet. Create a desk in Office QR Codes first.
                 </p>
               </div>
             </div>

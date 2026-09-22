@@ -6,7 +6,7 @@
     <!-- A. Header & Core Action Row -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange mb-1">Track Documents</p>
+        <p class="text-sm font-bold uppercase tracking-widest text-candy-orange mb-1">Track Documents</p>
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">All Documents</h1>
         <p class="mt-1 text-sm" :class="mutedTextClass">
           Upload and keep track of every document in your organization
@@ -16,6 +16,7 @@
       <div class="flex items-center gap-3">
         <NuxtLink
           to="/client/scan"
+          title="For a document that already has a QR sticker on it"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white dark:bg-onyx-card border px-4 py-2 font-medium transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
         >
@@ -24,6 +25,7 @@
         </NuxtLink>
         <button
           type="button"
+          title="For a new paper document that doesn't have a QR sticker yet"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white dark:bg-onyx-card border px-4 py-2 font-medium transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
           @click="isScannerModalOpen = true"
@@ -33,7 +35,7 @@
         </button>
         <button
           type="button"
-          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 font-medium text-white shadow-sm transition duration-200 hover:bg-candy-hover active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           @click="isUploadModalOpen = true"
         >
           <Icon name="ph:plus-bold" class="h-4 w-4" />
@@ -56,7 +58,7 @@
           <Icon name="ph:sparkle-fill" class="h-4 w-4 text-candy-orange" />
           Ask AI to find a document...
         </span>
-        <span class="rounded-full bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-[13px] font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
+        <span class="rounded-full bg-gray-200 dark:bg-white/10 px-2 py-0.5 text-sm font-bold text-gray-500 dark:text-gray-400 hidden sm:block">⌘K</span>
       </button>
 
       <select
@@ -137,7 +139,7 @@
                 @click="openDocumentPreview(doc)"
               >
                 <td class="min-w-72 px-5 py-4">
-                  <div class="font-semibold">{{ doc.title }}</div>
+                  <div class="font-semibold">{{ displayTitle(doc) }}</div>
                   <div class="mt-1 line-clamp-2 max-w-md text-xs" :class="mutedTextClass">
                     {{ doc.description }}
                   </div>
@@ -161,7 +163,7 @@
                     :class="statusClass(doc.status)"
                   >
                     <span class="h-1.5 w-1.5 rounded-full bg-current" :class="doc.status === 'Pending' ? 'animate-pulse' : ''"></span>
-                    {{ doc.status || 'Pending' }}
+                    {{ titleCase(doc.status || 'Pending') }}
                   </span>
                 </td>
               </tr>
@@ -307,6 +309,20 @@ const formatDate = (value?: string) => {
     year: 'numeric',
   }).format(new Date(value))
 }
+
+// Display-only fallback — never show a bare "Untitled Document" in the list.
+// DocumentRecord has no filename field, so this falls straight to
+// "Document from [Office] - [date]". Does not touch the stored title.
+const displayTitle = (doc: DocumentRecord) => {
+  const title = (doc.title || '').trim()
+  if (title && title.toLowerCase() !== 'untitled document') return title
+  return `Document from ${getOfficeName(doc)} - ${formatDate(doc.created_at)}`
+}
+
+// Display-only casing fix — stored status values arrive in mixed casing
+// (Pending / Approved / APPROVED); normalize to Title Case for consistency.
+const titleCase = (value: string) =>
+  (value || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 
 const statusClass = (status: string) => {
   switch ((status || 'Pending').toLowerCase()) {

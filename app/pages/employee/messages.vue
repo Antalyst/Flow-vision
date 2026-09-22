@@ -1,9 +1,9 @@
 <template>
-  <div class="absolute inset-0 flex flex-col" :class="isDark ? 'bg-onyx-background' : 'bg-white'">
+  <div class="absolute inset-0 flex flex-col" :class="isDark ? 'bg-onyx-black' : 'bg-white'">
     <!-- Mobile header -->
     <header class="flex shrink-0 items-center border-b px-4 py-3 sm:hidden"
       :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
-      <h1 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Messages</h1>
+      <h1 class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Messages</h1>
     </header>
 
     <div class="flex min-h-0 flex-1 overflow-hidden">
@@ -15,15 +15,23 @@
           isDark ? 'border-onyx-border bg-onyx-sidebar' : 'border-gray-200 bg-gray-50/50'
         ]"
       >
-        <div class="shrink-0 p-4">
+        <div class="shrink-0 p-4 space-y-3">
+          <button
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover"
+            @click="openCreateGroupModal"
+          >
+            <Icon name="ph:users-three-bold" class="h-4 w-4" />
+            New Group
+          </button>
           <div class="relative">
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search conversations..."
               class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors"
-              :class="isDark 
-                ? 'border-onyx-border bg-onyx-black text-white focus:border-candy-orange' 
+              :class="isDark
+                ? 'border-onyx-border bg-onyx-black text-white focus:border-candy-orange'
                 : 'border-gray-200 bg-white text-gray-900 focus:border-candy-orange'"
             />
           </div>
@@ -54,7 +62,7 @@
             >
               <div class="pointer-events-none flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-candy-orange/20 text-candy-orange"
                 :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
-                <Icon name="ph:files-light" class="pointer-events-none h-5 w-5" />
+                <Icon :name="conversationIcon(item)" class="pointer-events-none h-5 w-5" />
               </div>
               <div class="pointer-events-none min-w-0 flex-1">
                 <div class="pointer-events-none flex items-center justify-between">
@@ -90,7 +98,7 @@
         class="flex min-w-0 flex-1 flex-col transition-all"
         :class="[
           !currentActiveId ? 'hidden md:flex' : 'flex',
-          isDark ? 'bg-onyx-background' : 'bg-white'
+          isDark ? 'bg-onyx-black' : 'bg-white'
         ]"
       >
         <div v-if="currentActiveId" class="flex flex-1 flex-col min-h-0">
@@ -106,22 +114,22 @@
             </button>
             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-candy-orange/20 text-candy-orange"
               :class="isDark ? 'bg-candy-orange/10' : 'bg-candy-orange/5'">
-              <Icon name="ph:files-light" class="h-5 w-5" />
+              <Icon :name="conversationIcon(activeConversation)" class="h-5 w-5" />
             </div>
             <div class="min-w-0 flex-1 flex flex-col justify-center">
               <div class="flex items-center gap-2">
                 <template v-if="!isEditingTitle">
                   <h2 class="truncate text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                    {{ activeConversation?.title || 'Unknown Group' }}
+                    {{ activeConversation?.title || 'Conversation' }}
                   </h2>
                   <!-- Edit Title Button for groups -->
-                  <button v-if="activeConversation?.participants?.length > 1" @click="startEditingTitle" class="text-gray-400 hover:text-candy-orange">
+                  <button v-if="isGroupConversation(activeConversation)" @click="startEditingTitle" class="text-gray-400 hover:text-candy-orange">
                     <Icon name="ph:pencil-simple" class="h-4 w-4" />
                   </button>
                 </template>
                 <template v-else>
-                  <input 
-                    v-model="editedTitle" 
+                  <input
+                    v-model="editedTitle"
                     @keyup.enter="saveTitle"
                     @keyup.esc="isEditingTitle = false"
                     class="border border-candy-orange px-2 py-1 rounded-lg text-sm bg-transparent outline-none"
@@ -137,9 +145,9 @@
                   </button>
                 </template>
               </div>
-              
-              <!-- Participants subheader -->
-              <p v-if="activeConversation?.participants?.length" class="truncate text-xs mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+
+              <!-- Members subheader — only meaningful for an actual group, not a 1:1 chat -->
+              <p v-if="isGroupConversation(activeConversation)" class="truncate text-xs mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
                 Members: {{ activeConversation.participants.map(p => p.name).join(', ') }}
               </p>
             </div>
@@ -172,11 +180,11 @@
                       : 'border-gray-200 dark:border-onyx-border bg-gray-50 dark:bg-onyx-card text-gray-800 dark:text-gray-200 text-left'
                   ]"
                 >
-                  <p v-if="!isOwnMessage(msg)" class="text-[13px] font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
+                  <p v-if="!isOwnMessage(msg)" class="text-xs font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
 
                   <p class="whitespace-pre-wrap leading-relaxed">{{ msg.message_text }}</p>
                   <span 
-                    class="mt-1 block text-[13px] opacity-60"
+                    class="mt-1 block text-xs opacity-60"
                   >
                     {{ formatTimeOnly(msg.created_at) }}
                   </span>
@@ -214,78 +222,109 @@
 
         <!-- Empty State -->
         <div v-else class="flex h-full w-full flex-col items-center justify-center p-8 text-center"
-          :class="isDark ? 'bg-onyx-background' : 'bg-gray-50/50'">
+          :class="isDark ? 'bg-onyx-black' : 'bg-gray-50/50'">
           <div class="mb-6 flex h-24 w-24 items-center justify-center rounded-full border"
             :class="isDark ? 'border-candy-orange/20 bg-candy-orange/10' : 'border-candy-orange/30 bg-candy-orange/5'">
             <Icon name="ph:chats-light" class="h-10 w-10 text-candy-orange" />
           </div>
           <h2 class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Your Messages</h2>
           <p class="mt-2 max-w-sm text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
-            Select a conversation from the sidebar to view the message history and reply to your pipeline network.
+            Select a conversation from the sidebar to view the message history and reply.
           </p>
         </div>
       </main>
     </div>
 
     <!-- Create Group Modal -->
-    <div v-if="showCreateGroupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div class="w-full max-w-md rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" :class="isDark ? 'bg-[#18181b] border border-white/10' : 'bg-white'">
-        <div class="p-4 border-b flex justify-between items-center" :class="isDark ? 'border-white/5' : 'border-gray-200'">
+    <div v-if="showCreateGroupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+      <div class="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border shadow-2xl" :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'">
+        <div class="flex items-center justify-between border-b p-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
           <h3 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Create New Group</h3>
-          <button @click="showCreateGroupModal = false" class="text-gray-400 hover:text-gray-500 transition-colors">
+          <button @click="showCreateGroupModal = false" class="text-gray-400 transition-colors hover:text-candy-orange">
             <Icon name="ph:x-bold" class="h-5 w-5" />
           </button>
         </div>
-        <div class="p-4 border-b" :class="isDark ? 'border-white/5' : 'border-gray-200'">
-          <label class="block text-sm font-medium mb-1" :class="isDark ? 'text-gray-300' : 'text-gray-700'">Group Name</label>
+        <div class="border-b p-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
+          <label class="mb-1.5 block text-sm font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">Group Name</label>
           <input
             v-model="newGroupName"
             type="text"
             placeholder="e.g. Project Alpha (Optional)"
-            class="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors"
-            :class="isDark 
-              ? 'border-onyx-border bg-[#27272a] text-white focus:border-candy-orange' 
+            class="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-colors"
+            :class="isDark
+              ? 'border-onyx-border bg-onyx-black text-white focus:border-candy-orange'
               : 'border-gray-300 bg-white text-gray-900 focus:border-candy-orange'"
           />
         </div>
         <div class="flex-1 overflow-y-auto p-4">
-          <p class="text-sm font-medium mb-3" :class="isDark ? 'text-gray-300' : 'text-gray-700'">Select Contacts</p>
-          <div class="space-y-2">
-            <label
-              v-for="contact in chat.contacts"
-              :key="contact.id"
-              class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border"
-              :class="isDark ? 'border-white/5 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'"
-            >
-              <input
-                type="checkbox"
-                :value="contact"
-                v-model="selectedContacts"
-                class="h-4 w-4 rounded border-gray-300 text-candy-orange focus:ring-candy-orange bg-transparent"
-              />
-              <div class="flex-1">
-                <p class="text-sm font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">{{ contact.name }}</p>
+          <div v-if="chat.loadingContacts" class="flex flex-col items-center justify-center py-10 text-gray-400">
+            <Icon name="ph:spinner-gap-light" class="mb-2 h-6 w-6 animate-spin text-candy-orange" />
+            <p class="text-sm">Loading contacts...</p>
+          </div>
+          <template v-else>
+            <div v-if="peopleContacts.length" class="mb-4">
+              <p class="mb-2 text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-500' : 'text-gray-400'">People</p>
+              <div class="space-y-2">
+                <label
+                  v-for="contact in peopleContacts"
+                  :key="contact.id"
+                  class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors"
+                  :class="isDark ? 'border-onyx-border hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'"
+                >
+                  <input
+                    type="checkbox"
+                    :value="contact"
+                    v-model="selectedContacts"
+                    class="h-4 w-4 rounded border-gray-300 text-candy-orange focus:ring-candy-orange bg-transparent"
+                  />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">{{ contact.name }}</p>
+                  </div>
+                </label>
               </div>
-            </label>
+            </div>
+
+            <div v-if="officeContacts.length">
+              <p class="mb-2 text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Offices</p>
+              <div class="space-y-2">
+                <label
+                  v-for="contact in officeContacts"
+                  :key="contact.id"
+                  class="flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-colors"
+                  :class="isDark ? 'border-onyx-border hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'"
+                >
+                  <input
+                    type="checkbox"
+                    :value="contact"
+                    v-model="selectedContacts"
+                    class="h-4 w-4 rounded border-gray-300 text-candy-orange focus:ring-candy-orange bg-transparent"
+                  />
+                  <div class="flex-1">
+                    <p class="text-sm font-medium" :class="isDark ? 'text-white' : 'text-gray-900'">{{ contact.name }}</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div v-if="!chat.contacts?.length" class="py-8 text-center text-gray-400">
               <p class="text-sm">No other contacts found in your organization.</p>
             </div>
-          </div>
+          </template>
         </div>
-        <div class="p-4 border-t flex justify-end gap-2" :class="isDark ? 'border-white/5 bg-[#18181b]' : 'border-gray-200 bg-gray-50'">
+        <div class="flex justify-end gap-2 border-t p-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
           <button
             @click="showCreateGroupModal = false"
-            class="px-4 py-2 text-sm font-medium transition-colors"
-            :class="isDark ? 'hover:text-white text-gray-300' : 'hover:bg-gray-100 text-gray-700'"
+            class="rounded-xl px-4 py-2 text-sm font-medium transition-colors"
+            :class="isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:bg-gray-100'"
           >
             Cancel
           </button>
           <button
             @click="handleCreateGroup"
             :disabled="!selectedContacts?.length || creatingGroup"
-            class="px-4 py-2 text-sm font-medium rounded-lg bg-candy-orange text-white hover:bg-candy-hover transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex items-center gap-2 rounded-xl bg-candy-orange px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Icon v-if="creatingGroup" name="ph:spinner-gap" class="animate-spin h-4 w-4" />
+            <Icon v-if="creatingGroup" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
             Create
           </button>
         </div>
@@ -396,6 +435,7 @@ const mergedList = computed(() => {
       isExisting: true,
       targetOfficeId: null,
       title: c.title,
+      is_group: c.is_group ?? false,
       latest_message: c.latest_message,
       participants: c.participants
     })
@@ -409,13 +449,27 @@ const mergedList = computed(() => {
         isExisting: false,
         targetOfficeId: String(o.id),
         title: o.name,
+        is_group: false,
         latest_message: null,
-        participants: [o]
+        participants: [{ id: o.id, type: 'office', name: o.name }]
       })
     }
   }
   return list
 })
+
+// A conversation only counts as a "group" when it's flagged as one, or genuinely
+// has more than one other participant — never a solo office/person draft.
+const isGroupConversation = (item: any) => !!item && (item.is_group || (item.participants?.length ?? 0) > 1)
+
+const conversationIcon = (item: any) => {
+  if (isGroupConversation(item)) return 'ph:users-three-light'
+  if (item?.participants?.[0]?.type === 'office') return 'ph:buildings-light'
+  return 'ph:user-circle-light'
+}
+
+const peopleContacts = computed(() => chat.contacts.filter((c: any) => c.type === 'user'))
+const officeContacts = computed(() => chat.contacts.filter((c: any) => c.type === 'office'))
 
 const filteredInbox = computed(() => {
   if (!searchQuery.value) return mergedList.value

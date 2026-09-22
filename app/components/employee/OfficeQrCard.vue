@@ -14,18 +14,25 @@
               {{ office.name }}
             </h3>
           </div>
-          <p class="mt-1 font-mono text-[14px] font-semibold text-candy-orange">
+          <p class="mt-1 font-mono text-sm font-semibold text-candy-orange">
             {{ office.code || derivedCode }}
           </p>
+          <span
+            class="mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+            :class="office.assigned_user_profile ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'"
+          >
+            <Icon :name="office.assigned_user_profile ? 'ph:user-check-light' : 'ph:user-minus-light'" class="h-3 w-3" />
+            {{ office.assigned_user_profile ? office.assigned_user_profile.full_name : 'Unassigned' }}
+          </span>
         </div>
 
         <!-- Action buttons -->
-        <div class="flex flex-shrink-0 items-center gap-1">
+        <div v-if="editable" class="flex flex-shrink-0 items-center gap-1">
           <button
             type="button"
             class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
             :class="isDark ? 'text-gray-400' : 'text-gray-500'"
-            title="Edit office"
+            title="Edit desk"
             @click="emit('edit', office)"
           >
             <Icon name="ph:pencil-simple-bold" class="h-3.5 w-3.5" />
@@ -33,7 +40,7 @@
           <button
             type="button"
             class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
-            title="Delete office"
+            title="Delete desk"
             @click="emit('delete', office.id)"
           >
             <Icon name="ph:trash-bold" class="h-3.5 w-3.5" />
@@ -54,11 +61,11 @@
           />
           <div v-else class="flex flex-col items-center gap-2">
             <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin text-candy-orange" />
-            <span class="text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Generating…</span>
+            <span class="text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">Generating…</span>
           </div>
         </div>
 
-        <p class="text-center font-mono text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+        <p class="text-center font-mono text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
           {{ qrUri }}
         </p>
       </div>
@@ -70,13 +77,13 @@
       >
         <div>
           <p class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ office.doc_count ?? '—' }}</p>
-          <p class="mt-0.5 text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Documents</p>
+          <p class="mt-0.5 text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">Documents</p>
         </div>
         <div>
           <p class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ formatDate(office.created_at) }}
           </p>
-          <p class="mt-0.5 text-[13px]" :class="isDark ? 'text-gray-500' : 'text-gray-400'">Created</p>
+          <p class="mt-0.5 text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">Created</p>
         </div>
       </div>
 
@@ -101,30 +108,35 @@
 import QRCode from 'qrcode'
 import { computed, onMounted, ref } from 'vue'
 import { useTheme } from '~/composables/useTheme'
+import { buildCheckpointQrPayload } from '~/utils/checkpointQr'
 
 interface OfficeRecord {
-  id: number
+  id: string
   name: string
   code?: string
-  org_id: string | number
-  assigned_user: string | number
+  org_id: string
+  assigned_user?: string | null
+  assigned_user_profile?: { full_name: string; email: string } | null
   stage_id: number | null
   created_at: string
   doc_count?: number
 }
 
-const props = defineProps<{ office: OfficeRecord }>()
+const props = withDefaults(defineProps<{ office: OfficeRecord; editable?: boolean }>(), {
+  editable: true,
+})
 const emit  = defineEmits<{
   edit:   [office: OfficeRecord]
-  delete: [id: number]
+  delete: [id: string]
 }>()
 
 const { isDark } = useTheme()
 
 // Derive a code from the id if the DB column doesn't exist yet
-const derivedCode = computed(() => `OFF-${String(props.office.id).padStart(6, '0')}`)
+const derivedCode = computed(() => `OFF-${String(props.office.id).slice(0, 6).toUpperCase()}`)
 
-const qrUri    = computed(() => `flowvision://office/${props.office.id}`)
+// Canonical checkpoint deep link — same format the scan flow expects everywhere else.
+const qrUri    = computed(() => buildCheckpointQrPayload(props.office.id))
 const qrDataUrl = ref<string | null>(null)
 
 const generateQr = async () => {

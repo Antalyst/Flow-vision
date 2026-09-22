@@ -130,7 +130,7 @@
             :class="[
               enterClass,
               props.scope === 'LOCAL'
-                ? 'border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400 dark:border-orange-500/25 dark:bg-orange-500/[0.08]'
+                ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange dark:text-candy-orange dark:border-candy-orange/25 dark:bg-candy-orange/[0.08]'
                 : 'border-gray-200 bg-white text-neutral-500 dark:border-white/10 dark:bg-white/5 dark:text-neutral-400',
             ]"
           >
@@ -140,14 +140,14 @@
 
           <!-- Live indicator -->
           <span
-            class="fv-ai-enter-brand fv-ai-interactive inline-flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 transition-all duration-300 hover:scale-105 hover:border-orange-500/40 hover:shadow-[0_0_22px_rgba(249,115,22,0.18)] active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-orange-500/30"
+            class="fv-ai-enter-brand fv-ai-interactive inline-flex cursor-default items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-neutral-500 transition-colors duration-300 hover:border-candy-orange/40 active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-neutral-300 dark:hover:border-candy-orange/30"
             :class="enterClass"
           >
             <span class="relative flex h-1.5 w-1.5">
-              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
-              <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500"></span>
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-candy-orange opacity-75"></span>
+              <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-candy-orange"></span>
             </span>
-            FlowVision Intelligence
+            FlowVision AI
           </span>
         </div>
       </header>
@@ -170,14 +170,7 @@
             :style="staggerDelay(0, 420)"
           >
             <svg viewBox="0 0 24 24" fill="none" class="h-10 w-10">
-              <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="url(#splash-gemini-gradient)" />
-              <defs>
-                <linearGradient id="splash-gemini-gradient" x1="0" y1="0" x2="24" y2="24">
-                  <stop stop-color="#4285F4" />
-                  <stop offset="0.5" stop-color="#EA4335" />
-                  <stop offset="1" stop-color="#FBBC05" />
-                </linearGradient>
-              </defs>
+              <path d="M12 0C12 6.62742 17.3726 12 24 12C17.3726 12 12 17.3726 12 24C12 17.3726 6.62742 12 0 12C6.62742 12 12 6.62742 12 0Z" fill="#EE4D2D" />
             </svg>
           </div>
           <h1
@@ -185,7 +178,7 @@
             :class="enterClass"
             :style="staggerDelay(1, 420)"
           >
-            Where should we start?
+            Ask about your documents
           </h1>
           <p
             class="fv-ai-enter-hero mt-3 max-w-md text-sm leading-relaxed text-neutral-500 dark:text-neutral-400"
@@ -193,15 +186,28 @@
             :style="staggerDelay(2, 420)"
           >
             <template v-if="props.scope === 'LOCAL'">
-              Ask anything about your office branches. FlowVision Intelligence will
-              analyze only the records scoped to your assigned sub-offices — nothing else.
+              Ask in plain language. FlowVision AI only looks at your own office's records.
             </template>
             <template v-else>
-              Ask in plain language and FlowVision will assemble it from your entire
-              organization's records — securely scoped to your tenant.
+              Ask in plain language. FlowVision AI only looks at your organization's own records.
             </template>
           </p>
 
+          <div
+            class="fv-ai-enter-hero mt-6 flex flex-wrap items-center justify-center gap-2"
+            :class="enterClass"
+            :style="staggerDelay(3, 420)"
+          >
+            <button
+              v-for="example in examplePrompts"
+              :key="example"
+              type="button"
+              class="rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-sm text-neutral-600 transition-colors hover:border-candy-orange/50 hover:text-candy-orange dark:border-white/10 dark:bg-white/5 dark:text-neutral-300"
+              @click="inputPrompt = example"
+            >
+              {{ example }}
+            </button>
+          </div>
         </div>
 
         <!-- Fluid chat stream -->
@@ -294,11 +300,11 @@
                     v-for="doc in msg.inlineDocuments"
                     :key="doc.id"
                     type="button"
-                    class="fv-ai-interactive group flex w-full flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-all duration-300 active:scale-[0.99] cursor-pointer hover:bg-opacity-80 transition dark:border-white/10 dark:bg-black/20 hover:border-orange-500/40 hover:shadow-sm"
+                    class="fv-ai-interactive group flex w-full flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-all duration-300 active:scale-[0.99] cursor-pointer hover:bg-opacity-80 transition dark:border-white/10 dark:bg-black/20 hover:border-candy-orange/40 hover:shadow-sm"
                     @click="navigateTo(`/client/documents?id=${doc.id}`)"
                   >
                     <div class="flex items-center gap-3">
-                      <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-orange-500/20 bg-orange-500/10 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/20 dark:text-orange-400">
+                      <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-candy-orange/20 bg-candy-orange/10 text-candy-orange dark:border-candy-orange/30 dark:bg-candy-orange/20 dark:text-candy-orange">
                         <Icon name="ph:file-text" class="h-4 w-4" />
                       </span>
                       <span class="min-w-0 flex-1">
@@ -309,7 +315,7 @@
                           {{ doc.description || 'No description provided.' }}
                         </span>
                       </span>
-                      <div class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 transition-colors group-hover:bg-orange-500/10 group-hover:text-orange-600 dark:bg-white/10 dark:text-neutral-500 dark:group-hover:bg-orange-500/20 dark:group-hover:text-orange-400">
+                      <div class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-neutral-400 transition-colors group-hover:bg-candy-orange/10 group-hover:text-candy-orange dark:bg-white/10 dark:text-neutral-500 dark:group-hover:bg-candy-orange/20 dark:group-hover:text-candy-orange">
                         <Icon name="ph:arrow-right" class="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>
                     </div>
@@ -325,7 +331,7 @@
               <AiGeminiLoader class="mt-1 flex-shrink-0" />
               <div class="flex items-center px-1 py-1">
                 <Transition name="think" mode="out-in">
-                  <span :key="thinkingStageText" class="text-[16px] bg-gradient-to-r from-blue-500 via-red-400 to-yellow-500 bg-clip-text text-transparent italic">{{ thinkingStageText }}</span>
+                  <span :key="thinkingStageText" class="text-[16px] text-candy-orange italic">{{ thinkingStageText }}</span>
                 </Transition>
               </div>
             </div>
@@ -346,21 +352,21 @@
                 v-model="inputPrompt"
                 :disabled="isLoading"
                 rows="1"
-                placeholder="Ask FlowVision anything about your documents…"
+                placeholder="Ask a question about your documents…"
                 class="max-h-40 flex-1 resize-none bg-transparent px-4 py-3 text-[17px] text-slate-800 placeholder-neutral-500 focus:outline-none disabled:opacity-50 dark:text-slate-200 dark:placeholder-neutral-400"
                 @keydown.enter.exact.prevent="submitQuery"
               ></textarea>
               <button
                 type="submit"
                 :disabled="isLoading || !inputPrompt.trim()"
-                class="fv-ai-interactive flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white transition-all duration-300 hover:scale-105 hover:bg-neutral-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:scale-100 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                class="fv-ai-interactive flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange text-white transition-colors duration-300 hover:bg-candy-hover active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
               >
                 <Icon v-if="isLoading" name="ph:spinner-gap" class="h-5 w-5 animate-spin" />
                 <Icon v-else name="ph:arrow-up" class="h-5 w-5" />
               </button>
             </form>
             <p class="mt-2 text-center text-[14px] text-neutral-500 dark:text-neutral-500">
-              FlowVision Intelligence can make mistakes. Verify important facts.
+              FlowVision AI can make mistakes. Double-check anything important.
             </p>
           </div>
         </div>
@@ -392,7 +398,7 @@
                 <span
                   class="hidden sm:inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[13px] font-bold uppercase tracking-wider"
                   :class="props.scope === 'LOCAL'
-                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400'
+                    ? 'bg-candy-orange text-candy-hover dark:bg-candy-orange/10 dark:text-candy-orange'
                     : 'bg-neutral-100 text-neutral-600 dark:bg-white/10 dark:text-neutral-400'"
                 >
                   {{ scopeLabel }}
@@ -571,10 +577,23 @@ const brandLogo = computed(() => (isDark.value ? '/logo/new-logo.png' : '/logo/n
 
 // ── Scope-derived helpers ──────────────────────────────────────────────
 const scopeLabel = computed(() =>
-  props.scope === 'LOCAL' ? 'Office View' : 'Org View',
+  props.scope === 'LOCAL' ? 'My Office' : 'All Offices',
 )
 const scopeIcon = computed(() =>
   props.scope === 'LOCAL' ? 'ph:buildings-fill' : 'ph:globe-hemisphere-west-fill',
+)
+const examplePrompts = computed(() =>
+  props.scope === 'LOCAL'
+    ? [
+        'Which documents are overdue?',
+        'What came in this week?',
+        'Anything waiting on me?',
+      ]
+    : [
+        'Which offices are behind schedule?',
+        'Summarize this week\'s activity',
+        'Which documents are overdue?',
+      ],
 )
 
 const inputPrompt = ref('')

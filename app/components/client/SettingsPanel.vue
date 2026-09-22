@@ -7,7 +7,7 @@
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
-        <p class="mt-2 text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+        <p class="mt-2 text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
           Manage the FlowVision dashboard appearance.
         </p>
       </div>
@@ -30,7 +30,7 @@
       :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
     >
       <p class="text-sm font-semibold">{{ isDark ? 'Dark Mode' : 'Light Mode' }}</p>
-      <p class="mt-1 text-xs" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+      <p class="mt-1 text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
         Backgrounds, borders, surfaces, and text colors respond to the shared theme state.
       </p>
     </div>
@@ -40,7 +40,7 @@
       :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'"
     >
       <p class="text-sm font-semibold">Account</p>
-      <p class="mt-1 text-xs" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+      <p class="mt-1 text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
         Signed in as <span class="font-medium" :class="isDark ? 'text-gray-300' : 'text-gray-700'">{{ auth.user?.email || 'your account' }}</span>
       </p>
       <button

@@ -53,6 +53,8 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await queryBuilder.order('created_at', { ascending: false })
 
+  let offices = data ?? []
+
   if (error) {
     // Fallback query if OR filter fails
     const { data: fallbackData } = await client
@@ -62,9 +64,31 @@ export default defineEventHandler(async (event) => {
       .eq('assigned_user', userId)
       .order('created_at', { ascending: false })
 
-    return { success: true, data: fallbackData ?? [] }
+    offices = fallbackData ?? []
   }
 
-  return { success: true, data: data ?? [] }
+  if (offices.length === 0) {
+    return { success: true, data: [] }
+  }
+
+  // Count documents currently registered at each office.
+  const officeIds = offices.map((o: any) => o.id)
+  const docCountByOffice: Record<string, number> = {}
+  const { data: docs } = await client
+    .from('documents')
+    .select('office_id')
+    .eq('org_id', orgId)
+    .in('office_id', officeIds)
+  for (const d of (docs || [])) {
+    const id = String(d.office_id)
+    docCountByOffice[id] = (docCountByOffice[id] || 0) + 1
+  }
+
+  const enriched = offices.map((o: any) => ({
+    ...o,
+    doc_count: docCountByOffice[String(o.id)] ?? 0,
+  }))
+
+  return { success: true, data: enriched }
 })
 

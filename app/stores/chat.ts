@@ -9,6 +9,9 @@ export interface ConversationParticipant {
 export interface Conversation {
   id: string
   title: string
+  is_group?: boolean
+  group_name?: string | null
+  avatar_url?: string | null
   participants: ConversationParticipant[]
   latest_message?: {
     text: string

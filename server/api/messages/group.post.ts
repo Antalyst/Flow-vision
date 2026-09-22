@@ -21,9 +21,11 @@ export default defineEventHandler(async (event) => {
   const selfId = senderOfficeId || (actualSenderUserId || actor.userId)
 
   // 1. Create a new conversation
+  // is_group/group_name are what the inbox list (conversations.get.ts) actually reads for
+  // the display title — title alone is not enough, or the name typed here won't show up.
   const { data: conv, error: convErr } = await client
     .from('conversations')
-    .insert({ org_id: actor.orgId, title: title || null })
+    .insert({ org_id: actor.orgId, title: title || null, is_group: true, group_name: title || null })
     .select('id')
     .single()
 

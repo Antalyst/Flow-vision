@@ -4,11 +4,11 @@
     <!-- ── Page header ────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange mb-1">Track Documents</p>
+        <p class="text-sm font-bold uppercase tracking-widest text-candy-orange mb-1">Track Documents</p>
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl" :class="isDark ? 'text-white' : 'text-gray-900'">
           Live Tracking
         </h1>
-        <p class="mt-1 text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+        <p class="mt-1 text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
           See where every document is right now · {{ auth.currentOrg?.name }}
         </p>
       </div>
@@ -28,7 +28,7 @@
           <Icon :name="chip.icon" class="h-3.5 w-3.5" />
           <span>{{ chip.label }}</span>
           <span
-            class="rounded-full px-1.5 py-0.5 text-[13px]"
+            class="rounded-full px-1.5 py-0.5 text-sm"
             :class="statusFilter === chip.status ? 'bg-white/20' : (isDark ? 'bg-white/10' : 'bg-black/5')"
           >{{ queueSummary[chip.countKey] ?? 0 }}</span>
         </button>
@@ -38,7 +38,7 @@
     <!-- ── KPI row ─────────────────────────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
       <div class="flex flex-col justify-between gap-3 rounded-2xl p-4 bg-candy-orange shadow-lg shadow-candy-orange/15">
-        <span class="text-[13px] font-bold uppercase tracking-wider text-white/85">Total</span>
+        <span class="text-sm font-bold uppercase tracking-wider text-white/85">Total</span>
         <p class="text-2xl font-bold text-white">{{ queueSummary.total ?? 0 }}</p>
       </div>
       <div
@@ -51,7 +51,7 @@
           <span class="flex h-7 w-7 items-center justify-center rounded-lg" :class="kpi.iconBg">
             <Icon :name="kpi.icon" class="h-3.5 w-3.5" :class="kpi.iconColor" />
           </span>
-          <span class="text-[13px] font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+          <span class="text-sm font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
             {{ kpi.label }}
           </span>
         </div>
@@ -78,7 +78,7 @@
             <h2 class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
               Documents on the Move
             </h2>
-            <p class="text-xs mt-0.5" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <p class="text-xs mt-0.5" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
               {{ filteredQueue.length }} documents{{ statusFilter ? ` · ${STATUS_LABELS[statusFilter]}` : '' }}
             </p>
           </div>
@@ -133,18 +133,18 @@
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-2">
                 <p class="truncate text-sm font-semibold" :class="isDark ? 'text-gray-100' : 'text-gray-900'">
-                  {{ doc.title || 'Untitled Document' }}
+                  {{ displayTitle(doc) }}
                 </p>
                 <span
-                  class="flex-shrink-0 rounded-full px-2.5 py-0.5 text-[13px] font-bold uppercase tracking-wide"
+                  class="flex-shrink-0 rounded-full px-2.5 py-0.5 text-sm font-bold uppercase tracking-wide"
                   :class="statusBadgeClass(doc.tracking_status)"
                 >
                   {{ STATUS_LABELS[doc.tracking_status] ?? doc.tracking_status }}
                 </span>
               </div>
 
-              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[14px]"
-                :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+              <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm"
+                :class="isDark ? 'text-gray-400' : 'text-white-muted'">
                 <span v-if="doc.stage_name" class="flex items-center gap-1">
                   <Icon name="ph:steps-fill" class="h-3 w-3" />
                   {{ doc.stage_name }}
@@ -178,7 +178,7 @@
           <div v-if="!filteredQueue.length" class="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <Icon name="ph:package-fill" class="h-10 w-10 text-gray-300" />
             <p class="font-semibold" :class="isDark ? 'text-gray-300' : 'text-gray-600'">No documents here</p>
-            <p class="text-sm" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
               {{ statusFilter ? 'Try a different filter or refresh.' : 'Everything is either finished or nothing has been added yet.' }}
             </p>
           </div>
@@ -194,7 +194,7 @@
           <h2 class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ selectedDoc ? 'Delivery Journey' : 'Choose a Document' }}
           </h2>
-          <p v-if="selectedDoc" class="mt-0.5 truncate text-xs" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+          <p v-if="selectedDoc" class="mt-0.5 truncate text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
             {{ selectedDoc.title }}
           </p>
         </div>
@@ -205,7 +205,7 @@
           class="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center"
         >
           <Icon name="ph:cursor-click" class="h-10 w-10 text-gray-300" />
-          <p class="text-sm" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+          <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
             Click on any document to see its full delivery journey.
           </p>
         </div>
@@ -235,7 +235,7 @@
             class="space-y-2 border-t pt-4"
             :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
           >
-            <p class="text-[13px] font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
+            <p class="text-sm font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
               Update Status
             </p>
             <button
@@ -303,6 +303,16 @@ interface TimelineData {
     is_complete: boolean
     progress_pct: number
   }
+}
+
+// Display-only fallback — never show a bare "Untitled Document" in the queue.
+// QueueDoc has no office field here, so this falls back to the route name
+// and date instead. Does not touch the stored title.
+const displayTitle = (doc: QueueDoc) => {
+  const title = (doc.title || '').trim()
+  if (title && title.toLowerCase() !== 'untitled document') return title
+  const when = new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(doc.created_at))
+  return doc.stage_name ? `${doc.stage_name} document - ${when}` : `Document - ${when}`
 }
 
 // ── Constants ──────────────────────────────────────────────────────────

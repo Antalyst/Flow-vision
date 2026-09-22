@@ -1,8 +1,8 @@
 <template>
-  <div class="relative mx-auto aspect-[1/1.414] max-h-[550px] overflow-y-auto rounded-none border border-gray-200 bg-white p-6 text-black shadow-2xl">
+  <div class="relative mx-auto h-full aspect-[1/1.414] max-h-full overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 text-black shadow-2xl">
     <!-- Top frame badge -->
     <div class="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center">
-      <span class="mt-2 rounded-none bg-gray-900/90 px-3 py-1 text-[13px] font-bold uppercase tracking-[0.2em] text-white">
+      <span class="mt-2 rounded-full bg-gray-900/90 px-3 py-1 text-sm font-bold uppercase tracking-[0.2em] text-white">
         Live Document Preview
       </span>
     </div>
@@ -12,7 +12,7 @@
       v-if="isProcessing"
       class="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-white/80"
     >
-      <div class="h-8 w-8 animate-spin rounded-none border-4 border-candy-orange border-t-transparent"></div>
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-candy-orange border-t-transparent"></div>
       <p class="text-xs font-bold uppercase text-candy-orange">Rendering…</p>
     </div>
 
@@ -56,9 +56,9 @@
         Live preview rendering is not available for this file format in the browser.
       </p>
       
-      <div v-if="qrBase64" class="mt-4 flex flex-col items-center gap-2 rounded-none border border-dashed border-candy-orange/40 bg-candy-orange/5 p-4">
+      <div v-if="qrBase64" class="mt-4 flex flex-col items-center gap-2 rounded-xl border border-dashed border-candy-orange/40 bg-candy-orange/5 p-4">
         <img :src="qrBase64" class="h-24 w-24 bg-white" alt="Tracking QR Code" />
-        <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Tracking QR Generated</p>
+        <p class="text-sm font-bold uppercase tracking-wider text-candy-orange">Tracking QR Generated</p>
       </div>
     </div>
 

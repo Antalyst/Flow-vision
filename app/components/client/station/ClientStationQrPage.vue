@@ -2,7 +2,7 @@
   <section class="mx-auto w-full max-w-2xl space-y-6 pb-24 lg:pb-8">
     <header>
       <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
-      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Origin Checkpoint</p>
+      <p class="text-sm font-bold uppercase tracking-widest text-candy-orange">Origin Checkpoint</p>
       <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
         My Station QR
       </h1>

@@ -13,7 +13,7 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-candy-orange/20 transition-all duration-200 hover:scale-[1.02] hover:bg-candy-hover active:scale-[0.98]"
+        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-candy-hover active:scale-[0.98]"
         @click="openProvisionDrawer"
       >
         <Icon name="ph:motorcycle-fill" class="h-4 w-4" />
@@ -35,7 +35,7 @@
           </span>
           <div>
             <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ stat.value }}</p>
-            <p class="text-[14px] font-medium" :class="mutedClass">{{ stat.label }}</p>
+            <p class="text-sm font-medium" :class="mutedClass">{{ stat.label }}</p>
           </div>
         </div>
       </div>
@@ -57,7 +57,7 @@
           {{ tab.label }}
           <span
             v-if="tabCount(tab.value) > 0"
-            class="ml-1.5 rounded-full px-1.5 py-0.5 text-[13px] font-bold"
+            class="ml-1.5 rounded-full px-1.5 py-0.5 text-sm font-bold"
             :class="tab.value === 'messenger'
               ? 'bg-candy-orange/20 text-candy-orange'
               : tab.value === 'employee'
@@ -145,7 +145,7 @@
                 <!-- Role badge -->
                 <td class="whitespace-nowrap px-6 py-4">
                   <span
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[14px] font-bold uppercase tracking-wider"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold uppercase tracking-wider"
                     :class="member.role === 'messenger'
                       ? 'bg-candy-orange/10 text-candy-orange'
                       : (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')"
@@ -163,7 +163,7 @@
                   <button
                     type="button"
                     :title="member.status === 1 ? 'Click to deactivate' : 'Click to activate'"
-                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[14px] font-semibold transition-all hover:opacity-80"
+                    class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-semibold transition-all hover:opacity-80"
                     :class="member.status === 1
                       ? 'bg-success/10 text-success'
                       : 'bg-gray-400/10 text-gray-500 dark:text-gray-400'"
@@ -274,7 +274,7 @@
             :class="borderClass"
           >
             <div>
-              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+              <p class="text-sm font-bold uppercase tracking-widest text-candy-orange">
                 {{ drawerMode === 'edit' ? 'Edit' : 'Add' }}
               </p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
@@ -302,7 +302,7 @@
               <Icon :name="form.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-candy-orange" />
               <div>
                 <p class="text-sm font-bold text-candy-orange">Role: {{ form.role === 'messenger' ? 'Messenger' : 'Employee' }}</p>
-                <p class="text-[14px]" :class="mutedClass">
+                <p class="text-sm" :class="mutedClass">
                   {{ drawerMode === 'edit' ? 'Role cannot be changed here.' : 'Fixed — only messenger roles can be provisioned here.' }}
                 </p>
               </div>
@@ -363,7 +363,7 @@
                   <Icon :name="showPassword ? 'ph:eye-slash' : 'ph:eye'" class="h-4 w-4" />
                 </button>
               </div>
-              <p class="mt-1.5 text-[14px]" :class="mutedClass">
+              <p class="mt-1.5 text-sm" :class="mutedClass">
                 {{ drawerMode === 'edit' ? 'Leave blank to keep the current password.' : 'Share this with the messenger securely. They can change it after first login.' }}
               </p>
             </label>

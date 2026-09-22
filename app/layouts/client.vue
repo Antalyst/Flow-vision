@@ -77,16 +77,10 @@
           <div v-if="!isSidebarMinimized" class="relative mb-5">
             <Icon name="ph:magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search anything"
-              class="w-full pl-9 pr-16 py-2.5 text-xs outline-none transition border rounded-none"
+              class="w-full pl-9 pr-3 py-2.5 text-xs outline-none transition border rounded-xl"
               :class="isDark
                 ? 'bg-onyx-black/50 border-onyx-border text-gray-300 placeholder:text-gray-500 focus:border-candy-orange/50'
                 : 'bg-gray-50 border-gray-200 text-gray-700 placeholder:text-gray-400 focus:border-candy-orange/50'" />
-            <div class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <kbd class="px-1.5 py-0.5 rounded-none text-[13px] font-semibold"
-                :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">⌘</kbd>
-              <kbd class="px-1.5 py-0.5 rounded-none text-[13px] font-semibold"
-                :class="isDark ? 'bg-onyx-border text-gray-400' : 'bg-gray-200 text-gray-500'">K</kbd>
-            </div>
           </div>
         </div>
 
@@ -103,7 +97,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 md:p-8" :class="isDark ? 'bg-onyx-black' : 'bg-white-surface'">
+      <main class="relative z-0 h-full min-w-0 flex-1 overflow-y-auto p-4 pb-24 md:p-8 md:pb-28" :class="isDark ? 'bg-onyx-black' : 'bg-white-surface'">
         <div class="w-full">
           <ClientOrgSetup v-if="auth.needsOrgSetup" />
           <slot v-else />
@@ -122,7 +116,7 @@
             ? 'text-candy-orange'
             : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'">
           <Icon :name="item.icon" class="w-5 h-5" />
-          <span class="text-[13px] font-semibold">{{ item.label }}</span>
+          <span class="text-sm font-semibold">{{ item.label }}</span>
         </NuxtLink>
       </div>
     </nav>

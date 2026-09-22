@@ -15,7 +15,7 @@
 
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <div v-for="kpi in kpiCards" :key="kpi.label" class="rounded-xl border p-4" :class="panelClass">
-        <p class="text-[13px] font-bold uppercase tracking-wider" :class="mutedClass">{{ kpi.label }}</p>
+        <p class="text-sm font-bold uppercase tracking-wider" :class="mutedClass">{{ kpi.label }}</p>
         <p class="mt-1 text-xl font-bold" :class="headingClass">{{ kpi.value }}</p>
       </div>
     </div>
@@ -32,7 +32,7 @@
 
       <div v-else class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
-          <thead class="border-b text-[13px] font-bold uppercase tracking-wider" :class="borderClass">
+          <thead class="border-b text-sm font-bold uppercase tracking-wider" :class="borderClass">
             <tr :class="mutedClass">
               <th class="px-4 py-3">Office</th>
               <th class="px-4 py-3">Documents</th>
@@ -54,11 +54,11 @@
               <td class="px-4 py-3">
                 <span
                   v-if="station.is_bottleneck"
-                  class="inline-flex rounded-full border border-candy-orange/40 px-2 py-0.5 text-[13px] font-bold uppercase text-candy-orange"
+                  class="inline-flex rounded-full border border-candy-orange/40 px-2 py-0.5 text-sm font-bold uppercase text-candy-orange"
                 >
                   High Load
                 </span>
-                <span v-else class="text-[13px]" :class="mutedClass">—</span>
+                <span v-else class="text-sm" :class="mutedClass">—</span>
               </td>
             </tr>
           </tbody>

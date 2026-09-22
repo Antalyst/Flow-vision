@@ -73,7 +73,7 @@
                     {{ formatTimeRelative(item.latest_message?.created_at) }}
                   </span>
                 </div>
-                <p class="pointer-events-none mt-1 truncate text-xs" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+                <p class="pointer-events-none mt-1 truncate text-xs" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
                   <span v-if="item.latest_message" class="pointer-events-none" :class="item.latest_message.sender_id === auth.user?.user_id ? 'font-medium' : ''">
                     {{ item.latest_message.sender_id === auth.user?.user_id ? 'You: ' : '' }}{{ item.latest_message.text }}
                   </span>
@@ -139,7 +139,7 @@
               </div>
               
               <!-- Participants subheader -->
-              <p v-if="activeConversation?.participants?.length" class="truncate text-xs mt-0.5" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+              <p v-if="activeConversation?.participants?.length" class="truncate text-xs mt-0.5" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
                 Members: {{ activeConversation.participants.map(p => p.name).join(', ') }}
               </p>
             </div>
@@ -172,11 +172,11 @@
                       : 'border-gray-200 dark:border-onyx-border bg-gray-50 dark:bg-onyx-card text-gray-800 dark:text-gray-200 text-left'
                   ]"
                 >
-                  <p v-if="!isOwnMessage(msg)" class="text-[13px] font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
+                  <p v-if="!isOwnMessage(msg)" class="text-sm font-bold mb-0.5 opacity-70">{{ getSenderName(msg) }}</p>
 
                   <p class="whitespace-pre-wrap leading-relaxed">{{ msg.message_text }}</p>
                   <span 
-                    class="mt-1 block text-[13px] opacity-60"
+                    class="mt-1 block text-sm opacity-60"
                   >
                     {{ formatTimeOnly(msg.created_at) }}
                   </span>
@@ -220,7 +220,7 @@
             <Icon name="ph:chats-light" class="h-10 w-10 text-candy-orange" />
           </div>
           <h2 class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Your Messages</h2>
-          <p class="mt-2 max-w-sm text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+          <p class="mt-2 max-w-sm text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
             Select a conversation to view your messages and reply.
           </p>
         </div>

@@ -44,7 +44,7 @@
         </span>
         <div>
           <h2 class="text-sm font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Event Timeline</h2>
-          <p class="text-[14px]" :class="mutedClass">Document pickup, drop-off, and compliance events</p>
+          <p class="text-sm" :class="mutedClass">Document pickup, drop-off, and compliance events</p>
         </div>
       </div>
 

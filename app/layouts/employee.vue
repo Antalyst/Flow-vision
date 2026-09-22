@@ -83,13 +83,13 @@
                 Employee
               </span>
               <span
-                v-if="auth.user?.org_id"
-                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold truncate max-w-[100px]"
+                v-if="auth.currentOrg?.name"
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold truncate max-w-[140px]"
                 :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
-                :title="`Org ID: ${auth.user.org_id}`"
+                :title="auth.currentOrg.name"
               >
                 <Icon name="ph:buildings-light" class="w-3 h-3 flex-shrink-0" />
-                Org {{ auth.user.org_id }}
+                {{ auth.currentOrg.name }}
               </span>
             </div>
           </div>
@@ -157,7 +157,7 @@
     </nav>
 
     <!-- AI Overlay Chat -->
-    <AiOverlay role="employee" scope="LOCAL" theme="orange" />
+    <AiOverlay role="employee" scope="LOCAL" />
 
     <!-- ── Global Toast Notification ──────────────────────────────────── -->
     <Teleport to="body">

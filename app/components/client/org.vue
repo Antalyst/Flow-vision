@@ -9,14 +9,14 @@
           <img :src="brandLogo" class="h-10 w-10" alt="FlowVision" />
         </div>
         <h1 class="text-2xl font-bold tracking-tight">Welcome to FlowVision</h1>
-        <p class="mt-2 text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+        <p class="mt-2 text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
           Create your organization workspace to continue.
         </p>
       </div>
 
       <form class="space-y-5" @submit.prevent="handleCreateOrg">
         <label class="block">
-          <span class="text-xs font-semibold uppercase tracking-wide" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+          <span class="text-xs font-semibold uppercase tracking-wide" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
             Organization Name
           </span>
           <input

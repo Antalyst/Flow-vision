@@ -11,11 +11,11 @@
     <Transition name="preview-slide">
       <aside
         v-if="isOpen && document"
-        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl transition-transform duration-300 backdrop-blur-2xl"
+        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl transition-transform duration-300"
         :class="[
           isDark
-            ? 'border-white/10 bg-[#111113]/90 text-white'
-            : 'border-gray-200 bg-white/95 text-gray-900',
+            ? 'border-white/10 bg-onyx-black text-white'
+            : 'border-gray-200 bg-white-pure text-gray-900',
           widthClass,
         ]"
       >
@@ -26,17 +26,17 @@
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0 flex-1">
-              <div class="mb-2 h-1 w-10 rounded-full bg-candy-orange" />
               <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
                 Document Details
               </p>
-              <h2 class="mt-1 truncate text-xl font-bold">
+              <h2 class="mt-1 text-xl font-bold leading-snug">
                 {{ document.title }}
               </h2>
             </div>
             <button
               type="button"
-              class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+              class="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg transition hover:bg-candy-orange/10 hover:text-candy-orange"
+              :class="isDark ? 'bg-white/5' : 'bg-gray-100'"
               aria-label="Close preview"
               @click="emit('close')"
             >
@@ -59,113 +59,89 @@
               class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
               :class="priorityBadgeClass"
             >
-              {{ displayPriority }} Priority
-            </span>
-            <span
-              v-if="creatorName"
-              class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold"
-              :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
-            >
-              <Icon name="ph:user-circle-fill" class="h-3.5 w-3.5 text-candy-orange" />
-              {{ creatorName }}
+              Priority: {{ displayPriority }}
             </span>
           </div>
-
-          <p class="mt-3 font-mono text-[14px]" :class="mutedClass">
-            Reference ID: {{ document.id }}
-          </p>
         </header>
 
         <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div class="flex-1 space-y-8 overflow-y-auto px-8 py-8">
-            <!-- Details -->
-            <div class="stagger-block overflow-hidden rounded-2xl border" :class="cellClass">
-              <div class="p-4">
-                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Description</p>
-                <p class="mt-2 text-sm leading-relaxed" :class="mutedClass">
-                  {{ document.description?.trim() || 'No description provided.' }}
-                </p>
-              </div>
-              <div class="divide-y border-t" :class="isDark ? 'divide-onyx-border border-onyx-border' : 'divide-gray-200 border-gray-200'">
-                <div class="flex items-center justify-between gap-3 px-4 py-3">
-                  <span class="text-xs font-semibold" :class="mutedClass">Created</span>
-                  <span class="text-sm font-semibold">{{ formatDate(document.created_at) }}</span>
-                </div>
-                <div class="flex items-center justify-between gap-3 px-4 py-3">
-                  <span class="text-xs font-semibold" :class="mutedClass">Workflow</span>
-                  <span class="text-sm font-semibold">{{ stageName || 'Unassigned' }}</span>
-                </div>
-                <div class="flex items-center justify-between gap-3 px-4 py-3">
-                  <span class="text-xs font-semibold" :class="mutedClass">Destination</span>
-                  <span class="truncate text-sm font-semibold">{{ targetOfficeLabel }}</span>
-                </div>
-              </div>
+            <!-- What is this document? -->
+            <div class="stagger-block">
+              <p class="text-sm font-semibold" :class="mutedClass">What is this document?</p>
+              <p class="mt-2 text-[15px] leading-relaxed" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
+                {{ document.description?.trim() || 'No description provided.' }}
+              </p>
             </div>
 
-            <!-- §2 Fulfillment pipeline timeline -->
+            <!-- §2 Delivery progress -->
             <section class="stagger-block">
-              <div class="mb-5 flex items-center gap-2 text-sm font-semibold text-candy-orange">
-                <Icon name="ph:path" class="h-4 w-4" />
-                Routing Timeline
-              </div>
+              <h3 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Delivery Progress</h3>
+              <p class="mt-0.5 text-sm" :class="mutedClass">
+                {{ stageName || 'Unassigned route' }}<span v-if="targetOfficeLabel"> · to {{ targetOfficeLabel }}</span>
+              </p>
 
-              <div v-if="steps.length" class="mb-8">
-                <div class="mb-2 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-candy-orange/90">
-                  <span>Progress</span>
-                  <span>{{ pipelineProgressPct }}%</span>
-                </div>
+              <div v-if="timelineLoading" class="mt-6 space-y-4">
                 <div
-                  class="h-1.5 w-full overflow-hidden rounded-full shadow-inner"
-                  :class="isDark ? 'bg-white/10' : 'bg-gray-200'"
-                >
-                  <div
-                    class="h-full rounded-full bg-candy-orange transition-all duration-1000 ease-out"
-                    :style="{ width: `${pipelineProgressPct}%` }"
-                  />
-                </div>
+                  v-for="n in 3" :key="n"
+                  class="h-16 animate-pulse rounded-xl"
+                  :class="isDark ? 'bg-white/5' : 'bg-gray-100'"
+                />
               </div>
 
-              <div v-if="steps.length" class="relative space-y-3">
+              <div v-else-if="stepsDisplay.length" class="relative mt-6">
                 <button
-                  v-for="(step, index) in steps"
+                  v-for="(step, index) in stepsDisplay"
                   :key="`${step.office_id}-${index}`"
                   type="button"
-                  class="group relative flex w-full cursor-pointer select-none items-center gap-4 rounded-xl border p-3.5 text-left transition-all duration-300"
-                  :class="[
-                    isPipelineOfficeSelected(step) ? 'border-candy-orange bg-candy-orange/10' : (isDark ? 'border-onyx-border bg-white/[0.02] hover:bg-white/5 hover:border-white/10' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'),
-                    isStepDone(step) ? 'opacity-80' : ''
-                  ]"
+                  class="group relative flex w-full gap-4 pb-7 text-left last:pb-0"
                   :disabled="!pipelineMessagingEnabled"
                   @click="selectPipelineOffice(step)"
                 >
-
-                  <div
-                    class="relative z-10 flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-bold transition-all duration-300"
-                    :class="[
-                      isStepDone(step) ? 'bg-candy-orange text-white' :
-                      isStepCurrent(step) ? 'border-2 border-candy-orange bg-onyx-black text-candy-orange' :
-                      (isDark ? 'bg-white/5 text-gray-500' : 'bg-white text-gray-400 border border-gray-200'),
-                      isPipelineOfficeSelected(step) ? 'scale-110' : ''
-                    ]"
-                  >
-                    <Icon v-if="isStepDone(step)" name="ph:check-bold" class="h-4 w-4" />
-                    <span v-else>{{ step.step_number }}</span>
+                  <!-- Node + connector -->
+                  <div class="relative flex flex-none flex-col items-center">
+                    <span
+                      class="relative z-10 flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-bold transition-all duration-300"
+                      :class="[
+                        step.done ? 'bg-success text-white' :
+                        step.current ? 'bg-candy-orange text-white ring-4 ring-candy-orange/20' :
+                        (isDark ? 'border border-onyx-border bg-onyx-card text-gray-500' : 'border border-gray-200 bg-white text-gray-400'),
+                        isPipelineOfficeSelected(step) ? 'scale-110' : '',
+                      ]"
+                    >
+                      <Icon v-if="step.done" name="ph:check-bold" class="h-3.5 w-3.5" />
+                      <span v-else>{{ step.step_number }}</span>
+                    </span>
+                    <span
+                      v-if="index < stepsDisplay.length - 1"
+                      class="mt-1 w-0.5 flex-1"
+                      :class="step.done ? 'bg-success' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
+                    />
                   </div>
-                  
+
+                  <!-- Content -->
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
-                      <p class="text-sm font-bold truncate" :class="isStepUpcoming(step) ? mutedClass : (isDark ? 'text-white' : 'text-gray-900')">
+                      <p class="truncate text-[15px] font-bold" :class="step.upcoming ? mutedClass : (isDark ? 'text-white' : 'text-gray-900')">
                         {{ step.office_name }}
                       </p>
                       <Icon
                         v-if="pipelineMessagingEnabled"
                         name="ph:chat-teardrop-dots-fill"
-                        class="h-4 w-4 text-candy-orange opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        class="h-4 w-4 flex-none text-candy-orange opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                         :class="isPipelineOfficeSelected(step) ? 'opacity-100' : ''"
                       />
                     </div>
-                    <p class="mt-0.5 text-[14px] font-bold uppercase tracking-widest" :class="stepLabelClass(step)">
-                      {{ stepStateLabel(step) }}
+                    <p class="text-xs font-bold uppercase tracking-wide" :class="step.statusClass">
+                      {{ step.statusLabel }}
+                    </p>
+
+                    <p v-if="step.actorLine" class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                      <Icon name="ph:user-fill" class="h-3.5 w-3.5 flex-none text-candy-orange" />
+                      {{ step.actorLine }}
+                    </p>
+                    <p v-if="step.timeLine" class="mt-0.5 text-xs" :class="mutedClass">
+                      {{ step.timeLine }}
                     </p>
                   </div>
                 </button>
@@ -181,8 +157,8 @@
               />
 
               <div
-                v-if="!steps.length"
-                class="rounded-xl border border-dashed p-8 text-center text-sm"
+                v-if="!timelineLoading && !stepsDisplay.length"
+                class="mt-6 rounded-xl border border-dashed p-8 text-center text-sm"
                 :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
               >
                 <Icon name="ph:route" class="h-8 w-8 mx-auto mb-3 opacity-30" />
@@ -190,26 +166,19 @@
               </div>
             </section>
 
-            <!-- §2b Live file preview (MySQL BLOB) -->
-            <DocumentLiveFilePreview
-              class="stagger-block"
-              :document-id="document.id"
-              :active="isOpen"
-            />
-
             <!-- Office checkpoint review (intermediate + final) -->
             <section
               v-if="showCompletionActions && canMarkCheckpointDone"
-              class="stagger-block rounded-2xl border p-5 shadow-sm backdrop-blur-md transition-all hover:shadow-md"
+              class="stagger-block rounded-xl border p-5 transition-all"
               :class="isFinalCheckpoint
-                ? 'border-emerald-500/30 bg-emerald-500/5'
+                ? 'border-success/30 bg-success/5'
                 : 'border-candy-orange/30 bg-candy-orange/5'"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p
                     class="text-[13px] font-bold uppercase tracking-widest"
-                    :class="isFinalCheckpoint ? 'text-emerald-500' : 'text-candy-orange'"
+                    :class="isFinalCheckpoint ? 'text-success' : 'text-candy-orange'"
                   >
                     {{ isFinalCheckpoint ? 'Final Checkpoint' : 'Office Desk Review' }}
                   </p>
@@ -236,39 +205,14 @@
               </div>
             </section>
 
-            <!-- Compliance flag action -->
-            <section
-              v-if="showComplianceActions"
-              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
-                    Compliance Review
-                  </p>
-                  <p class="mt-1 text-sm" :class="mutedClass">
-                    Flag incomplete hard copies and message the responsible office desk.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure shadow-sm transition-colors hover:bg-candy-hover"
-                  @click="emit('flag-issue')"
-                >
-                  <Icon name="ph:warning-fill" class="h-4 w-4" />
-                  Flag Issue / Incomplete
-                </button>
-              </div>
-            </section>
-
             <slot name="extra" />
 
             <!-- §3 Official routing slip view (bottom) -->
             <section
-              class="stagger-block overflow-hidden rounded-2xl border shadow-card"
-              :class="isDark ? 'border-candy-orange/30 bg-onyx-black/50' : 'border-candy-orange/40 bg-white/50'"
+              class="stagger-block overflow-hidden rounded-xl border shadow-card"
+              :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
             >
-              <div class="border-b border-candy-orange/30 bg-candy-orange/10 px-5 py-4">
+              <div class="border-b px-5 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
                 <p class="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-widest text-candy-orange">
                   <Icon name="ph:qr-code-fill" class="h-3.5 w-3.5" />
                   Routing Slip
@@ -279,13 +223,13 @@
               </div>
 
               <div class="space-y-4 p-5">
-                <div class="flex flex-col items-center gap-4 rounded-xl border border-candy-orange/25 bg-white-pure p-5">
+                <div class="flex flex-col items-center gap-4 rounded-xl border p-5" :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white-surface'">
                   <canvas
                     ref="qrCanvas"
                     class="h-44 w-44 max-w-full"
                     aria-label="Scannable document QR code"
                   />
-                  <p class="break-all text-center font-mono text-[13px] text-onyx-black/70">
+                  <p class="break-all text-center font-mono text-[13px]" :class="mutedClass">
                     {{ document.qr_code_data || 'QR payload not assigned' }}
                   </p>
                 </div>
@@ -324,7 +268,6 @@ import gsap from 'gsap'
 import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
-import DocumentLiveFilePreview from './DocumentLiveFilePreview.vue'
 import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
 
 interface MessagingOffice { id: string; name: string }
@@ -356,6 +299,18 @@ interface StageStep {
   office_id: string | number
   step_number: number
   office_name: string
+  delivered_by?: string | null
+  arrived_at?: string | null
+  released_at?: string | null
+  released_by?: string | null
+}
+
+interface TimelineSummary {
+  total_steps: number
+  current_step: number
+  tracking_status: string
+  is_complete: boolean
+  progress_pct: number
 }
 
 interface SelectedPipelineOffice {
@@ -396,13 +351,13 @@ const downloading = ref(false)
 const completingCheckpoint = ref(false)
 const selectedPipelineOffice = ref<SelectedPipelineOffice | null>(null)
 
+const timelineRouteSteps = ref<StageStep[]>([])
+const timelineSummary = ref<TimelineSummary | null>(null)
+const timelineLoading = ref(false)
+
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
-const cellClass = computed(() =>
-  isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-surface'
-)
 
 const displayPriority = computed(() => props.document?.priority?.trim() || 'Not specified')
-const creatorName = computed(() => props.document?.uploader_name?.trim() || '')
 const displayTrackingStatus = computed(
   () => props.document?.tracking_status || 'CREATED',
 )
@@ -448,19 +403,40 @@ const targetOfficeLabel = computed(() => {
   )
 })
 
-const steps = computed<StageStep[]>(() => {
-  const stageId = props.document?.stage_id
-  if (stageId == null) return []
-  const seq = stageStore.stageOfficeSequences[stageId as number] || []
-  return [...seq]
-    .sort((a, b) => a.step_number - b.step_number)
-    .map((step) => ({
-      ...step,
-      office_name: resolveOffice(step.office_id),
-    }))
-})
+// Timeline endpoint gives us the real per-checkpoint history (who picked it
+// up, when it arrived, when it was released) — richer than the plain
+// office/step list from the stage store, and it's what the "Delivery
+// Progress" stepper below is built from.
+async function fetchTimeline() {
+  const documentId = props.document?.id
+  if (!documentId) {
+    timelineRouteSteps.value = []
+    timelineSummary.value = null
+    return
+  }
+  timelineLoading.value = true
+  try {
+    const res = await $fetch<{
+      success: boolean
+      data: { routeSteps: StageStep[]; summary: TimelineSummary }
+    }>('/api/tracking/timeline', { params: { documentId } })
+    timelineRouteSteps.value = (res.data.routeSteps ?? [])
+      .map((step) => ({ ...step, office_name: step.office_name || resolveOffice(step.office_id) }))
+      .sort((a, b) => a.step_number - b.step_number)
+    timelineSummary.value = res.data.summary
+  } catch (err) {
+    console.error('[DocumentPreviewDrawer] timeline fetch error:', err)
+    timelineRouteSteps.value = []
+    timelineSummary.value = null
+  } finally {
+    timelineLoading.value = false
+  }
+}
+
+const steps = computed<StageStep[]>(() => timelineRouteSteps.value)
 
 const currentStepNumber = computed(() => {
+  if (timelineSummary.value) return timelineSummary.value.current_step
   const doc = props.document
   const officeId = doc?.current_office_id ?? doc?.office_id
   return (
@@ -471,6 +447,7 @@ const currentStepNumber = computed(() => {
 })
 
 const pipelineProgressPct = computed(() => {
+  if (timelineSummary.value) return timelineSummary.value.progress_pct
   const total = steps.value.length
   if (!total) return 0
   const done = steps.value.filter((s) => isStepDone(s)).length
@@ -513,6 +490,7 @@ async function handleApproveCheckpoint() {
       status: res.data.document.status,
       checkpoint_cleared_step: res.data.document.checkpoint_cleared_step,
     })
+    await fetchTimeline()
     if (import.meta.client && res.message) {
       window.alert(res.message)
     }
@@ -526,20 +504,6 @@ async function handleApproveCheckpoint() {
 const isStepDone = (step: StageStep) => step.step_number < currentStepNumber.value
 const isStepCurrent = (step: StageStep) => step.step_number === currentStepNumber.value
 const isStepUpcoming = (step: StageStep) => step.step_number > currentStepNumber.value
-
-const stepNodeClass = (step: StageStep) => {
-  if (isStepDone(step)) return 'bg-candy-orange text-white-pure border-candy-orange'
-  if (isStepCurrent(step)) return 'border-candy-orange text-candy-orange bg-candy-orange/10 animate-pulse'
-  return isDark.value ? 'border-onyx-border text-white-muted' : 'border-gray-200 text-gray-400'
-}
-
-const pipelineStepNodeClass = (step: StageStep) => {
-  const base = stepNodeClass(step)
-  if (isPipelineOfficeSelected(step)) {
-    return `${base} border-candy-orange ring-2 ring-candy-orange/30`
-  }
-  return base
-}
 
 const isPipelineOfficeSelected = (step: StageStep) =>
   selectedPipelineOffice.value != null &&
@@ -559,15 +523,51 @@ const selectPipelineOffice = (step: StageStep) => {
       }
 }
 
-const stepLabelClass = (step: StageStep) => {
-  if (isStepDone(step) || isStepCurrent(step)) return 'text-candy-orange'
-  return mutedClass.value
-}
+// Enriches each route step with the display strings the vertical stepper
+// needs: a status label/color, who handled it, and a human time line built
+// from this step's own arrival/release plus the *previous* step's release
+// (the moment it was actually picked up and sent here).
+const stepsDisplay = computed(() => {
+  return steps.value.map((step, index) => {
+    const prior = steps.value[index - 1]
+    const done = isStepDone(step)
+    const current = isStepCurrent(step)
+    const upcoming = isStepUpcoming(step)
 
-const stepStateLabel = (step: StageStep) => {
-  if (isStepDone(step)) return 'Completed'
-  if (isStepCurrent(step)) return 'Current Checkpoint'
-  return 'Upcoming'
+    let statusLabel = 'Upcoming'
+    let statusClass = mutedClass.value
+    if (done) {
+      statusLabel = 'Delivered'
+      statusClass = 'text-success'
+    } else if (current) {
+      statusLabel = 'Current Checkpoint'
+      statusClass = 'text-candy-orange'
+    }
+
+    const actorName = step.delivered_by || (current ? prior?.released_by : null)
+    const actorLine = !upcoming && actorName ? `Picked up by ${actorName}` : ''
+
+    let timeLine = ''
+    if (upcoming) {
+      timeLine = 'Not yet started'
+    } else {
+      const pickupAt = prior?.released_at || null
+      const bits: string[] = []
+      if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
+      if (step.arrived_at) bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
+      else if (pickupAt) bits.push('In transit now')
+      timeLine = bits.join(' · ')
+    }
+
+    return { ...step, done, current, upcoming, statusLabel, statusClass, actorLine, timeLine }
+  })
+})
+
+const formatStopTime = (value?: string | null) => {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', hour: 'numeric', minute: '2-digit' })
+    .format(new Date(value))
+    .replace(',', '')
 }
 
 // Shopee-style palette: not-started stays neutral gray, anything moving is
@@ -596,17 +596,6 @@ const trackingLabel = (status?: string) => {
     case 'DISCREPANCY_REPORTED': return 'Discrepancy'
     default: return 'Created'
   }
-}
-
-const formatDate = (value?: string) => {
-  if (!value) return '—'
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
 }
 
 const renderQrCanvas = async () => {
@@ -657,7 +646,8 @@ const handleDownloadPdf = async () => {
 watch(
   () => [props.isOpen, props.document?.id] as const,
   ([open]) => {
-    if (!open) selectedPipelineOffice.value = null
+    if (open) fetchTimeline()
+    else selectedPipelineOffice.value = null
   },
 )
 

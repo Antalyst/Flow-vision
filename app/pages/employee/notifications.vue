@@ -11,10 +11,10 @@
           <span :class="isDark ? 'text-white' : 'text-gray-800'">Notifications</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="isDark ? 'text-white' : 'text-gray-900'">
-          Inbound Alerts
+          Notifications
         </h1>
         <p class="mt-1.5 text-sm" :class="mutedClass">
-          Documents picked up by messengers and heading to your office station.
+          Documents picked up by messengers and heading to your office.
         </p>
       </div>
       <NuxtLink
@@ -40,7 +40,7 @@
         <div class="flex items-center gap-2.5">
           <span
             v-if="unreadCount > 0"
-            class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-[13px] font-bold text-white"
+            class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-candy-orange px-1.5 text-xs font-bold text-white"
           >
             {{ unreadCount > 99 ? '99+' : unreadCount }}
           </span>
@@ -127,7 +127,7 @@
               <p class="text-xs leading-relaxed" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
                 {{ notif.message }}
               </p>
-              <span class="mt-1.5 block text-[13px] font-medium" :class="isDark ? 'text-gray-600' : 'text-gray-400'">
+              <span class="mt-1.5 block text-xs font-medium" :class="isDark ? 'text-gray-600' : 'text-gray-400'">
                 Received {{ formatReceived(notif.created_at) }}
               </span>
             </div>

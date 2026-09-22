@@ -8,7 +8,7 @@
       </div>
       <div v-if="!minimized" class="flex-1 min-w-0">
         <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ displayName }}</p>
-        <p class="text-xs truncate" :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ displayEmail }}</p>
+        <p class="text-xs truncate" :class="isDark ? 'text-gray-400' : 'text-white-muted'">{{ displayEmail }}</p>
       </div>
     </div>
     <button

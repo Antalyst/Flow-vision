@@ -2,7 +2,7 @@
   <div>
     <div v-for="(group, gIndex) in navGroups" :key="group.title" :class="gIndex > 0 ? 'mt-4' : ''">
       <p v-if="!minimized" class="px-4 mb-2 text-xs font-bold uppercase tracking-widest"
-        :class="isDark ? 'text-gray-500' : 'text-gray-400'">{{ group.title }}</p>
+        :class="isDark ? 'text-gray-400' : 'text-white-muted'">{{ group.title }}</p>
       <div v-else class="h-4 border-t mb-2 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'"></div>
 
       <div class="space-y-0.5">
@@ -68,7 +68,7 @@ const navGroups = [
     ],
   },
   {
-    title: 'Delivery Setup',
+    title: 'Office Setup',
     items: [
       { to: '/employee/stages',  label: 'Workflow Steps',  icon: 'ph:steps-light' },
       { to: '/employee/offices', label: 'Office QR Codes', icon: 'ph:qr-code-light' },
@@ -83,12 +83,12 @@ const navGroups = [
     ],
   },
   {
-    title: 'Compliance & Insights',
+    title: 'Reports & Activity',
     items: [
       { to: '/employee/flagged',  label: 'Flagged Documents', icon: 'ph:shield-warning-light' },
       { to: '/employee/activity', label: 'Activity Log',      icon: 'ph:clock-counter-clockwise-light' },
       { to: '/employee/reports',  label: 'Reports',           icon: 'ph:chart-bar-light' },
-      { to: '/employee/ai',       label: 'AI Insights',       icon: 'ph:sparkle-light' },
+      { to: '/employee/ai',       label: 'Ask AI',            icon: 'ph:sparkle-light' },
     ],
   },
   {

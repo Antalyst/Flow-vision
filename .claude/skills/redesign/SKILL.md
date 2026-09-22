@@ -65,6 +65,7 @@ When touching a page's labels, also update its `useSeoMeta` title/description to
 
 ## Workflow
 
+0. **No Figma access (rate-limited, no link, etc.) but a screenshot was given** — follow [references/screenshot-to-code.md](references/screenshot-to-code.md). It has the full process for turning a pasted screenshot into FlowVision code using this same design system, plus a library of component recipes (KPI stat cards, phase-accent kanban columns, the scroll-container fix, the real-data vertical stepper) already built this way — copy-adapt those instead of re-deriving from scratch.
 1. **Big/whole-page redesigns** (a full dashboard, a new page layout): draft it first as an editable mockup using the `design` skill (Claude Design canvas), covering both light and dark mode, and get the user's approval before touching real code. Don't skip straight to implementation on large-scope visual changes.
 2. **Small/targeted redesigns** (one component, one card, a color tweak): implement directly — no mockup needed.
 3. **Never break functionality on a visual-only ask.** If the user says "just redesign the color/radius/labels," touch only that — don't restructure logic, props, or data flow. Read the component fully before editing so a "visual" change doesn't silently regress behavior.

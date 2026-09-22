@@ -5,7 +5,7 @@
   >
     <div class="mb-3 h-1 w-12 rounded-full bg-candy-orange"></div>
     <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
-    <p class="mt-2 max-w-2xl text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+    <p class="mt-2 max-w-2xl text-sm" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
       This workspace is ready for its module content.
     </p>
   </section>

@@ -38,7 +38,7 @@
           </span>
           <div>
             <h2 class="text-sm font-bold" :class="headingClass">{{ cat.title }}</h2>
-            <p class="text-[14px]" :class="mutedClass">{{ cat.articlesCount }} articles</p>
+            <p class="text-sm" :class="mutedClass">{{ cat.articlesCount }} articles</p>
           </div>
         </div>
         <p class="mt-3 text-xs leading-relaxed" :class="mutedClass">{{ cat.description }}</p>
@@ -172,7 +172,7 @@ const articles = [
     summary: 'Generate unique QR station tags for your office tables and intake counters.',
     steps: [
       'Navigate to the "Office QR Codes" section from the sidebar.',
-      'Click "Register New Desk" to create a named desk node.',
+      'Click "Register New Desk" to create a named desk.',
       'Print the generated QR placard and affix it to your physical station.',
     ],
   },

@@ -1,6 +1,10 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
 
+const MAX_RANGE_DAYS = 62
+
+const toDateOnly = (d: Date) => d.toISOString().slice(0, 10)
+
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const query = getQuery(event)
@@ -8,13 +12,33 @@ export default defineEventHandler(async (event) => {
 
   const actor = await resolveActorContextWithOffices(event, client)
 
-  // We will build a realistic-looking payload based on actual document counts
-  // in the organisation (GLOBAL) or the employee's offices (LOCAL).
+  // ── Resolve the requested date range (defaults to the last 7 days) ───────
+  const today = new Date()
+  const defaultStart = new Date(today)
+  defaultStart.setUTCDate(defaultStart.getUTCDate() - 6)
 
+  let startStr = (query.start as string | undefined) || toDateOnly(defaultStart)
+  let endStr   = (query.end as string | undefined) || toDateOnly(today)
+
+  if (new Date(startStr) > new Date(endStr)) {
+    ;[startStr, endStr] = [endStr, startStr]
+  }
+
+  const rangeStart = new Date(`${startStr}T00:00:00.000Z`)
+  const rangeEnd   = new Date(`${endStr}T23:59:59.999Z`)
+  const spanDays   = Math.floor((rangeEnd.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+
+  if (spanDays > MAX_RANGE_DAYS) {
+    throw createError({ statusCode: 400, statusMessage: `Date range too large — pick ${MAX_RANGE_DAYS} days or fewer.` })
+  }
+
+  // ── Query documents created within the range, scoped like before ─────────
   let docQuery = client
     .from('documents')
-    .select('id, tracking_status, created_at')
+    .select('id, created_at')
     .eq('org_id', actor.orgId)
+    .gte('created_at', rangeStart.toISOString())
+    .lte('created_at', rangeEnd.toISOString())
 
   if (scope === 'LOCAL' && actor.officeIds.length > 0) {
     const officeList = actor.officeIds.join(',')
@@ -25,47 +49,32 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  const { data: docs } = await docQuery
+  const { data: docs, error } = await docQuery
 
-  const now = new Date()
-  const documents = docs ?? []
-
-  // Count documents created in the last 6, 4, 2 hours
-  let h6 = 0, h4 = 0, h2 = 0, h0 = 0
-  let inTransit = 0
-  
-  for (const d of documents) {
-    if (d.tracking_status === 'IN_TRANSIT') {
-      inTransit++
-    }
-
-    const created = new Date(d.created_at)
-    const diffHours = (now.getTime() - created.getTime()) / (1000 * 60 * 60)
-
-    if (diffHours <= 2) h0++
-    else if (diffHours <= 4) h2++
-    else if (diffHours <= 6) h4++
-    else if (diffHours <= 8) h6++
+  if (error) {
+    throw createError({ statusCode: 500, statusMessage: error.message })
   }
 
-  const historicalBase = [h6, h4, h2, h0]
-
-  // Predict future based on IN_TRANSIT and recent momentum
-  const momentum = (h0 - h2) / 2
-  const incomingPredict = inTransit
-
-  const p2 = Math.max(0, Math.floor(h0 + momentum + (incomingPredict * 0.4)))
-  const p4 = Math.max(0, Math.floor(p2 + (momentum * 0.5) + (incomingPredict * 0.3)))
-  const p6 = Math.max(0, Math.floor(p4 * 0.8))
-
-  const predictedBase = [null, null, null, historicalBase[3], p2, p4, p6]
+  // ── Bucket counts per calendar day across the range ───────────────────────
+  const counts: Record<string, number> = {}
+  for (let i = 0; i < spanDays; i++) {
+    const d = new Date(rangeStart)
+    d.setUTCDate(d.getUTCDate() + i)
+    counts[toDateOnly(d)] = 0
+  }
+  for (const doc of docs ?? []) {
+    const key = toDateOnly(new Date(doc.created_at))
+    if (key in counts) counts[key]++
+  }
 
   return {
     success: true,
     scope,
+    start: startStr,
+    end: endStr,
     data: {
-      historical: historicalBase,
-      predicted: predictedBase,
-    }
+      labels: Object.keys(counts),
+      values: Object.values(counts),
+    },
   }
 })

@@ -3,11 +3,10 @@
     <!-- Floating Action Button -->
     <button
       @click="isOpen = true"
-      class="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-white hover:scale-105 active:scale-95 transition-all duration-300 group"
-      :class="fabClass"
-      aria-label="Open FlowVision Intelligence"
+      class="fixed bottom-24 right-4 md:bottom-10 md:right-10 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-candy-orange text-white shadow-lg transition-colors duration-200 hover:bg-candy-hover active:scale-95 group"
+      aria-label="Ask FlowVision AI"
     >
-      <Icon name="ph:sparkle-fill" class="h-6 w-6 transition-transform duration-500 group-hover:rotate-12" />
+      <Icon name="ph:sparkle-fill" class="h-5 w-5" />
     </button>
 
     <!-- Overlay Wrapper -->
@@ -36,7 +35,7 @@
               <!-- System-like Header -->
               <div class="flex-none flex items-center justify-between px-6 py-4 bg-transparent">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-8 w-8 items-center justify-center rounded-xl text-white" :class="props.theme === 'blue' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-orange-500/20 text-orange-600 dark:text-orange-400'">
+                  <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-candy-orange/15 text-candy-orange">
                     <Icon name="ph:sparkle-fill" class="h-4 w-4" />
                   </div>
                   <span class="font-bold text-gray-900 dark:text-white tracking-tight text-sm uppercase tracking-wide">FlowVision Assistant</span>
@@ -72,10 +71,6 @@ const props = defineProps({
   scope: {
     type: String,
     default: 'GLOBAL'
-  },
-  theme: {
-    type: String,
-    default: 'orange' // 'orange' or 'blue'
   }
 })
 
@@ -87,19 +82,7 @@ const showOverlayButton = computed(() => {
   return route.path !== aiPath && !route.path.startsWith(`${aiPath}/`)
 })
 
-const fabClass = computed(() => {
-  if (props.theme === 'blue') {
-    return 'from-blue-500 to-cyan-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_35px_rgba(59,130,246,0.6)]'
-  }
-  return 'from-orange-500 to-amber-500 shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_35px_rgba(249,115,22,0.6)]'
-})
-
-const blobClass = computed(() => {
-  if (props.theme === 'blue') {
-    return ['bg-blue-500/30', 'bg-cyan-400/20', 'bg-indigo-500/20']
-  }
-  return ['bg-orange-500/30', 'bg-amber-400/20', 'bg-rose-500/20']
-})
+const blobClass = ['bg-candy-orange/30', 'bg-candy-orange/15', 'bg-candy-orange/10']
 </script>
 
 <style scoped>

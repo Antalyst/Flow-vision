@@ -8,19 +8,17 @@
           <Icon name="ph:briefcase-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span :class="headingClass">Live Workspace</span>
+          <span :class="headingClass">Current Working</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="headingClass">
-          Live Workspace
+          Current Working
         </h1>
         <p class="mt-1.5 text-sm" :class="mutedClass">
-          Documents at your station awaiting action, review, or hand-off.
+          Documents on your desk right now — {{ lastSyncedAt ? `updated ${lastSyncedLabel}` : 'updating…' }}.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
-
-
         <button
           type="button"
           class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
@@ -31,14 +29,6 @@
           <Icon name="ph:arrows-clockwise-light" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
           Sync
         </button>
-
-        <span
-          v-if="lastSyncedAt"
-          class="text-[13px] font-medium tabular-nums"
-          :class="mutedClass"
-        >
-          {{ lastSyncedLabel }}
-        </span>
       </div>
     </header>
 
@@ -53,7 +43,7 @@
             <Icon name="ph:motorcycle-fill" class="h-4 w-4 animate-bounce" />
           </span>
           <div>
-            <span class="font-bold text-candy-orange uppercase tracking-wider text-[13px]">Inbound Dispatch Alert:</span>
+            <span class="font-bold text-candy-orange uppercase tracking-wider text-xs">Incoming Delivery:</span>
             <span class="ml-1.5 font-semibold">"{{ latestDispatch.document_title || 'Document' }}"</span>
             <span class="ml-1 text-gray-300/80">is in transit{{ latestDispatch.target_office_name ? ` to ${latestDispatch.target_office_name}` : '' }} (Courier: {{ latestDispatch.messenger_name || 'Courier' }})</span>
           </div>
@@ -68,28 +58,20 @@
       </div>
     </Transition>
 
-    <!-- ── Pipeline Summary Strip ─────────────────────────────────────── -->
-    <div
-      ref="stripEl"
-      class="flex flex-wrap items-center gap-4 rounded-xl border px-5 py-3.5 text-xs"
-      :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
-    >
-      <div class="flex items-center gap-2">
-        <span class="h-2 w-2 animate-pulse rounded-full bg-candy-orange" />
-        <span class="font-bold uppercase tracking-widest text-candy-orange text-[13px]">Active Pipeline</span>
-      </div>
-      <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
-      <span :class="mutedClass">{{ visibleDocs.length }} documents</span>
-      <span class="hidden h-3 w-px sm:inline" :class="isDark ? 'bg-onyx-border' : 'bg-gray-200'" />
-      <span
+    <!-- ── KPI Stat Cards ─────────────────────────────────────────────── -->
+    <div ref="stripEl" class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div
         v-for="col in pipelineColumns"
         :key="col.id"
-        class="inline-flex items-center gap-1.5"
-        :class="mutedClass"
+        class="flex flex-col gap-4 rounded-card border p-5 shadow-card"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
       >
-        <Icon :name="col.icon" class="h-3 w-3" />
-        {{ col.label }}: <strong :class="headingClass">{{ columnDocs(col.id).length }}</strong>
-      </span>
+        <div class="flex items-center gap-3">
+          <Icon :name="col.icon" class="h-6 w-6 flex-none" :class="phaseAccent(col.id).text" />
+          <span class="text-3xl font-bold tabular-nums" :class="headingClass">{{ columnDocs(col.id).length }}</span>
+        </div>
+        <p class="text-sm font-medium" :class="mutedClass">{{ col.label }}</p>
+      </div>
     </div>
 
     <!-- ── Kanban Board ───────────────────────────────────────────────── -->
@@ -100,8 +82,8 @@
       <div
         v-for="n in 4"
         :key="n"
-        class="min-h-[320px] animate-pulse rounded-2xl border"
-        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white'"
+        class="min-h-[280px] animate-pulse rounded-xl border"
+        :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
       />
     </div>
 
@@ -111,89 +93,71 @@
       class="grid min-h-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
     >
       <section
-        v-for="(col, colIdx) in pipelineColumns"
+        v-for="col in pipelineColumns"
         :key="col.id"
-        class="flex min-h-[280px] flex-col rounded-2xl border overflow-hidden transition-all duration-200"
-        :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-gray-200 bg-white'"
+        class="flex min-h-[200px] flex-col gap-3"
       >
-        <!-- Column accent strip -->
+        <!-- Column header pill -->
         <div
-          class="h-0.5 w-full"
-          :class="colIdx === 0 ? (isDark ? 'bg-gray-600' : 'bg-gray-300') : colIdx === 3 ? 'bg-success' : 'bg-candy-orange'"
-        />
-        <!-- Column header -->
-        <div
-          class="flex items-center justify-between border-b px-4 py-3"
-          :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
+          class="flex items-center justify-between gap-3 rounded-xl px-4 py-3.5"
+          :class="isDark ? 'bg-white/[0.06]' : 'bg-gray-100'"
         >
           <div class="flex items-center gap-2 min-w-0">
-            <Icon
-              :name="col.icon"
-              class="h-3.5 w-3.5 flex-none"
-              :class="colIdx === 0 ? mutedClass : colIdx === 3 ? 'text-success' : 'text-candy-orange'"
-            />
-            <h2 class="truncate text-xs font-bold uppercase tracking-wider" :class="headingClass">
+            <Icon :name="col.icon" class="h-5 w-5 flex-none" :class="phaseAccent(col.id).text" />
+            <h2 class="truncate text-sm font-semibold" :class="headingClass">
               {{ col.label }}
             </h2>
           </div>
-          <span
-            class="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1.5 text-[13px] font-bold tabular-nums border"
-            :class="isDark ? 'border-onyx-border bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
-          >
+          <span class="flex-none text-sm font-semibold tabular-nums" :class="mutedClass">
             {{ columnDocs(col.id).length }}
           </span>
         </div>
 
         <!-- Token list -->
-        <div class="flex-1 overflow-y-auto p-2.5">
-          <TransitionGroup name="token-fade" tag="div" class="flex flex-col gap-2">
+        <div class="overflow-y-auto pr-1 sm:h-[calc(100vh-25rem)]">
+          <TransitionGroup name="token-fade" tag="div" class="flex flex-col gap-3">
             <button
               v-for="doc in columnDocs(col.id)"
               :key="doc.id"
               type="button"
-              class="group w-full rounded-xl border px-3 py-2.5 text-left transition-colors duration-200"
+              class="group relative block w-full overflow-hidden rounded-xl border py-3.5 pl-5 pr-4 text-left shadow-card transition-colors duration-200"
               :class="[
                 isDark
-                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange'
-                  : 'border-gray-200 bg-white hover:border-candy-orange',
+                  ? 'border-onyx-border bg-onyx-card hover:border-candy-orange/50'
+                  : 'border-gray-200 bg-white-pure hover:border-candy-orange/50',
                 activeDocument?.id === doc.id ? 'border-candy-orange' : '',
               ]"
               @click="openDocument(doc)"
             >
-              <div class="flex items-start justify-between gap-2">
-                <span
-                  class="font-mono text-[13px] font-bold uppercase tracking-wide text-candy-orange"
-                >
-                  {{ truncateId(doc.id) }}
-                </span>
-                <span
-                  v-if="doc.total_steps"
-                  class="flex-none rounded-full border px-1.5 py-0.5 text-[12px] font-bold tabular-nums"
-                  :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
-                >
-                  Step {{ doc.current_step }}/{{ doc.total_steps }}
-                </span>
-              </div>
-              <p class="mt-1.5 line-clamp-2 text-xs font-semibold leading-snug" :class="headingClass">
+              <span class="absolute inset-y-0 left-0 w-1" :class="phaseAccent(col.id).bar" />
+
+              <p class="line-clamp-2 text-sm font-semibold leading-snug" :class="headingClass">
                 {{ doc.title || 'Untitled' }}
               </p>
 
-              <p
-                v-if="doc.messenger_name"
-                class="mt-1.5 truncate text-[13px] text-candy-orange flex items-center gap-1"
-              >
-                <Icon name="ph:motorcycle-light" class="inline h-2.5 w-2.5 flex-none" />
-                {{ doc.messenger_name }}
+              <div class="mt-2.5 flex items-center gap-1.5">
+                <span
+                  v-for="n in 3"
+                  :key="n"
+                  class="h-2 w-2 rounded-full"
+                  :class="n <= (col.id === 'verified' ? 3 : 1) ? phaseAccent(col.id).bar : (isDark ? 'bg-white/10' : 'bg-gray-200')"
+                />
+              </div>
+
+              <p class="mt-2.5 flex items-center gap-1.5 truncate text-xs" :class="mutedClass">
+                <Icon name="ph:user-light" class="h-3.5 w-3.5 flex-none" />
+                {{ personLabel(doc, col.id) }}
               </p>
             </button>
           </TransitionGroup>
 
           <div
             v-if="!columnDocs(col.id).length"
-            class="flex flex-col items-center justify-center gap-2 px-3 py-12 text-center"
+            class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-10 text-center"
+            :class="isDark ? 'border-onyx-border' : 'border-gray-200'"
           >
             <Icon :name="col.icon" class="h-6 w-6 opacity-15" />
-            <p class="text-[13px] font-medium" :class="mutedClass">No documents</p>
+            <p class="text-xs font-medium" :class="mutedClass">No documents</p>
           </div>
         </div>
       </section>
@@ -305,7 +269,7 @@ const mutedClass = computed(() => (isDark.value ? 'text-gray-400' : 'text-gray-5
 
 const lastSyncedLabel = computed(() => {
   if (!lastSyncedAt.value) return ''
-  return `Synced ${lastSyncedAt.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  return lastSyncedAt.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 })
 
 function classifyPhase(doc: QueueDoc): PipelinePhase {
@@ -332,7 +296,23 @@ const visibleDocs = computed(() => allDocs.value)
 const columnDocs = (phase: PipelinePhase) =>
   visibleDocs.value.filter((doc) => classifyPhase(doc) === phase)
 
-const truncateId = (id: string) => String(id).replace(/-/g, '').slice(0, 8).toUpperCase()
+// Shopee-style tiering: pending work reads amber, anything moving/under review
+// reads brand orange, and only a fully verified document reads green.
+const PHASE_ACCENT: Record<PipelinePhase, { text: string; bar: string }> = {
+  awaiting_pickup: { text: 'text-warning', bar: 'bg-warning' },
+  in_transit: { text: 'text-candy-orange', bar: 'bg-candy-orange' },
+  under_review: { text: 'text-candy-orange', bar: 'bg-candy-orange' },
+  verified: { text: 'text-success', bar: 'bg-success' },
+}
+const phaseAccent = (phase: PipelinePhase) => PHASE_ACCENT[phase]
+
+function personLabel(doc: QueueDoc, phase: PipelinePhase): string {
+  if (phase === 'verified') return 'Completed'
+  if (doc.messenger_name) return doc.messenger_name
+  if (phase === 'under_review') return doc.current_label || doc.office_label || 'At office review desk'
+  if (phase === 'in_transit') return 'Courier en route'
+  return 'Not yet assigned'
+}
 
 const resolveOfficeName = (officeId: string | number | null | undefined) => {
   if (officeId == null) return 'Unassigned'

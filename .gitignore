@@ -25,3 +25,4 @@ logs
 
 # Agnts special skills 
 .agents/
+.claude/

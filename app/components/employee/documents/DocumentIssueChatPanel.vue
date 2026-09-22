@@ -8,13 +8,13 @@
     <div v-if="canReportDiscrepancy" class="px-6 py-4">
       <button
         type="button"
-        class="group flex w-full items-center justify-center gap-2.5 rounded-xl border-2 border-candy-orange/40 bg-candy-orange/10 px-4 py-3.5 text-sm font-bold text-candy-orange transition-colors duration-200 hover:border-candy-orange hover:bg-candy-orange hover:text-white active:scale-[0.98]"
+        class="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-danger px-4 py-3.5 text-sm font-bold text-white transition-colors duration-200 hover:bg-danger/90 active:scale-[0.98]"
         @click="openReportForm"
       >
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
         Flag Issue / Incomplete
       </button>
-      <p class="mt-2 text-center text-[14px]" :class="mutedText">
+      <p class="mt-2 text-center text-sm" :class="mutedText">
         Report missing signatures, incomplete forms, or damaged hard copies.
       </p>
     </div>
@@ -23,18 +23,18 @@
     <div
       v-if="activeIssue"
       class="flex min-h-[300px] flex-1 flex-col"
-      :class="isDark ? 'bg-onyx-black' : 'bg-zinc-50'"
+      :class="isDark ? 'bg-onyx-black' : 'bg-white-surface'"
     >
       <div
         class="flex items-start justify-between gap-3 border-b px-5 py-3.5"
-        :class="isDark ? 'border-white/10 bg-zinc-950' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-white'"
       >
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-2">
             <Icon name="ph:chat-circle-dots-fill" class="h-4 w-4 text-candy-orange" />
-            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
+            <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Compliance Thread</p>
             <span
-              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-bold uppercase"
+              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold uppercase"
               :class="activeIssue.status === 'OPEN'
                 ? 'border-warning/40 bg-warning/10 text-warning'
                 : 'border-success/40 bg-success/10 text-success'"
@@ -46,7 +46,7 @@
           <p class="mt-1 truncate text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
             {{ activeIssue.issue_type || activeIssue.title }}
           </p>
-          <p v-if="targetOfficeLabel" class="mt-1 text-[14px]" :class="mutedText">
+          <p v-if="targetOfficeLabel" class="mt-1 text-sm" :class="mutedText">
             Messaging: <span class="font-semibold text-candy-orange">{{ targetOfficeLabel }}</span>
           </p>
         </div>
@@ -54,7 +54,7 @@
         <button
           v-if="canResolveIssue"
           type="button"
-          class="inline-flex flex-none items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-1.5 text-[14px] font-semibold text-success transition hover:bg-success/20 disabled:opacity-50"
+          class="inline-flex flex-none items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-1.5 text-sm font-semibold text-success transition hover:bg-success/20 disabled:opacity-50"
           :disabled="resolving"
           @click="handleResolve"
         >
@@ -82,15 +82,15 @@
               :class="isOwnMessage(msg)
                 ? 'bg-candy-orange text-white'
                 : isDark
-                  ? 'bg-zinc-950 text-gray-100 border border-white/10'
-                  : 'bg-zinc-950 text-gray-100'"
+                  ? 'bg-onyx-black text-gray-100 border border-white/10'
+                  : 'bg-gray-100 text-gray-900'"
             >
               <div class="mb-1 flex flex-wrap items-center gap-2">
                 <span class="text-xs font-bold" :class="isOwnMessage(msg) ? 'text-white' : 'text-candy-orange'">
                   {{ msg.sender_name || 'Unknown' }}
                 </span>
                 <span
-                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-bold uppercase tracking-wide"
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide"
                   :class="isOwnMessage(msg)
                     ? 'bg-white/15 text-white'
                     : 'bg-candy-orange/15 text-candy-orange'"
@@ -99,7 +99,7 @@
                 </span>
               </div>
               <p class="text-sm leading-relaxed">{{ msg.message_text }}</p>
-              <p class="mt-2 text-[13px]" :class="isOwnMessage(msg) ? 'text-white/70' : 'text-gray-500'">
+              <p class="mt-2 text-xs" :class="isOwnMessage(msg) ? 'text-white/70' : 'text-gray-500'">
                 {{ fmtTime(msg.created_at) }}
               </p>
             </div>
@@ -114,12 +114,12 @@
       <form
         v-if="activeIssue.status === 'OPEN'"
         class="border-t px-4 py-3"
-        :class="isDark ? 'border-white/10 bg-zinc-950' : 'border-gray-200 bg-white'"
+        :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-white'"
         @submit.prevent="sendMessage"
       >
         <div
           class="flex items-end gap-2 rounded-xl border p-2 transition-all focus-within:border-candy-orange/50 focus-within:ring-2 focus-within:ring-candy-orange/20"
-          :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-zinc-50'"
+          :class="isDark ? 'border-white/10 bg-onyx-black' : 'border-gray-200 bg-white-surface'"
         >
           <textarea
             v-model="draftMessage"
@@ -150,7 +150,7 @@
       >
         <div class="flex items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <div>
-            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
+            <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
             <h3 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Report Document Issue</h3>
           </div>
           <button
@@ -204,8 +204,8 @@
 
           <div class="block">
             <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-danger">*</span></span>
-            <p class="mt-1 text-[14px]" :class="mutedText">
-              Choose who should receive this compliance thread based on the routing pipeline.
+            <p class="mt-1 text-sm" :class="mutedText">
+              Choose who should receive this compliance thread based on the document's route.
             </p>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
               <button
@@ -218,20 +218,20 @@
                   : isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
                 @click="selectChatTarget(target)"
               >
-                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">
+                <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">
                   {{ target.role === 'origin' ? 'Option A' : 'Option B' }}
                 </p>
                 <p class="mt-1 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                   {{ target.name }}
                 </p>
-                <p class="mt-1 text-[14px]" :class="mutedText">
+                <p class="mt-1 text-sm" :class="mutedText">
                   {{ target.role === 'origin'
                     ? 'Contact originating registration office'
-                    : 'Contact previous hand-off checkpoint' }}
+                    : 'Contact the previous office in the route' }}
                 </p>
               </button>
             </div>
-            <p v-if="loadingTargets" class="mt-2 text-xs" :class="mutedText">Resolving pipeline offices…</p>
+            <p v-if="loadingTargets" class="mt-2 text-xs" :class="mutedText">Finding offices…</p>
             <p v-else-if="!chatTargets.length" class="mt-2 text-xs text-warning">
               No routing offices found. Ensure this document has an origin office assigned.
             </p>

@@ -23,10 +23,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'You do not have permission to edit this conversation' })
   }
 
-  // Update title
+  // Update title — group_name is what the inbox list actually displays for groups,
+  // so it must be kept in sync with title (see group.post.ts for the same pairing).
   const { error: updateErr } = await client
     .from('conversations')
-    .update({ title: title || null, updated_at: new Date().toISOString() })
+    .update({ title: title || null, group_name: title || null, updated_at: new Date().toISOString() })
     .eq('id', conversationId)
 
   if (updateErr) {

@@ -8,11 +8,11 @@
           <Icon name="ph:buildings-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span :class="isDark ? 'text-white' : 'text-gray-800'">Office Ledger</span>
+          <span :class="isDark ? 'text-white' : 'text-gray-800'">Office QR Codes</span>
         </div>
-        <h1 class="text-3xl font-bold tracking-tight leading-tight">Office & Desk Ledger</h1>
+        <h1 class="text-3xl font-bold tracking-tight leading-tight">Office QR Codes</h1>
         <p class="mt-1.5 text-sm" :class="mutedText">
-          Manage desks and tables registered under your primary office node.
+          Manage the desks registered under your office.
         </p>
       </div>
 
@@ -36,7 +36,7 @@
           <Icon name="ph:desktop-light" class="h-6 w-6 text-candy-orange" />
         </div>
         <div>
-          <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Active Desks</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.length }}</p>
         </div>
       </div>
@@ -48,7 +48,7 @@
           <Icon name="ph:user-check-light" class="h-6 w-6 text-success" />
         </div>
         <div>
-          <p class="text-[13px] font-bold uppercase tracking-widest text-success">Assigned</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-success">Assigned</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => t.assigned_user_profile).length }}</p>
         </div>
       </div>
@@ -60,7 +60,7 @@
           <Icon name="ph:user-minus-light" class="h-6 w-6 text-warning" />
         </div>
         <div>
-          <p class="text-[13px] font-bold uppercase tracking-widest text-warning">Unassigned</p>
+          <p class="text-xs font-bold uppercase tracking-widest text-warning">Unassigned</p>
           <p class="mt-0.5 text-3xl font-bold tracking-tight">{{ tables.filter(t => !t.assigned_user_profile).length }}</p>
         </div>
       </div>
@@ -88,13 +88,14 @@
             v-for="office in myOffices"
             :key="'my-' + office.id"
             :office="office"
+            :editable="false"
           />
         </div>
       </div>
 
       <!-- Sub-Offices / Desks Section -->
       <div>
-        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Registered Desks & Sub-Nodes</h2>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Registered Desks</h2>
         <div v-if="loading" class="py-12 text-center" :class="mutedText">
           <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
           <p class="text-xs font-medium">Loading office desks…</p>
@@ -105,7 +106,7 @@
               <Icon name="ph:buildings-light" class="h-7 w-7 text-candy-orange/60" />
             </div>
             <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No desks registered</p>
-            <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk node to begin assigning internal staff.</p>
+            <p class="text-xs max-w-[220px]" :class="mutedText">Register a new desk to begin assigning internal staff.</p>
           </div>
         </div>
         <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -113,6 +114,8 @@
             v-for="table in tables"
             :key="'table-' + table.id"
             :office="table"
+            @edit="openEditModal"
+            @delete="handleDeleteOffice"
           />
         </div>
       </div>
@@ -126,7 +129,7 @@
           <form
             class="w-full max-w-md rounded-2xl border"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
-            @submit.prevent="registerOffice"
+            @submit.prevent="submitOfficeForm"
           >
             <!-- Modal header -->
             <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b" :class="isDark ? 'border-onyx-border' : 'border-gray-100'">
@@ -134,7 +137,9 @@
                 <span class="flex h-9 w-9 items-center justify-center rounded-full border border-candy-orange/20 bg-candy-orange/10">
                   <Icon name="ph:desktop-light" class="h-4.5 w-4.5 text-candy-orange" />
                 </span>
-                <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Register New Desk</h2>
+                <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                  {{ editingId ? 'Edit Desk' : 'Register New Desk' }}
+                </h2>
               </div>
               <button
                 type="button"
@@ -148,13 +153,13 @@
             <div class="space-y-4 px-6 py-5">
               <div>
                 <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">
-                  Desk / Table Name <span class="text-danger">*</span>
+                  Desk Name <span class="text-danger">*</span>
                 </label>
                 <input
                   v-model="form.name"
                   type="text"
                   required
-                  placeholder="e.g. Table A — Public Intake"
+                  placeholder="e.g. Front Counter A"
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                   @input="generateCode"
@@ -169,7 +174,7 @@
                   v-model="form.code"
                   type="text"
                   required
-                  placeholder="e.g. TABLE-A"
+                  placeholder="e.g. DESK-A"
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange font-mono uppercase tracking-wider"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900'"
                 />
@@ -211,7 +216,7 @@
                 class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-candy-hover disabled:opacity-50"
               >
                 <Icon v-if="submitting" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
-                {{ submitting ? 'Registering…' : 'Register Desk' }}
+                {{ submitting ? (editingId ? 'Saving…' : 'Registering…') : (editingId ? 'Save Changes' : 'Register Desk') }}
               </button>
             </div>
           </form>
@@ -240,6 +245,7 @@ const isModalOpen = ref(false)
 const tables = ref<any[]>([])
 const subUsers = ref<any[]>([])
 const errorMsg = ref('')
+const editingId = ref<string | null>(null)
 
 const myOffices = ref<any[]>([])
 const myOfficesLoading = ref(true)
@@ -311,6 +317,7 @@ async function fetchSubUsers() {
 }
 
 function openCreateModal() {
+  editingId.value = null
   form.name = ''
   form.code = ''
   form.assigned_user = ''
@@ -318,26 +325,48 @@ function openCreateModal() {
   isModalOpen.value = true
 }
 
-async function registerOffice() {
+function openEditModal(office: any) {
+  editingId.value = String(office.id)
+  form.name = office.name || ''
+  form.code = office.code || ''
+  form.assigned_user = office.assigned_user ? String(office.assigned_user) : ''
+  errorMsg.value = ''
+  isModalOpen.value = true
+}
+
+async function submitOfficeForm() {
   if (submitting.value) return
   submitting.value = true
   errorMsg.value = ''
   try {
-    await $fetch('/api/employee/offices', {
-      method: 'POST',
-      body: {
-        name: form.name,
-        code: form.code,
-        assigned_user: form.assigned_user || undefined
-      }
-    })
+    const body = {
+      name: form.name,
+      code: form.code,
+      assigned_user: form.assigned_user || undefined
+    }
+    if (editingId.value) {
+      await $fetch(`/api/employee/offices/${editingId.value}`, { method: 'PUT', body })
+    } else {
+      await $fetch('/api/employee/offices', { method: 'POST', body })
+    }
     isModalOpen.value = false
     await fetchTables()
   } catch (err: any) {
-    console.error('Failed to register desk/table:', err)
-    errorMsg.value = err.data?.message || 'Failed to register desk/table'
+    console.error('Failed to save desk/table:', err)
+    errorMsg.value = err.data?.message || 'Failed to save desk/table'
   } finally {
     submitting.value = false
+  }
+}
+
+async function handleDeleteOffice(id: string) {
+  if (!confirm('Delete this desk? This cannot be undone.')) return
+  try {
+    await $fetch(`/api/employee/offices/${id}`, { method: 'DELETE' })
+    tables.value = tables.value.filter((t) => String(t.id) !== String(id))
+  } catch (err: any) {
+    console.error('Failed to delete desk/table:', err)
+    alert(err.data?.message || 'Failed to delete desk/table')
   }
 }
 

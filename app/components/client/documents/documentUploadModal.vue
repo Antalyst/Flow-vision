@@ -22,7 +22,7 @@
         >
           <div>
             <div class="mb-1 h-0.5 w-8 rounded-full bg-candy-orange" />
-            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+            <p class="text-sm font-bold uppercase tracking-widest text-candy-orange">
               {{ officeId ? 'Office Document' : 'Organisation Document' }}
             </p>
             <h2 class="mt-1 text-xl font-bold" :class="headingClass">Upload & Analyze</h2>
@@ -70,13 +70,13 @@
                 <p class="text-sm font-semibold" :class="headingClass">
                   {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
                 </p>
-                <p class="mt-1 text-xs" :class="mutedClass">PDF, DOCX, XLSX, TXT, CSV supported</p>
+                <p class="mt-1 text-xs" :class="mutedClass">Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) supported</p>
               </div>
               <input
                 ref="fileInput"
                 type="file"
                 class="hidden"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json"
+                accept=".doc,.docx,.xls,.xlsx,.csv"
                 @change="handleFileChange"
               />
             </label>
@@ -123,7 +123,7 @@
 
                 <!-- Manual override for AI analysis -->
                 <div class="space-y-3 pt-3 border-t border-candy-orange/20">
-                  <p class="text-[14px] font-medium text-candy-orange/80">Manual Document Details</p>
+                  <p class="text-sm font-medium text-candy-orange/80">Manual Document Details</p>
                   <div>
                     <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
                     <input
@@ -153,19 +153,19 @@
             <!-- ══════════════════════════════════════════════════════════ -->
             <div>
               <!-- Section label + scope tab toggle -->
-              <div class="flex items-center justify-between gap-3">
+              <div class="flex flex-col gap-2">
                 <div>
                   <span class="text-sm font-semibold" :class="headingClass">
                     Delivery Route <span class="text-danger">*</span>
                   </span>
-                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
+                  <p class="mt-0.5 text-sm" :class="mutedClass">
                     Where the messenger must physically carry this document.
                   </p>
                 </div>
 
                 <!-- Dual-scope tab toggle -->
                 <div
-                  class="flex flex-none items-center rounded-xl border p-0.5 text-xs"
+                  class="flex flex-none items-center self-start rounded-xl border p-0.5 text-xs"
                   :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
                 >
                   <button
@@ -185,7 +185,7 @@
               </div>
 
               <!-- Route description line -->
-              <p class="mt-2 text-[14px]" :class="mutedClass">
+              <p class="mt-2 text-sm" :class="mutedClass">
                 <span v-if="routeTab === 'global'">
                   <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-candy-orange" />
                   Routes set up by your admin — available to every office.
@@ -261,12 +261,12 @@
 
                       <!-- Mini stop-name pills — only for the selected route, to keep the list scannable -->
                       <div v-if="selectedStageId === String(stage.stage_id) && getRouteSteps(stage.stage_id).length" class="mt-3">
-                        <p class="mb-1.5 text-[12px] font-bold uppercase tracking-widest" :class="mutedClass">Stops</p>
+                        <p class="mb-1.5 text-sm font-bold uppercase tracking-widest" :class="mutedClass">Stops</p>
                         <div class="flex flex-wrap gap-1">
                           <span
                             v-for="(stop, idx) in getRouteStops(stage.stage_id)"
                             :key="idx"
-                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-medium"
+                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm font-medium"
                             :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
                           >
                             <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
@@ -274,7 +274,7 @@
                           </span>
                           <span
                             v-if="getRouteSteps(stage.stage_id).length > 3"
-                            class="inline-flex items-center rounded-full px-2 py-0.5 text-[13px] font-medium text-candy-orange"
+                            class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-medium text-candy-orange"
                           >
                             +{{ getRouteSteps(stage.stage_id).length - 3 }} more
                           </span>
@@ -285,7 +285,7 @@
                     <!-- Right: stop count badge + scope tag -->
                     <div class="flex flex-none flex-col items-end gap-1.5">
                       <span
-                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] font-bold"
+                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm font-bold"
                         :class="routeTab === 'global'
                           ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
                           : 'border-gray-300/40 bg-gray-500/10 text-gray-500 dark:border-gray-500/30 dark:text-gray-400'"
@@ -293,7 +293,7 @@
                         <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
                         {{ routeTab === 'global' ? 'Global' : 'Local' }}
                       </span>
-                      <span class="text-[13px]" :class="mutedClass">
+                      <span class="text-sm" :class="mutedClass">
                         {{ getRouteSteps(stage.stage_id).length }} stop{{ getRouteSteps(stage.stage_id).length !== 1 ? 's' : '' }}
                       </span>
                     </div>
@@ -314,9 +314,9 @@
                   <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-2">
                       <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
-                      <span class="text-[14px] font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
+                      <span class="text-sm font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
                     </div>
-                    <span class="text-[13px]" :class="mutedClass">
+                    <span class="text-sm" :class="mutedClass">
                       {{ selectedTimelineSteps.length + 1 }} stops
                     </span>
                   </div>
@@ -333,12 +333,12 @@
                           <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
                         </div>
                         <p
-                          class="mt-2 max-w-[76px] text-center text-[13px] font-bold leading-tight text-candy-orange"
+                          class="mt-2 max-w-[76px] text-center text-sm font-bold leading-tight text-candy-orange"
                           style="word-break: break-word"
                         >
                           {{ selectedOriginOfficeName || 'Origin' }}
                         </p>
-                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-[12px] font-bold uppercase tracking-wide text-candy-orange">
+                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-sm font-bold uppercase tracking-wide text-candy-orange">
                           Origin
                         </span>
                       </div>
@@ -378,7 +378,7 @@
 
                           <!-- Office name -->
                           <p
-                            class="mt-2 max-w-[76px] text-center text-[13px] font-semibold leading-tight"
+                            class="mt-2 max-w-[76px] text-center text-sm font-semibold leading-tight"
                             :class="headingClass"
                             style="word-break: break-word"
                           >
@@ -387,7 +387,7 @@
 
                           <!-- Step label -->
                           <span
-                            class="mt-0.5 text-[12px]"
+                            class="mt-0.5 text-sm"
                             :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
                           >
                             {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
@@ -398,7 +398,7 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-[13px]" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="border-t px-4 py-2.5 text-sm" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
                         <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
@@ -424,7 +424,7 @@
                   <span class="text-sm font-semibold" :class="headingClass">
                     Document Category <span class="text-danger">*</span>
                   </span>
-                  <p class="mt-0.5 text-[14px]" :class="mutedClass">
+                  <p class="mt-0.5 text-sm" :class="mutedClass">
                     Select a category to help organize documents.
                   </p>
                 </div>
@@ -497,7 +497,7 @@
                 >
                   <Icon name="ph:qr-code" class="h-6 w-6 mb-1" />
                   <span class="text-xs font-semibold">Small</span>
-                  <span class="text-[13px] opacity-70">1x1 in</span>
+                  <span class="text-sm opacity-70">1x1 in</span>
                 </button>
                 <button
                   type="button"
@@ -507,7 +507,7 @@
                 >
                   <Icon name="ph:qr-code" class="h-7 w-7 mb-1" />
                   <span class="text-xs font-semibold">Medium</span>
-                  <span class="text-[13px] opacity-70">2x2 in</span>
+                  <span class="text-sm opacity-70">2x2 in</span>
                 </button>
                 <button
                   type="button"
@@ -517,7 +517,7 @@
                 >
                   <Icon name="ph:qr-code" class="h-8 w-8 mb-1" />
                   <span class="text-xs font-semibold">Large</span>
-                  <span class="text-[13px] opacity-70">4x4 in</span>
+                  <span class="text-sm opacity-70">4x4 in</span>
                 </button>
               </div>
             </div>
@@ -557,7 +557,7 @@
             <Transition name="fade-in">
               <div
                 v-if="selectedStageId"
-                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[14px] font-semibold text-candy-orange"
+                class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
               >
                 <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
@@ -804,21 +804,46 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+
+const isValidDocumentFile = (file: File | null | undefined): boolean => {
+  if (!file) return false
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  return ALLOWED_EXTENSIONS.includes(ext)
+}
+
 const handleFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0] || null
+  if (!file) {
+    clearFile()
+    return
+  }
+
+  if (!isValidDocumentFile(file)) {
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    clearFile()
+    return
+  }
+
   selectedFile.value = file
-  currentTrackingId.value = file ? generateTrackingId() : ''
+  currentTrackingId.value = generateTrackingId()
   errorMessage.value = ''
 }
 
 const handleDrop = (e: DragEvent) => {
   isDragging.value = false
   const file = e.dataTransfer?.files?.[0]
-  if (file) {
-    selectedFile.value = file
-    currentTrackingId.value = generateTrackingId()
-    errorMessage.value = ''
+  if (!file) return
+
+  if (!isValidDocumentFile(file)) {
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    clearFile()
+    return
   }
+
+  selectedFile.value = file
+  currentTrackingId.value = generateTrackingId()
+  errorMessage.value = ''
 }
 
 const clearFile = () => {
