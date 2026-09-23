@@ -9,6 +9,7 @@ import {
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { broadcastComplianceIssueNotification } from '~~/server/utils/notifications'
+import { emitDiscrepancyEmail } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/documents/issues/create
@@ -216,6 +217,28 @@ export default defineEventHandler(async (event) => {
     issue,
     timestamp:     new Date().toISOString(),
   })
+
+  try {
+    const { data: creatorFields } = await client
+      .from('documents')
+      .select('user_id, creator_role, current_step, qr_code_data')
+      .eq('id', documentId)
+      .maybeSingle()
+
+    await emitDiscrepancyEmail({
+      orgId: actor.orgId,
+      documentId,
+      title: document.title,
+      trackingCode: creatorFields?.qr_code_data ?? null,
+      creatorUserId: creatorFields?.user_id ? String(creatorFields.user_id) : null,
+      creatorRole: creatorFields?.creator_role ?? null,
+      status: 'DISCREPANCY_REPORTED',
+      currentStep: creatorFields?.current_step ?? 0,
+      currentOfficeName: reportingOffice.name,
+    })
+  } catch (emailErr) {
+    console.warn('[issues/create] Non-fatal: discrepancy email failed:', emailErr)
+  }
 
   return {
     success: true,

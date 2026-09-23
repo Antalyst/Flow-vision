@@ -32,27 +32,25 @@
       </div>
     </div>
   </div>
+  <AppSidebarNav :groups="navGroups" :minimized="minimized" accent="orange" />
 </template>
 
 <script setup>
 import { useChatStore } from '~/stores/chat'
+import AppSidebarNav from '~/components/shared/AppSidebarNav.vue'
 
 const props = defineProps({
   minimized: { type: Boolean, default: false }
 })
 
-const { isDark } = useTheme()
-const route = useRoute()
 const { count: badgeCount, refresh: refreshBadge } = useEmployeeNotificationBadge()
 
 const chat = useChatStore()
 const chatUnreadCount = computed(() => chat.totalUnreadCount)
 
-const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
-
 // Grouped by what an employee is actually trying to do, with the day-to-day
 // document work surfaced right after the dashboard.
-const navGroups = [
+const navGroups = computed(() => [
   {
     title: 'Overview',
     items: [
@@ -69,24 +67,31 @@ const navGroups = [
   },
   {
     title: 'Office Setup',
+    title: 'Messenger',
     items: [
-      { to: '/employee/stages',  label: 'Workflow Steps',  icon: 'ph:steps-light' },
+      { to: '/employee/deliveries', label: 'My Deliveries', icon: 'ph:package-light' },
+    ],
+  },
+  {
+    title: 'Delivery Setup',
+    items: [
+      { to: '/employee/stages',  label: 'Document Routes',  icon: 'ph:steps-light' },
       { to: '/employee/offices', label: 'Office QR Codes', icon: 'ph:qr-code-light' },
     ],
   },
   {
     title: 'Team',
     items: [
-      { to: '/employee/messages',      label: 'Messages',      icon: 'ph:chat-teardrop-text-light' },
+      { to: '/employee/messages',      label: 'Messages',      icon: 'ph:chat-teardrop-text-light', badgeCount: chatUnreadCount.value, badgeColor: 'red' },
       { to: '/employee/users',         label: 'Team Members',  icon: 'ph:users-light' },
-      { to: '/employee/notifications', label: 'Notifications', icon: 'ph:bell-light' },
+      { to: '/employee/notifications', label: 'Notifications', icon: 'ph:bell-light', badgeCount: badgeCount.value },
     ],
   },
   {
     title: 'Reports & Activity',
     items: [
       { to: '/employee/flagged',  label: 'Flagged Documents', icon: 'ph:shield-warning-light' },
-      { to: '/employee/activity', label: 'Activity Log',      icon: 'ph:clock-counter-clockwise-light' },
+      { to: '/employee/activity', label: 'Activity History',  icon: 'ph:clock-counter-clockwise-light' },
       { to: '/employee/reports',  label: 'Reports',           icon: 'ph:chart-bar-light' },
       { to: '/employee/ai',       label: 'Ask AI',            icon: 'ph:sparkle-light' },
     ],
@@ -98,7 +103,7 @@ const navGroups = [
       { to: '/employee/help',     label: 'Help & Support',  icon: 'ph:question-light' },
     ],
   },
-]
+])
 
 onMounted(() => {
   refreshBadge()
@@ -106,17 +111,8 @@ onMounted(() => {
   chat.subscribeToMessages()
 })
 
+const route = useRoute()
 watch(() => route.path, () => {
   refreshBadge()
 })
 </script>
-
-<style scoped>
-.nav-item-employee-active {
-  @apply text-candy-orange bg-candy-orange/[0.08] dark:bg-candy-orange/[0.12] relative;
-}
-.nav-item-employee-active::before {
-  content: '';
-  @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
-}
-</style>

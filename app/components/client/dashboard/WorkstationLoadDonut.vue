@@ -33,7 +33,7 @@ const chartData = computed(() => {
   const l = props.load
   if (!l) return null
   return {
-    labels: ['Busy', 'Available', 'In Transit', 'Idle'],
+    labels: ['Busy', 'Available', 'On the Way', 'Idle'],
     datasets: [
       {
         data: [l.busy, l.available, l.inTransit, l.idle],

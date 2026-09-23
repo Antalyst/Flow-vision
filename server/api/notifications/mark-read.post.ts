@@ -31,8 +31,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const role = (userRole ?? '').toLowerCase()
-  if (role !== 'employee' && role !== 'client') {
-    throw createError({ statusCode: 403, message: 'Only clients or employees can mark notifications as read.' })
+  if (role !== 'employee' && role !== 'client' && role !== 'messenger') {
+    throw createError({ statusCode: 403, message: 'Only clients, employees, or liaisons can mark notifications as read.' })
   }
 
   const client = await serverSupabaseClient(event)
@@ -40,7 +40,8 @@ export default defineEventHandler(async (event) => {
 
   let ok = false
 
-  if (role === 'client') {
+  if (role === 'client' || role === 'messenger') {
+    // Both are direct-address (user_id = them) — same org+user_id ownership check applies.
     ok = await markClientNotificationRead(
       String(notificationId),
       actor.orgId,

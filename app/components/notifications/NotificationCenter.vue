@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <div class="flex items-center justify-between gap-3">
       <p class="text-xs" :class="mutedClass">
-        {{ unclaimedCount }} open pickup{{ unclaimedCount === 1 ? '' : 's' }}
+        {{ unreadCount }} unread notification{{ unreadCount === 1 ? '' : 's' }}
       </p>
       <button
         type="button"
@@ -22,7 +22,7 @@
       {{ error }}
     </div>
     <div v-else-if="notifications.length === 0" class="rounded-xl border border-dashed px-4 py-10 text-center text-sm" :class="emptyClass">
-      No pickup requests right now. New uploads from your organisation will appear here.
+      No deliveries assigned to you yet. An office will assign you directly when there's one ready.
     </div>
 
     <ul v-else class="space-y-3">
@@ -35,39 +35,22 @@
         <div class="min-w-0">
           <p class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-gray-900'">{{ item.title }}</p>
           <p v-if="item.message" class="mt-0.5 text-xs" :class="mutedClass">{{ item.message }}</p>
-          <div
-            v-if="item.metadata?.pickup_source_name || item.metadata?.destination_office_name"
-            class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2"
-          >
-            <div class="rounded-lg border px-2.5 py-2" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-100 bg-gray-50'">
-              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Pickup Source</p>
-              <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
-                {{ item.metadata?.pickup_source_name || '—' }}
-              </p>
-            </div>
-            <div class="rounded-lg border px-2.5 py-2" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-100 bg-gray-50'">
-              <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Next Drop-off</p>
-              <p class="mt-0.5 text-xs font-semibold" :class="isDark ? 'text-white' : 'text-gray-800'">
-                {{ item.metadata?.destination_office_name || '—' }}
-              </p>
-            </div>
-          </div>
           <time class="mt-1 block text-[14px]" :class="mutedClass">{{ formatWhen(item.created_at) }}</time>
         </div>
         <button
-          v-if="isUnclaimedNotification(item.is_claimed)"
+          v-if="isUnreadNotification(item.is_read)"
           type="button"
-          class="flex-shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
-          :disabled="claimingId === item.id"
-          @click="acceptPickup(item.id)"
+          class="flex-shrink-0 rounded-lg bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          :disabled="markingId === item.id"
+          @click="markAsRead(item.id)"
         >
-          {{ claimingId === item.id ? 'Accepting…' : 'Accept Pickup' }}
+          {{ markingId === item.id ? 'Marking…' : 'Mark Read' }}
         </button>
         <span
           v-else
           class="flex-shrink-0 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
         >
-          Claimed
+          Read
         </span>
       </li>
     </ul>
@@ -75,17 +58,17 @@
 </template>
 
 <script setup>
-import { isUnclaimedNotification } from '~/composables/useNotifications'
+import { isUnreadNotification } from '~/composables/useNotifications'
 
 const { isDark } = useTheme()
 const {
   notifications,
-  unclaimedCount,
+  unreadCount,
   loading,
   error,
-  claimingId,
+  markingId,
   fetchNotifications,
-  acceptPickup,
+  markAsRead,
   startAutoRefresh,
 } = useMessengerNotifications()
 

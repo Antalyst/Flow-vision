@@ -307,8 +307,8 @@
 
               <hr :class="borderClass" />
 
-              <!-- Employee: origin office -->
-              <label v-if="role === 'employee'" class="block">
+              <!-- Employee / Employee Sub-User: origin office -->
+              <label v-if="requiresOriginOffice" class="block">
                 <span class="text-sm font-semibold" :class="headingClass">Origin Office</span>
                 <select v-model="originOfficeId" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" required>
                   <option value="" disabled>Select your sub-office</option>
@@ -375,7 +375,7 @@ import { useAuthStore } from '~/stores/auth'
 import { useCategoriesStore } from '~/stores/categories'
 import DocumentQrStickerModal from './DocumentQrStickerModal.vue'
 
-type DocumentRole = 'client' | 'employee'
+type DocumentRole = 'client' | 'employee' | 'employee_sub_user'
 type ScanMode = 'FIRST_PAGE' | 'FULL_DOCUMENT'
 type Priority = 'High' | 'Medium' | 'Low'
 type Step = 'mode' | 'camera' | 'analyzing' | 'review'
@@ -671,9 +671,26 @@ const priorityOptions = [
   { value: 'Low' as Priority, label: 'Low', icon: 'ph:check-circle-fill' },
 ]
 
-const myOffices = computed(() =>
-  officeStore.offices.filter((o) => String(o.assigned_user) === String(auth.user?.user_id)),
-)
+// Employees own offices directly (offices.assigned_user). Sub-users don't own an
+// office — they're assigned to one via users.office_id/current_office_id (same
+// dual-check the backend uses in actorContext.ts / scan/register.post.ts).
+const requiresOriginOffice = computed(() => props.role === 'employee' || props.role === 'employee_sub_user')
+
+const myOffices = computed(() => {
+  const ownedByMe = officeStore.offices.filter((o) => String(o.assigned_user) === String(auth.user?.user_id))
+  if (props.role !== 'employee_sub_user') return ownedByMe
+
+  const assignedOfficeIds = new Set(
+    [auth.user?.office_id, auth.user?.current_office_id]
+      .filter((id) => id != null && String(id).trim())
+      .map((id) => String(id)),
+  )
+  const assignedToMe = officeStore.offices.filter((o) => assignedOfficeIds.has(String(o.id)))
+
+  const merged = new Map(ownedByMe.map((o) => [String(o.id), o]))
+  for (const o of assignedToMe) merged.set(String(o.id), o)
+  return Array.from(merged.values())
+})
 
 const allStages = computed<EnrichedStage[]>(() => stageStore.stages as unknown as EnrichedStage[])
 
@@ -699,7 +716,7 @@ const canSubmit = computed(() =>
   !!title.value.trim() &&
   !!categoryId.value &&
   !!stageId.value &&
-  (props.role !== 'employee' || !!originOfficeId.value) &&
+  (!requiresOriginOffice.value || !!originOfficeId.value) &&
   capturedPages.value.length > 0,
 )
 
@@ -722,7 +739,7 @@ async function handleRegister() {
 
     fd.append('stage_id', stageId.value)
     fd.append('category_id', categoryId.value)
-    if (props.role === 'employee') fd.append('origin_office_id', originOfficeId.value)
+    if (requiresOriginOffice.value) fd.append('origin_office_id', originOfficeId.value)
 
     fd.append('ai_skipped', String(aiSkipped.value))
     fd.append('title', title.value.trim())

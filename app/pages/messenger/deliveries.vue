@@ -18,6 +18,9 @@
           </p>
         </div>
         <div v-if="allDocs.length" class="flex items-center gap-2 text-xs font-semibold">
+          <span class="px-2.5 py-1 rounded-none border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+            {{ custody.assigned_pending_pickup.length }} Assigned to You
+          </span>
           <span class="px-2.5 py-1 rounded-none border border-candy-orange/40 bg-candy-orange/10 text-candy-orange">
             {{ custody.in_transit.length }} In Transit
           </span>
@@ -44,18 +47,11 @@
         <Icon name="ph:package-light" class="h-6 w-6" />
       </div>
       <p class="font-bold text-base" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
-        No Active Deliveries in Custody
+        No Deliveries Assigned to You
       </p>
       <p class="mt-1 text-xs" :class="mutedClass">
-        Accept an inbound pickup request from the Messenger Dashboard or scan a dispatch QR to begin.
+        An office will assign you directly when a document is ready — nothing to accept or claim.
       </p>
-      <NuxtLink
-        to="/messenger/scan?mode=pickup"
-        class="mt-4 inline-flex items-center gap-2 rounded-none bg-candy-orange px-4 py-2.5 text-xs font-bold text-white transition hover:bg-candy-orange/90 active:scale-[0.98]"
-      >
-        <Icon name="ph:qr-code-light" class="h-4 w-4" />
-        Open Pickup Scanner
-      </NuxtLink>
     </div>
 
     <div v-else class="space-y-6">
@@ -97,9 +93,11 @@
                 class="px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider border"
                 :class="focusedDoc.tracking_status === 'IN_TRANSIT'
                   ? 'border-candy-orange bg-candy-orange/10 text-candy-orange'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-400'"
+                  : focusedDoc.tracking_status === 'PICKED_UP'
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                    : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'"
               >
-                {{ focusedDoc.tracking_status === 'IN_TRANSIT' ? 'In Transit' : 'Awaiting Scan' }}
+                {{ focusedDoc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : focusedDoc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
               </span>
 
               <!-- Change Focus CTA -->
@@ -274,9 +272,13 @@
                 </span>
                 <span
                   class="rounded-none px-2 py-0.5 text-[13px] font-bold uppercase"
-                  :class="doc.tracking_status === 'IN_TRANSIT' ? 'bg-candy-orange/10 text-candy-orange border border-candy-orange/30' : 'bg-amber-500/10 text-amber-500 border border-amber-500/30'"
+                  :class="doc.tracking_status === 'IN_TRANSIT'
+                    ? 'bg-candy-orange/10 text-candy-orange border border-candy-orange/30'
+                    : doc.tracking_status === 'PICKED_UP'
+                      ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
+                      : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'"
                 >
-                  {{ doc.tracking_status === 'IN_TRANSIT' ? 'In Transit' : 'Awaiting Scan' }}
+                  {{ doc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : doc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
                 </span>
                 <span
                   class="inline-flex items-center gap-1 px-2 py-0.5 text-[13px] font-bold uppercase border"
@@ -357,12 +359,17 @@ const messengerStore = useMessengerStore()
 
 const loading = ref(true)
 const manifestExpanded = ref(true)
-const custody = ref<{ in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[] }>({
+const custody = ref<{ in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[]; assigned_pending_pickup: CustodyDocument[] }>({
   in_transit: [],
   awaiting_scan: [],
+  assigned_pending_pickup: [],
 })
 
-const allDocs = computed(() => [...custody.value.in_transit, ...custody.value.awaiting_scan])
+const allDocs = computed(() => [
+  ...custody.value.assigned_pending_pickup,
+  ...custody.value.in_transit,
+  ...custody.value.awaiting_scan,
+])
 
 // Active Focus is strictly manual / liaison-driven
 const focusedDoc = computed(() => {
@@ -414,12 +421,13 @@ onMounted(async () => {
   try {
     const res = await $fetch<{
       success: boolean
-      data?: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[] }
+      data?: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[]; assigned_pending_pickup: CustodyDocument[] }
     }>('/api/tracking/custody', { credentials: 'include' })
 
     custody.value = {
       in_transit: Array.isArray(res?.data?.in_transit) ? res.data.in_transit : [],
       awaiting_scan: Array.isArray(res?.data?.awaiting_scan) ? res.data.awaiting_scan : [],
+      assigned_pending_pickup: Array.isArray(res?.data?.assigned_pending_pickup) ? res.data.assigned_pending_pickup : [],
     }
 
     // Safeguard: verify if current stored focus is still in custody roster
@@ -433,7 +441,7 @@ onMounted(async () => {
     }
   } catch (err) {
     console.warn('[MessengerDeliveries] custody load error, defaulting to empty list:', err)
-    custody.value = { in_transit: [], awaiting_scan: [] }
+    custody.value = { in_transit: [], awaiting_scan: [], assigned_pending_pickup: [] }
   } finally {
     loading.value = false
   }

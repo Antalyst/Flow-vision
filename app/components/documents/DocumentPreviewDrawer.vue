@@ -66,12 +66,28 @@
 
         <div class="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div class="flex-1 space-y-8 overflow-y-auto px-8 py-8">
-            <!-- What is this document? -->
-            <div class="stagger-block">
-              <p class="text-sm font-semibold" :class="mutedClass">What is this document?</p>
-              <p class="mt-2 text-[15px] leading-relaxed" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-                {{ document.description?.trim() || 'No description provided.' }}
-              </p>
+            <!-- Details -->
+            <div class="stagger-block overflow-hidden rounded-2xl border" :class="cellClass">
+              <div class="p-4">
+                <p class="text-[13px] font-bold uppercase tracking-wider text-candy-orange">Description</p>
+                <p class="mt-2 text-sm leading-relaxed" :class="mutedClass">
+                  {{ document.description?.trim() || 'No description provided.' }}
+                </p>
+              </div>
+              <div class="divide-y border-t" :class="isDark ? 'divide-onyx-border border-onyx-border' : 'divide-gray-200 border-gray-200'">
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Created</span>
+                  <span class="text-sm font-semibold">{{ formatDate(document.created_at) }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Document Route</span>
+                  <span class="text-sm font-semibold">{{ stageName || 'Unassigned' }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Receiving Office</span>
+                  <span class="truncate text-sm font-semibold">{{ targetOfficeLabel }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- §2 Delivery progress -->
@@ -205,6 +221,38 @@
               </div>
             </section>
 
+            <!-- Compliance flag action -->
+            <section
+              v-if="showComplianceActions"
+              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+                    Compliance Review
+                  </p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    Flag incomplete hard copies and message the responsible office desk.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure shadow-sm transition-colors hover:bg-candy-hover"
+                  @click="emit('flag-issue')"
+                >
+                  <Icon name="ph:warning-fill" class="h-4 w-4" />
+                  Flag Issue / Incomplete
+                </button>
+              </div>
+            </section>
+
+            <!-- Office-assigned Liaison: direct assignment, no accept/claim step -->
+            <AssignLiaisonPanel
+              :document="document"
+              @assigned="handleLiaisonAssigned"
+            />
+
+>>>>>>> 2bfca2b (updates)
             <slot name="extra" />
 
             <!-- §3 Official routing slip view (bottom) -->
@@ -269,6 +317,7 @@ import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
 import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
+import AssignLiaisonPanel from './AssignLiaisonPanel.vue'
 
 interface MessagingOffice { id: string; name: string }
 
@@ -340,7 +389,12 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'flag-issue'): void
   (e: 'compliance-updated', payload: { tracking_status: string; status?: string; checkpoint_cleared_step?: number | null }): void
+  (e: 'liaison-assigned', payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }): void
 }>()
+
+function handleLiaisonAssigned(payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }) {
+  emit('liaison-assigned', payload)
+}
 
 const officeStore = useOfficeStore()
 const stageStore = useStageStore()
@@ -590,11 +644,11 @@ const trackingBadgeClass = (status?: string) => {
 const trackingLabel = (status?: string) => {
   switch (status) {
     case 'COMPLETED': return 'Completed'
-    case 'IN_TRANSIT': return 'In Transit'
+    case 'IN_TRANSIT': return 'On the Way'
     case 'PICKED_UP': return 'Picked Up'
-    case 'ARRIVED_AT_OFFICE': return 'At Office'
-    case 'DISCREPANCY_REPORTED': return 'Discrepancy'
-    default: return 'Created'
+    case 'ARRIVED_AT_OFFICE': return 'Received by Office'
+    case 'DISCREPANCY_REPORTED': return 'Issue Reported'
+    default: return 'Registered'
   }
 }
 

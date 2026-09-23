@@ -566,6 +566,105 @@ export async function notifyClientStatusUpdate(
   return (data as { id: string }).id
 }
 
+/**
+ * Notify the document's creator/owner, resolved by their ACTUAL role (client or
+ * employee) rather than assuming client. `notifyDocumentOwner`/`notifyClientStatusUpdate`
+ * above hardcode `target_role: 'client'`, so an employee creator (e.g. registering a
+ * hard-copy at their own desk) never sees those rows via `fetchEmployeeNotifications`
+ * (which requires `target_role='employee'` AND a matching `office_id`). This is used by
+ * the office → liaison assignment flow, where the creator may be either role.
+ */
+export async function notifyDocumentCreator(input: {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  userId: string | null | undefined
+  creatorRole: string | null | undefined
+  officeId?: string | null
+  title: string
+  message: string
+}): Promise<string | null> {
+  if (!input.userId) return null
+  const normalizedUserId = String(input.userId).trim()
+  if (!normalizedUserId || normalizedUserId === 'null' || normalizedUserId === 'undefined') return null
+
+  const role = (input.creatorRole ?? 'client').toLowerCase()
+  const targetRole = role === 'employee' || role === 'employee_sub_user' ? 'employee' : 'client'
+
+  const row = {
+    org_id: input.orgId,
+    document_id: input.documentId,
+    user_id: normalizedUserId,
+    target_role: targetRole,
+    // fetchEmployeeNotifications requires office_id to be in the employee's assigned offices.
+    office_id: targetRole === 'employee' ? (input.officeId ?? null) : null,
+    title: input.title,
+    message: input.message,
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Document creator notification insert failed:', error?.message, row)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
+/**
+ * Direct assignment notification for the office-assigned Liaison model.
+ * Replaces the old org-wide `broadcastPickupNotification` pool broadcast — this
+ * addresses exactly one user (`user_id`), the liaison the current office selected.
+ */
+export async function notifyLiaisonAssigned(input: {
+  orgId: string
+  documentId: string
+  documentTitle: string
+  liaisonUserId: string
+  assignedByOfficeName?: string | null
+  destinationOfficeName?: string | null
+}): Promise<string | null> {
+  const originLabel = input.assignedByOfficeName || 'The current office'
+  const destinationLabel = input.destinationOfficeName || 'the next office'
+
+  const row = {
+    org_id: input.orgId,
+    document_id: input.documentId,
+    user_id: input.liaisonUserId,
+    target_role: 'messenger',
+    title: 'Document Assigned to You',
+    message:
+      `"${input.documentTitle}" has been assigned to you for delivery. ` +
+      `Assigned by: ${originLabel}. Destination: ${destinationLabel}. Ready for pickup.`,
+    is_read: false,
+    is_claimed: false,
+    claimed_by_user_id: null,
+  }
+
+  const db = getServiceSupabase()
+  const { data, error } = await db
+    .from('notifications')
+    .insert(row)
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    console.error('[notifications] Liaison assignment notification insert failed:', error?.message, row)
+    return null
+  }
+
+  return (data as { id: string }).id
+}
+
 /** Alert destination office employees that a messenger dropped off a folder awaiting desk review. */
 export async function broadcastOfficeReviewNotification(input: {
   orgId: string
@@ -622,6 +721,11 @@ function isUnclaimedFlag(value: unknown): boolean {
 }
 
 /**
+ * @deprecated Pool-broadcast model — superseded by the office-assigned Liaison
+ * workflow (`notifyLiaisonAssigned`). No longer called from the active registration
+ * or checkpoint-clearance flow. Kept (not deleted) in case anything external still
+ * references it; do not wire this back into new code.
+ *
  * Broadcast a pickup request to the entire messenger pool in an organisation.
  * Matches public.notifications schema: user_id NULL = org-wide pool broadcast.
  */
@@ -687,6 +791,7 @@ export async function createPickupNotification(
   }
 }
 
+/** @deprecated Pool/claim model — superseded by `fetchMessengerNotifications`. Kept, not called from the active flow. */
 export async function fetchNotificationsForRole(
   event: H3Event,
   options: { unclaimedOnly?: boolean } = {},
@@ -869,6 +974,58 @@ export async function fetchClientNotifications(
   return data ?? []
 }
 
+/**
+ * Direct-address messenger notification feed for the office-assigned Liaison model.
+ * Replaces `fetchNotificationsForRole` (org-wide unclaimed pool) for the active workflow —
+ * a liaison now only ever sees notifications addressed to them (`user_id = them`),
+ * exactly like `fetchClientNotifications` above. `fetchNotificationsForRole` and the
+ * pool-claim functions are kept in this file (not deleted) but are no longer called
+ * from the live registration/checkpoint/pickup flow.
+ */
+export async function fetchMessengerNotifications(
+  event: H3Event,
+  options: { unreadOnly?: boolean } = {},
+) {
+  const client = await serverSupabaseClient(event)
+  const userId = getCookie(event, 'user_session')
+  const userRole = getCookie(event, 'user_role')
+
+  if (!userId || !userRole) {
+    throw createError({ statusCode: 401, message: 'Authentication required.' })
+  }
+
+  if (userRole.toLowerCase() !== 'messenger') {
+    throw createError({ statusCode: 403, message: 'Only liaisons/messengers can view this notification feed.' })
+  }
+
+  const actor = await resolveActorContext(event, client)
+  const db = getServiceSupabase()
+
+  let query = db
+    .from('notifications')
+    .select(NOTIFICATION_COLUMNS)
+    .eq('org_id', actor.orgId)
+    .eq('user_id', actor.userId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (options.unreadOnly !== false) {
+    query = query.eq('is_read', false)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error('[notifications] Messenger direct-address fetch failed:', error.message, {
+      orgId: actor.orgId,
+      userId: actor.userId,
+    })
+    throw createError({ statusCode: 500, message: error.message })
+  }
+
+  return data ?? []
+}
+
 export async function markClientNotificationRead(
   notificationId: string,
   clientOrgId: string,
@@ -938,6 +1095,10 @@ export interface ClaimPickupResult {
 }
 
 /**
+ * @deprecated Pool/claim model — superseded by office-assigned Liaison workflow
+ * (`POST /api/tracking/assign-liaison`). The `/api/notifications/accept-pickup`
+ * endpoint that called this now returns 410 Gone. Kept, not called from the active flow.
+ *
  * Atomic messenger pickup claim with optimistic concurrency lock.
  */
 export async function claimPickupNotification(

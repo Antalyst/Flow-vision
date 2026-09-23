@@ -13,25 +13,22 @@
     </div>
     <Icon v-if="!minimized" name="ph:caret-up-down" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex-none text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
   </div>
+=======
+  <AppSidebarProfile
+    :user="user"
+    :minimized="minimized"
+    accent="orange"
+    fallback-name="FlowVision User"
+    @logout="emit('logout')"
+  />
 </template>
 
 <script setup>
-const props = defineProps({
+import AppSidebarProfile from '~/components/shared/AppSidebarProfile.vue'
+
+defineProps({
   user: { type: Object, default: null },
   minimized: { type: Boolean, default: false }
 })
-defineEmits(['logout'])
-
-const { isDark } = useTheme()
-
-const displayName = computed(() => props.user?.full_name || 'FlowVision User')
-const displayEmail = computed(() => props.user?.email || 'user@flowvision.com')
-const userInitials = computed(() => {
-  const name = displayName.value
-  const parts = name.split(' ')
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-  }
-  return name.substring(0, 2).toUpperCase()
-})
+const emit = defineEmits(['logout'])
 </script>

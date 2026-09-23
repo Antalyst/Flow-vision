@@ -6,6 +6,7 @@ import {
   notifyClientStatusUpdate,
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
+import { emitInTransitEmails } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/tracking/pickup
@@ -28,10 +29,14 @@ export default defineEventHandler(async (event) => {
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required.' })
-  if (!['messenger', 'client', 'employee'].includes(actorRole ?? '')) {
+  // employee_sub_user included: assign-liaison.post.ts allows this role as an eligible
+  // Liaison, so whoever is actually assigned must be able to perform the physical scan.
+  // This is only the identity gate — the real authorization is the assigned_messenger_id
+  // check further down, which is role-agnostic and remains unchanged.
+  if (!['messenger', 'client', 'employee', 'employee_sub_user'].includes(actorRole ?? '')) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only messenger, client, or employee accounts can perform document pickups.',
+      message: 'You do not have permission to pick up documents.',
     })
   }
 
@@ -42,7 +47,7 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (actorErr || !actorRow?.org_id) {
-    throw createError({ statusCode: 403, message: 'User account has no organisation assigned.' })
+    throw createError({ statusCode: 403, message: 'We could not find your office account. Please contact your administrator.' })
   }
 
   const messengerOrgId = String(actorRow.org_id)
@@ -60,7 +65,7 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 422,
         statusMessage: 'Unprocessable Entity',
-        message: 'VALIDATION_ERROR: "document_ids" array must contain at least one valid document ID string.',
+        message: 'Please select at least one document to pick up.',
         data: { code: 'EMPTY_BATCH_IDS', field: 'document_ids' },
       })
     }
@@ -70,13 +75,13 @@ export default defineEventHandler(async (event) => {
     // 1. Fetch all documents in batch
     const { data: docs, error: docErr } = await client
       .from('documents')
-      .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id, checkpoint_cleared_step, current_office_id')
+      .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id, checkpoint_cleared_step, current_office_id, creator_role, qr_code_data')
       .in('id', docIds)
 
-    if (docErr) throw createError({ statusCode: 500, message: docErr.message })
+    if (docErr) throw createError({ statusCode: 500, message: 'We could not load these documents. Please try again.' })
 
     if (!docs || docs.length === 0) {
-      throw createError({ statusCode: 404, message: 'No matching documents found for the provided batch IDs.' })
+      throw createError({ statusCode: 404, message: 'We could not find these documents.' })
     }
 
     if (docs.length !== docIds.length) {
@@ -84,7 +89,7 @@ export default defineEventHandler(async (event) => {
       const missing = docIds.filter((id) => !foundIds.has(id))
       throw createError({
         statusCode: 404,
-        message: `Some documents could not be found: ${missing.join(', ')}`,
+        message: `We could not find ${missing.length === 1 ? 'one of the selected documents' : 'some of the selected documents'}.`,
       })
     }
 
@@ -93,15 +98,24 @@ export default defineEventHandler(async (event) => {
       if (String(doc.org_id) !== messengerOrgId) {
         throw createError({
           statusCode: 403,
-          message: `SECURITY_ORG_MISMATCH: Document "${doc.title || doc.id}" belongs to a different organisation.`,
+          message: `You do not have permission to pick up "${doc.title || doc.id}".`,
           data: { code: 'SECURITY_ORG_MISMATCH', document_id: doc.id },
         })
       }
 
-      if (doc.assigned_messenger_id && doc.assigned_messenger_id !== actorId) {
+      if (!doc.assigned_messenger_id) {
         throw createError({
           statusCode: 403,
-          message: `Document "${doc.title || doc.id}" is assigned to another messenger.`,
+          message: `Please assign a messenger to "${doc.title || doc.id}" before picking it up.`,
+          data: { code: 'LIAISON_ASSIGNMENT_REQUIRED', document_id: doc.id },
+        })
+      }
+
+      if (doc.assigned_messenger_id !== actorId) {
+        throw createError({
+          statusCode: 403,
+          message: `"${doc.title || doc.id}" is assigned to another messenger.`,
+          data: { code: 'NOT_ASSIGNED_LIAISON', document_id: doc.id },
         })
       }
 
@@ -109,7 +123,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
           statusCode: 422,
           statusMessage: 'Unprocessable Entity',
-          message: `DISCREPANCY_FROZEN: Cannot pick up batch document "${doc.title || doc.id}" because an active discrepancy or compliance issue has been flagged. Physical transfers are frozen until the issue is resolved.`,
+          message: `"${doc.title || doc.id}" has an open issue and cannot be picked up until it is resolved.`,
           data: { code: 'DISCREPANCY_REPORTED', document_id: doc.id, tracking_status: doc.tracking_status },
         })
       }
@@ -118,7 +132,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
           statusCode: 422,
           statusMessage: 'Unprocessable Entity',
-          message: `INVALID_STATUS: Cannot pick up batch document "${doc.title || doc.id}" in "${doc.tracking_status}" status. Documents must be in CREATED, ARRIVED_AT_OFFICE, or PICKED_UP status.`,
+          message: `"${doc.title || doc.id}" cannot be picked up right now. Please check its current status.`,
           data: { code: 'INVALID_STATUS', document_id: doc.id, tracking_status: doc.tracking_status, allowed_statuses: allowedFromStates },
         })
       }
@@ -130,7 +144,7 @@ export default defineEventHandler(async (event) => {
         throw createError({
           statusCode: 422,
           statusMessage: 'Unprocessable Entity',
-          message: `DESK_REVIEW_REQUIRED: Document "${doc.title || doc.id}" has arrived at the station but has not yet been cleared by an employee. An employee must verify the physical hard copy and mark the checkpoint done before pickup.`,
+          message: `"${doc.title || doc.id}" is waiting for office staff to confirm receipt before it can be picked up again.`,
           data: { code: 'CHECKPOINT_NOT_CLEARED', document_id: doc.id, current_step: doc.current_step, checkpoint_cleared_step: doc.checkpoint_cleared_step },
         })
       }
@@ -385,6 +399,25 @@ export default defineEventHandler(async (event) => {
         'ASN_PROACTIVE_ALERT',
         singleDispatchPayload,
       )
+
+      try {
+        await emitInTransitEmails({
+          orgId: messengerOrgId,
+          documentId: item.doc.id,
+          title: item.doc.title,
+          trackingCode: (item.doc as any).qr_code_data ?? null,
+          creatorUserId: item.doc.user_id ? String(item.doc.user_id) : null,
+          creatorRole: (item.doc as any).creator_role ?? null,
+          status: 'IN_TRANSIT',
+          currentStep: item.nextStep,
+          originOfficeName: item.originOfficeName,
+          destinationOfficeId: item.officeId,
+          destinationOfficeName: item.officeName,
+          liaisonName: actorRow.full_name,
+        })
+      } catch (emailErr) {
+        console.warn('[Pickup:Batch] Non-fatal: in-transit/ASN email failed:', emailErr)
+      }
     }
 
     return {
@@ -392,7 +425,7 @@ export default defineEventHandler(async (event) => {
       batch: true,
       manifest_id: manifestId,
       count: updatedDocs.length,
-      message: `Batch manifest processed: ${updatedDocs.length} document(s) are now IN TRANSIT.`,
+      message: `${updatedDocs.length} document${updatedDocs.length === 1 ? '' : 's'} picked up and now on the way.`,
       data: {
         documents: updatedDocs,
         manifest_id: manifestId,
@@ -413,14 +446,14 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       statusMessage: 'Unprocessable Entity',
-      message: 'VALIDATION_ERROR: Missing pickup parameters. Either "qr_code_data" (QR scan string) or "document_id" is required to initiate a document pickup.',
+      message: 'Please scan a document QR code to continue.',
       data: { code: 'MISSING_PAYLOAD_PROPERTY', required_fields: ['qr_code_data', 'document_id'] },
     })
   }
 
   let docQuery = client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id, checkpoint_cleared_step, current_office_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id, checkpoint_cleared_step, current_office_id, creator_role, qr_code_data')
 
   if (rawQr) {
     docQuery = docQuery.eq('qr_code_data', rawQr)
@@ -430,14 +463,14 @@ export default defineEventHandler(async (event) => {
 
   const { data: doc, error: docErr } = await docQuery.maybeSingle()
 
-  if (docErr) throw createError({ statusCode: 500, message: docErr.message })
+  if (docErr) throw createError({ statusCode: 500, message: 'We could not load this document. Please try again.' })
 
   if (!doc) {
     throw createError({
       statusCode: 404,
       message: rawQr
-        ? 'No document found matching this QR code. Ensure you are scanning a valid FlowVision document.'
-        : `No document found with ID "${rawDocId}".`,
+        ? 'We could not find a document matching this QR code.'
+        : 'We could not find this document.',
       data: { code: 'DOCUMENT_NOT_FOUND', query: rawQr || rawDocId },
     })
   }
@@ -445,15 +478,24 @@ export default defineEventHandler(async (event) => {
   if (String(doc.org_id) !== messengerOrgId) {
     throw createError({
       statusCode: 403,
-      message: 'SECURITY_ORG_MISMATCH: This document belongs to a different organisation. Scanning is not permitted.',
+      message: 'You do not have permission to pick up this document.',
       data: { code: 'SECURITY_ORG_MISMATCH' },
     })
   }
 
-  if (doc.assigned_messenger_id && doc.assigned_messenger_id !== actorId) {
+  if (!doc.assigned_messenger_id) {
     throw createError({
       statusCode: 403,
-      message: 'This package is assigned to another messenger. Only the assigned messenger may scan this document.',
+      message: 'Please assign a messenger before picking up this document.',
+      data: { code: 'LIAISON_ASSIGNMENT_REQUIRED', document_id: doc.id },
+    })
+  }
+
+  if (doc.assigned_messenger_id !== actorId) {
+    throw createError({
+      statusCode: 403,
+      message: 'This document is assigned to another messenger.',
+      data: { code: 'NOT_ASSIGNED_LIAISON', document_id: doc.id },
     })
   }
 
@@ -461,7 +503,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       statusMessage: 'Unprocessable Entity',
-      message: `DISCREPANCY_FROZEN: Document "${doc.title || doc.id}" has an active discrepancy or compliance issue flagged. Physical transfers are frozen until the issue is reviewed and resolved.`,
+      message: `"${doc.title || doc.id}" has an open issue and cannot be picked up until it is resolved.`,
       data: { code: 'DISCREPANCY_REPORTED', document_id: doc.id, tracking_status: doc.tracking_status },
     })
   }
@@ -472,7 +514,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       statusMessage: 'Unprocessable Entity',
-      message: `INVALID_STATUS: Cannot pick up document "${doc.title || doc.id}" in "${doc.tracking_status}" status. Documents must be in CREATED, ARRIVED_AT_OFFICE, or PICKED_UP status.`,
+      message: `"${doc.title || doc.id}" cannot be picked up right now. Please check its current status.`,
       data: { code: 'INVALID_STATUS', document_id: doc.id, tracking_status: doc.tracking_status, allowed_statuses: allowedFromStates },
     })
   }
@@ -484,7 +526,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 422,
       statusMessage: 'Unprocessable Entity',
-      message: `DESK_REVIEW_REQUIRED: Document "${doc.title || doc.id}" has arrived at the station but has not yet been cleared by an employee. An employee must verify the physical hard copy and mark the checkpoint done before pickup.`,
+      message: `"${doc.title || doc.id}" is waiting for office staff to confirm receipt before it can be picked up again.`,
       data: { code: 'CHECKPOINT_NOT_CLEARED', document_id: doc.id, current_step: doc.current_step, checkpoint_cleared_step: doc.checkpoint_cleared_step },
     })
   }
@@ -714,9 +756,28 @@ export default defineEventHandler(async (event) => {
     dispatchPayload,
   )
 
+  try {
+    await emitInTransitEmails({
+      orgId: messengerOrgId,
+      documentId: doc.id,
+      title: doc.title,
+      trackingCode: (doc as any).qr_code_data ?? null,
+      creatorUserId: doc.user_id ? String(doc.user_id) : null,
+      creatorRole: (doc as any).creator_role ?? null,
+      status: 'IN_TRANSIT',
+      currentStep: nextStep,
+      originOfficeName,
+      destinationOfficeId: officeId,
+      destinationOfficeName: officeName,
+      liaisonName: actorRow.full_name,
+    })
+  } catch (emailErr) {
+    console.warn('[Pickup] Non-fatal: in-transit/ASN email failed:', emailErr)
+  }
+
   return {
     success: true,
-    message: `Document "${doc.title}" is now IN TRANSIT${officeName ? ` toward ${officeName}` : ''}.`,
+    message: `"${doc.title}" picked up and now on the way${officeName ? ` to ${officeName}` : ''}.`,
     data: {
       document:    updatedDoc,
       destination: { office_id: officeId, office_name: officeName, step: nextStep },

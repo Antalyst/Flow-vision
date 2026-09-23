@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (!ALLOWED_ROLES.includes(actor.userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only client, employee, or sub-user accounts may scan documents.',
+      message: 'You do not have permission to scan documents.',
     })
   }
 
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const scanMode = (get('scan_mode') as ScanMode) || 'FIRST_PAGE'
 
   if (!sessionId) {
-    throw createError({ statusCode: 400, message: 'session_id is required.' })
+    throw createError({ statusCode: 400, message: 'This scanning session has expired. Please scan the document again.' })
   }
 
   const { data: session, error: sessionErr } = await client
@@ -55,13 +55,13 @@ export default defineEventHandler(async (event) => {
     .maybeSingle()
 
   if (sessionErr) {
-    throw createError({ statusCode: 500, message: `Scan session lookup failed: ${sessionErr.message}` })
+    throw createError({ statusCode: 500, message: 'We could not check your scanning session. Please try again.' })
   }
   if (!session) {
-    throw createError({ statusCode: 404, message: 'Scan session not found.' })
+    throw createError({ statusCode: 404, message: 'This scanning session has expired. Please scan the document again.' })
   }
   if (String(session.user_id) !== String(actor.userId) || String(session.organization_id) !== String(actor.orgId)) {
-    throw createError({ statusCode: 403, message: 'This scan session does not belong to you.' })
+    throw createError({ statusCode: 403, message: 'This scanning session does not belong to you.' })
   }
 
   // FIRST_PAGE is a one-page contract end-to-end — cap here so page_count and the
@@ -71,17 +71,17 @@ export default defineEventHandler(async (event) => {
     imageItems = imageItems.slice(0, 1)
   }
   if (!imageItems.length) {
-    throw createError({ statusCode: 400, message: 'At least one captured page image is required.' })
+    throw createError({ statusCode: 400, message: 'Please scan at least one page before continuing.' })
   }
   if (imageItems.length > MAX_PAGES) {
-    throw createError({ statusCode: 413, message: `Too many pages — maximum ${MAX_PAGES} per scan.` })
+    throw createError({ statusCode: 413, message: `You can scan up to ${MAX_PAGES} pages at a time.` })
   }
   for (const item of imageItems) {
     if (!item.type?.startsWith('image/')) {
-      throw createError({ statusCode: 415, message: `Unsupported file type for a scanned page: ${item.type}` })
+      throw createError({ statusCode: 415, message: 'One of the scanned pages is not a supported image. Please try scanning it again.' })
     }
     if (item.data.length > MAX_IMAGE_BYTES) {
-      throw createError({ statusCode: 413, message: 'One of the captured pages exceeds the 12MB size limit.' })
+      throw createError({ statusCode: 413, message: 'One of the scanned pages is too large. Please try scanning it again.' })
     }
   }
 
@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: error.statusCode || 500,
-      message: error.message || 'AI analysis failed. Your scan has been preserved — you can retry or continue manually.',
+      message: "We couldn't automatically read this document. Your scan has been kept — you can try again or continue manually.",
       data: { code: 'SCAN_AI_FAILED', session_id: sessionId },
     })
   }

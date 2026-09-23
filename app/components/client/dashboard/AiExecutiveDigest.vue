@@ -231,7 +231,7 @@ const skeletonClass = computed(() => (isDark.value ? 'bg-onyx-border' : 'bg-gray
 const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Registered',
   PICKED_UP: 'Picked Up',
-  IN_TRANSIT: 'In Transit',
+  IN_TRANSIT: 'On the Way',
   ARRIVED_AT_OFFICE: 'Arrived',
   COMPLETED: 'Completed',
 }

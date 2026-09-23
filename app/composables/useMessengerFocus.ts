@@ -14,6 +14,7 @@ export interface CustodyDocument {
   created_at?: string
   priority?: string | null
   target_date?: string | null
+  ready_for_pickup?: boolean
 }
 
 function getPriorityWeight(priority?: string | null): number {

@@ -7,6 +7,7 @@ import {
   notifyClientStatusUpdate,
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
+import { emitArrivedEmail } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/tracking/dropoff
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event) => {
   const { office_id } = body
 
   if (!office_id) {
-    throw createError({ statusCode: 400, message: 'office_id is required' })
+    throw createError({ statusCode: 400, message: 'Please scan an office QR code to continue.' })
   }
 
   // ── Auth: messenger only ──────────────────────────────────────────────
@@ -45,8 +46,12 @@ export default defineEventHandler(async (event) => {
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })
-  if (!['messenger', 'client', 'employee'].includes(actorRole)) {
-    throw createError({ statusCode: 403, message: 'Forbidden: only messenger, client, or employee accounts can perform office drop-offs' })
+  // employee_sub_user included: assign-liaison.post.ts allows this role as an eligible
+  // Liaison, so whoever is actually assigned must be able to perform the physical scan.
+  // This is only the identity gate — the real authorization is the assigned_messenger_id
+  // filter on the activeDocs query below, which is role-agnostic and remains unchanged.
+  if (!['messenger', 'client', 'employee', 'employee_sub_user'].includes(actorRole)) {
+    throw createError({ statusCode: 403, message: 'You do not have permission to deliver documents.' })
   }
 
   // ── Resolve messenger org ─────────────────────────────────────────────
@@ -57,7 +62,7 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (actorErr || !actorRow?.org_id) {
-    throw createError({ statusCode: 403, message: 'Messenger account has no organisation assigned' })
+    throw createError({ statusCode: 403, message: 'We could not find your office account. Please contact your administrator.' })
   }
 
   const messengerOrgId = String(actorRow.org_id)
@@ -75,7 +80,7 @@ export default defineEventHandler(async (event) => {
   if (!office) {
     throw createError({
       statusCode: 404,
-      message: 'Office checkpoint not found. Ensure you are scanning a valid FlowVision office QR code.',
+      message: 'We could not find this office. Please scan a valid FlowVision office QR code.',
     })
   }
 
@@ -83,7 +88,7 @@ export default defineEventHandler(async (event) => {
   if (String(office.org_id) !== messengerOrgId) {
     throw createError({
       statusCode: 403,
-      message: 'SECURITY_ORG_MISMATCH: This office checkpoint belongs to a different organisation. Access denied.',
+      message: 'You do not have permission to deliver documents to this office.',
       data: { code: 'SECURITY_ORG_MISMATCH', office_org: office.org_id, messenger_org: messengerOrgId },
     })
   }
@@ -91,17 +96,17 @@ export default defineEventHandler(async (event) => {
   // ── Find this messenger's active IN_TRANSIT document ──────────────────
   const { data: activeDocs, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, creator_role, qr_code_data')
     .eq('assigned_messenger_id', actorId)
     .eq('org_id', messengerOrgId)
     .eq('tracking_status', 'IN_TRANSIT')
 
-  if (docErr) throw createError({ statusCode: 500, message: docErr.message })
+  if (docErr) throw createError({ statusCode: 500, message: 'We could not load your documents. Please try again.' })
 
   if (!activeDocs || activeDocs.length === 0) {
     throw createError({
       statusCode: 404,
-      message: 'No active in-transit document found. Please perform a document pickup first.',
+      message: 'You do not have a document on the way. Please pick up a document first.',
     })
   }
 
@@ -137,7 +142,7 @@ export default defineEventHandler(async (event) => {
   if (!targetDoc) {
     throw createError({
       statusCode: 422,
-      message: `ROUTE_MISMATCH: Office "${office.name}" is not the expected next checkpoint for your current delivery. Please continue to the correct destination.`,
+      message: `This document is not scheduled for "${office.name}". Please continue to the correct office.`,
       data: { code: 'ROUTE_MISMATCH', scanned_office: office.name },
     })
   }
@@ -176,7 +181,7 @@ export default defineEventHandler(async (event) => {
     .select('id, title, tracking_status, current_step')
     .single()
 
-  if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+  if (updateErr) throw createError({ statusCode: 500, message: 'We could not save this delivery. Please try again.' })
 
   const dropoffMessage = isFinalStop
     ? `${actorRow.full_name} delivered "${targetDoc.title}" to final stop ${office.name} — awaiting desk review`
@@ -199,14 +204,14 @@ export default defineEventHandler(async (event) => {
   const destinationOfficeName = office.name
 
   if (targetDoc.user_id) {
-    const destLabel = destinationOfficeName || 'Destination Office'
+    const destLabel = destinationOfficeName || 'the receiving office'
     await notifyDocumentOwner({
       orgId: messengerOrgId,
       documentId: targetDoc.id,
       documentTitle: targetDoc.title,
       userId: String(targetDoc.user_id),
-      title: `Document Arrived at ${destLabel}`,
-      message: `Your document "${targetDoc.title}" has arrived at ${destLabel} and is currently awaiting station review.`,
+      title: `Document Received by ${destLabel}`,
+      message: `Your document "${targetDoc.title}" has been received by ${destLabel} and is waiting to be verified.`,
       trackingStatus: finalStatus,
       targetOfficeId: destinationOfficeId,
       targetOfficeName: destinationOfficeName,
@@ -220,8 +225,8 @@ export default defineEventHandler(async (event) => {
     trackingStatus: finalStatus,
     clientUserId: targetDoc.user_id ? String(targetDoc.user_id) : null,
     message: isFinalStop
-      ? `Your document "${targetDoc.title}" has arrived at its final destination (${office.name}). The office will verify it shortly.`
-      : `Your document "${targetDoc.title}" has arrived at ${office.name}. The office desk will review it before the next pickup leg.`,
+      ? `Your document "${targetDoc.title}" has reached its final office (${office.name}) and will be verified shortly.`
+      : `Your document "${targetDoc.title}" has been received by ${office.name} and will be checked before continuing.`,
   })
 
   try {
@@ -232,8 +237,8 @@ export default defineEventHandler(async (event) => {
       messengerName: actorRow.full_name,
       officeId: destinationOfficeId,
       officeName: destinationOfficeName,
-      title: 'Inbound Document — Review Required',
-      message: `${actorRow.full_name} delivered "${targetDoc.title}" to ${destinationOfficeName || 'your office'}. Open the document preview, verify the hard copy, and mark the checkpoint done to release the next pickup.`,
+      title: 'Document Received — Please Verify',
+      message: `${actorRow.full_name} delivered "${targetDoc.title}" to ${destinationOfficeName || 'your office'}. Open the document, confirm the paper copy, and mark it received to release it for the next pickup.`,
     })
 
     const dropoffDispatchPayload = {
@@ -268,12 +273,28 @@ export default defineEventHandler(async (event) => {
     console.warn('[Dropoff] Office review notification failed:', hookErr)
   }
 
+  try {
+    await emitArrivedEmail({
+      orgId: messengerOrgId,
+      documentId: targetDoc.id,
+      title: targetDoc.title,
+      trackingCode: (targetDoc as any).qr_code_data ?? null,
+      creatorUserId: targetDoc.user_id ? String(targetDoc.user_id) : null,
+      creatorRole: (targetDoc as any).creator_role ?? null,
+      status: 'ARRIVED_AT_OFFICE',
+      currentStep: targetDoc.current_step ?? 0,
+      currentOfficeName: destinationOfficeName,
+    })
+  } catch (emailErr) {
+    console.warn('[Dropoff] Non-fatal: arrival email failed:', emailErr)
+  }
+
   return {
     success:        true,
     is_final_stop:  isFinalStop,
     message:        isFinalStop
-      ? `Checked in at final stop ${office.name}. Awaiting employee verification to complete delivery.`
-      : `Checked in at ${office.name}. Document is now ARRIVED_AT_OFFICE. Awaiting desk review.`,
+      ? `Delivered to ${office.name}. Waiting for office staff to confirm receipt and complete delivery.`
+      : `Delivered to ${office.name}. Received by office — waiting to be checked before the next pickup.`,
     data: {
       document: updatedDoc,
       office:   { id: office.id, name: office.name, code: office.code },

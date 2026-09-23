@@ -3,7 +3,7 @@
     <div class="flex items-center gap-3 px-2 py-2 rounded-lg transition"
       :class="[isDark ? 'hover:bg-onyx-card' : 'hover:bg-gray-50', minimized ? 'justify-center px-0' : '']">
       <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-none bg-candy-orange/10 text-candy-orange"
-           :title="minimized ? displayName : undefined">
+            :title="minimized ? displayName : undefined">
         {{ initials }}
       </div>
       <div v-if="!minimized" class="flex-1 min-w-0">
@@ -22,22 +22,21 @@
       <span v-if="!minimized">Log out</span>
     </button>
   </div>
+  <AppSidebarProfile
+    :user="user"
+    :minimized="minimized"
+    accent="orange"
+    fallback-name="Employee"
+    @logout="emit('logout')"
+  />
 </template>
 
 <script setup>
-const props = defineProps({ 
+import AppSidebarProfile from '~/components/shared/AppSidebarProfile.vue'
+
+defineProps({
   user: { type: Object, default: null },
   minimized: { type: Boolean, default: false }
 })
 const emit = defineEmits(['logout'])
-const { isDark } = useTheme()
-
-const displayName  = computed(() => props.user?.full_name || 'Employee')
-const displayEmail = computed(() => props.user?.email    || '')
-const initials = computed(() => {
-  const parts = displayName.value.split(' ')
-  return parts.length >= 2
-    ? (parts[0][0] + parts.at(-1)[0]).toUpperCase()
-    : displayName.value.substring(0, 2).toUpperCase()
-})
 </script>

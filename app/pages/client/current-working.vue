@@ -321,7 +321,7 @@ const displayTitle = (doc: QueueDoc) => {
 const STATUS_LABELS: Record<string, string> = {
   CREATED:           'Registered',
   PICKED_UP:         'Picked Up',
-  IN_TRANSIT:        'In Transit',
+  IN_TRANSIT:        'On the Way',
   ARRIVED_AT_OFFICE: 'Arrived',
   COMPLETED:         'Completed',
 }
@@ -345,7 +345,7 @@ const TRANSITIONS: Record<string, string[]> = {
 const statusChips = [
   { status: 'CREATED',           label: 'Registered',  icon: 'ph:file-plus-fill',    countKey: 'created' },
   { status: 'PICKED_UP',         label: 'Picked Up',   icon: 'ph:hand-fill',         countKey: 'picked_up' },
-  { status: 'IN_TRANSIT',        label: 'In Transit',  icon: 'ph:motorcycle-fill',   countKey: 'in_transit' },
+  { status: 'IN_TRANSIT',        label: 'On the Way',  icon: 'ph:motorcycle-fill',   countKey: 'in_transit' },
   { status: 'ARRIVED_AT_OFFICE', label: 'Arrived',     icon: 'ph:buildings-fill',    countKey: 'arrived_at_office' },
   { status: 'COMPLETED',         label: 'Completed',   icon: 'ph:check-circle-fill', countKey: 'completed' },
 ]
@@ -368,7 +368,7 @@ const filteredQueue = computed(() => {
 
 const kpiCards = computed(() => [
   { label: 'Registered', value: queueSummary.value.created ?? 0,            icon: 'ph:file-plus-fill',        iconBg: 'bg-gray-500/10',    iconColor: 'text-gray-500' },
-  { label: 'In Transit', value: queueSummary.value.in_transit ?? 0,         icon: 'ph:motorcycle-fill',       iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange' },
+  { label: 'On the Way', value: queueSummary.value.in_transit ?? 0,         icon: 'ph:motorcycle-fill',       iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange' },
   { label: 'Arrived',    value: queueSummary.value.arrived_at_office ?? 0,  icon: 'ph:buildings-fill',        iconBg: 'bg-candy-orange/10', iconColor: 'text-candy-orange' },
   { label: 'Completed',  value: queueSummary.value.completed ?? 0,          icon: 'ph:check-circle-fill',     iconBg: 'bg-success/10',     iconColor: 'text-success' },
 ])

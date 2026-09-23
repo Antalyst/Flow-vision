@@ -219,7 +219,7 @@ const documentList = ref([
     title: 'Business Permit Renewal 2024',
     icon: 'ph:briefcase-bold',
     status: 'processing' as DocStatus,
-    statusLabel: 'In Transit',
+    statusLabel: 'On the Way',
     lastUpdate: '10 min ago'
   },
   {

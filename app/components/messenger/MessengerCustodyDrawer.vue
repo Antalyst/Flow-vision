@@ -136,7 +136,7 @@ const cellClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-car
 
 const statusLabel = computed(() => {
   switch (props.document?.tracking_status) {
-    case 'IN_TRANSIT': return 'In Transit'
+    case 'IN_TRANSIT': return 'On the Way'
     case 'PICKED_UP': return 'Awaiting Scan'
     default: return props.document?.tracking_status ?? '—'
   }

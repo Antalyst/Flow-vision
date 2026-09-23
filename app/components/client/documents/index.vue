@@ -204,6 +204,7 @@
       :is-open="!!activeDocument"
       :document="activeDocument"
       @close="closeDocumentPreview"
+      @liaison-assigned="documentStore.fetchDocuments()"
     />
 
     <!-- Semantic Search Modal -->

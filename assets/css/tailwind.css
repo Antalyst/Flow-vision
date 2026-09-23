@@ -76,7 +76,7 @@
 
   .nav-item-active::before {
     content: '';
-    @apply absolute left-0 top-0 bottom-0 w-[3px] bg-candy-orange;
+    @apply absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-candy-orange rounded-full;
   }
 
   .badge {

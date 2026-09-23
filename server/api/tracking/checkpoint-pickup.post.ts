@@ -6,6 +6,7 @@ import {
   notifyClientStatusUpdate,
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
+import { emitInTransitEmails } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/tracking/checkpoint-pickup
@@ -19,17 +20,22 @@ export default defineEventHandler(async (event) => {
   const officeId = String(body?.office_id ?? '').trim()
 
   if (!officeId) {
-    throw createError({ statusCode: 400, message: 'office_id is required.' })
+    throw createError({ statusCode: 400, message: 'Please scan an office QR code to continue.' })
   }
 
   const actorId = getCookie(event, 'user_session')
   const actorRole = getCookie(event, 'user_role')
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required.' })
-  if (!['messenger', 'client', 'employee'].includes(actorRole)) {
+  // employee_sub_user included: assign-liaison.post.ts allows this role as an eligible
+  // Liaison, so whoever is actually assigned must be able to perform the physical scan.
+  // This is only the identity gate — the real authorization is the
+  // .eq('assigned_messenger_id', actorId) filter on the document query below, which is
+  // role-agnostic and remains unchanged.
+  if (!['messenger', 'client', 'employee', 'employee_sub_user'].includes(actorRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only messenger, client, or employee accounts can perform checkpoint pickups',
+      message: 'You do not have permission to pick up documents.',
     })
   }
 
@@ -40,7 +46,7 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (actorErr || !actorRow?.org_id) {
-    throw createError({ statusCode: 403, message: 'Messenger account has no organisation assigned.' })
+    throw createError({ statusCode: 403, message: 'We could not find your office account. Please contact your administrator.' })
   }
 
   const messengerOrgId = String(actorRow.org_id)
@@ -53,24 +59,28 @@ export default defineEventHandler(async (event) => {
 
   if (officeErr) throw createError({ statusCode: 500, message: officeErr.message })
   if (!office) {
-    throw createError({ statusCode: 404, message: 'Checkpoint station not found.' })
+    throw createError({ statusCode: 404, message: 'We could not find this office.' })
   }
 
   if (String(office.org_id) !== messengerOrgId) {
     throw createError({
       statusCode: 403,
-      message: 'SECURITY_ORG_MISMATCH: This checkpoint belongs to a different organisation.',
+      message: 'You do not have permission to use this office.',
       data: { code: 'SECURITY_ORG_MISMATCH' },
     })
   }
 
   const isClientStation = Boolean((office as { is_client_station?: boolean }).is_client_station)
 
+  // Office-assigned Liaison model: this station scan only ever surfaces documents the
+  // current office has already explicitly assigned to THIS liaison — never an
+  // unassigned document "up for grabs" (that was the old pool behaviour).
   let docQuery = client
     .from('documents')
-    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id')
+    .select('id, org_id, user_id, title, tracking_status, current_step, stage_id, assigned_messenger_id, origin_office_id, office_id, creator_role, qr_code_data')
     .eq('org_id', messengerOrgId)
     .eq('tracking_status', 'CREATED')
+    .eq('assigned_messenger_id', actorId)
     .order('created_at', { ascending: true })
     .limit(1)
 
@@ -88,7 +98,7 @@ export default defineEventHandler(async (event) => {
 
   if (!doc) {
     const checkInMessage =
-      `${actorRow.full_name} scanned origin checkpoint "${office.name}" — no documents awaiting pickup.`
+      `${actorRow.full_name} scanned origin checkpoint "${office.name}" — no documents assigned to them are waiting here.`
 
     await logActivitySafe({
       orgId: messengerOrgId,
@@ -108,20 +118,13 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      message: `Checked in at ${office.name}. No documents are waiting for pickup at this station.`,
+      message: `Checked in at ${office.name}. No documents assigned to you are waiting for pickup at this station.`,
       data: {
         office: { id: office.id, name: office.name, code: office.code },
         document: null,
         checkpoint_only: true,
       },
     }
-  }
-
-  if (doc.assigned_messenger_id && doc.assigned_messenger_id !== actorId) {
-    throw createError({
-      statusCode: 403,
-      message: 'The next document at this station is assigned to another messenger.',
-    })
   }
 
   const nextStep = (doc.current_step ?? 0) + 1
@@ -340,9 +343,28 @@ export default defineEventHandler(async (event) => {
     dispatchPayload,
   )
 
+  try {
+    await emitInTransitEmails({
+      orgId: messengerOrgId,
+      documentId: doc.id,
+      title: doc.title,
+      trackingCode: (doc as any).qr_code_data ?? null,
+      creatorUserId: doc.user_id ? String(doc.user_id) : null,
+      creatorRole: (doc as any).creator_role ?? null,
+      status: 'IN_TRANSIT',
+      currentStep: nextStep,
+      originOfficeName: office.name,
+      destinationOfficeId: destOfficeId,
+      destinationOfficeName: destOfficeName,
+      liaisonName: actorRow.full_name,
+    })
+  } catch (emailErr) {
+    console.warn('[CheckpointPickup] Non-fatal: in-transit/ASN email failed:', emailErr)
+  }
+
   return {
     success: true,
-    message: `Picked up "${doc.title}" from ${office.name}. Now IN TRANSIT.`,
+    message: `Picked up "${doc.title}" from ${office.name}. Now on the way.`,
     data: {
       office: { id: office.id, name: office.name, code: office.code },
       document: updatedDoc,

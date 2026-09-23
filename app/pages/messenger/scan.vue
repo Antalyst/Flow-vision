@@ -575,11 +575,12 @@ async function loadCustody() {
   try {
     const res = await $fetch<{
       success: boolean
-      data?: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[] }
+      data?: { in_transit: CustodyDocument[]; awaiting_scan: CustodyDocument[]; assigned_pending_pickup: CustodyDocument[] }
     }>('/api/tracking/custody', { credentials: 'include' })
     const inTransit = Array.isArray(res?.data?.in_transit) ? res.data.in_transit : []
     const awaitingScan = Array.isArray(res?.data?.awaiting_scan) ? res.data.awaiting_scan : []
-    custodyDocs.value = [...inTransit, ...awaitingScan]
+    const assignedPendingPickup = Array.isArray(res?.data?.assigned_pending_pickup) ? res.data.assigned_pending_pickup : []
+    custodyDocs.value = [...inTransit, ...awaitingScan, ...assignedPendingPickup]
 
     // Context-Aware Auto-Mode Lock:
     if (queryDocId.value) {

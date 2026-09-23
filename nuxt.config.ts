@@ -24,6 +24,11 @@ export default defineNuxtConfig({
     supabaseServiceKey: process.env.NUXT_SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_KEY,
     public: {
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      // Publishable/anon key — safe for the browser by design. Used by the custom
+      // lightweight Realtime WebSocket client in useSupabaseClient.ts (NOT the
+      // @nuxtjs/supabase module, which reads NUXT_PUBLIC_SUPABASE_KEY directly from
+      // process.env on its own and was never affected by this gap).
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
     }
   },
 

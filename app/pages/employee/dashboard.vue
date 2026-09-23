@@ -429,6 +429,80 @@ const kpiCards = computed(() => {
   const waiting = ledger.value.filter((d) => !d.tracking_status || d.tracking_status === 'CREATED').length
   const moving  = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
 
+// ── Computed KPI cards (scope-aware, data-driven) ──────────────────────
+const kpiCards = computed(() => {
+  if (currentScope.value === 'LOCAL') {
+    const own     = ledger.value.filter((d) => d.is_own_upload).length
+    const pending = ledger.value.filter((d) => (d.status ?? '').toLowerCase() === 'pending').length
+    const transit = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
+    return [
+      {
+        label: 'Office Docs', value: String(ledger.value.length),
+        trend: 'in your offices', trendColor: 'text-candy-orange',
+        icon: 'ph:files-light', iconColor: 'text-candy-orange',
+      },
+      {
+        label: 'My Uploads', value: String(own),
+        trend: 'uploaded by you', trendColor: mutedText.value,
+        icon: 'ph:upload-simple-light', iconColor: 'text-emerald-500',
+      },
+      {
+        label: 'Pending', value: String(pending),
+        trend: 'awaiting action', trendColor: pending > 0 ? 'text-amber-500' : mutedText.value,
+        icon: 'ph:clock-countdown-light', iconColor: 'text-amber-500',
+      },
+      {
+        label: 'On the Way', value: String(transit),
+        trend: 'currently moving', trendColor: transit > 0 ? 'text-blue-400' : mutedText.value,
+        icon: 'ph:package-light', iconColor: 'text-blue-400',
+      },
+    ]
+  }
+
+  // GLOBAL view
+  const { total, in_transit, arrived_at_office, completed } = queueSummary.value
+  return [
+    {
+      label: 'Total Org Docs', value: String(total),
+      trend: 'across organisation', trendColor: 'text-candy-orange',
+      icon: 'ph:files-light', iconColor: 'text-candy-orange',
+    },
+    {
+      label: 'On the Way', value: String(in_transit),
+      trend: 'with messengers', trendColor: in_transit > 0 ? 'text-blue-400' : mutedText.value,
+      icon: 'ph:truck-light', iconColor: 'text-blue-400',
+    },
+    {
+      label: 'Received by Office', value: String(arrived_at_office),
+      trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-teal-500' : mutedText.value,
+      icon: 'ph:buildings-light', iconColor: 'text-teal-500',
+    },
+    {
+      label: 'Completed', value: String(completed),
+      trend: 'fully delivered', trendColor: completed > 0 ? 'text-emerald-500' : mutedText.value,
+      icon: 'ph:check-circle-light', iconColor: 'text-emerald-500',
+    },
+  ]
+})
+
+// Pipeline chips for GLOBAL view
+const pipelineChips = computed(() => [
+  { label: 'Created',   count: queueSummary.value.created,           dot: 'bg-candy-orange' },
+  { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
+  { label: 'On the Way',count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
+  { label: 'Received by Office', count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
+  { label: 'Completed', count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
+])
+
+// Queue stats list for right panel
+const queueStats = computed(() => [
+  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: 'bg-candy-orange' },
+  { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
+  { label: 'On the Way',                    count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
+  { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
+  { label: 'Completed',                     count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
+])
+
   return [
     { label: 'Documents in Your Office', value: String(ledger.value.length), icon: 'ph:buildings-light',       to: '/employee/documents' },
     { label: 'Uploaded by You',          value: String(own),                 icon: 'ph:upload-simple-light',   to: '/employee/documents?office=own' },

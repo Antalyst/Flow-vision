@@ -228,7 +228,7 @@ const props = defineProps<{
 const STATUS_LABELS: Record<string, string> = {
   CREATED:           'Registered',
   PICKED_UP:         'Picked Up',
-  IN_TRANSIT:        'In Transit',
+  IN_TRANSIT:        'On the Way',
   ARRIVED_AT_OFFICE: 'Arrived at Office',
   COMPLETED:         'Completed',
 }

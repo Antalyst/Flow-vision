@@ -29,6 +29,17 @@
           Scan QR
         </NuxtLink>
 
+        <!-- Scan Physical Document -->
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-none bg-white dark:bg-onyx-card border px-4 py-2 text-sm font-semibold transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
+          @click="isScannerOpen = true"
+        >
+          <Icon name="ph:camera-fill" class="h-4 w-4 text-candy-orange" />
+          Scan Physical Document
+        </button>
+
         <!-- Upload -->
         <button
           type="button"
@@ -110,6 +121,7 @@
         </select>
       </div>
 
+
       <!-- Status quick filter pills -->
       <div class="flex flex-wrap items-center gap-2">
         <button
@@ -125,6 +137,21 @@
           {{ s.label }}
         </button>
       </div>
+
+      <!-- Tracking filter -->
+      <select
+        v-model="trackingFilter"
+        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
+        :class="inputClass"
+      >
+        <option value="all">All Tracking</option>
+        <option value="CREATED">Registered</option>
+        <option value="PICKED_UP">Picked Up</option>
+        <option value="IN_TRANSIT">On the Way</option>
+        <option value="ARRIVED_AT_OFFICE">Received by Office</option>
+        <option value="DISCREPANCY_REPORTED">Issue Reported</option>
+        <option value="COMPLETED">Completed</option>
+      </select>
     </div>
 
     <!-- Active Semantic Search Indicator -->
@@ -278,6 +305,7 @@
       @close="closeDocumentPreview"
       @flag-issue="issueChatRef?.openReportForm()"
       @compliance-updated="handleIssueUpdated"
+      @liaison-assigned="fetchDocs"
     >
       <template #footer>
         <DocumentIssueChatPanel
@@ -299,6 +327,14 @@
       @uploaded="handleUploadSuccess"
     />
 
+    <!-- Scan Physical Document modal -->
+    <DocumentScannerModal
+      :is-open="isScannerOpen"
+      :role="scannerRole"
+      @close="isScannerOpen = false"
+      @registered="handleUploadSuccess"
+    />
+
     <!-- Semantic Search Modal -->
     <SemanticSearchModal
       :is-open="isSemanticSearchOpen"
@@ -317,6 +353,7 @@ import { useAuthStore } from '~/stores/auth'
 import { useStageStore } from '~/stores/stage'
 import EmployeeDocUploadModal from './EmployeeDocUploadModal.vue'
 import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
+import DocumentScannerModal from '~/components/documents/DocumentScannerModal.vue'
 import DocumentIssueChatPanel from './DocumentIssueChatPanel.vue'
 import SemanticSearchModal from '~/components/client/documents/SemanticSearchModal.vue'
 
@@ -358,6 +395,12 @@ const docs          = ref<LedgerDoc[]>([])
 const myOffices     = ref<OfficeRecord[]>([])
 const loading       = ref(false)
 const isUploadOpen  = ref(false)
+const isScannerOpen = ref(false)
+// Employees own their sub-office directly; sub-users are assigned to one —
+// DocumentScannerModal handles the office-resolution difference internally.
+const scannerRole = computed<'employee' | 'employee_sub_user'>(() =>
+  auth.user?.role === 'employee_sub_user' ? 'employee_sub_user' : 'employee',
+)
 const activeDocument = ref<LedgerDoc | null>(null)
 const issueChatRef   = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
 // Pre-filter from a deep link (e.g. the dashboard's KPI cards): ?office=own, ?tracking=IN_TRANSIT
@@ -418,7 +461,7 @@ const kpiCards = computed(() => [
     trendColor: isDark.value ? 'text-gray-400' : 'text-white-muted',
   },
   {
-    label: 'In Transit',
+    label: 'On the Way',
     value: docs.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length,
     icon: 'ph:van-fill',
     iconBg: 'bg-candy-orange/10',
@@ -494,11 +537,11 @@ const trackingClass = (s?: string) => {
 const trackingLabel = (s?: string) => {
   switch (s) {
     case 'COMPLETED':         return 'Completed'
-    case 'IN_TRANSIT':        return 'In Transit'
+    case 'IN_TRANSIT':        return 'On the Way'
     case 'PICKED_UP':         return 'Picked Up'
-    case 'ARRIVED_AT_OFFICE': return 'At Office'
-    case 'DISCREPANCY_REPORTED': return 'Discrepancy'
-    default:                  return 'Created'
+    case 'ARRIVED_AT_OFFICE': return 'Received by Office'
+    case 'DISCREPANCY_REPORTED': return 'Issue Reported'
+    default:                  return 'Registered'
   }
 }
 

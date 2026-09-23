@@ -1,7 +1,7 @@
 import {
   fetchClientNotifications,
   fetchEmployeeNotifications,
-  fetchNotificationsForRole,
+  fetchMessengerNotifications,
 } from '~~/server/utils/notifications'
 
 export default defineEventHandler(async (event) => {
@@ -30,8 +30,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const unclaimedOnly = query.unclaimed !== 'false'
-  const notifications = await fetchNotificationsForRole(event, { unclaimedOnly })
+  // Liaison/messenger notifications are now direct-address (assigned deliveries),
+  // not a claimable pool — same unread/all toggle as the client/employee feeds.
+  const unreadOnly = query.unread !== 'false'
+  const notifications = await fetchMessengerNotifications(event, { unreadOnly })
 
   return {
     success: true,

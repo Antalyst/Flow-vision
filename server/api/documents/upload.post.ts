@@ -34,12 +34,7 @@ import { randomUUID } from 'node:crypto'
 import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import {
-  broadcastPickupNotification,
-  broadcastInboundOfficeNotification,
-  broadcastInboundDispatchRealtime,
-  resolveTargetOfficeIdForInboundNotification,
-} from '~~/server/utils/notifications'
+import { emitDocumentRegisteredEmail } from '~~/server/utils/email/emailEvents'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
 
@@ -62,7 +57,7 @@ export default defineEventHandler(async (event) => {
   if (!db) {
     throw createError({
       statusCode: 500,
-      message: 'MySQL storage connector is not available on the request context.',
+      message: 'We could not save the document right now. Please try again.',
     })
   }
 
@@ -76,7 +71,7 @@ export default defineEventHandler(async (event) => {
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({
       statusCode: 403,
-      message: 'Forbidden: only client, employee, or sub-user accounts may upload documents.',
+      message: 'You do not have permission to upload documents.',
     })
   }
 
@@ -88,14 +83,14 @@ export default defineEventHandler(async (event) => {
 
   const { data: actorRow, error: actorErr } = await client
     .from('users')
-    .select('org_id, full_name, role')
+    .select('org_id, full_name, role, office_id')
     .eq('user_id', userId)
     .single()
 
   if (actorErr || !actorRow?.org_id) {
     throw createError({
       statusCode: 401,
-      message: 'Could not resolve authenticated user profile. Please log in again.',
+      message: 'We could not find your account. Please log in again.',
     })
   }
 
@@ -107,7 +102,7 @@ export default defineEventHandler(async (event) => {
   if (!resolvedRole) {
     throw createError({
       statusCode: 403,
-      message: 'Role mismatch: session cookie does not match database profile.',
+      message: 'Your session has expired. Please log in again.',
     })
   }
 
@@ -117,7 +112,7 @@ export default defineEventHandler(async (event) => {
 
   const formData = await readMultipartFormData(event)
   if (!formData) {
-    throw createError({ statusCode: 400, message: 'No multipart form data received.' })
+    throw createError({ statusCode: 400, message: 'Please choose a file to upload.' })
   }
 
   const get = (name: string) => formData.find((f) => f.name === name)?.data.toString().trim() || null
@@ -131,7 +126,7 @@ export default defineEventHandler(async (event) => {
   const categoryId        = get('category_id')
 
   if (!fileItem?.data) {
-    throw createError({ statusCode: 400, message: 'Missing document file payload.' })
+    throw createError({ statusCode: 400, message: 'Please choose a file to upload.' })
   }
 
   const fileName = fileItem.filename || 'unnamed'
@@ -155,18 +150,16 @@ export default defineEventHandler(async (event) => {
   let resolvedOriginOfficeId: string | null = null
   let resolvedOfficeName:     string | null = null
 
-  if (resolvedRole === 'employee') {
-    // Employee mandate: origin_office_id is required
+  if (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user') {
+    // Employee / sub-user mandate: origin_office_id is required
     if (!originOfficeId) {
       throw createError({
         statusCode: 400,
-        message:
-          'EMPLOYEE_ORIGIN_REQUIRED: Employees must supply origin_office_id — ' +
-          'the sub-office/branch where this hard-copy is being physically registered.',
+        message: 'Please select the office where this document is being registered.',
       })
     }
 
-    // Verify: office exists, belongs to the same org, and is assigned to this employee
+    // Verify: office exists and belongs to the same org
     const { data: officeRow, error: officeErr } = await client
       .from('offices')
       .select('id, name, org_id, assigned_user')
@@ -174,31 +167,34 @@ export default defineEventHandler(async (event) => {
       .maybeSingle()
 
     if (officeErr) {
-      throw createError({ statusCode: 500, message: `Office lookup failed: ${officeErr.message}` })
+      throw createError({ statusCode: 500, message: 'We could not check this office. Please try again.' })
     }
 
     if (!officeRow) {
       throw createError({
         statusCode: 404,
-        message: `OFFICE_NOT_FOUND: No office found with id ${originOfficeId}.`,
+        message: 'We could not find this office.',
       })
     }
 
     if (String(officeRow.org_id) !== orgId) {
       throw createError({
         statusCode: 403,
-        message:
-          `CROSS_ORG_VIOLATION: Office ${originOfficeId} belongs to a different organisation. ` +
-          'Cross-tenant document registration is not permitted.',
+        message: 'You can only register documents for offices in your own LGU.',
       })
     }
 
-    if (String(officeRow.assigned_user) !== String(userId)) {
+    // Employees own an office directly via offices.assigned_user. Sub-users don't
+    // own offices — they're assigned to one via users.office_id (same dual-check
+    // used by actorContext.ts and scan/register.post.ts).
+    const isOwningEmployee = String(officeRow.assigned_user) === String(userId)
+    const isAssignedSubUser =
+      resolvedRole === 'employee_sub_user' && String(actorRow.office_id ?? '') === String(officeRow.id)
+
+    if (!isOwningEmployee && !isAssignedSubUser) {
       throw createError({
         statusCode: 403,
-        message:
-          'UNAUTHORIZED_OFFICE: This office is not assigned to your account. ' +
-          'Employees may only register documents under their own sub-office branches.',
+        message: 'You can only register documents for your assigned office.',
       })
     }
 
@@ -229,32 +225,29 @@ export default defineEventHandler(async (event) => {
       .maybeSingle()
 
     if (stageErr) {
-      throw createError({ statusCode: 500, message: `Stage lookup failed: ${stageErr.message}` })
+      throw createError({ statusCode: 500, message: 'We could not check this document route. Please try again.' })
     }
 
     if (!stageRow) {
       throw createError({
         statusCode: 404,
-        message: `STAGE_NOT_FOUND: No stage template found with id ${stageIdRaw}.`,
+        message: 'We could not find this document route.',
       })
     }
 
     if (String(stageRow.org_id) !== orgId) {
       throw createError({
         statusCode: 403,
-        message: 'CROSS_ORG_VIOLATION: The selected stage template belongs to a different organisation.',
+        message: 'This document route belongs to a different LGU.',
       })
     }
 
-    if (resolvedRole === 'employee' && stageRow.office_id) {
+    if ((resolvedRole === 'employee' || resolvedRole === 'employee_sub_user') && stageRow.office_id) {
       // Local stage — must be scoped to the employee's own origin office
       if (String(stageRow.office_id) !== resolvedOriginOfficeId) {
         throw createError({
           statusCode: 403,
-          message:
-            'STAGE_SCOPE_MISMATCH: Employees may only use global stages or stages scoped ' +
-            'to their own sub-office. Select a global route template or one belonging to ' +
-            `your office (${resolvedOfficeName ?? resolvedOriginOfficeId}).`,
+          message: `You can only use shared routes or routes set up for your office (${resolvedOfficeName ?? resolvedOriginOfficeId}).`,
         })
       }
     }
@@ -292,7 +285,7 @@ export default defineEventHandler(async (event) => {
     if (stepsErr) {
       throw createError({
         statusCode: 500,
-        message: `Route checkpoint fetch failed: ${stepsErr.message}`,
+        message: 'We could not check this document route. Please try again.',
       })
     }
 
@@ -313,7 +306,7 @@ export default defineEventHandler(async (event) => {
       if (cpOfficeErr) {
         throw createError({
           statusCode: 500,
-          message: `Route checkpoint office verification failed: ${cpOfficeErr.message}`,
+          message: 'We could not check this document route. Please try again.',
         })
       }
 
@@ -325,15 +318,9 @@ export default defineEventHandler(async (event) => {
       )
 
       if (crossOrgViolators.length > 0) {
-        const violatingIds   = crossOrgViolators.map((o: any) => String(o.id)).join(', ')
-        const violatingNames = crossOrgViolators.map((o: any) => o.name || o.id).join(', ')
         throw createError({
           statusCode: 403,
-          message:
-            `CROSS_ORG_ROUTE_VIOLATION: Route checkpoints [${violatingNames}] (id: ${violatingIds}) ` +
-            `belong to a different organisation. All destination offices in a routing pathway ` +
-            `must be registered under organisation ${orgId}. ` +
-            'Cross-tenant routing is strictly prohibited and has been logged.',
+          message: 'This document route includes offices from a different LGU. Please choose a different route.',
         })
       }
 
@@ -344,10 +331,7 @@ export default defineEventHandler(async (event) => {
       if (ghostIds.length > 0) {
         throw createError({
           statusCode: 404,
-          message:
-            `INVALID_ROUTE_CHECKPOINTS: The following office IDs in the routing pathway do not ` +
-            `exist in the database: [${ghostIds.join(', ')}]. ` +
-            'Ensure all destination offices are registered before routing documents through them.',
+          message: 'This document route includes an office that no longer exists. Please choose a different route.',
         })
       }
 
@@ -399,9 +383,7 @@ export default defineEventHandler(async (event) => {
       console.error('[Upload] QR stamp failed:', stampErr)
       throw createError({
         statusCode: 422,
-        message:
-          `Could not embed the tracking QR code into "${fileName}". ` +
-          'Please verify the file is a valid .docx or .xlsx document and try again.',
+        message: `We could not add the QR code to "${fileName}". Please make sure the file is a valid Word or Excel document and try again.`,
         data: { code: 'QR_STAMP_FAILED' },
       })
     }
@@ -507,9 +489,9 @@ export default defineEventHandler(async (event) => {
       }
 
       // ── Layer A + B: Actor context + armed-for-pickup handshake ──────
-      const initNotes = resolvedRole === 'employee'
+      const initNotes = (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user')
         ? `Document physically registered at "${resolvedOfficeName}" (office: ${resolvedOriginOfficeId}) ` +
-          `by ${actorName ?? 'an employee'} (role: employee). ` +
+          `by ${actorName ?? 'an employee'} (role: ${resolvedRole}). ` +
           `Hard-copy asset is stationed at its origin checkpoint and armed for messenger QR-scan pickup.` +
           routeSnapshotLine
         : `Document registered org-wide under organisation ${orgId} ` +
@@ -552,70 +534,26 @@ export default defineEventHandler(async (event) => {
       metadata: { creator_role: resolvedRole, tracking_status: 'CREATED' },
     }, client)
 
-    let notificationId: string | null = null
+    // Office-assigned Liaison model: no automatic pool broadcast or destination-office
+    // ASN here. The registering office already knows about this document (they just
+    // uploaded it) — they now explicitly assign a Liaison via
+    // POST /api/tracking/assign-liaison whenever they're ready.
+    const notificationId: string | null = null
+
     try {
-      notificationId = await broadcastPickupNotification(client, {
-        orgId: String((supabaseDoc as { org_id?: string }).org_id ?? orgId),
+      await emitDocumentRegisteredEmail({
+        orgId: String(orgId),
         documentId: supabaseDoc.id,
-        documentTitle: docTitle,
+        title: docTitle,
+        trackingCode: qrCode,
+        creatorUserId: userId,
+        creatorRole: resolvedRole,
+        status: 'CREATED',
+        currentStep: 0,
+        originOfficeName: resolvedOfficeName,
       })
-    } catch (notificationErr) {
-      console.error('[Upload] Messenger notification broadcast failed:', notificationErr)
-    }
-
-    // Proactive Inbound Advance Shipping Notice (ASN) — Awaiting Courier Pickup
-    try {
-      let destOfficeId = resolvedRouteSteps[0]?.office_id ? String(resolvedRouteSteps[0].office_id) : null
-      let destOfficeName = resolvedRouteSteps[0]?.office_name ?? null
-
-      if (!destOfficeId && (supabaseDoc as any).stage_id) {
-        const dest = await resolveTargetOfficeIdForInboundNotification(client, supabaseDoc as any)
-        destOfficeId = dest.officeId
-        destOfficeName = dest.officeName
-      }
-
-      if (destOfficeId) {
-        const effectiveOrgId = String((supabaseDoc as { org_id?: string }).org_id ?? orgId)
-        const originLabel = resolvedOfficeName ? resolvedOfficeName : 'origin office'
-        await broadcastInboundOfficeNotification({
-          orgId: effectiveOrgId,
-          documentId: supabaseDoc.id,
-          documentTitle: docTitle,
-          officeId: destOfficeId,
-          officeName: destOfficeName,
-          type: 'ASN_PENDING_PICKUP',
-          title: 'Inbound Advance Notice — Awaiting Pickup',
-          message: `"${docTitle}" has been released by ${originLabel} and is waiting for courier pickup.`,
-          metadata: {
-            type: 'ASN_PENDING_PICKUP',
-            origin_office_id: resolvedOriginOfficeId,
-            origin_office_name: resolvedOfficeName,
-            target_step: 1,
-          },
-        })
-
-        await broadcastInboundDispatchRealtime(
-          effectiveOrgId,
-          destOfficeId,
-          'ASN_PENDING_PICKUP',
-          {
-            type: 'ASN_PENDING_PICKUP',
-            event: 'ASN_PENDING_PICKUP',
-            document_id: supabaseDoc.id,
-            document_title: docTitle,
-            origin_office_id: resolvedOriginOfficeId,
-            origin_office_name: resolvedOfficeName,
-            target_office_id: destOfficeId,
-            target_office_name: destOfficeName,
-            step: 1,
-            tracking_status: 'CREATED',
-            dispatched_at: new Date().toISOString(),
-            notes: `Document released by ${originLabel} and awaiting courier pickup.`,
-          },
-        )
-      }
-    } catch (asnErr) {
-      console.warn('[Upload] Pre-pickup ASN alert failed (non-fatal):', asnErr)
+    } catch (emailErr) {
+      console.warn('[Upload] Non-fatal: registration email failed:', emailErr)
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -624,9 +562,9 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      message: resolvedRole === 'employee'
-        ? `Document registered at "${resolvedOfficeName}" and armed for messenger pickup.`
-        : 'Document analyzed and registered org-wide. Ready for route assignment.',
+      message: (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user')
+        ? `Document registered at "${resolvedOfficeName}". Assign a messenger to start the delivery.`
+        : 'Document registered successfully. Assign a messenger to start the delivery.',
       scope: {
         role:              resolvedRole,
         org_id:            orgId,
@@ -666,7 +604,7 @@ export default defineEventHandler(async (event) => {
     console.error('[Document Upload] Pipeline failed:', error)
     throw createError({
       statusCode: error.statusCode || 500,
-      message: `Document upload failed: ${error.message || 'Internal Server Error'}`,
+      message: error.statusCode ? error.message : 'We could not upload this document. Please try again.',
     })
   }
 })

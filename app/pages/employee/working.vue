@@ -236,7 +236,7 @@ const {
 
 const pipelineColumns = [
   { id: 'awaiting_pickup' as PipelinePhase, label: 'Awaiting Pickup', icon: 'ph:package-light' },
-  { id: 'in_transit' as PipelinePhase, label: 'In Transit', icon: 'ph:motorcycle-light' },
+  { id: 'in_transit' as PipelinePhase, label: 'On the Way', icon: 'ph:motorcycle-light' },
   { id: 'under_review' as PipelinePhase, label: 'Under Review', icon: 'ph:clipboard-text-light' },
   { id: 'verified' as PipelinePhase, label: 'Verified / Processing', icon: 'ph:check-square-light' },
 ]

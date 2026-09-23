@@ -224,7 +224,7 @@ const skeletonInner = computed(() => (isDark.value ? 'bg-onyx-border' : 'bg-gray
 
 const statusLabel = computed(() => {
   switch (trip.value?.tracking_status) {
-    case 'IN_TRANSIT': return 'In Transit'
+    case 'IN_TRANSIT': return 'On the Way'
     case 'PICKED_UP': return 'Awaiting Pickup Scan'
     case 'COMPLETED': return 'Completed'
     case 'DISCREPANCY_REPORTED': return 'Flagged'

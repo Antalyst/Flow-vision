@@ -1,12 +1,12 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import {
-  broadcastPickupNotification,
   broadcastInboundOfficeNotification,
   broadcastInboundDispatchRealtime,
   notifyClientStatusUpdate,
 } from '~~/server/utils/notifications'
 import { getRouteContext, isDocumentAtFinalRouteStop, resolveOfficeName, resolveRouteOfficeAtStep } from '~~/server/utils/routeCompletion'
+import { emitCompletedEmail, emitVerifiedEmail } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/documents/complete-checkpoint
@@ -16,7 +16,9 @@ import { getRouteContext, isDocumentAtFinalRouteStop, resolveOfficeName, resolve
  * Intermediate stop:
  *   - Marks checkpoint cleared for current_step
  *   - Notifies document owner (client)
- *   - Broadcasts messenger pickup for the next leg
+ *   - Sends an informational inbound alert to the NEXT office (not a courier
+ *     assignment) — that office must then explicitly assign a Liaison via
+ *     POST /api/tracking/assign-liaison before the document can move again.
  *
  * Final stop:
  *   - Sets tracking_status → COMPLETED and status → Approved
@@ -28,7 +30,7 @@ export default defineEventHandler(async (event) => {
   const { document_id } = body
 
   if (!document_id) {
-    throw createError({ statusCode: 400, message: 'document_id is required' })
+    throw createError({ statusCode: 400, message: 'Please select a document.' })
   }
 
   const actorId = getCookie(event, 'user_session')
@@ -39,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (actorRole !== 'employee' && actorRole !== 'employee_sub_user') {
-    throw createError({ statusCode: 403, message: 'Only employees or sub-users may approve office checkpoint reviews' })
+    throw createError({ statusCode: 403, message: 'You do not have permission to confirm receipt of documents.' })
   }
 
   const { data: actorRow } = await client
@@ -49,7 +51,7 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (!actorRow?.org_id) {
-    throw createError({ statusCode: 403, message: 'Employee account has no organisation assigned' })
+    throw createError({ statusCode: 403, message: 'We could not find your office account. Please contact your administrator.' })
   }
 
   const orgId = String(actorRow.org_id)
@@ -58,17 +60,17 @@ export default defineEventHandler(async (event) => {
     .from('documents')
     .select(
       'id, org_id, user_id, title, status, tracking_status, current_step, stage_id, ' +
-      'current_office_id, office_id, checkpoint_cleared_step, assigned_messenger_id',
+      'current_office_id, office_id, checkpoint_cleared_step, assigned_messenger_id, creator_role, qr_code_data',
     )
     .eq('id', document_id)
     .single()
 
   if (docErr || !doc) {
-    throw createError({ statusCode: 404, message: 'Document not found' })
+    throw createError({ statusCode: 404, message: 'We could not find this document.' })
   }
 
   if (String(doc.org_id) !== orgId) {
-    throw createError({ statusCode: 403, message: 'Forbidden: document belongs to a different organisation' })
+    throw createError({ statusCode: 403, message: 'You do not have permission to confirm this document.' })
   }
 
   if (doc.tracking_status === 'COMPLETED') {
@@ -82,7 +84,7 @@ export default defineEventHandler(async (event) => {
   if (doc.tracking_status !== 'ARRIVED_AT_OFFICE') {
     throw createError({
       statusCode: 422,
-      message: `Document must be checked in at an office before review (current: ${doc.tracking_status}).`,
+      message: 'This document has not been received by an office yet.',
     })
   }
 
@@ -90,7 +92,7 @@ export default defineEventHandler(async (event) => {
   if ((doc.checkpoint_cleared_step ?? null) === currentStep) {
     throw createError({
       statusCode: 422,
-      message: 'This checkpoint has already been marked done. Messengers have been notified for pickup.',
+      message: 'Receipt of this document has already been confirmed. Messengers have been notified for pickup.',
     })
   }
 
@@ -126,7 +128,7 @@ export default defineEventHandler(async (event) => {
       .select('id, title, status, tracking_status, current_step, checkpoint_cleared_step')
       .single()
 
-    if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+    if (updateErr) throw createError({ statusCode: 500, message: 'We could not confirm receipt of this document. Please try again.' })
 
     const completionMessage =
       `${actorRow.full_name} approved and completed "${doc.title}" at the final office checkpoint.`
@@ -152,6 +154,22 @@ export default defineEventHandler(async (event) => {
       clientUserId: doc.user_id ? String(doc.user_id) : null,
       message: `Your document "${doc.title}" has been verified and completed at ${officeName ?? 'its final destination'}.`,
     })
+
+    try {
+      await emitCompletedEmail({
+        orgId,
+        documentId: doc.id,
+        title: doc.title,
+        trackingCode: (doc as any).qr_code_data ?? null,
+        creatorUserId: doc.user_id ? String(doc.user_id) : null,
+        creatorRole: (doc as any).creator_role ?? null,
+        status: 'COMPLETED',
+        currentStep,
+        currentOfficeName: officeName,
+      })
+    } catch (emailErr) {
+      console.warn('[complete-checkpoint] Non-fatal: completion email failed:', emailErr)
+    }
 
     return {
       success: true,
@@ -184,7 +202,7 @@ export default defineEventHandler(async (event) => {
     .select('id, title, status, tracking_status, current_step, checkpoint_cleared_step, current_office_id')
     .single()
 
-  if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+  if (updateErr) throw createError({ statusCode: 500, message: 'We could not confirm receipt of this document. Please try again.' })
 
   const reviewMessage =
     `${actorRow.full_name} verified "${doc.title}" at ${officeName ?? 'the office desk'} and released it for the next pickup leg.`
@@ -210,67 +228,86 @@ export default defineEventHandler(async (event) => {
     clientUserId: doc.user_id ? String(doc.user_id) : null,
     message:
       `Your document "${doc.title}" was reviewed and cleared at ${officeName ?? 'the current office'}. ` +
-      'A messenger will pick it up for the next route leg shortly.',
+      'The next office will assign a messenger shortly.',
   })
 
-  await broadcastPickupNotification(client, {
-    orgId,
-    documentId: doc.id,
-    documentTitle: doc.title,
-  })
-
-  // Proactive Inbound Advance Shipping Notice (ASN) for next route step — Awaiting Courier Pickup
   try {
-    const nextStep = currentStep + 1
-    const destination = await resolveRouteOfficeAtStep(client, doc.stage_id, nextStep)
+    await emitVerifiedEmail({
+      orgId,
+      documentId: doc.id,
+      title: doc.title,
+      trackingCode: (doc as any).qr_code_data ?? null,
+      creatorUserId: doc.user_id ? String(doc.user_id) : null,
+      creatorRole: (doc as any).creator_role ?? null,
+      status: 'ARRIVED_AT_OFFICE',
+      currentStep,
+      currentOfficeName: officeName,
+    })
+  } catch (emailErr) {
+    console.warn('[complete-checkpoint] Non-fatal: verified email failed:', emailErr)
+  }
 
-    if (destination.officeId) {
-      const originLabel = officeName ? officeName : 'current station'
+  // NOTE: no automatic courier assignment here (old pool broadcast removed).
+  // The NEXT office must explicitly assign a Liaison via
+  // POST /api/tracking/assign-liaison before this document can move again.
+
+  // Office-assigned Liaison model: it's the CURRENT office (the one that just cleared
+  // the checkpoint — still holding the document) that must act next by assigning a
+  // Liaison for the next leg, NOT the destination office (which has nothing to do
+  // until a Liaison actually arrives). Alert the current office's desk accordingly.
+  try {
+    if (officeId) {
+      const nextStep = currentStep + 1
+      const destination = await resolveRouteOfficeAtStep(client, doc.stage_id, nextStep)
+      const destinationLabel = destination.officeName ?? 'the next office'
+
       await broadcastInboundOfficeNotification({
         orgId,
         documentId: doc.id,
         documentTitle: doc.title,
-        officeId: destination.officeId,
-        officeName: destination.officeName,
-        type: 'ASN_PENDING_PICKUP',
-        title: 'Inbound Advance Notice — Awaiting Pickup',
-        message: `"${doc.title}" has been released by ${originLabel} and is waiting for courier pickup.`,
+        officeId: String(officeId),
+        officeName,
+        type: 'ASSIGN_LIAISON_REQUIRED',
+        title: 'Ready to Assign a Messenger',
+        message: `"${doc.title}" is ready — assign a messenger to deliver it to ${destinationLabel}.`,
         metadata: {
-          type: 'ASN_PENDING_PICKUP',
-          origin_office_id: officeId ? String(officeId) : null,
-          origin_office_name: officeName,
+          type: 'ASSIGN_LIAISON_REQUIRED',
+          current_office_id: String(officeId),
+          current_office_name: officeName,
+          destination_office_id: destination.officeId,
+          destination_office_name: destination.officeName,
           target_step: nextStep,
         },
       })
 
       await broadcastInboundDispatchRealtime(
         orgId,
-        destination.officeId,
-        'ASN_PENDING_PICKUP',
+        String(officeId),
+        'ASSIGN_LIAISON_REQUIRED',
         {
-          type: 'ASN_PENDING_PICKUP',
-          event: 'ASN_PENDING_PICKUP',
+          type: 'ASSIGN_LIAISON_REQUIRED',
+          event: 'ASSIGN_LIAISON_REQUIRED',
           document_id: doc.id,
           document_title: doc.title,
-          origin_office_id: officeId ? String(officeId) : null,
-          origin_office_name: officeName,
-          target_office_id: destination.officeId,
-          target_office_name: destination.officeName,
+          current_office_id: String(officeId),
+          current_office_name: officeName,
+          destination_office_id: destination.officeId,
+          destination_office_name: destination.officeName,
           step: nextStep,
           tracking_status: 'ARRIVED_AT_OFFICE',
           dispatched_at: new Date().toISOString(),
-          notes: `Document released by ${originLabel} and awaiting courier pickup.`,
+          notes: `Document received at ${officeName ?? 'the current office'} — assign a messenger to deliver it to ${destinationLabel}.`,
         },
       )
     }
   } catch (asnErr) {
-    console.warn('[complete-checkpoint] Pre-pickup ASN alert failed (non-fatal):', asnErr)
+    console.warn('[complete-checkpoint] Assign-liaison alert failed (non-fatal):', asnErr)
   }
 
   return {
     success: true,
     is_final: false,
-    message: `Checkpoint marked done. Document owner and messenger pool have been notified.`,
+    message: `Receipt confirmed. Document owner notified — this office can now assign the next messenger.`,
     data: { document: updatedDoc },
   }
 })

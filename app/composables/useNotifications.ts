@@ -70,7 +70,7 @@ async function resolveMessengerScope(): Promise<{ userId: string, orgId: string 
   return { userId, orgId }
 }
 
-async function loadMessengerNotificationsFromApi(): Promise<NotificationRow[]> {
+async function loadMessengerNotificationsFromApi(unreadOnly = false): Promise<NotificationRow[]> {
   const { userId, orgId } = await resolveMessengerScope()
 
   if (!userId || !orgId) {
@@ -82,7 +82,7 @@ async function loadMessengerNotificationsFromApi(): Promise<NotificationRow[]> {
     count: number
     notifications: NotificationRow[]
   }>('/api/notifications', {
-    query: { unclaimed: 'true' },
+    query: { unread: unreadOnly ? 'true' : 'false' },
     credentials: 'include',
   })
 
@@ -115,16 +115,22 @@ async function loadClientNotificationsFromApi(unreadOnly = false): Promise<Notif
   return res.notifications ?? []
 }
 
-/** Shared messenger notification store */
+/**
+ * Shared Liaison (messenger) notification store.
+ *
+ * Office-assigned Liaison model: these are now direct-address notifications
+ * ("Document Assigned to You") rather than a claimable org-wide pool — there is no
+ * accept/claim step. `unreadCount` / `markAsRead` mirror the client/employee stores.
+ */
 export function useMessengerNotifications() {
   const notifications = useState<NotificationRow[]>('messenger:notifications', () => [])
   const loading = useState('messenger:notifications-loading', () => false)
   const error = useState<string | null>('messenger:notifications-error', () => null)
-  const claimingId = useState<string | null>('messenger:notifications-claiming', () => null)
+  const markingId = useState<string | null>('messenger:notifications-marking', () => null)
   const lastFetchedAt = useState<number | null>('messenger:notifications-fetched-at', () => null)
 
-  const unclaimedCount = computed(() =>
-    notifications.value.filter((n) => isUnclaimedNotification(n.is_claimed)).length,
+  const unreadCount = computed(() =>
+    notifications.value.filter((n) => isUnreadNotification(n.is_read)).length,
   )
 
   let refreshTimer: ReturnType<typeof setInterval> | null = null
@@ -134,16 +140,18 @@ export function useMessengerNotifications() {
 
     loading.value = true
     error.value = null
-    const previousCount = notifications.value.filter((n) => isUnclaimedNotification(n.is_claimed)).length
+    const previousCount = notifications.value.filter((n) => isUnreadNotification(n.is_read)).length
 
     try {
-      const rows = await loadMessengerNotificationsFromApi()
+      // Always load the full recent feed (not just unread) so the notifications
+      // page can show assignment history, not just a disappearing unread queue.
+      const rows = await loadMessengerNotificationsFromApi(false)
       notifications.value = Array.isArray(rows) ? [...rows] : []
       lastFetchedAt.value = Date.now()
 
       if (import.meta.client) {
         const { playPickupSound, soundAlertsOnPickup } = useMessengerSettings()
-        const newCount = notifications.value.filter((n) => isUnclaimedNotification(n.is_claimed)).length
+        const newCount = notifications.value.filter((n) => isUnreadNotification(n.is_read)).length
         if (soundAlertsOnPickup.value && newCount > previousCount && previousCount > 0) {
           playPickupSound()
         }
@@ -157,25 +165,17 @@ export function useMessengerNotifications() {
     }
   }
 
-  async function acceptPickup(notificationId: string): Promise<{ success: boolean, message?: string }> {
-    claimingId.value = notificationId
+  async function markAsRead(notificationId: string) {
+    markingId.value = notificationId
     try {
-      await $fetch('/api/notifications/accept-pickup', {
+      await $fetch('/api/notifications/mark-read', {
         method: 'POST',
         body: { notification_id: notificationId },
         credentials: 'include',
       })
       await fetchNotifications(true)
-      return { success: true }
-    } catch (err: unknown) {
-      const e = err as { data?: { message?: string }, message?: string }
-      const message = e?.data?.message ?? e?.message ?? 'Failed to accept pickup.'
-      if (import.meta.client) {
-        window.alert(message)
-      }
-      return { success: false, message }
     } finally {
-      claimingId.value = null
+      markingId.value = null
     }
   }
 
@@ -200,13 +200,13 @@ export function useMessengerNotifications() {
 
   return {
     notifications,
-    unclaimedCount,
+    unreadCount,
     loading,
     error,
-    claimingId,
+    markingId,
     lastFetchedAt,
     fetchNotifications,
-    acceptPickup,
+    markAsRead,
     startAutoRefresh,
     stopAutoRefresh,
   }
@@ -304,13 +304,13 @@ export function useNotifications(options: { autoRefreshMs?: number } = {}) {
 }
 
 export function useMessengerNotificationBadge() {
-  const { unclaimedCount, fetchNotifications } = useMessengerNotifications()
+  const { unreadCount, fetchNotifications } = useMessengerNotifications()
 
   async function refresh() {
     await fetchNotifications()
   }
 
-  return { count: unclaimedCount, refresh }
+  return { count: unreadCount, refresh }
 }
 
 export function useEmployeeNotificationBadge() {
