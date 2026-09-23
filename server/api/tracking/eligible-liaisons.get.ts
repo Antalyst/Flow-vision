@@ -4,12 +4,10 @@
  * Lists users the caller is allowed to assign as the Liaison for this document's
  * current leg — i.e. the picker list for `POST /api/tracking/assign-liaison`.
  *
- * "Eligible" = same organisation, an eligible role (employee / employee_sub_user /
- * messenger — never client), and either already associated with the document's
- * current office (`users.office_id`) or not yet associated with ANY office (a
- * floating candidate who would be onboarded to this office on assignment — see
- * assign-liaison.post.ts). Users already tied to a DIFFERENT office never appear —
- * an office cannot see, let alone pick, another office's staff.
+ * "Eligible" = same organisation, role = messenger, AND already staff of the
+ * document's current office (`users.office_id` matches exactly). Messengers from
+ * a different office, unassigned/floating users, and non-messenger roles never
+ * appear — an office can only hand a document to its own messengers.
  *
  * Same authorization as assign-liaison: client admins may query any document in
  * their org; employees only for documents currently at an office assigned to them.
@@ -17,12 +15,6 @@
 
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
-
-// 'client' included: an org-wide client admin can be a document's creator, and the
-// business rule explicitly allows a creator to become their own document's Liaison.
-// Client rows always have office_id IS NULL, so they already surface for any office
-// via the `office_id.is.null` branch below.
-const ELIGIBLE_LIAISON_ROLES = ['employee', 'employee_sub_user', 'messenger', 'client']
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -66,18 +58,18 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  let usersQuery = client
+  // No office context (org-wide document) — there's no office staff to hand it to.
+  if (!effectiveOfficeId) {
+    return { success: true, data: { office_id: null, candidates: [] } }
+  }
+
+  const { data: candidates, error: candErr } = await client
     .from('users')
     .select('user_id, full_name, email, role, office_id, status')
     .eq('org_id', actor.orgId)
-    .in('role', ELIGIBLE_LIAISON_ROLES)
+    .eq('role', 'messenger')
+    .eq('office_id', effectiveOfficeId)
     .order('full_name', { ascending: true })
-
-  usersQuery = effectiveOfficeId
-    ? usersQuery.or(`office_id.eq.${effectiveOfficeId},office_id.is.null`)
-    : usersQuery.is('office_id', null) // no office context yet (org-wide document) — only floating candidates
-
-  const { data: candidates, error: candErr } = await usersQuery
 
   if (candErr) throw createError({ statusCode: 500, message: candErr.message })
 
@@ -92,7 +84,7 @@ export default defineEventHandler(async (event) => {
         full_name: u.full_name,
         email: u.email,
         role: u.role,
-        already_associated: u.office_id != null,
+        already_associated: true,
       })),
     },
   }

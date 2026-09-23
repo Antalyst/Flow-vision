@@ -63,8 +63,8 @@
     <div ref="chartDivEl" class="rounded-2xl border p-5 transition-colors" :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'">
       <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-sm font-bold">Document Activity</h2>
-          <p class="mt-0.5 text-xs" :class="mutedText">Documents created in your offices, by day.</p>
+          <h2 class="text-sm font-bold">Document Forecast</h2>
+          <p class="mt-0.5 text-xs" :class="mutedText">Documents created recently, and what's expected next.</p>
         </div>
         <div class="flex flex-none items-center gap-2">
           <label for="forecast-start" class="text-xs font-medium" :class="mutedText">From</label>
@@ -87,6 +87,16 @@
             :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-200 bg-white text-gray-900'"
           />
         </div>
+      </div>
+      <div v-if="predictiveData.predictedCount > 0" class="mb-3 flex items-center gap-4 text-xs" :class="mutedText">
+        <span class="flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-candy-orange" />
+          Actual
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-candy-orange/50" />
+          Forecast
+        </span>
       </div>
       <div class="h-64 w-full">
         <Bar v-if="chartData.datasets.length" :data="chartData" :options="chartOptions" :plugins="[barValueLabelPlugin]" ref="chartRef" />
@@ -114,11 +124,13 @@
 
           <!-- Ledger rows -->
           <div v-else-if="ledger.length" key="rows" class="flex-1 space-y-3 overflow-y-auto p-5">
-            <div
+            <button
               v-for="doc in ledger.slice(0, 12)"
               :key="doc.id"
-              class="flex items-center gap-4 rounded-2xl border p-4 transition-colors"
+              type="button"
+              class="flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition-colors"
               :class="isDark ? 'border-onyx-border hover:bg-white/[0.025]' : 'border-gray-100 hover:bg-gray-50/80'"
+              @click="openDocument(doc)"
             >
               <span
                 class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
@@ -137,7 +149,7 @@
               <span class="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold" :class="docStatusMeta(doc).class">
                 {{ docStatusMeta(doc).label }}
               </span>
-            </div>
+            </button>
           </div>
 
           <!-- Empty state -->
@@ -264,6 +276,14 @@
       </div>
     </div>
 
+    <!-- Document detail drawer — status, route, and processing progress -->
+    <DocumentPreviewDrawer
+      :is-open="!!activeDocument"
+      :document="activeDocument"
+      width-class="lg:w-[60%] lg:max-w-4xl"
+      :office-resolver="resolveOfficeName"
+      @close="closeDocument"
+    />
   </div>
 </template>
 
@@ -283,6 +303,7 @@ import {
 import { Bar } from 'vue-chartjs'
 import { useChartTheme } from '~/composables/useChartTheme'
 import { useInboundDispatchRealtime } from '~/composables/useInboundDispatchRealtime'
+import DocumentPreviewDrawer from '~/components/documents/DocumentPreviewDrawer.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
@@ -296,13 +317,22 @@ const { candy, buildCartesianScales, buildTooltipPlugin, watchChartTheme } = use
 interface LedgerDoc {
   id: string
   title: string | null
+  description?: string | null
   status: string | null
   tracking_status?: string | null
+  current_step?: number | null
+  checkpoint_cleared_step?: number | null
+  qr_code_data?: string | null
+  priority?: string | null
+  stage_id?: string | number | null
   office_id?: string | null
+  origin_office_id?: string | null
+  current_office_id?: string | null
   office_label?: string | null
   origin_label?: string | null
   current_label?: string | null
   stage_name?: string | null
+  user_id?: string
   is_own_upload: boolean
   created_at: string
 }
@@ -320,6 +350,16 @@ const myOffices      = ref<OfficeRecord[]>([])
 const officesLoading = ref(false)
 const queueItems     = ref<LedgerDoc[]>([])
 const queueLoading   = ref(false)
+const activeDocument = ref<LedgerDoc | null>(null)
+
+const openDocument  = (doc: LedgerDoc) => { activeDocument.value = doc }
+const closeDocument = () => { activeDocument.value = null }
+
+const resolveOfficeName = (officeId: string | number | null | undefined) => {
+  if (officeId == null) return 'Unassigned'
+  const found = myOffices.value.find((o) => String(o.id) === String(officeId))
+  return found?.name ?? `Office ${String(officeId).slice(0, 6)}`
+}
 
 // ── Inbound Dispatch Realtime Subscription (ASN) ───────────────────────
 const myOfficeIds = computed(() => myOffices.value.map((o) => o.id))
@@ -331,9 +371,13 @@ useInboundDispatchRealtime(orgIdComputed, myOfficeIds, (dispatch) => {
   fetchPredictiveData()
 })
 
-const predictiveData = ref<{ labels: string[]; values: number[] }>({ labels: [], values: [] })
+const predictiveData = ref<{ labels: string[]; values: number[]; predictedCount: number }>({
+  labels: [],
+  values: [],
+  predictedCount: 0,
+})
 
-// ── Document Activity date-range filter ─────────────────────────────────
+// ── Document Forecast date-range filter ──────────────────────────────────
 const todayStr = new Date().toISOString().slice(0, 10)
 const defaultStartDate = new Date()
 defaultStartDate.setDate(defaultStartDate.getDate() - 6)
@@ -342,7 +386,7 @@ const forecastEnd   = ref<string>(todayStr)
 
 watch([forecastStart, forecastEnd], () => fetchPredictiveData())
 
-// ── Document Activity Chart (bar) ───────────────────────────────────────
+// ── Document Forecast Chart (bar) ─────────────────────────────────────────
 const chartRef = ref(null)
 
 watchChartTheme(() => chartRef.value?.chart)
@@ -350,6 +394,11 @@ watchChartTheme(() => chartRef.value?.chart)
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  layout: {
+    // Headroom for the on-bar value label (drawn above each bar by barValueLabelPlugin) —
+    // without it, a bar that reaches the axis max gets its label clipped by the canvas edge.
+    padding: { top: 24 },
+  },
   plugins: {
     legend: { display: false },
     tooltip: { ...buildTooltipPlugin() },
@@ -364,14 +413,16 @@ const chartData = computed(() => {
   const labels = predictiveData.value.labels.map((iso) =>
     new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${iso}T00:00:00`))
   )
+  const values = predictiveData.value.values
+  const predictedCount = predictiveData.value.predictedCount
 
   return {
     labels,
     datasets: [
       {
         label: 'Documents',
-        data: predictiveData.value.values,
-        backgroundColor: candy.primary,
+        data: values,
+        backgroundColor: values.map((_, i) => (i < values.length - predictedCount ? candy.primary : candy.forecast)),
         maxBarThickness: 48,
       },
     ],
@@ -426,85 +477,14 @@ const officeBannerText = computed(() => {
 // ── Computed KPI cards (data-driven, real ledger data) ──────────────────
 const kpiCards = computed(() => {
   const own     = ledger.value.filter((d) => d.is_own_upload).length
+  // "Documents in Your Office" excludes your own uploads — those are already
+  // counted separately below, so the two cards don't overlap.
+  const officeOnly = ledger.value.length - own
   const waiting = ledger.value.filter((d) => !d.tracking_status || d.tracking_status === 'CREATED').length
   const moving  = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
 
-// ── Computed KPI cards (scope-aware, data-driven) ──────────────────────
-const kpiCards = computed(() => {
-  if (currentScope.value === 'LOCAL') {
-    const own     = ledger.value.filter((d) => d.is_own_upload).length
-    const pending = ledger.value.filter((d) => (d.status ?? '').toLowerCase() === 'pending').length
-    const transit = ledger.value.filter((d) => d.tracking_status === 'IN_TRANSIT').length
-    return [
-      {
-        label: 'Office Docs', value: String(ledger.value.length),
-        trend: 'in your offices', trendColor: 'text-candy-orange',
-        icon: 'ph:files-light', iconColor: 'text-candy-orange',
-      },
-      {
-        label: 'My Uploads', value: String(own),
-        trend: 'uploaded by you', trendColor: mutedText.value,
-        icon: 'ph:upload-simple-light', iconColor: 'text-emerald-500',
-      },
-      {
-        label: 'Pending', value: String(pending),
-        trend: 'awaiting action', trendColor: pending > 0 ? 'text-amber-500' : mutedText.value,
-        icon: 'ph:clock-countdown-light', iconColor: 'text-amber-500',
-      },
-      {
-        label: 'On the Way', value: String(transit),
-        trend: 'currently moving', trendColor: transit > 0 ? 'text-blue-400' : mutedText.value,
-        icon: 'ph:package-light', iconColor: 'text-blue-400',
-      },
-    ]
-  }
-
-  // GLOBAL view
-  const { total, in_transit, arrived_at_office, completed } = queueSummary.value
   return [
-    {
-      label: 'Total Org Docs', value: String(total),
-      trend: 'across organisation', trendColor: 'text-candy-orange',
-      icon: 'ph:files-light', iconColor: 'text-candy-orange',
-    },
-    {
-      label: 'On the Way', value: String(in_transit),
-      trend: 'with messengers', trendColor: in_transit > 0 ? 'text-blue-400' : mutedText.value,
-      icon: 'ph:truck-light', iconColor: 'text-blue-400',
-    },
-    {
-      label: 'Received by Office', value: String(arrived_at_office),
-      trend: 'awaiting next step', trendColor: arrived_at_office > 0 ? 'text-teal-500' : mutedText.value,
-      icon: 'ph:buildings-light', iconColor: 'text-teal-500',
-    },
-    {
-      label: 'Completed', value: String(completed),
-      trend: 'fully delivered', trendColor: completed > 0 ? 'text-emerald-500' : mutedText.value,
-      icon: 'ph:check-circle-light', iconColor: 'text-emerald-500',
-    },
-  ]
-})
-
-// Pipeline chips for GLOBAL view
-const pipelineChips = computed(() => [
-  { label: 'Created',   count: queueSummary.value.created,           dot: 'bg-candy-orange' },
-  { label: 'Picked Up', count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
-  { label: 'On the Way',count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
-  { label: 'Received by Office', count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
-  { label: 'Completed', count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
-])
-
-// Queue stats list for right panel
-const queueStats = computed(() => [
-  { label: 'Created — awaiting pickup',     count: queueSummary.value.created,           dot: 'bg-candy-orange' },
-  { label: 'Picked Up',                     count: queueSummary.value.picked_up,         dot: 'bg-purple-400' },
-  { label: 'On the Way',                    count: queueSummary.value.in_transit,        dot: 'bg-blue-400' },
-  { label: 'Arrived at Office',             count: queueSummary.value.arrived_at_office, dot: 'bg-teal-400' },
-  { label: 'Completed',                     count: queueSummary.value.completed,         dot: 'bg-emerald-400' },
-])
-
-  return [
-    { label: 'Documents in Your Office', value: String(ledger.value.length), icon: 'ph:buildings-light',       to: '/employee/documents' },
+    { label: 'Your Office Total Documents', value: String(officeOnly),          icon: 'ph:buildings-light',       to: '/employee/documents' },
     { label: 'Uploaded by You',          value: String(own),                 icon: 'ph:upload-simple-light',   to: '/employee/documents?office=own' },
     { label: 'Waiting for Pickup',       value: String(waiting),             icon: 'ph:clock-countdown-light', to: '/employee/documents?tracking=CREATED' },
     { label: 'Currently Moving',         value: String(moving),              icon: 'ph:truck-light',           to: '/employee/documents?tracking=IN_TRANSIT' },
@@ -562,7 +542,7 @@ const fetchOffices = async () => {
 
 const fetchPredictiveData = async () => {
   try {
-    const res = await $fetch<{ success: boolean; data: { labels: string[]; values: number[] } }>('/api/employee/predictive-workload', {
+    const res = await $fetch<{ success: boolean; data: { labels: string[]; values: number[]; predictedCount: number } }>('/api/employee/predictive-workload', {
       params: { start: forecastStart.value, end: forecastEnd.value }
     })
     if (res.data) {

@@ -381,7 +381,22 @@ async function openDocumentFromQuery() {
 
   if (!allDocs.value.length) await refreshQueue(true)
   const match = allDocs.value.find((d) => String(d.id) === documentId)
-  if (match) activeDocument.value = match
+  if (match) {
+    activeDocument.value = match
+    return
+  }
+
+  // Not in the default queue window (e.g. an older/completed document pushed out
+  // by the row limit) — resolve it directly by id instead of silently giving up.
+  try {
+    const res = await $fetch<{ success: boolean; data: QueueDoc[] }>('/api/tracking/queue', {
+      params: { id: documentId, limit: 1 },
+    })
+    const direct = res.data?.[0]
+    if (direct) activeDocument.value = direct
+  } catch (err) {
+    console.error('[Working] direct document fetch error:', err)
+  }
 }
 
 function handleDocUpdated(data: {

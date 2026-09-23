@@ -112,15 +112,14 @@
           :class="inputClass"
         >
           <option value="all">All Tracking</option>
-          <option value="CREATED">Created</option>
+          <option value="CREATED">Registered</option>
           <option value="PICKED_UP">Picked Up</option>
-          <option value="IN_TRANSIT">In Transit</option>
-          <option value="ARRIVED_AT_OFFICE">At Office</option>
-          <option value="DISCREPANCY_REPORTED">Flagged</option>
+          <option value="IN_TRANSIT">On the Way</option>
+          <option value="ARRIVED_AT_OFFICE">Received by Office</option>
+          <option value="DISCREPANCY_REPORTED">Issue Reported</option>
           <option value="COMPLETED">Completed</option>
         </select>
       </div>
-
 
       <!-- Status quick filter pills -->
       <div class="flex flex-wrap items-center gap-2">
@@ -137,21 +136,6 @@
           {{ s.label }}
         </button>
       </div>
-
-      <!-- Tracking filter -->
-      <select
-        v-model="trackingFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
-        :class="inputClass"
-      >
-        <option value="all">All Tracking</option>
-        <option value="CREATED">Registered</option>
-        <option value="PICKED_UP">Picked Up</option>
-        <option value="IN_TRANSIT">On the Way</option>
-        <option value="ARRIVED_AT_OFFICE">Received by Office</option>
-        <option value="DISCREPANCY_REPORTED">Issue Reported</option>
-        <option value="COMPLETED">Completed</option>
-      </select>
     </div>
 
     <!-- Active Semantic Search Indicator -->

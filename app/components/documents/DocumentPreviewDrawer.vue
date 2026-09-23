@@ -83,6 +83,10 @@
                   <span class="text-xs font-semibold" :class="mutedClass">Document Route</span>
                   <span class="text-sm font-semibold">{{ stageName || 'Unassigned' }}</span>
                 </div>
+                <div v-if="stepsDisplay.length" class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Current Stop</span>
+                  <span class="text-sm font-semibold text-candy-orange">Stop {{ currentStepNumber }} of {{ stepsDisplay.length }}</span>
+                </div>
                 <div class="flex items-center justify-between gap-3 px-4 py-3">
                   <span class="text-xs font-semibold" :class="mutedClass">Receiving Office</span>
                   <span class="truncate text-sm font-semibold">{{ targetOfficeLabel }}</span>
@@ -92,7 +96,15 @@
 
             <!-- §2 Delivery progress -->
             <section class="stagger-block">
-              <h3 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Delivery Progress</h3>
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Delivery Progress</h3>
+                <span
+                  v-if="stepsDisplay.length"
+                  class="flex-none rounded-full bg-candy-orange/10 px-3 py-1 text-xs font-bold text-candy-orange"
+                >
+                  Stop {{ currentStepNumber }} of {{ stepsDisplay.length }}
+                </span>
+              </div>
               <p class="mt-0.5 text-sm" :class="mutedClass">
                 {{ stageName || 'Unassigned route' }}<span v-if="targetOfficeLabel"> · to {{ targetOfficeLabel }}</span>
               </p>
@@ -185,10 +197,8 @@
             <!-- Office checkpoint review (intermediate + final) -->
             <section
               v-if="showCompletionActions && canMarkCheckpointDone"
-              class="stagger-block rounded-xl border p-5 transition-all"
-              :class="isFinalCheckpoint
-                ? 'border-success/30 bg-success/5'
-                : 'border-candy-orange/30 bg-candy-orange/5'"
+              class="stagger-block rounded-xl border p-5"
+              :class="cellClass"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -224,7 +234,8 @@
             <!-- Compliance flag action -->
             <section
               v-if="showComplianceActions"
-              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
+              class="stagger-block rounded-2xl border p-5"
+              :class="cellClass"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -252,7 +263,6 @@
               @assigned="handleLiaisonAssigned"
             />
 
->>>>>>> 2bfca2b (updates)
             <slot name="extra" />
 
             <!-- §3 Official routing slip view (bottom) -->
@@ -277,9 +287,7 @@
                     class="h-44 w-44 max-w-full"
                     aria-label="Scannable document QR code"
                   />
-                  <p class="break-all text-center font-mono text-[13px]" :class="mutedClass">
-                    {{ document.qr_code_data || 'QR payload not assigned' }}
-                  </p>
+                 
                 </div>
 
                 <button
@@ -400,6 +408,8 @@ const officeStore = useOfficeStore()
 const stageStore = useStageStore()
 const { isDark } = useTheme()
 
+const cellClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'))
+
 const qrCanvas = ref<HTMLCanvasElement | null>(null)
 const downloading = ref(false)
 const completingCheckpoint = ref(false)
@@ -410,6 +420,9 @@ const timelineSummary = ref<TimelineSummary | null>(null)
 const timelineLoading = ref(false)
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
+
+const formatDate = (value?: string | null) =>
+  value ? new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(value)) : '—'
 
 const displayPriority = computed(() => props.document?.priority?.trim() || 'Not specified')
 const displayTrackingStatus = computed(
@@ -726,11 +739,30 @@ watch(
         stageStore.fetchStages()
       }
       nextTick(() => {
+        const blocks = document.querySelectorAll<HTMLElement>('.stagger-block')
+        if (!blocks.length) return
         gsap.fromTo(
-          '.stagger-block',
+          blocks,
           { y: 25, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.5, stagger: 0.05, ease: 'power3.out' }
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: 'power3.out',
+            overwrite: true,
+            clearProps: 'opacity,transform',
+          }
         )
+        // Safety net: if the tween is ever interrupted (tab backgrounded, a
+        // re-render mid-animation, etc.) the drawer's content must never be
+        // left permanently invisible just because it never reached its "to" state.
+        setTimeout(() => {
+          blocks.forEach((el) => {
+            el.style.opacity = ''
+            el.style.transform = ''
+          })
+        }, 900)
       })
     }
   },

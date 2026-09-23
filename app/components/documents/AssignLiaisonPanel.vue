@@ -1,7 +1,8 @@
 <template>
   <section
     v-if="isEligibleForAssignment"
-    class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
+    class="stagger-block rounded-2xl border p-5"
+    :class="cellClass"
   >
     <div class="flex items-start justify-between gap-3">
       <div>
@@ -87,6 +88,7 @@ const emit = defineEmits<{
 
 const { isDark } = useTheme()
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
+const cellClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'))
 
 // Same eligibility rule enforced server-side in assign-liaison.post.ts: CREATED, or
 // ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step.
