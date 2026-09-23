@@ -65,12 +65,9 @@ const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)
 // Grouped around what the user is actually trying to do, most-used first:
 // track a document, check messages/alerts, check reports, then setup/help
 // tucked lower since those are occasional, not daily, tasks.
-const navGroups = [
-=======
 // Grouped by what a non-technical user is trying to do, with "track a document's
 // journey" (the core MVP) surfaced right after the dashboard.
 const navGroups = computed(() => [
->>>>>>> theirs
   {
     title: 'Track Documents',
     items: [
@@ -91,12 +88,7 @@ const navGroups = computed(() => [
     title: 'Messages & Alerts',
     items: [
       { to: '/client/messages', label: 'Messages', icon: 'ph:chat-teardrop-text-light' },
-      { to: '/client/notifications', label: 'Notifications', icon: 'ph:bell-light' }
-    title: 'Delivery Setup',
-    items: [
-      { to: '/client/stages', label: 'Document Routes', icon: 'ph:steps-light' },
-      { to: '/client/office', label: 'Branch Offices', icon: 'ph:buildings-light' },
-      { to: '/client/station', label: 'QR Terminals', icon: 'ph:qr-code-light' },
+      { to: '/client/notifications', label: 'Notifications', icon: 'ph:bell-light' },
     ],
   },
   {
