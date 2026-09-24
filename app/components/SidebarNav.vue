@@ -23,6 +23,7 @@ const navGroups = computed(() => [
   {
     title: 'Track Documents',
     items: [
+      { to: '/client/my-tracking', label: 'My Tracking', icon: 'ph:map-pin-light' },
       { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-light' },
       { to: '/client/current-working', label: 'Live Tracking', icon: 'ph:truck-light' },
       { to: '/client/documents', label: 'All Documents', icon: 'ph:files-light' },
@@ -55,7 +56,7 @@ const navGroups = computed(() => [
   {
     title: 'Setup & Team',
     items: [
-      { to: '/client/stages', label: 'Workflow Steps', icon: 'ph:steps-light' },
+      { to: '/client/stages', label: 'Document Routes', icon: 'ph:steps-light' },
       { to: '/client/office', label: 'Branch Offices', icon: 'ph:buildings-light' },
       { to: '/client/station', label: 'QR Terminals', icon: 'ph:qr-code-light' },
       { to: '/client/user-management', label: 'Team Members', icon: 'ph:users-three-light' },

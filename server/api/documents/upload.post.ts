@@ -124,6 +124,17 @@ export default defineEventHandler(async (event) => {
   const manualTitle       = get('manual_title')
   const manualDescription = get('manual_description')
   const categoryId        = get('category_id')
+  const expectedCompletionHoursRaw = get('expected_completion_hours')
+
+  // Optional, uploader-set end-to-end time budget for this specific document —
+  // separate from the route's own per-checkpoint SLA. See docs/tracking-ux-improvement-plan.md Part 7.
+  let targetCompletionDate: string | null = null
+  if (expectedCompletionHoursRaw) {
+    const hours = Number(expectedCompletionHoursRaw)
+    if (Number.isFinite(hours) && hours > 0) {
+      targetCompletionDate = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+    }
+  }
 
   if (!fileItem?.data) {
     throw createError({ statusCode: 400, message: 'Please choose a file to upload.' })
@@ -419,6 +430,7 @@ export default defineEventHandler(async (event) => {
         // current_office_id = origin for employees (doc physically there at start)
         // NULL for client admins (not yet at a specific office)
         current_office_id: resolvedOriginOfficeId,
+        target_completion_date: targetCompletionDate,
       })
       .select()
       .single()

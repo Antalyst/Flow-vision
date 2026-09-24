@@ -67,7 +67,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3" :class="currentLayout === 'compact_grid' ? 'gap-3' : 'gap-6'">
           <div class="lg:col-span-2" :style="cardEnterDelay(6)">
-            <DocumentTable />
+            <DocumentTable :office-id="selectedOfficeId" />
           </div>
           <div class="lg:col-span-1" :style="cardEnterDelay(7)">
             <OfficeVelocityMatrix :offices="data?.topOfficesByVelocity" :loading="loading" />
@@ -75,17 +75,17 @@
         </div>
 
         <div :style="cardEnterDelay(8)">
-          <LatestUpdates />
+          <LatestUpdates :alerts="data?.recentAlerts" :loading="loading" />
         </div>
       </template>
 
       <!-- Focused: just the document-tracking essentials, one column, top to bottom -->
       <template v-else-if="currentLayout === 'focused-stream'">
         <div :style="cardEnterDelay(4)">
-          <DocumentTable />
+          <DocumentTable :office-id="selectedOfficeId" />
         </div>
         <div :style="cardEnterDelay(5)">
-          <LatestUpdates />
+          <LatestUpdates :alerts="data?.recentAlerts" :loading="loading" />
         </div>
       </template>
     </div>

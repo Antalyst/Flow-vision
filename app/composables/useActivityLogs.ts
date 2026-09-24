@@ -16,12 +16,13 @@ export interface ActivityLogRow {
 export type ActivityDatePreset = 'day' | 'week' | 'month' | 'all'
 export type ActivityActionFilter = 'all' | 'upload' | 'scan' | 'pickup'
 
-export function useActivityLogs() {
+export function useActivityLogs(options: { mineOnly?: boolean } = {}) {
   const logs = ref<ActivityLogRow[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const datePreset = ref<ActivityDatePreset>('week')
   const actionType = ref<ActivityActionFilter>('all')
+  const mineOnly = ref(options.mineOnly ?? false)
 
   async function fetchLogs() {
     loading.value = true
@@ -31,6 +32,7 @@ export function useActivityLogs() {
         query: {
           range: datePreset.value,
           action: actionType.value,
+          mine: mineOnly.value ? 'true' : 'false',
         },
       })
       logs.value = res.logs ?? []
@@ -43,7 +45,7 @@ export function useActivityLogs() {
     }
   }
 
-  watch([datePreset, actionType], () => {
+  watch([datePreset, actionType, mineOnly], () => {
     fetchLogs()
   })
 
@@ -53,6 +55,7 @@ export function useActivityLogs() {
     error,
     datePreset,
     actionType,
+    mineOnly,
     fetchLogs,
   }
 }

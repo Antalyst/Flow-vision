@@ -59,10 +59,10 @@
 
       <div v-else class="space-y-4">
         <div
-          v-for="notif in notifications"
+          v-for="notif in sortedNotifications"
           :key="notif.id"
-          class="flex flex-col gap-4 rounded-2xl border p-5 md:flex-row md:items-center md:justify-between"
-          :class="isDark ? 'border-zinc-800 bg-[#1e1e24]' : 'border-gray-200 bg-white'"
+          class="flex flex-col gap-4 rounded-2xl border border-l-4 p-5 md:flex-row md:items-center md:justify-between"
+          :class="[severityBorderClass(notif.title), isDark ? 'border-zinc-800 bg-[#1e1e24]' : 'border-gray-200 bg-white']"
         >
           <div class="min-w-0 flex-1">
             <div class="mb-1 flex items-center gap-2">
@@ -70,6 +70,13 @@
                 v-if="isUnreadNotification(notif.is_read)"
                 class="h-2 w-2 animate-pulse rounded-full bg-candy-orange"
               />
+              <span
+                v-if="classifyNotificationSeverity(notif.title) !== 'info'"
+                class="rounded-full px-2 py-0.5 text-[13px] font-bold uppercase tracking-wide"
+                :class="classifyNotificationSeverity(notif.title) === 'urgent' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'"
+              >
+                {{ classifyNotificationSeverity(notif.title) === 'urgent' ? 'Urgent' : 'Needs Action' }}
+              </span>
               <h4 class="truncate text-base font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                 {{ notif.title }}
               </h4>
@@ -118,7 +125,7 @@ useSeoMeta({
   title: 'FlowVision | Notifications',
   description: 'Review critical alerts, SLA warnings, and important updates regarding your document workflows.'
 })
-import { isUnreadNotification } from '~/composables/useNotifications'
+import { isUnreadNotification, classifyNotificationSeverity, sortNotificationsBySeverity } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'client' })
 
@@ -135,6 +142,15 @@ const {
   markAsRead,
   startAutoRefresh,
 } = useClientNotifications()
+
+const sortedNotifications = computed(() => sortNotificationsBySeverity(notifications.value))
+
+function severityBorderClass(title) {
+  const severity = classifyNotificationSeverity(title)
+  if (severity === 'urgent') return 'border-l-danger'
+  if (severity === 'action') return 'border-l-warning'
+  return isDark.value ? 'border-l-zinc-800' : 'border-l-gray-200'
+}
 
 const { refresh: refreshBadge } = useClientNotificationBadge()
 

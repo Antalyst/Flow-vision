@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
       .select(
         'id, title, description, status, tracking_status, current_step, ' +
         'qr_code_data, office_id, origin_office_id, current_office_id, ' +
-        'stage_id, created_at, user_id, creator_role',
+        'stage_id, created_at, user_id, creator_role, priority, target_completion_date',
       )
       .eq('org_id', actor.orgId)
       .order('created_at', { ascending: false })
@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
     .select(
       'id, title, description, status, tracking_status, current_step, ' +
       'qr_code_data, office_id, origin_office_id, current_office_id, ' +
-      'stage_id, created_at, user_id, creator_role',
+      'stage_id, created_at, user_id, creator_role, priority, target_completion_date',
     )
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })

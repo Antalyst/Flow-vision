@@ -239,7 +239,7 @@ const handleRegister = async () => {
     if (selectedTypeName.value === 'organization') {
       const result = await auth.register({
         ...form.value,
-        acctype_id: selectedType.value,
+        accType_id: selectedType.value,
         role: userRole.value
       })
       processResult(result);
@@ -250,7 +250,7 @@ const handleRegister = async () => {
       if (verifyCode.value) {
         const result = await auth.register({
           ...form.value,
-          acctype_id: selectedType.value,
+          accType_id: selectedType.value,
           role: userRole.value
         })
         processResult(result);

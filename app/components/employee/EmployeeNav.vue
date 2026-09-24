@@ -27,6 +27,7 @@ const navGroups = computed(() => [
   {
     title: 'My Work',
     items: [
+      { to: '/employee/my-tracking', label: 'My Tracking', icon: 'ph:map-pin-light' },
       { to: '/employee/working',   label: 'Current Working', icon: 'ph:briefcase-light' },
       { to: '/employee/documents', label: 'Documents',       icon: 'ph:files-light' },
       { to: '/employee/scan',      label: 'Scan & Update',   icon: 'ph:scan-light' },

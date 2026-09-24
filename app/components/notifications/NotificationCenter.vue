@@ -37,21 +37,31 @@
           <p v-if="item.message" class="mt-0.5 text-xs" :class="mutedClass">{{ item.message }}</p>
           <time class="mt-1 block text-[14px]" :class="mutedClass">{{ formatWhen(item.created_at) }}</time>
         </div>
-        <button
-          v-if="isUnreadNotification(item.is_read)"
-          type="button"
-          class="flex-shrink-0 rounded-lg bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-          :disabled="markingId === item.id"
-          @click="markAsRead(item.id)"
-        >
-          {{ markingId === item.id ? 'Marking…' : 'Mark Read' }}
-        </button>
-        <span
-          v-else
-          class="flex-shrink-0 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
-        >
-          Read
-        </span>
+        <div class="flex flex-shrink-0 items-center gap-2">
+          <NuxtLink
+            v-if="item.document_id"
+            :to="`/messenger/delivery?document_id=${item.document_id}`"
+            class="rounded-lg border px-3 py-2 text-xs font-semibold transition hover:opacity-80"
+            :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+          >
+            View
+          </NuxtLink>
+          <button
+            v-if="isUnreadNotification(item.is_read)"
+            type="button"
+            class="rounded-lg bg-candy-orange px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            :disabled="markingId === item.id"
+            @click="markAsRead(item.id)"
+          >
+            {{ markingId === item.id ? 'Marking…' : 'Mark Read' }}
+          </button>
+          <span
+            v-else
+            class="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+          >
+            Read
+          </span>
+        </div>
       </li>
     </ul>
   </div>

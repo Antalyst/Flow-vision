@@ -91,6 +91,12 @@
                   <span class="text-xs font-semibold" :class="mutedClass">Receiving Office</span>
                   <span class="truncate text-sm font-semibold">{{ targetOfficeLabel }}</span>
                 </div>
+                <div v-if="document.target_completion_date" class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Expected Completion</span>
+                  <span class="text-sm font-semibold" :class="isOverdue ? 'text-danger' : ''">
+                    {{ dueLabel }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -428,6 +434,24 @@ const displayPriority = computed(() => props.document?.priority?.trim() || 'Not 
 const displayTrackingStatus = computed(
   () => props.document?.tracking_status || 'CREATED',
 )
+
+// Optional per-document expected completion time — see docs/tracking-ux-improvement-plan.md Part 7.
+const isOverdue = computed(() => {
+  const target = props.document?.target_completion_date
+  if (!target || displayTrackingStatus.value === 'COMPLETED') return false
+  return new Date(target).getTime() < Date.now()
+})
+
+const dueLabel = computed(() => {
+  const target = props.document?.target_completion_date
+  if (!target) return ''
+  const diffMs = new Date(target).getTime() - Date.now()
+  const absHours = Math.abs(diffMs) / (60 * 60 * 1000)
+  const days = Math.floor(absHours / 24)
+  const hours = Math.round(absHours % 24)
+  const span = days > 0 ? `${days}d ${hours}h` : `${Math.max(1, Math.round(absHours))}h`
+  return isOverdue.value ? `Overdue by ${span}` : `${span} left`
+})
 
 const priorityBadgeClass = computed(() => {
   switch (displayPriority.value.toLowerCase()) {

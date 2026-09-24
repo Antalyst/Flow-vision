@@ -27,6 +27,36 @@ export function isUnreadNotification(value: unknown): boolean {
   return value === false || value === 'false' || value === 0 || value == null
 }
 
+export type NotificationSeverity = 'urgent' | 'action' | 'info'
+
+/**
+ * Heuristic severity from the notification title — no schema change needed.
+ * Urgent (compliance issues, overdue SLAs) always outranks routine progress updates.
+ */
+export function classifyNotificationSeverity(title: string | null | undefined): NotificationSeverity {
+  const t = (title || '').toLowerCase()
+  if (t.includes('issue') || t.includes('discrepancy') || t.includes('overdue') || t.includes('compliance')) {
+    return 'urgent'
+  }
+  if (t.includes('required') || t.includes('review') || t.includes('assign') || t.includes('ready')) {
+    return 'action'
+  }
+  return 'info'
+}
+
+const SEVERITY_RANK: Record<NotificationSeverity, number> = { urgent: 0, action: 1, info: 2 }
+
+/** Urgent first, then needs-action, then routine — unread ahead of read within each tier. */
+export function sortNotificationsBySeverity(rows: NotificationRow[]): NotificationRow[] {
+  return [...rows].sort((a, b) => {
+    const rankDiff = SEVERITY_RANK[classifyNotificationSeverity(a.title)] - SEVERITY_RANK[classifyNotificationSeverity(b.title)]
+    if (rankDiff !== 0) return rankDiff
+    const unreadDiff = Number(isUnreadNotification(b.is_read)) - Number(isUnreadNotification(a.is_read))
+    if (unreadDiff !== 0) return unreadDiff
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+}
+
 function notifyOnFreshEmployeeAlerts(previous: NotificationRow[], next: NotificationRow[]) {
   if (!import.meta.client || !previous.length) return
 

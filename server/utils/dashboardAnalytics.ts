@@ -177,6 +177,7 @@ export interface ClientDashboardPayload {
     title: string
     message: string
     time: string
+    createdAt: string
     tone: 'amber' | 'orange' | 'zinc' | 'emerald' | 'red'
   }>
   charts: {
@@ -390,7 +391,8 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
     if (elapsedMs <= thresholdMs) slaCompliant++
   }
 
-  const slaRate = slaTotal > 0 ? Math.round((slaCompliant / slaTotal) * 1000) / 10 : 100
+  const hasSlaData = slaTotal > 0
+  const slaRate = hasSlaData ? Math.round((slaCompliant / slaTotal) * 1000) / 10 : 0
 
   const last14 = lastNDays(14)
   const last7 = last14.slice(-7)
@@ -776,6 +778,7 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
         title: action.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
         message: String((log as { message?: string }).message ?? (log as { details?: string }).details ?? 'System event'),
         time: new Date(log.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        createdAt: log.created_at,
         tone: alertToneMap[action] ?? 'zinc',
       }
     })
@@ -806,10 +809,10 @@ export async function buildClientDashboardPayload(event: H3Event, officeId?: str
         sparkline: speedSparkline.some((v) => v > 0) ? speedSparkline : dailyDocCounts7,
       },
       slaCompliance: {
-        display: `${slaRate}%`,
+        display: hasSlaData ? `${slaRate}%` : 'No data',
         rate: slaRate,
-        trend: slaTrend.trend,
-        trendUp: slaTrend.trendUp,
+        trend: hasSlaData ? slaTrend.trend : 'No documents yet',
+        trendUp: hasSlaData ? slaTrend.trendUp : true,
         sparkline: slaSparkline,
       },
     },

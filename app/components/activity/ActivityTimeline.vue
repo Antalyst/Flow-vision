@@ -33,6 +33,11 @@
         </select>
       </div>
 
+      <label v-if="!mineOnlyLocked" class="flex items-center gap-1.5 self-end pb-1.5 text-sm font-medium" :class="mutedClass">
+        <input v-model="mineOnly" type="checkbox" class="h-3.5 w-3.5 rounded accent-candy-orange" />
+        Mine only
+      </label>
+
       <button
         type="button"
         class="rounded-xl border px-3 py-1.5 text-xs font-semibold transition hover:opacity-80"
@@ -74,8 +79,14 @@
 </template>
 
 <script setup>
+const props = defineProps({
+  // Force "mine only" and hide the toggle — used when this timeline is
+  // already embedded in a personal-scoped view (e.g. My Tracking's Activity tab).
+  mineOnlyLocked: { type: Boolean, default: false },
+})
+
 const { isDark } = useTheme()
-const { logs, loading, error, datePreset, actionType, fetchLogs } = useActivityLogs()
+const { logs, loading, error, datePreset, actionType, mineOnly, fetchLogs } = useActivityLogs({ mineOnly: props.mineOnlyLocked })
 
 const mutedClass = computed(() => (isDark.value ? 'text-gray-500' : 'text-gray-400'))
 const inputClass = computed(() =>

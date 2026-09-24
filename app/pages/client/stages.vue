@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 useSeoMeta({
-  title: 'FlowVision | Workflow Steps',
+  title: 'FlowVision | Document Routes',
   description: 'Set up the checkpoints a document passes through and define the steps it should follow from start to finish.'
 })
 import StageView from '~/components/client/stages/stageComp.vue'

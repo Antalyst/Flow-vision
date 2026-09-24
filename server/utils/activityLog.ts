@@ -156,6 +156,7 @@ export async function fetchActivityLogsForActor(
     datePreset?: ActivityDatePreset
     actionType?: string
     limit?: number
+    mineOnly?: boolean
   } = {},
 ) {
   const client = await serverSupabaseClient(event)
@@ -200,6 +201,10 @@ export async function fetchActivityLogsForActor(
     }
   } else {
     throw createError({ statusCode: 403, message: 'Unsupported role for activity log access.' })
+  }
+
+  if (options.mineOnly) {
+    query = query.eq('user_id', userId)
   }
 
   const { data, error } = await query

@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange"></div>
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Workflow Steps</h1>
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Document Routes</h1>
         <p class="mt-1 text-sm" :class="mutedTextClass">
           Set up the routes your documents follow and the offices they stop at.
         </p>
