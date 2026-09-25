@@ -58,3 +58,28 @@ export async function resolveOrCreateOffice(
 
   return { id: newOffice.id, name: newOffice.name, created: true }
 }
+
+/**
+ * Backfills an office's assigned_user with the employee just linked to it,
+ * but ONLY when the office doesn't already have one — covers both a
+ * brand-new office (created this request) and a pre-existing office that
+ * was never assigned an owner (e.g. seeded manually, or left over from
+ * before this auto-assignment existed). The `assigned_user IS NULL` guard
+ * in the query itself means an office someone already owns is never
+ * reassigned just because a second employee joins it.
+ */
+export async function linkOfficeOwnerIfNew(
+  admin: SupabaseClient,
+  office: { id: string; created: boolean },
+  userId: string,
+): Promise<void> {
+  const { error } = await admin
+    .from('offices')
+    .update({ assigned_user: userId })
+    .eq('id', office.id)
+    .is('assigned_user', null)
+
+  if (error) {
+    console.error('[employeeProvisioning] Failed to link office owner:', error.message, { officeId: office.id, userId })
+  }
+}

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hash } from 'bcrypt-ts'
 import { resolveActorContext } from '~~/server/utils/actorContext'
 import { logActivityForEvent } from '~~/server/utils/activityLog'
-import { computeAgeFields, resolveOrCreateOffice } from '~~/server/utils/employeeProvisioning'
+import { computeAgeFields, resolveOrCreateOffice, linkOfficeOwnerIfNew } from '~~/server/utils/employeeProvisioning'
 
 interface ImportRowResult {
   row: number
@@ -94,23 +94,29 @@ export default defineEventHandler(async (event) => {
       })
 
       const hashedPassword = await hash(password, 10)
-      const { error: insertError } = await admin.from('users').insert({
-        full_name,
-        email,
-        password: hashedPassword,
-        role: 'employee',
-        org_id: actor.orgId,
-        office_id: office.id,
-        birth_date,
-        birth_year: ageFields.birthYear,
-        age: ageFields.age,
-        status: 1,
-      })
+      const { data: insertedEmployee, error: insertError } = await admin
+        .from('users')
+        .insert({
+          full_name,
+          email,
+          password: hashedPassword,
+          role: 'employee',
+          org_id: actor.orgId,
+          office_id: office.id,
+          birth_date,
+          birth_year: ageFields.birthYear,
+          age: ageFields.age,
+          status: 1,
+        })
+        .select('user_id')
+        .single()
 
-      if (insertError) {
-        results.push({ row: rowNum, email, status: 'skipped', message: insertError.message })
+      if (insertError || !insertedEmployee) {
+        results.push({ row: rowNum, email, status: 'skipped', message: insertError?.message || 'Failed to create account' })
         continue
       }
+
+      await linkOfficeOwnerIfNew(admin, office, insertedEmployee.user_id)
 
       createdCount++
       results.push({ row: rowNum, email, status: 'created', message: `Added to office "${office.name}"${office.created ? ' (new office)' : ''}` })

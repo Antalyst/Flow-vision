@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hash } from 'bcrypt-ts'
 import { resolveActorContext } from '~~/server/utils/actorContext'
 import { logActivityForEvent } from '~~/server/utils/activityLog'
-import { computeAgeFields, resolveOrCreateOffice } from '~~/server/utils/employeeProvisioning'
+import { computeAgeFields, resolveOrCreateOffice, linkOfficeOwnerIfNew } from '~~/server/utils/employeeProvisioning'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -68,6 +68,8 @@ export default defineEventHandler(async (event) => {
   if (userError || !newEmployee) {
     throw createError({ statusCode: 500, message: userError?.message || 'Failed to create employee account' })
   }
+
+  await linkOfficeOwnerIfNew(admin, office, newEmployee.user_id)
 
   await logActivityForEvent(event, client, {
     actionType: 'system',

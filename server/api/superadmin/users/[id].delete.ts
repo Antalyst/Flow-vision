@@ -16,8 +16,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Super administrator accounts cannot be deleted here' })
   }
 
+  // Detach this user from any office where they're the assigned owner —
+  // offices.assigned_user has no ON DELETE rule, so leaving it set blocks
+  // the delete below with a foreign key violation. The office row itself
+  // is untouched; it's just left without an owner.
+  await db.from('offices').update({ assigned_user: null }).eq('assigned_user', id)
+
   const { error } = await db.from('users').delete().eq('user_id', id)
-  if (error) throw createError({ statusCode: 500, message: error.message || 'Failed to delete account' })
+  if (error) {
+    if (error.code === '23503') {
+      throw createError({
+        statusCode: 409,
+        message: `${target.full_name} still has documents, activity, or reports on record and can't be permanently deleted. Suspend the account instead to disable it while keeping its history.`,
+      })
+    }
+    throw createError({ statusCode: 500, message: error.message || 'Failed to delete account' })
+  }
 
   return { success: true, message: `${target.full_name}'s account has been permanently removed` }
 })

@@ -2,7 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { hash } from 'bcrypt-ts'
 import { resolveActorContext } from '~~/server/utils/actorContext'
-import { computeAgeFields, resolveOrCreateOffice } from '~~/server/utils/employeeProvisioning'
+import { computeAgeFields, resolveOrCreateOffice, linkOfficeOwnerIfNew } from '~~/server/utils/employeeProvisioning'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -49,6 +49,8 @@ export default defineEventHandler(async (event) => {
     officeName: office_name || null,
     createdBy: actor.userId,
   })
+
+  await linkOfficeOwnerIfNew(admin, office, String(id))
 
   const updatePayload: Record<string, unknown> = {
     full_name: full_name.trim(),

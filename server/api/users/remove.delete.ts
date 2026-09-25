@@ -56,12 +56,24 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Cannot remove an administrator account' })
   }
 
+  // Detach this user from any office where they're the assigned owner —
+  // offices.assigned_user has no ON DELETE rule, so leaving it set blocks
+  // the delete below with a foreign key violation. The office row itself
+  // is untouched; it's just left without an owner.
+  await client.from('offices').update({ assigned_user: null }).eq('assigned_user', userId)
+
   const { error } = await client
     .from('users')
     .delete()
     .eq('user_id', userId)
 
   if (error) {
+    if (error.code === '23503') {
+      throw createError({
+        statusCode: 409,
+        message: `${targetRow.full_name} still has documents, activity, or reports on record and can't be permanently deleted. Use "Suspend" instead to disable the account while keeping its history.`,
+      })
+    }
     throw createError({ statusCode: 500, message: error.message || 'Failed to remove user' })
   }
 
