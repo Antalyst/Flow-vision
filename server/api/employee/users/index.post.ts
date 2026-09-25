@@ -57,6 +57,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Staff (employee_sub_user) are scoped to the creating employee's own office —
+  // each 'employee' ("Office") account owns exactly one office (named via the
+  // first-login claim flow), so any staff they add belong to that same office.
+  // Messengers stay unscoped — they're not desk-bound.
+  let officeId: string | null = null
+  if (targetRole === 'employee_sub_user') {
+    const { data: ownedOffice, error: officeError } = await adminClient
+      .from('offices')
+      .select('id, code')
+      .eq('org_id', actor.orgId)
+      .eq('assigned_user', actor.userId)
+      .maybeSingle()
+
+    if (officeError || !ownedOffice) {
+      throw createError({
+        statusCode: 409,
+        message: 'You need to name your office before adding staff. Reload the page to set it up.',
+      })
+    }
+    officeId = ownedOffice.id
+  }
+
   const hashedPassword = await hash(password, 10)
 
   const { data: newUser, error } = await adminClient
@@ -69,9 +91,9 @@ export default defineEventHandler(async (event) => {
       status: 1,
       password: hashedPassword,
       org_id: actor.orgId,
-      office_id: null,
+      office_id: officeId,
     })
-    .select('user_id, email, full_name, role, status, office_id, created_at')
+    .select('user_id, email, full_name, role, status, office_id, created_at, offices!users_office_id_fkey(name, code)')
     .single()
 
   if (error) {

@@ -235,7 +235,6 @@
                   required
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
-                  @change="onRoleChange"
                 >
                   <option v-for="tab in roleTabs.filter(t => t.value !== 'all')" :key="tab.value" :value="tab.value">{{ tab.label }}</option>
                 </select>
@@ -283,7 +282,6 @@
                   required
                   class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange"
                   :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
-                  @change="onOrgChange"
                 >
                   <option value="" disabled>Select an organization…</option>
                   <option v-for="org in orgs" :key="org.org_id" :value="org.org_id">{{ org.name }}</option>
@@ -300,21 +298,11 @@
                   <option v-for="org in orgs" :key="org.org_id" :value="org.org_id">{{ org.name }}</option>
                 </select>
               </div>
-              <div v-if="form.role === 'employee_sub_user' || form.role === 'employee'">
-                <label class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedText">
-                  Office / Desk <span v-if="form.role === 'employee_sub_user'" class="text-danger">*</span>
-                </label>
-                <select
-                  v-model="form.office_id"
-                  :required="form.role === 'employee_sub_user'"
-                  :disabled="!form.org_id"
-                  class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-colors focus:border-candy-orange disabled:opacity-50"
-                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-300 bg-white text-gray-900'"
-                >
-                  <option value="">{{ form.org_id ? 'Select an office…' : 'Select an organization first' }}</option>
-                  <option v-for="office in offices" :key="office.id" :value="office.id">{{ office.name }}</option>
-                </select>
-              </div>
+              <p v-if="form.role === 'employee'" class="rounded-xl border px-4 py-3 text-xs leading-relaxed"
+                :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-400' : 'border-gray-200 bg-gray-50 text-gray-500'">
+                <Icon name="ph:info-light" class="mr-1 inline h-3.5 w-3.5 text-candy-orange" />
+                No office to assign here — this Office account names and claims its own office the first time it logs in.
+              </p>
             </div>
 
             <div v-if="errorMsg" class="mx-6 mb-4 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
@@ -401,8 +389,8 @@ const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500
 
 const roleTabs = [
   { value: 'all', label: 'All' },
-  { value: 'client', label: 'Client' },
-  { value: 'employee', label: 'Employee' },
+  { value: 'client', label: 'Organization Super Admin' },
+  { value: 'employee', label: 'Office' },
   { value: 'messenger', label: 'Laison' },
 ]
 
@@ -414,7 +402,6 @@ const loading = ref(true)
 const submitting = ref(false)
 const users = ref([])
 const orgs = ref([])
-const offices = ref([])
 const totalCount = ref(0)
 const pageSize = 25
 const offset = ref(0)
@@ -434,16 +421,6 @@ async function fetchOrgs() {
     orgs.value = res.data || []
   } catch (err) {
     console.error('Failed to fetch organizations:', err)
-  }
-}
-
-async function fetchOffices(orgId) {
-  if (!orgId) { offices.value = []; return }
-  try {
-    const res = await $fetch('/api/superadmin/offices', { params: { org_id: orgId } })
-    offices.value = res.data || []
-  } catch (err) {
-    console.error('Failed to fetch offices:', err)
   }
 }
 
@@ -474,7 +451,7 @@ const isModalOpen = ref(false)
 const isEditMode = ref(false)
 const editingUserId = ref(null)
 
-const form = reactive({ full_name: '', email: '', password: '', role: 'client', org_id: '', office_id: '' })
+const form = reactive({ full_name: '', email: '', password: '', role: 'client', org_id: '' })
 
 function resetForm() {
   form.full_name = ''
@@ -482,8 +459,6 @@ function resetForm() {
   form.password = ''
   form.role = 'client'
   form.org_id = ''
-  form.office_id = ''
-  offices.value = []
 }
 
 function openAddModal() {
@@ -502,19 +477,8 @@ function openEditModal(user) {
   form.password = ''
   form.role = user.role
   form.org_id = user.org_id || ''
-  form.office_id = user.office_id || ''
   errorMsg.value = ''
   isModalOpen.value = true
-  if (user.org_id) fetchOffices(user.org_id)
-}
-
-function onRoleChange() {
-  if (form.role === 'client') form.office_id = ''
-}
-
-function onOrgChange() {
-  form.office_id = ''
-  fetchOffices(form.org_id)
 }
 
 async function saveUser() {

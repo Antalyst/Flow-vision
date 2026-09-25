@@ -105,6 +105,7 @@
           <tr>
             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Member</th>
             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Role</th>
+            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Office</th>
             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Status</th>
             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest" :class="mutedText">Registered</th>
             <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-widest" :class="mutedText">Actions</th>
@@ -112,13 +113,13 @@
         </thead>
         <tbody class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
           <tr v-if="loading">
-            <td colspan="5" class="px-6 py-12 text-center" :class="mutedText">
+            <td colspan="6" class="px-6 py-12 text-center" :class="mutedText">
               <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
               <p class="text-xs font-medium">Loading accounts…</p>
             </td>
           </tr>
           <tr v-else-if="!filteredUsers.length">
-            <td colspan="5" class="px-6 py-16 text-center">
+            <td colspan="6" class="px-6 py-16 text-center">
               <div class="flex flex-col items-center gap-3">
                 <div class="flex h-14 w-14 items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
                   <Icon name="ph:users-light" class="h-7 w-7 text-candy-orange/60" />
@@ -155,6 +156,15 @@
                 <Icon :name="user.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-3 w-3" />
                 {{ user.role === 'messenger' ? 'Messenger' : 'Staff' }}
               </span>
+            </td>
+            <td class="px-6 py-4">
+              <span v-if="user.offices?.name" class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                :class="isDark ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange' : 'border-orange-200 bg-orange-50 text-candy-orange'">
+                <Icon name="ph:desktop-light" class="h-3 w-3" />
+                {{ user.offices.name }}
+                <span class="opacity-60 font-mono">{{ user.offices.code }}</span>
+              </span>
+              <span v-else :class="mutedText">—</span>
             </td>
             <td class="px-6 py-4">
               <button

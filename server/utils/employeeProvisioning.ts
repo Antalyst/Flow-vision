@@ -83,3 +83,23 @@ export async function linkOfficeOwnerIfNew(
     console.error('[employeeProvisioning] Failed to link office owner:', error.message, { officeId: office.id, userId })
   }
 }
+
+/**
+ * The single office an 'employee' ("Office") account owns (offices.assigned_user
+ * = their own user_id). Used to scope staff visibility/edit/delete to the
+ * employee's own office — an employee never sees or manages another office's staff.
+ */
+export async function resolveOwnedOfficeId(
+  admin: SupabaseClient,
+  orgId: string,
+  userId: string,
+): Promise<string | null> {
+  const { data } = await admin
+    .from('offices')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('assigned_user', userId)
+    .maybeSingle()
+
+  return data?.id ?? null
+}

@@ -2,6 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext } from '~~/server/utils/actorContext'
 import { hash } from 'bcrypt-ts'
 import { createClient } from '@supabase/supabase-js'
+import { resolveOwnedOfficeId } from '~~/server/utils/employeeProvisioning'
 
 const MANAGED_ROLES = ['employee_sub_user', 'messenger']
 
@@ -36,6 +37,15 @@ export default defineEventHandler(async (event) => {
   // Tenant boundary check
   if (targetUser.org_id !== actor.orgId || !MANAGED_ROLES.includes(targetUser.role)) {
     throw createError({ statusCode: 403, message: 'Forbidden: Tenant boundary mismatch' })
+  }
+
+  // Staff belong to exactly one office — an employee can only manage staff at
+  // their OWN office, never another office's staff. Messengers are unaffected.
+  if (targetUser.role === 'employee_sub_user') {
+    const ownedOfficeId = await resolveOwnedOfficeId(adminClient, actor.orgId, actor.userId)
+    if (!ownedOfficeId || String(targetUser.office_id) !== String(ownedOfficeId)) {
+      throw createError({ statusCode: 403, message: 'Forbidden: this staff member belongs to a different office' })
+    }
   }
 
   if (method === 'PUT') {

@@ -156,6 +156,56 @@
       </div>
     </nav>
 
+    <!-- ── Name Your Office (mandatory first-login step) ───────────────── -->
+    <Teleport to="body">
+      <Transition name="overlay">
+        <div v-if="showClaimOfficeModal" class="fixed inset-0 z-[95] bg-black/70 backdrop-blur-sm" />
+      </Transition>
+      <Transition name="overlay">
+        <div v-if="showClaimOfficeModal" class="fixed inset-0 z-[96] flex items-center justify-center p-4">
+          <form
+            class="w-full max-w-md rounded-2xl border p-6"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+            @submit.prevent="claimOffice"
+          >
+            <span class="flex h-11 w-11 items-center justify-center rounded-full border border-candy-orange/20 bg-candy-orange/10">
+              <Icon name="ph:buildings-light" class="h-5 w-5 text-candy-orange" />
+            </span>
+            <h2 class="mt-4 text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Name Your Office</h2>
+            <p class="mt-1.5 text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
+              Before you continue, give your office a name. You'll be its point of contact, and it gets a unique office code automatically.
+            </p>
+
+            <label class="mt-5 block">
+              <span class="text-xs font-semibold uppercase tracking-wide" :class="isDark ? 'text-gray-400' : 'text-gray-500'">Office Name</span>
+              <input
+                v-model.trim="claimOfficeName"
+                type="text"
+                required
+                autofocus
+                placeholder="e.g. City Mayor's Office"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                :class="isDark ? 'border-onyx-border bg-onyx-black text-white placeholder:text-gray-600' : 'border-gray-300 bg-white text-gray-900 placeholder:text-gray-400'"
+              />
+            </label>
+
+            <p v-if="claimOfficeError" class="mt-3 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
+              {{ claimOfficeError }}
+            </p>
+
+            <button
+              type="submit"
+              :disabled="claimingOffice || !claimOfficeName"
+              class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Icon v-if="claimingOffice" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+              {{ claimingOffice ? 'Creating…' : 'Create My Office' }}
+            </button>
+          </form>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- AI Overlay Chat -->
     <AiOverlay role="employee" scope="LOCAL" />
 
@@ -249,8 +299,36 @@ const fetchLayoutOffices = async () => {
   try {
     const res = await $fetch('/api/employee/my-offices', { params: { orgId, userId } })
     layoutOffices.value = res.data ?? []
+
+    // 'employee' ("Office") accounts are created with no office at all now —
+    // the account itself must name and claim one before using the portal.
+    if (auth.user?.role === 'employee' && layoutOffices.value.length === 0) {
+      showClaimOfficeModal.value = true
+    }
   } catch {
     // silent
+  }
+}
+
+// ── Name Your Office (mandatory first-login step) ──────────────────────────
+const showClaimOfficeModal = ref(false)
+const claimingOffice = ref(false)
+const claimOfficeName = ref('')
+const claimOfficeError = ref('')
+
+const claimOffice = async () => {
+  if (claimingOffice.value || !claimOfficeName.value.trim()) return
+  claimingOffice.value = true
+  claimOfficeError.value = ''
+  try {
+    await $fetch('/api/employee/office/claim', { method: 'POST', body: { name: claimOfficeName.value } })
+    showClaimOfficeModal.value = false
+    claimOfficeName.value = ''
+    await fetchLayoutOffices()
+  } catch (err) {
+    claimOfficeError.value = err?.data?.message || 'Failed to create your office. Please try again.'
+  } finally {
+    claimingOffice.value = false
   }
 }
 
