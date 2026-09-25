@@ -1,36 +1,49 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
+import { resolveActorContext } from '~~/server/utils/actorContext'
 import { hash } from 'bcrypt-ts'
 import { createClient } from '@supabase/supabase-js'
+
+const CREATABLE_ROLES = ['employee_sub_user', 'messenger'] as const
+type CreatableRole = typeof CREATABLE_ROLES[number]
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  
-  const { email, password, full_name, office_id } = body
-  
-  if (!email || !password || !full_name || !office_id) {
+
+  const { email, password, full_name, role } = body
+  const targetRole: CreatableRole = (CREATABLE_ROLES as readonly string[]).includes(role) ? role : 'employee_sub_user'
+
+  if (!email || !password || !full_name) {
     throw createError({
       statusCode: 400,
-      message: 'Missing required fields: email, password, full_name, office_id',
+      message: 'Missing required fields: email, password, full_name',
     })
+  }
+  if (String(password).length < 8) {
+    throw createError({ statusCode: 400, message: 'Password must be at least 8 characters' })
   }
 
   const client = await serverSupabaseClient(event)
-  
-  // Resolve actor to get orgId and officeIds they are assigned to
-  const actor = await resolveActorContextWithOffices(event, client)
-  
+  const actor = await resolveActorContext(event, client)
+
   if (actor.userRole !== 'employee') {
-    throw createError({ statusCode: 403, message: 'Only employees can create internal office users' })
+    throw createError({ statusCode: 403, message: 'Only employees can create staff or messenger accounts' })
   }
 
-  const adminClient = createClient(
-    config.public.supabaseUrl, 
-    config.supabaseServiceKey
-  )
+  const adminClient = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
 
-  // 1. Fetch parent employee's acctype_id to inherit
+  const normalizedEmail = String(email).trim().toLowerCase()
+  const { data: existing } = await adminClient
+    .from('users')
+    .select('user_id')
+    .eq('email', normalizedEmail)
+    .maybeSingle()
+
+  if (existing) {
+    throw createError({ statusCode: 409, message: 'An account with this email address already exists' })
+  }
+
+  // Inherit the creating employee's acctype_id
   const { data: parentUser, error: parentError } = await adminClient
     .from('users')
     .select('acctype_id')
@@ -44,20 +57,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 2. Hash password and insert sub-user
   const hashedPassword = await hash(password, 10)
 
   const { data: newUser, error } = await adminClient
     .from('users')
     .insert({
-      email: email,
-      full_name: full_name,
-      role: 'employee_sub_user',
+      email: normalizedEmail,
+      full_name,
+      role: targetRole,
       acctype_id: parentUser.acctype_id,
       status: 1,
       password: hashedPassword,
       org_id: actor.orgId,
-      office_id: office_id
+      office_id: null,
     })
     .select('user_id, email, full_name, role, status, office_id, created_at')
     .single()
@@ -65,7 +77,7 @@ export default defineEventHandler(async (event) => {
   if (error) {
     throw createError({
       statusCode: 500,
-      message: `Failed to create internal user: ${error.message}`,
+      message: `Failed to create account: ${error.message}`,
     })
   }
 

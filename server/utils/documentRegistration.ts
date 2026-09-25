@@ -5,7 +5,7 @@ import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { emitDocumentRegisteredEmail } from '~~/server/utils/email/emailEvents'
 
-const ALLOWED_ROLES = ['client', 'employee'] as const
+const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
 
 export type DocumentPriority = 'High' | 'Medium' | 'Low'

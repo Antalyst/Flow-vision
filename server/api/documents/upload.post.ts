@@ -253,7 +253,9 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if ((resolvedRole === 'employee' || resolvedRole === 'employee_sub_user') && stageRow.office_id) {
+    // Staff (employee_sub_user) operate org-wide and may use any of the org's
+    // configured routes, not just ones scoped to their own office.
+    if (resolvedRole === 'employee' && stageRow.office_id) {
       // Local stage — must be scoped to the employee's own origin office
       if (String(stageRow.office_id) !== resolvedOriginOfficeId) {
         throw createError({

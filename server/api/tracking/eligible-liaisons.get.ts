@@ -48,7 +48,9 @@ export default defineEventHandler(async (event) => {
     : doc.office_id ? String(doc.office_id)
     : null
 
-  if (actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
+  // Staff (employee_sub_user) operate org-wide, same as a client admin — they can
+  // hand off any document in their org, not just ones at their own home office.
+  if (actor.userRole === 'employee') {
     if (!effectiveOfficeId || !actor.officeIds.includes(effectiveOfficeId)) {
       throw createError({
         statusCode: 403,
@@ -75,17 +77,32 @@ export default defineEventHandler(async (event) => {
 
   const active = (candidates ?? []).filter((u) => u.status !== 0)
 
+  const mapped = active.map((u) => ({
+    user_id: u.user_id,
+    full_name: u.full_name,
+    email: u.email,
+    role: u.role,
+    already_associated: true,
+  }))
+
+  // Let the creator/handler hand-carry it themselves instead of assigning a
+  // messenger — already permitted server-side by assign-liaison.post.ts, this
+  // just surfaces it as a pickable option instead of requiring a separate flow.
+  if (actor.userRole === 'client' || actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
+    mapped.unshift({
+      user_id: actor.userId,
+      full_name: `${actor.fullName ?? 'Myself'} (Myself)`,
+      email: null,
+      role: actor.userRole,
+      already_associated: true,
+    })
+  }
+
   return {
     success: true,
     data: {
       office_id: effectiveOfficeId,
-      candidates: active.map((u) => ({
-        user_id: u.user_id,
-        full_name: u.full_name,
-        email: u.email,
-        role: u.role,
-        already_associated: true,
-      })),
+      candidates: mapped,
     },
   }
 })

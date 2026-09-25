@@ -13,7 +13,7 @@
         <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Documents</h1>
         <p class="mt-1 text-sm" :class="mutedText">
-          Documents from the offices assigned to you.
+          {{ props.ledgerScope === 'GLOBAL' ? 'Every document across your organization.' : 'Documents from the offices assigned to you.' }}
         </p>
       </div>
 
@@ -21,7 +21,7 @@
       <div class="flex flex-wrap items-center gap-3">
         <!-- Scan QR Button -->
         <NuxtLink
-          to="/employee/scan"
+          :to="props.scanBasePath"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white dark:bg-onyx-card border px-4 py-2 text-sm font-semibold transition duration-200 hover:bg-gray-50 dark:hover:bg-white/5 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-candy-orange"
           :class="isDark ? 'border-onyx-border text-white' : 'border-gray-200 text-onyx-black'"
         >
@@ -372,6 +372,18 @@ interface LedgerDoc {
 
 interface OfficeRecord { id: string; name: string; code?: string }
 
+// ── Props ─────────────────────────────────────────────────────────────
+// Lets the Staff portal reuse this exact view (org-wide ledger, own scan page)
+// without duplicating 600+ lines — same pattern as LiaisonDeliveriesBoard's
+// scanBasePath prop.
+const props = withDefaults(defineProps<{
+  scanBasePath?: string
+  ledgerScope?: Scope
+}>(), {
+  scanBasePath: '/employee/scan',
+  ledgerScope: 'LOCAL',
+})
+
 // ── Stores & composables ──────────────────────────────────────────────
 const auth       = useAuthStore()
 const route      = useRoute()
@@ -597,7 +609,7 @@ const fetchDocs = async () => {
   loading.value = true
   try {
     const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/employee/ledger', {
-      params: { orgId, userId, scope: 'LOCAL', limit: 200 },
+      params: { orgId, userId, scope: props.ledgerScope, limit: 200 },
     })
     docs.value = res.data ?? []
   } catch (err) {

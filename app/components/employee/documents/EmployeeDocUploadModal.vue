@@ -259,7 +259,7 @@
                   <span>
                     No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
                     <template v-if="routeTab === 'local'">
-                      <NuxtLink to="/employee/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Stages.
+                      <NuxtLink :to="stagesPath" class="text-candy-orange hover:underline">Create one</NuxtLink> in Stages.
                     </template>
                   </span>
                 </div>
@@ -664,6 +664,9 @@ const officeStore = useOfficeStore()
 const auth        = useAuthStore()
 const categoriesStore = useCategoriesStore()
 const { isDark }  = useTheme()
+
+// Sub-users get their own Staff portal (see /staff/routes) instead of /employee/stages.
+const stagesPath = computed(() => auth.user?.role === 'employee_sub_user' ? '/staff/routes' : '/employee/stages')
 
 // ── Route scope tab ───────────────────────────────────────────────────
 type RouteTab = 'global' | 'local'
