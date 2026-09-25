@@ -36,6 +36,25 @@
       </div>
     </div>
 
+    <!-- ── My Office ─────────────────────────────────────────────────── -->
+    <div
+      ref="officeEl"
+      class="flex items-center gap-4 rounded-2xl border p-5"
+      :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+    >
+      <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
+        <Icon name="ph:buildings-light" class="h-5 w-5 text-candy-orange" />
+      </span>
+      <div class="min-w-0 flex-1">
+        <p class="text-xs font-semibold uppercase tracking-wide" :class="mutedText">Your account belongs to</p>
+        <p v-if="loadingOffice" class="mt-0.5 text-sm" :class="mutedText">Loading…</p>
+        <p v-else-if="myOffice" class="mt-0.5 truncate text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
+          {{ myOffice.name }}
+        </p>
+        <p v-else class="mt-0.5 text-sm" :class="mutedText">No office on record yet.</p>
+      </div>
+    </div>
+
     <!-- ── KPI Cards ─────────────────────────────────────────────────── -->
     <div ref="kpiEl" class="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <div
@@ -99,6 +118,8 @@ const firstName = computed(() => (auth.user?.full_name || '').split(' ')[0])
 
 const loading = ref(true)
 const docs = ref([])
+const myOffice = ref(null)
+const loadingOffice = ref(true)
 
 const recentDocs = computed(() => docs.value.slice(0, 8))
 
@@ -134,6 +155,18 @@ function formatTime(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+async function fetchMyOffice() {
+  loadingOffice.value = true
+  try {
+    const res = await $fetch('/api/staff/my-office')
+    myOffice.value = res.data || null
+  } catch (err) {
+    console.error('Failed to load your office:', err)
+  } finally {
+    loadingOffice.value = false
+  }
+}
+
 async function fetchDashboard() {
   const orgId = auth.user?.org_id
   const userId = auth.user?.user_id
@@ -152,19 +185,22 @@ async function fetchDashboard() {
 // GSAP refs
 const pageRoot = ref(null)
 const headerEl = ref(null)
+const officeEl = ref(null)
 const kpiEl = ref(null)
 const recentEl = ref(null)
 
 const runEntranceAnimation = () => {
   const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
   if (headerEl.value) tl.fromTo(headerEl.value, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.45 }, 0)
-  if (kpiEl.value) tl.fromTo(kpiEl.value, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5 }, 0.14)
-  if (recentEl.value) tl.fromTo(recentEl.value, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5 }, 0.24)
+  if (officeEl.value) tl.fromTo(officeEl.value, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.45 }, 0.1)
+  if (kpiEl.value) tl.fromTo(kpiEl.value, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5 }, 0.18)
+  if (recentEl.value) tl.fromTo(recentEl.value, { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5 }, 0.28)
 }
 
 onMounted(() => {
   runEntranceAnimation()
   if (auth.isLoggedIn && !auth.currentOrg) auth.fetchMyOrg()
+  fetchMyOffice()
   fetchDashboard()
 })
 </script>
