@@ -10,15 +10,6 @@
           {{ auth.currentOrg?.name || '—' }}
         </p>
       </div>
-
-      <button
-        type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-candy-hover active:scale-[0.98]"
-        @click="openProvisionDrawer"
-      >
-        <Icon name="ph:motorcycle-fill" class="h-4 w-4" />
-        Add Messenger
-      </button>
     </div>
 
     <!-- ── Stat cards ──────────────────────────────────────────────────── -->

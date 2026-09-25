@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col h-screen w-full font-primary overflow-hidden">
-
     <div class="w-full h-[100dvh] flex flex-col md:flex-row overflow-hidden font-dashboard transition-colors duration-300"
       :class="isDark ? 'bg-onyx-black text-white' : 'bg-white-surface text-onyx-black'">
 
@@ -13,7 +12,7 @@
         <Icon name="ph:list" class="w-6 h-6 text-gray-700 dark:text-gray-300" />
       </button>
       <div class="flex items-center gap-2">
-         <div class="w-14 h-14 rounded-xl flex items-center justify-center">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center">
               <img :src="brandLogo" alt="FlowVision Logo" class="w-10 h-10" />
             </div>
         <span class="text-base font-bold text-gray-900 dark:text-white tracking-tight">FlowVision</span>
