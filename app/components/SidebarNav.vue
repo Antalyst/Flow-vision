@@ -32,12 +32,6 @@ const navGroups = computed(() => [
     ],
   },
   {
-    title: 'Messenger',
-    items: [
-      { to: '/client/deliveries', label: 'My Deliveries', icon: 'ph:package-light' },
-    ],
-  },
-  {
     title: 'Messages & Alerts',
     items: [
       { to: '/client/messages', label: 'Messages', icon: 'ph:chat-teardrop-text-light', badgeCount: chatUnreadCount.value, badgeColor: 'red' },
@@ -58,7 +52,7 @@ const navGroups = computed(() => [
     items: [
       { to: '/client/stages', label: 'Document Routes', icon: 'ph:steps-light' },
       { to: '/client/station', label: 'QR Terminals', icon: 'ph:qr-code-light' },
-      { to: '/client/user-management', label: 'Team Members', icon: 'ph:users-three-light' },
+      { to: '/client/user-management', label: 'Offices', icon: 'ph:users-three-light' },
     ],
   },
   {
