@@ -10,6 +10,26 @@
           {{ auth.currentOrg?.name || '—' }}
         </p>
       </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition"
+          :class="isDark ? 'border-onyx-border text-gray-200 hover:bg-onyx-card' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
+          @click="openImportModal"
+        >
+          <Icon name="ph:upload-simple-light" class="h-4 w-4" />
+          Import CSV
+        </button>
+       
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98]"
+          @click="openProvisionDrawer('employee')"
+        >
+          <Icon name="ph:plus-bold" class="h-4 w-4" />
+          Add Employee
+        </button>
+      </div>
     </div>
 
     <!-- ── Stat cards ──────────────────────────────────────────────────── -->
@@ -49,11 +69,7 @@
           <span
             v-if="tabCount(tab.value) > 0"
             class="ml-1.5 rounded-full px-1.5 py-0.5 text-sm font-bold"
-            :class="tab.value === 'messenger'
-              ? 'bg-candy-orange/20 text-candy-orange'
-              : tab.value === 'employee'
-              ? (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')
-              : (isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600')"
+            :class="isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-200 text-gray-600'"
           >
             {{ tabCount(tab.value) }}
           </span>
@@ -76,13 +92,13 @@
 
     <!-- ── Member table ────────────────────────────────────────────────── -->
     <article class="overflow-hidden rounded-2xl border transition-all duration-300" :class="surfaceClass">
-      <!-- Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
           <thead :class="isDark ? 'bg-onyx-black/50 text-gray-400' : 'bg-gray-50 text-gray-500'">
             <tr>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Member</th>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Role</th>
+              <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Office</th>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Status</th>
               <th class="whitespace-nowrap px-6 py-3.5 text-xs font-semibold uppercase tracking-wide">Joined</th>
               <th class="whitespace-nowrap px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wide">Actions</th>
@@ -90,10 +106,9 @@
           </thead>
 
           <tbody>
-            <!-- Loading skeleton -->
             <template v-if="loading">
               <tr v-for="n in 5" :key="n" class="border-t" :class="borderClass">
-                <td class="px-6 py-4" colspan="5">
+                <td class="px-6 py-4" colspan="6">
                   <div class="flex items-center gap-3">
                     <div class="h-9 w-9 animate-pulse rounded-full" :class="isDark ? 'bg-white/5' : 'bg-gray-200'" />
                     <div class="flex-1 space-y-2">
@@ -105,15 +120,13 @@
               </tr>
             </template>
 
-            <!-- Data rows -->
             <template v-else>
               <tr
                 v-for="member in filteredMembers"
-                :key="member.user_id"
+                :key="`${member.role}-${member.user_id}`"
                 class="border-t transition-colors duration-150"
                 :class="[borderClass, isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50/80']"
               >
-                <!-- Name + email -->
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
                     <div
@@ -133,7 +146,6 @@
                   </div>
                 </td>
 
-                <!-- Role badge -->
                 <td class="whitespace-nowrap px-6 py-4">
                   <span
                     class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold uppercase tracking-wider"
@@ -149,7 +161,16 @@
                   </span>
                 </td>
 
-                <!-- Status toggle -->
+                <td class="whitespace-nowrap px-6 py-4">
+                  <span v-if="member.office_name" class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold"
+                    :class="isDark ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange' : 'border-orange-200 bg-orange-50 text-candy-orange'">
+                    <Icon name="ph:desktop-light" class="h-3 w-3" />
+                    {{ member.office_name }}
+                    <span class="opacity-60 font-mono">{{ member.office_code }}</span>
+                  </span>
+                  <span v-else :class="mutedClass">—</span>
+                </td>
+
                 <td class="whitespace-nowrap px-6 py-4">
                   <button
                     type="button"
@@ -168,12 +189,10 @@
                   </button>
                 </td>
 
-                <!-- Joined date -->
                 <td class="whitespace-nowrap px-6 py-4 text-sm" :class="mutedClass">
                   {{ formatDate(member.created_at) }}
                 </td>
 
-                <!-- Actions -->
                 <td class="whitespace-nowrap px-6 py-4">
                   <div class="flex justify-end gap-1">
                     <button
@@ -196,16 +215,15 @@
                 </td>
               </tr>
 
-              <!-- Empty state -->
               <tr v-if="!filteredMembers.length">
-                <td colspan="5" class="px-6 py-16 text-center" :class="mutedClass">
+                <td colspan="6" class="px-6 py-16 text-center" :class="mutedClass">
                   <div class="flex flex-col items-center gap-3">
                     <Icon name="ph:users-three" class="h-10 w-10 text-gray-300" />
                     <p class="font-semibold text-base" :class="isDark ? 'text-gray-300' : 'text-gray-600'">
                       No members found
                     </p>
                     <p class="text-sm">
-                      {{ searchQuery ? 'Try a different search term.' : 'Provision a messenger to get started.' }}
+                      {{ searchQuery ? 'Try a different search term.' : 'Add an employee or messenger to get started.' }}
                     </p>
                   </div>
                 </td>
@@ -215,7 +233,6 @@
         </table>
       </div>
 
-      <!-- Table footer meta -->
       <div
         v-if="!loading && filteredMembers.length"
         class="flex items-center justify-between border-t px-6 py-3"
@@ -236,14 +253,14 @@
         <div class="space-y-1 min-w-0">
           <p class="font-semibold text-sm" :class="isDark ? 'text-gray-100' : 'text-gray-900'">Your Organization Only</p>
           <p class="text-xs leading-relaxed" :class="mutedClass">
-            Messengers you add here only work within <strong>{{ auth.currentOrg?.name ?? 'your organization' }}</strong>.
+            Employees and messengers you add here only work within <strong>{{ auth.currentOrg?.name ?? 'your organization' }}</strong>.
             They can't see or access documents, offices, or activity that belong to another organization.
           </p>
         </div>
       </div>
     </article>
 
-    <!-- ── Provision Messenger Drawer ─────────────────────────────────── -->
+    <!-- ── Add/Edit Drawer ────────────────────────────────────────────── -->
     <Teleport to="body">
       <Transition name="drawer-fade">
         <div
@@ -269,7 +286,7 @@
                 {{ drawerMode === 'edit' ? 'Edit' : 'Add' }}
               </p>
               <h2 class="mt-1 text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                {{ drawerMode === 'edit' ? 'Edit Member Account' : 'New Messenger Account' }}
+                {{ drawerMode === 'edit' ? 'Edit Member Account' : (drawerRole === 'employee' ? 'New Employee Account' : 'New Messenger Account') }}
               </h2>
               <p class="mt-0.5 text-xs" :class="mutedClass">
                 {{ auth.currentOrg?.name }}
@@ -290,12 +307,10 @@
               class="flex items-center gap-3 rounded-xl border px-4 py-3"
               :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'"
             >
-              <Icon :name="form.role === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-candy-orange" />
+              <Icon :name="drawerRole === 'messenger' ? 'ph:motorcycle-fill' : 'ph:briefcase-fill'" class="h-5 w-5 text-candy-orange" />
               <div>
-                <p class="text-sm font-bold text-candy-orange">Role: {{ form.role === 'messenger' ? 'Messenger' : 'Employee' }}</p>
-                <p class="text-sm" :class="mutedClass">
-                  {{ drawerMode === 'edit' ? 'Role cannot be changed here.' : 'Fixed — only messenger roles can be provisioned here.' }}
-                </p>
+                <p class="text-sm font-bold text-candy-orange">Role: {{ drawerRole === 'messenger' ? 'Messenger' : 'Employee' }}</p>
+                <p class="text-sm" :class="mutedClass">Role cannot be changed after the account is created.</p>
               </div>
             </div>
 
@@ -314,6 +329,21 @@
               />
             </label>
 
+            <!-- Date of Birth (employee only) -->
+            <label v-if="drawerRole === 'employee'" class="block">
+              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                Date of Birth <span class="text-danger">*</span>
+              </span>
+              <input
+                v-model="form.birth_date"
+                type="date"
+                :max="todayIso"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                :class="inputClass"
+                required
+              />
+            </label>
+
             <!-- Email -->
             <label class="block">
               <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
@@ -322,7 +352,7 @@
               <input
                 v-model.trim="form.email"
                 type="email"
-                placeholder="messenger@yourorg.com"
+                placeholder="name@yourorg.com"
                 class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
                 :class="inputClass"
                 required
@@ -354,10 +384,81 @@
                   <Icon :name="showPassword ? 'ph:eye-slash' : 'ph:eye'" class="h-4 w-4" />
                 </button>
               </div>
-              <p class="mt-1.5 text-sm" :class="mutedClass">
-                {{ drawerMode === 'edit' ? 'Leave blank to keep the current password.' : 'Share this with the messenger securely. They can change it after first login.' }}
+            </label>
+
+            <!-- Confirm Password -->
+            <label v-if="form.password" class="block">
+              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                Confirm Password <span class="text-danger">*</span>
+              </span>
+              <input
+                v-model="confirmPassword"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Re-enter the password"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                :class="[inputClass, confirmPassword && confirmPassword !== form.password ? '!border-danger' : '']"
+              />
+              <p v-if="confirmPassword && confirmPassword !== form.password" class="mt-1.5 text-sm text-danger">
+                Passwords do not match.
               </p>
             </label>
+            <p v-else-if="drawerMode === 'edit'" class="-mt-3 text-sm" :class="mutedClass">
+              Leave password blank to keep the current password.
+            </p>
+
+            <!-- Office (employee only) -->
+            <div v-if="drawerRole === 'employee'" class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                  Office <span class="text-danger">*</span>
+                </span>
+                <div class="flex rounded-lg border p-0.5" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
+                  <button
+                    type="button"
+                    class="rounded-md px-2.5 py-1 text-sm font-semibold transition"
+                    :class="officeMode === 'existing' ? 'bg-candy-orange text-white' : mutedClass"
+                    @click="officeMode = 'existing'"
+                  >
+                    Existing
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md px-2.5 py-1 text-sm font-semibold transition"
+                    :class="officeMode === 'new' ? 'bg-candy-orange text-white' : mutedClass"
+                    @click="officeMode = 'new'"
+                  >
+                    New Office
+                  </button>
+                </div>
+              </div>
+
+              <select
+                v-if="officeMode === 'existing'"
+                v-model="form.office_id"
+                class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                :class="inputClass"
+                :required="officeMode === 'existing'"
+              >
+                <option value="" disabled>{{ offices.length ? 'Select an office…' : 'No offices yet — create one below' }}</option>
+                <option v-for="office in offices" :key="office.id" :value="office.id">
+                  {{ office.name }} ({{ office.code }})
+                </option>
+              </select>
+
+              <div v-else>
+                <input
+                  v-model.trim="form.office_name"
+                  type="text"
+                  placeholder="e.g. Cebu Branch Office"
+                  class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                  :class="inputClass"
+                  :required="officeMode === 'new'"
+                />
+                <p class="mt-1.5 text-sm" :class="mutedClass">
+                  This office will be created under {{ auth.currentOrg?.name || 'your organization' }} — its office code is generated automatically.
+                </p>
+              </div>
+            </div>
 
             <!-- Org scope lock -->
             <div
@@ -368,10 +469,6 @@
                 <Icon name="ph:lock-fill" class="h-4 w-4 text-candy-orange" />
                 Belongs to Your Organization
               </div>
-              <p class="mt-2 text-xs leading-5" :class="mutedClass">
-                This account will only ever belong to <strong>{{ auth.currentOrg?.name ?? 'your organization' }}</strong> —
-                it can't be moved or shared with another organization.
-              </p>
               <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
                 <dt :class="mutedClass">Organization</dt>
                 <dd class="font-semibold text-right" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
@@ -384,7 +481,6 @@
               </dl>
             </div>
 
-            <!-- Error feedback -->
             <div
               v-if="provisionError"
               class="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/5 p-4 text-sm text-danger"
@@ -405,19 +501,123 @@
             </button>
             <button
               type="submit"
-              :disabled="saving || !form.full_name || !form.email || (drawerMode === 'provision' && form.password.length < 8) || (drawerMode === 'edit' && form.password && form.password.length < 8)"
+              :disabled="!canSubmitDrawer"
               class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="saving" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-              <Icon v-else :name="drawerMode === 'edit' ? 'ph:floppy-disk' : 'ph:motorcycle-fill'" class="h-4 w-4" />
-              {{ saving ? 'Saving…' : (drawerMode === 'edit' ? 'Save Changes' : 'Provision Account') }}
+              <Icon v-else :name="drawerMode === 'edit' ? 'ph:floppy-disk' : 'ph:user-plus-fill'" class="h-4 w-4" />
+              {{ saving ? 'Saving…' : (drawerMode === 'edit' ? 'Save Changes' : 'Create Account') }}
             </button>
           </footer>
         </form>
       </Transition>
     </Teleport>
 
-    <!-- ── Success toast ───────────────────────────────────────────────── -->
+    <!-- ── CSV Import Modal ──────────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="importModalOpen" class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div
+            class="w-full max-w-lg rounded-2xl border my-8"
+            :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+          >
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b" :class="borderClass">
+              <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full border border-candy-orange/20 bg-candy-orange/10">
+                  <Icon name="ph:upload-simple-light" class="h-4.5 w-4.5 text-candy-orange" />
+                </span>
+                <h2 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Import Employees (CSV)</h2>
+              </div>
+              <button type="button" class="rounded-lg p-1.5 transition hover:bg-gray-100 dark:hover:bg-white/10" @click="closeImportModal">
+                <Icon name="ph:x-light" class="h-4 w-4" :class="mutedClass" />
+              </button>
+            </div>
+
+            <div class="space-y-4 px-6 py-5">
+              <div class="rounded-xl border p-4" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+                <p class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">1. Download the template</p>
+                <p class="mt-1 text-xs leading-relaxed" :class="mutedClass">
+                  Fill in <code class="font-mono">full_name, email, password, birth_date, office_name</code> for each employee.
+                  Reuse the same office name for staff sharing an office — we'll match it automatically instead of creating duplicates.
+                </p>
+                <button
+                  type="button"
+                  class="mt-3 inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition"
+                  :class="isDark ? 'border-onyx-border text-gray-200 hover:bg-onyx-card' : 'border-gray-200 text-gray-700 hover:bg-white'"
+                  @click="downloadTemplate"
+                >
+                  <Icon name="ph:download-simple-light" class="h-4 w-4" />
+                  Download CSV Template
+                </button>
+              </div>
+
+              <div>
+                <p class="text-sm font-semibold mb-2" :class="isDark ? 'text-gray-200' : 'text-gray-800'">2. Upload your filled-in CSV</p>
+                <input
+                  ref="importFileInput"
+                  type="file"
+                  accept=".csv"
+                  class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-candy-orange/10 file:px-3.5 file:py-2 file:text-xs file:font-semibold file:text-candy-orange hover:file:bg-candy-orange/20"
+                  :class="mutedClass"
+                  @change="handleImportFileChange"
+                />
+              </div>
+
+              <div v-if="importError" class="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
+                {{ importError }}
+              </div>
+
+              <div v-if="importSummary" class="space-y-2">
+                <div class="rounded-xl border p-3 text-sm font-semibold"
+                  :class="importSummary.created > 0 ? 'border-success/20 bg-success/10 text-success' : 'border-warning/20 bg-warning/10 text-warning'">
+                  {{ importSummary.created }} of {{ importSummary.total }} employee(s) imported successfully.
+                </div>
+                <div class="max-h-56 overflow-y-auto rounded-xl border" :class="borderClass">
+                  <div
+                    v-for="r in importResults"
+                    :key="r.row"
+                    class="flex items-start gap-2 border-b px-3.5 py-2 text-xs last:border-b-0"
+                    :class="borderClass"
+                  >
+                    <Icon
+                      :name="r.status === 'created' ? 'ph:check-circle-fill' : 'ph:warning-circle-fill'"
+                      class="mt-0.5 h-3.5 w-3.5 flex-shrink-0"
+                      :class="r.status === 'created' ? 'text-success' : 'text-warning'"
+                    />
+                    <div class="min-w-0">
+                      <p class="font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">Row {{ r.row }} · {{ r.email }}</p>
+                      <p :class="mutedClass">{{ r.message }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 px-6 pb-6">
+              <button
+                type="button"
+                class="rounded-xl px-4 py-2.5 text-sm font-semibold transition border border-transparent"
+                :class="isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'"
+                @click="closeImportModal"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                :disabled="!importFile || importing"
+                class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover disabled:opacity-50"
+                @click="submitImport"
+              >
+                <Icon v-if="importing" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+                {{ importing ? 'Importing…' : 'Import' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── Toast ───────────────────────────────────────────────────────── -->
     <Teleport to="body">
       <Transition name="toast-fade">
         <div
@@ -443,7 +643,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
-const { isDark, toggleTheme: _toggleTheme } = useTheme()
+const { isDark } = useTheme()
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface OrgMember {
@@ -451,35 +651,71 @@ interface OrgMember {
   full_name: string
   email: string
   role: 'employee' | 'messenger'
-  org_id: string | number
+  org_id?: string | number
   status: number
   created_at: string
+  office_id?: string | null
+  office_name?: string | null
+  office_code?: string | null
+}
+
+interface OfficeOption {
+  id: string
+  name: string
+  code: string
+}
+
+interface ImportRowResult {
+  row: number
+  email: string
+  status: 'created' | 'skipped'
+  message: string
 }
 
 // ── State ──────────────────────────────────────────────────────────────
-const members      = ref<OrgMember[]>([])
-const loading      = ref(false)
-const saving       = ref(false)
-const drawerOpen   = ref(false)
-const drawerMode   = ref<'provision' | 'edit'>('provision')
+const employees    = ref<OrgMember[]>([])
+const messengers    = ref<OrgMember[]>([])
+const offices       = ref<OfficeOption[]>([])
+const loading       = ref(false)
+const saving        = ref(false)
+const drawerOpen    = ref(false)
+const drawerMode    = ref<'provision' | 'edit'>('provision')
+const drawerRole    = ref<'employee' | 'messenger'>('employee')
 const editingUserId = ref<string | number | null>(null)
-const showPassword = ref(false)
-const activeTab    = ref<'all' | 'employee' | 'messenger'>('all')
-const searchQuery  = ref('')
+const showPassword  = ref(false)
+const activeTab     = ref<'all' | 'employee' | 'messenger'>('all')
+const searchQuery   = ref('')
 const provisionError = ref('')
+const officeMode    = ref<'existing' | 'new'>('existing')
+const confirmPassword = ref('')
 
-const form = reactive({ full_name: '', email: '', password: '', role: 'messenger' })
+const form = reactive({
+  full_name: '', email: '', password: '', birth_date: '',
+  office_id: '' as string, office_name: '',
+})
 
 const toast = reactive({ visible: false, message: '', type: 'success' as 'success' | 'error' })
+
+const todayIso = new Date().toISOString().slice(0, 10)
+
+// ── Import modal state ────────────────────────────────────────────────
+const importModalOpen = ref(false)
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importFile       = ref<File | null>(null)
+const importing        = ref(false)
+const importError      = ref('')
+const importResults    = ref<ImportRowResult[]>([])
+const importSummary    = ref<{ created: number; total: number } | null>(null)
 
 // ── Constants ──────────────────────────────────────────────────────────
 const TABS = [
   { value: 'all',       label: 'All Members' },
   { value: 'employee',  label: 'Employees'   },
-  { value: 'messenger', label: 'Messengers'  },
 ] as const
 
 // ── Computed ───────────────────────────────────────────────────────────
+const members = computed<OrgMember[]>(() => [...employees.value, ...messengers.value])
+
 const filteredMembers = computed(() => {
   let list = members.value
   if (activeTab.value !== 'all') list = list.filter((m) => m.role === activeTab.value)
@@ -505,14 +741,14 @@ const stats = computed(() => [
   },
   {
     label: 'Employees',
-    value: members.value.filter((m) => m.role === 'employee').length,
+    value: employees.value.length,
     icon: 'ph:briefcase-fill',
     iconBg: isDark.value ? 'bg-white/10' : 'bg-gray-200',
     iconColor: isDark.value ? 'text-gray-300' : 'text-gray-600',
   },
   {
     label: 'Messengers',
-    value: members.value.filter((m) => m.role === 'messenger').length,
+    value: messengers.value.length,
     icon: 'ph:motorcycle-fill',
     iconBg: 'bg-candy-orange/10',
     iconColor: 'text-candy-orange',
@@ -525,6 +761,20 @@ const stats = computed(() => [
     iconColor: 'text-danger',
   },
 ])
+
+const canSubmitDrawer = computed(() => {
+  if (saving.value) return false
+  if (!form.full_name || !form.email) return false
+  if (drawerMode.value === 'provision' && form.password.length < 8) return false
+  if (form.password && form.password.length < 8) return false
+  if (form.password && confirmPassword.value !== form.password) return false
+  if (drawerRole.value === 'employee') {
+    if (!form.birth_date) return false
+    if (officeMode.value === 'existing' && !form.office_id) return false
+    if (officeMode.value === 'new' && !form.office_name.trim()) return false
+  }
+  return true
+})
 
 // ── Theme helpers ──────────────────────────────────────────────────────
 const surfaceClass = computed(() =>
@@ -557,17 +807,44 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
 }
 
 // ── Data fetching ──────────────────────────────────────────────────────
-const fetchMembers = async () => {
+const fetchEmployees = async () => {
+  try {
+    const res = await $fetch<{ success: boolean; data: OrgMember[] }>('/api/client/employees')
+    employees.value = res.data ?? []
+  } catch (err: any) {
+    console.error('[UserManagement] fetch employees error:', err)
+  }
+}
+
+const fetchMessengers = async () => {
   const orgId = auth.user?.org_id
   if (!orgId) return
-  loading.value = true
   try {
     const res = await $fetch<{ success: boolean; data: OrgMember[] }>('/api/users/org-members', {
-      params: { orgId },
+      params: { orgId, role: 'messenger' },
     })
-    members.value = res.data ?? []
+    messengers.value = res.data ?? []
   } catch (err: any) {
-    console.error('[UserManagement] fetch error:', err)
+    console.error('[UserManagement] fetch messengers error:', err)
+  }
+}
+
+const fetchOffices = async () => {
+  const orgId = auth.user?.org_id
+  if (!orgId) return
+  try {
+    const res = await $fetch<{ success: boolean; data: OfficeOption[] }>('/api/office', { params: { orgId } })
+    offices.value = res.data ?? []
+  } catch (err: any) {
+    console.error('[UserManagement] fetch offices error:', err)
+  }
+}
+
+const fetchMembers = async () => {
+  loading.value = true
+  try {
+    await Promise.all([fetchEmployees(), fetchMessengers()])
+  } catch (err: any) {
     showToast(err?.data?.message || 'Failed to load members', 'error')
   } finally {
     loading.value = false
@@ -575,25 +852,40 @@ const fetchMembers = async () => {
 }
 
 // ── Drawer handlers ────────────────────────────────────────────────────
-const openProvisionDrawer = () => {
-  drawerMode.value = 'provision'
-  editingUserId.value = null
+function resetForm() {
   form.full_name = ''
-  form.email     = ''
-  form.password  = ''
-  form.role      = 'messenger'
+  form.email = ''
+  form.password = ''
+  form.birth_date = ''
+  form.office_id = ''
+  form.office_name = ''
+  confirmPassword.value = ''
+  officeMode.value = 'existing'
+}
+
+const openProvisionDrawer = async (role: 'employee' | 'messenger') => {
+  drawerMode.value = 'provision'
+  drawerRole.value = role
+  editingUserId.value = null
+  resetForm()
   provisionError.value = ''
   showPassword.value   = false
+  if (role === 'employee') await fetchOffices()
   drawerOpen.value     = true
 }
 
-const openEditDrawer = (member: OrgMember) => {
+const openEditDrawer = async (member: OrgMember) => {
   drawerMode.value = 'edit'
+  drawerRole.value = member.role
   editingUserId.value = member.user_id
+  resetForm()
   form.full_name = member.full_name
   form.email     = member.email
-  form.password  = ''
-  form.role      = member.role
+  if (member.role === 'employee') {
+    await fetchOffices()
+    form.office_id = member.office_id ? String(member.office_id) : ''
+    officeMode.value = 'existing'
+  }
   provisionError.value = ''
   showPassword.value   = false
   drawerOpen.value     = true
@@ -603,44 +895,50 @@ const closeDrawer = () => { drawerOpen.value = false }
 
 // ── CRUD ───────────────────────────────────────────────────────────────
 const handleSaveDrawer = async () => {
-  if (saving.value) return
+  if (!canSubmitDrawer.value) return
   provisionError.value = ''
   saving.value = true
 
   try {
-    if (drawerMode.value === 'provision') {
+    if (drawerRole.value === 'employee') {
+      const payload = {
+        full_name: form.full_name,
+        email: form.email,
+        password: form.password,
+        birth_date: form.birth_date,
+        office_id: officeMode.value === 'existing' ? form.office_id : '',
+        office_name: officeMode.value === 'new' ? form.office_name : '',
+      }
+
+      if (drawerMode.value === 'provision') {
+        const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/client/employees', {
+          method: 'POST', body: payload,
+        })
+        showToast(res.message)
+        await fetchEmployees()
+      } else {
+        const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>(`/api/client/employees/${editingUserId.value}`, {
+          method: 'PUT', body: payload,
+        })
+        showToast(`Employee "${res.data.full_name}" updated successfully`)
+        await fetchEmployees()
+      }
+    } else if (drawerMode.value === 'provision') {
       const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/users/provision', {
         method: 'POST',
-        body: {
-          full_name: form.full_name,
-          email:     form.email,
-          password:  form.password,
-          role:      'messenger',
-        },
+        body: { full_name: form.full_name, email: form.email, password: form.password, role: 'messenger' },
       })
-      members.value.push(res.data)
-      members.value.sort((a, b) => a.full_name.localeCompare(b.full_name))
-      closeDrawer()
       showToast(`Messenger "${res.data.full_name}" provisioned successfully`)
+      await fetchMessengers()
     } else {
       const res = await $fetch<{ success: boolean; data: OrgMember; message: string }>('/api/users/update', {
         method: 'PUT',
-        body: {
-          user_id:   editingUserId.value,
-          full_name: form.full_name,
-          email:     form.email,
-          password:  form.password,
-        },
+        body: { user_id: editingUserId.value, full_name: form.full_name, email: form.email, password: form.password },
       })
-      
-      const index = members.value.findIndex(m => m.user_id === editingUserId.value)
-      if (index !== -1) {
-        members.value[index] = { ...members.value[index], ...res.data }
-        members.value.sort((a, b) => a.full_name.localeCompare(b.full_name))
-      }
-      closeDrawer()
       showToast(`Member "${res.data.full_name}" updated successfully`)
+      await fetchMessengers()
     }
+    closeDrawer()
   } catch (err: any) {
     provisionError.value = err?.data?.message || 'Operation failed. Please try again.'
   } finally {
@@ -669,10 +967,78 @@ const handleRemove = async (member: OrgMember) => {
       method: 'DELETE',
       params: { userId: member.user_id },
     })
-    members.value = members.value.filter((m) => m.user_id !== member.user_id)
+    if (member.role === 'employee') {
+      employees.value = employees.value.filter((m) => m.user_id !== member.user_id)
+    } else {
+      messengers.value = messengers.value.filter((m) => m.user_id !== member.user_id)
+    }
     showToast(`${member.full_name}'s account has been removed`)
   } catch (err: any) {
     showToast(err?.data?.message || 'Failed to remove member', 'error')
+  }
+}
+
+// ── CSV Import ─────────────────────────────────────────────────────────
+const CSV_TEMPLATE = [
+  'full_name,email,password,birth_date,office_name',
+  'Juan Dela Cruz,juan.delacruz@example.com,TempPass123,1990-05-14,Manila Branch',
+].join('\n')
+
+function downloadTemplate() {
+  const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'flowvision-employee-import-template.csv'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+function openImportModal() {
+  importFile.value = null
+  importError.value = ''
+  importResults.value = []
+  importSummary.value = null
+  importModalOpen.value = true
+}
+
+function closeImportModal() {
+  importModalOpen.value = false
+}
+
+function handleImportFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  importFile.value = target.files?.[0] ?? null
+  importError.value = ''
+  importResults.value = []
+  importSummary.value = null
+}
+
+async function submitImport() {
+  if (!importFile.value || importing.value) return
+  importing.value = true
+  importError.value = ''
+  try {
+    const formData = new FormData()
+    formData.append('file', importFile.value)
+    const res = await $fetch<{ success: boolean; created: number; total: number; results: ImportRowResult[] }>(
+      '/api/client/employees/import',
+      { method: 'POST', body: formData },
+    )
+    importSummary.value = { created: res.created, total: res.total }
+    importResults.value = res.results
+    if (importFileInput.value) importFileInput.value.value = ''
+    importFile.value = null
+    if (res.created > 0) {
+      showToast(`${res.created} employee(s) imported successfully`)
+      await fetchEmployees()
+    }
+  } catch (err: any) {
+    importError.value = err?.data?.message || 'Failed to import CSV'
+  } finally {
+    importing.value = false
   }
 }
 
@@ -690,6 +1056,9 @@ onMounted(async () => {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .drawer-slide-enter-from, .drawer-slide-leave-to { transform: translateX(100%); }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 
 .toast-fade-enter-active, .toast-fade-leave-active {
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);

@@ -30,7 +30,7 @@
     </div>
 
     <!-- ── KPI Cards ─────────────────────────────────────────────────── -->
-    <div ref="kpiEl" class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div ref="kpiEl" class="grid grid-cols-2 gap-4 lg:grid-cols-3">
       <div
         v-for="card in kpiCards"
         :key="card.label"
@@ -159,7 +159,7 @@ const kpiCards = computed(() => [
   { label: 'Organizations', value: totals.organizations, icon: 'ph:buildings-light' },
   { label: 'Total Accounts', value: totals.totalUsers, icon: 'ph:users-three-light' },
   { label: 'Active Accounts', value: totals.activeUsers, icon: 'ph:check-circle-light' },
-  { label: 'Documents Tracked', value: totals.documents, icon: 'ph:files-light' },
+ 
 ])
 
 const roleBreakdown = computed(() => {

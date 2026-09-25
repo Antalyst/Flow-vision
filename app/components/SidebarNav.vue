@@ -59,7 +59,7 @@ const navGroups = computed(() => [
       { to: '/client/stages', label: 'Document Routes', icon: 'ph:steps-light' },
       { to: '/client/office', label: 'Branch Offices', icon: 'ph:buildings-light' },
       { to: '/client/station', label: 'QR Terminals', icon: 'ph:qr-code-light' },
-      { to: '/client/user-management', label: 'Team Members', icon: 'ph:users-three-light' },
+      { to: '/client/user-management', label: 'Crete Office', icon: 'ph:users-three-light' },
     ],
   },
   {
