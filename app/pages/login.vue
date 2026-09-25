@@ -132,7 +132,7 @@ const getPostLoginRoute = (role = '') => {
   const map = {
     client: '/client/dashboard',
     employee: '/employee/dashboard',
-    employee_sub_user: '/employee/dashboard',
+    employee_sub_user: '/staff/dashboard',
     messenger: '/messenger/dashboard',
     superadmin: '/superadmin/dashboard',
   }

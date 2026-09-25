@@ -50,7 +50,7 @@ const navGroups = computed(() => [
     title: 'Team',
     items: [
       { to: '/employee/messages',      label: 'Messages',      icon: 'ph:chat-teardrop-text-light', badgeCount: chatUnreadCount.value, badgeColor: 'red' },
-      { to: '/employee/users',         label: 'Team Members',  icon: 'ph:users-light' },
+      { to: '/employee/users',         label: 'Staff Accounts', icon: 'ph:users-light' },
       { to: '/employee/notifications', label: 'Notifications', icon: 'ph:bell-light', badgeCount: badgeCount.value },
     ],
   },

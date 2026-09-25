@@ -1,7 +1,9 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
+import { resolveActorContext } from '~~/server/utils/actorContext'
 import { hash } from 'bcrypt-ts'
 import { createClient } from '@supabase/supabase-js'
+
+const MANAGED_ROLES = ['employee_sub_user', 'messenger']
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -13,18 +15,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Missing user ID parameter' })
   }
 
-  // Resolve actor context
-  const actor = await resolveActorContextWithOffices(event, client)
+  const actor = await resolveActorContext(event, client)
   if (actor.userRole !== 'employee') {
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
-  const adminClient = createClient(
-    config.public.supabaseUrl, 
-    config.supabaseServiceKey
-  )
+  const adminClient = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
 
-  // Fetch target user to verify they belong to same org and are sub-users
+  // Fetch target user to verify they belong to same org and are a managed role
   const { data: targetUser, error: fetchError } = await adminClient
     .from('users')
     .select('*')
@@ -35,26 +33,39 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
-  // Tenant Boundary Check
-  if (targetUser.org_id !== actor.orgId || targetUser.role !== 'employee_sub_user') {
+  // Tenant boundary check
+  if (targetUser.org_id !== actor.orgId || !MANAGED_ROLES.includes(targetUser.role)) {
     throw createError({ statusCode: 403, message: 'Forbidden: Tenant boundary mismatch' })
   }
 
   if (method === 'PUT') {
     const body = await readBody(event)
-    const { full_name, email, office_id, password } = body
+    const { full_name, email, password } = body
 
-    if (!full_name || !email || !office_id) {
-      throw createError({ statusCode: 400, message: 'Missing fields: full_name, email, office_id' })
+    if (!full_name || !email) {
+      throw createError({ statusCode: 400, message: 'Missing fields: full_name, email' })
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase()
+    const { data: existing } = await adminClient
+      .from('users')
+      .select('user_id')
+      .eq('email', normalizedEmail)
+      .maybeSingle()
+
+    if (existing && String(existing.user_id) !== String(id)) {
+      throw createError({ statusCode: 409, message: 'An account with this email address already exists' })
     }
 
     const updatePayload: any = {
       full_name,
-      email,
-      office_id
+      email: normalizedEmail,
     }
 
     if (password && password.trim() !== '') {
+      if (password.trim().length < 8) {
+        throw createError({ statusCode: 400, message: 'Password must be at least 8 characters' })
+      }
       updatePayload.password = await hash(password, 10)
     }
 
@@ -73,12 +84,23 @@ export default defineEventHandler(async (event) => {
   }
 
   if (method === 'DELETE') {
+    // Detach this user from any office where they're the assigned owner —
+    // offices.assigned_user has no ON DELETE rule, so leaving it set blocks
+    // the delete below with a foreign key violation.
+    await adminClient.from('offices').update({ assigned_user: null }).eq('assigned_user', id)
+
     const { error: deleteError } = await adminClient
       .from('users')
       .delete()
       .eq('user_id', id)
 
     if (deleteError) {
+      if (deleteError.code === '23503') {
+        throw createError({
+          statusCode: 409,
+          message: `${targetUser.full_name} still has documents, activity, or reports on record and can't be permanently deleted. Suspend the account instead.`,
+        })
+      }
       throw createError({ statusCode: 500, message: `Failed to delete user: ${deleteError.message}` })
     }
 

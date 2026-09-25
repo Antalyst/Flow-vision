@@ -129,7 +129,9 @@ export default defineEventHandler(async (event) => {
     : doc.office_id ? String(doc.office_id)
     : null
 
-  if (actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
+  // Staff (employee_sub_user) operate org-wide, same as a client admin — they can
+  // assign a Liaison on any document in their org, not just ones at their own desk.
+  if (actor.userRole === 'employee') {
     if (!effectiveOfficeId || !actor.officeIds.includes(effectiveOfficeId)) {
       throw createError({
         statusCode: 403,

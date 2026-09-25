@@ -229,8 +229,10 @@ export default defineEventHandler(async (event) => {
     if (String(stageRow.org_id) !== orgId) {
       throw createError({ statusCode: 403, message: 'This document route belongs to a different LGU.' })
     }
+    // Staff (employee_sub_user) operate org-wide and may use any of the org's
+    // configured routes, not just ones scoped to their own office.
     if (
-      (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user') &&
+      resolvedRole === 'employee' &&
       stageRow.office_id &&
       String(stageRow.office_id) !== resolvedOriginOfficeId
     ) {
