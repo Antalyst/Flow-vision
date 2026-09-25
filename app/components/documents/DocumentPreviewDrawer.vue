@@ -252,7 +252,6 @@
               @assigned="handleLiaisonAssigned"
             />
 
->>>>>>> 2bfca2b (updates)
             <slot name="extra" />
 
             <!-- §3 Official routing slip view (bottom) -->
