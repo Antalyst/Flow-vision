@@ -205,6 +205,7 @@
       :document="activeDocument"
       @close="closeDocumentPreview"
       @liaison-assigned="documentStore.fetchDocuments()"
+      @deleted="documentStore.fetchDocuments()"
     />
 
     <!-- Semantic Search Modal -->

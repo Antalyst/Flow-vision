@@ -12,7 +12,7 @@
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight">Office QR Codes</h1>
         <p class="mt-1.5 text-sm" :class="mutedText">
-          Manage the desks registered under your office.
+          Manage the desks registered under your office, and view each staff member's QR code.
         </p>
       </div>
 
@@ -95,7 +95,7 @@
 
       <!-- Sub-Offices / Desks Section -->
       <div>
-        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Registered Desks</h2>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Staff Desks</h2>
         <div v-if="loading" class="py-12 text-center" :class="mutedText">
           <Icon name="ph:spinner-gap-light" class="h-6 w-6 animate-spin mx-auto mb-3 text-candy-orange" />
           <p class="text-xs font-medium">Loading office desks…</p>
@@ -116,6 +116,27 @@
             :office="table"
             @edit="openEditModal"
             @delete="handleDeleteOffice"
+          />
+        </div>
+      </div>
+
+      <!-- Staff QR Codes Section -->
+      <div>
+        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Staff QR Codes</h2>
+        <div v-if="!staffMembers.length" class="py-16 text-center rounded-2xl transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
+          <div class="flex flex-col items-center gap-3">
+            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-candy-orange/10 border-transparent">
+              <Icon name="ph:identification-badge-light" class="h-7 w-7 text-candy-orange/60" />
+            </div>
+            <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No staff accounts yet</p>
+            <p class="text-xs max-w-[220px]" :class="mutedText">Add a staff account in Staff Accounts to see their QR code here.</p>
+          </div>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <StaffQrCard
+            v-for="staff in staffMembers"
+            :key="'staff-' + staff.user_id"
+            :staff="staff"
           />
         </div>
       </div>
@@ -232,6 +253,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useTheme } from '~/composables/useTheme'
 import { gsap } from 'gsap'
 import OfficeQrCard from '~/components/employee/OfficeQrCard.vue'
+import StaffQrCard from '~/components/employee/StaffQrCard.vue'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'employee' })
@@ -263,6 +285,7 @@ const statsEl  = ref<HTMLElement | null>(null)
 const tableEl  = ref<HTMLElement | null>(null)
 
 const mutedText = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500')
+const staffMembers = computed(() => subUsers.value.filter((u) => u.role === 'employee_sub_user'))
 
 function generateCode() {
   if (!form.name) return

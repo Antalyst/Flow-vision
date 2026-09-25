@@ -142,6 +142,15 @@ export default defineEventHandler(async (event) => {
     if (stepRow?.office_id) {
       destOfficeId = String(stepRow.office_id)
       destOfficeName = (stepRow as { offices?: { name?: string } } | null)?.offices?.name ?? null
+    } else {
+      // Bound to a route, but that route has no configured stop for the next
+      // step — fail loudly here instead of silently falling back, which is
+      // what causes dropoff to reject a genuinely-correct scan later.
+      throw createError({
+        statusCode: 422,
+        message: `"${doc.title}" has no next checkpoint configured on its route. Ask an office admin to fix this document's route before it can be picked up.`,
+        data: { code: 'ROUTE_NOT_CONFIGURED' },
+      })
     }
   }
 

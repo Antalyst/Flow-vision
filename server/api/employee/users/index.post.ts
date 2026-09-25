@@ -2,6 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext } from '~~/server/utils/actorContext'
 import { hash } from 'bcrypt-ts'
 import { createClient } from '@supabase/supabase-js'
+import { resolveOwnedOfficeId } from '~~/server/utils/employeeProvisioning'
 
 const CREATABLE_ROLES = ['employee_sub_user', 'messenger'] as const
 type CreatableRole = typeof CREATABLE_ROLES[number]
@@ -57,26 +58,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Staff (employee_sub_user) are scoped to the creating employee's own office —
+  // Both staff and messengers are scoped to the creating employee's own office —
   // each 'employee' ("Office") account owns exactly one office (named via the
-  // first-login claim flow), so any staff they add belong to that same office.
-  // Messengers stay unscoped — they're not desk-bound.
-  let officeId: string | null = null
-  if (targetRole === 'employee_sub_user') {
-    const { data: ownedOffice, error: officeError } = await adminClient
-      .from('offices')
-      .select('id, code')
-      .eq('org_id', actor.orgId)
-      .eq('assigned_user', actor.userId)
-      .maybeSingle()
-
-    if (officeError || !ownedOffice) {
-      throw createError({
-        statusCode: 409,
-        message: 'You need to name your office before adding staff. Reload the page to set it up.',
-      })
-    }
-    officeId = ownedOffice.id
+  // first-login claim flow), so anyone they add belongs to that same office.
+  // This only sets who they belong to / who can manage them — it does not
+  // restrict where a messenger can actually pick up or drop off (that's
+  // assignment-based, not office-based, so they can still work any office
+  // once assigned to a document there).
+  const officeId = await resolveOwnedOfficeId(adminClient, actor.orgId, actor.userId)
+  if (!officeId) {
+    throw createError({
+      statusCode: 409,
+      message: 'You need to name your office before adding staff or messengers. Reload the page to set it up.',
+    })
   }
 
   const hashedPassword = await hash(password, 10)

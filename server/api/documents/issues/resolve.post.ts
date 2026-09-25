@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: document, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, tracking_status, current_office_id')
+    .select('id, org_id, title, tracking_status, current_office_id, current_step')
     .eq('id', issue.document_id)
     .eq('org_id', actor.orgId)
     .maybeSingle()
@@ -65,12 +65,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Mark the current step reviewed/cleared too — this is what
+  // AssignLiaisonPanel checks to offer pickup again immediately, the same
+  // as a normal (non-flagged) office desk review would.
   const { data: updatedDoc, error: trackUpdateErr } = await client
     .from('documents')
-    .update({ tracking_status: 'ARRIVED_AT_OFFICE' })
+    .update({
+      tracking_status: 'ARRIVED_AT_OFFICE',
+      checkpoint_cleared_step: document.current_step ?? 0,
+    })
     .eq('id', issue.document_id)
     .eq('org_id', actor.orgId)
-    .select('id, title, tracking_status, current_office_id')
+    .select('id, title, tracking_status, current_office_id, current_step, checkpoint_cleared_step')
     .single()
 
   if (trackUpdateErr) {
@@ -82,7 +88,7 @@ export default defineEventHandler(async (event) => {
 
   const resolveNotes =
     `Issue "${issue.title}" marked RESOLVED by ${actor.fullName ?? 'an operator'}. ` +
-    `Document returned to ARRIVED_AT_OFFICE — clean delivery workflow resumed.`
+    `Document is ready for pickup again — clean delivery workflow resumed.`
 
   const { data: trackingEvent } = await client
     .from('document_tracking_events')
@@ -90,8 +96,8 @@ export default defineEventHandler(async (event) => {
       document_id: issue.document_id,
       org_id:      actor.orgId,
       status:      'ARRIVED_AT_OFFICE',
-      step_index:  null,
-      office_id:   null,
+      step_index:  document.current_step ?? null,
+      office_id:   document.current_office_id ?? null,
       office_name: null,
       actor_id:    actor.userId,
       actor_role:  actor.userRole,
@@ -134,7 +140,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    message: 'Issue resolved. Document returned to At Office status.',
+    message: 'Issue resolved. Document is ready for pickup again.',
     data: {
       issue:         resolvedIssue,
       document:      updatedDoc,

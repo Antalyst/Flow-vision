@@ -202,38 +202,20 @@
             </select>
           </label>
 
-          <div class="block">
-            <span class="text-sm font-semibold text-candy-orange">Message Target Office <span class="text-danger">*</span></span>
-            <p class="mt-1 text-sm" :class="mutedText">
-              Choose who should receive this compliance thread based on the document's route.
+          <div class="block rounded-xl border p-4" :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'">
+            <span class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
+              <Icon name="ph:arrow-u-up-left-bold" class="h-4 w-4" />
+              Sends back to
+            </span>
+            <p v-if="loadingTargets" class="mt-1.5 text-sm" :class="mutedText">Finding the previous office…</p>
+            <p v-else-if="returnTarget" class="mt-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+              {{ returnTarget.name }}
             </p>
-            <div class="mt-3 grid gap-2 sm:grid-cols-2">
-              <button
-                v-for="target in chatTargets"
-                :key="target.id"
-                type="button"
-                class="rounded-xl border p-3 text-left transition"
-                :class="reportForm.target_office_id === target.id
-                  ? 'border-candy-orange bg-candy-orange/10 ring-2 ring-candy-orange/30'
-                  : isDark ? 'border-white/10 hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
-                @click="selectChatTarget(target)"
-              >
-                <p class="text-xs font-bold uppercase tracking-wider text-candy-orange">
-                  {{ target.role === 'origin' ? 'Option A' : 'Option B' }}
-                </p>
-                <p class="mt-1 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                  {{ target.name }}
-                </p>
-                <p class="mt-1 text-sm" :class="mutedText">
-                  {{ target.role === 'origin'
-                    ? 'Contact originating registration office'
-                    : 'Contact the previous office in the route' }}
-                </p>
-              </button>
-            </div>
-            <p v-if="loadingTargets" class="mt-2 text-xs" :class="mutedText">Finding offices…</p>
-            <p v-else-if="!chatTargets.length" class="mt-2 text-xs text-warning">
-              No routing offices found. Ensure this document has an origin office assigned.
+            <p v-else class="mt-1.5 text-sm text-warning">
+              No previous office found on this document's route — it will stay flagged here instead.
+            </p>
+            <p class="mt-1 text-sm" :class="mutedText">
+              Whoever handed this document off will be notified and can fix it before sending it forward again.
             </p>
           </div>
 
@@ -349,7 +331,6 @@ const reportForm = reactive({
   issue_type: '',
   details: '',
   reported_by_office_id: '',
-  target_office_id: '',
 })
 
 const orgId   = computed(() => String(auth.user?.org_id ?? ''))
@@ -372,9 +353,16 @@ const canSubmitReport = computed(() =>
   Boolean(
     reportForm.issue_type &&
     reportForm.details.trim() &&
-    reportForm.reported_by_office_id &&
-    reportForm.target_office_id,
+    reportForm.reported_by_office_id,
   )
+)
+
+// Auto-routing target shown for information — the backend resolves this
+// itself (whoever sent the document here), this is display-only.
+const returnTarget = computed(() =>
+  chatTargets.value.find((t) => t.role === 'previous_handoff') ??
+  chatTargets.value.find((t) => t.role === 'origin') ??
+  null
 )
 
 const targetOfficeLabel = computed(() => {
@@ -414,19 +402,12 @@ const fetchChatTargets = async () => {
       params: { document_id: props.document.id },
     })
     chatTargets.value = res.data?.targets ?? []
-    if (chatTargets.value.length === 1) {
-      reportForm.target_office_id = chatTargets.value[0].id
-    }
   } catch (err) {
     console.error('[IssueChat] fetchChatTargets:', err)
     chatTargets.value = []
   } finally {
     loadingTargets.value = false
   }
-}
-
-const selectChatTarget = (target: ChatTarget) => {
-  reportForm.target_office_id = target.id
 }
 
 const scrollToBottom = async () => {
@@ -489,7 +470,6 @@ const submitReport = async () => {
       body: {
         document_id:           props.document.id,
         reported_by_office_id: reportForm.reported_by_office_id,
-        target_office_id:      reportForm.target_office_id,
         issue_type:            reportForm.issue_type,
         details:               reportForm.details.trim(),
         title,
@@ -502,7 +482,6 @@ const submitReport = async () => {
     reportForm.issue_type = ''
     reportForm.details = ''
     reportForm.reported_by_office_id = ''
-    reportForm.target_office_id = ''
 
     emit('updated', { tracking_status: res.data.document.tracking_status })
     await fetchMessages(res.data.issue.id)

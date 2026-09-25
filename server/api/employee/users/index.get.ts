@@ -11,40 +11,25 @@ export default defineEventHandler(async (event) => {
   }
 
   const officeId = await resolveOwnedOfficeId(client, actor.orgId, actor.userId)
-  const OFFICE_COLUMNS = 'user_id, email, full_name, role, status, office_id, created_at, offices!users_office_id_fkey(name, code)'
-
-  // Messengers are org-wide (not desk-bound). Staff are scoped to THIS employee's
-  // own office only — an employee never sees another office's staff.
-  const messengersQuery = client
-    .from('users')
-    .select(OFFICE_COLUMNS)
-    .eq('org_id', actor.orgId)
-    .eq('role', 'messenger')
-
-  const staffQuery = officeId
-    ? client
-        .from('users')
-        .select(OFFICE_COLUMNS)
-        .eq('org_id', actor.orgId)
-        .eq('role', 'employee_sub_user')
-        .eq('office_id', officeId)
-    : Promise.resolve({ data: [] as any[], error: null })
-
-  const [{ data: messengers, error: messengersError }, { data: staff, error: staffError }] = await Promise.all([
-    messengersQuery,
-    staffQuery,
-  ])
-
-  if (messengersError || staffError) {
-    throw createError({
-      statusCode: 500,
-      message: (messengersError || staffError)?.message || 'Failed to fetch staff and messenger accounts',
-    })
+  if (!officeId) {
+    return { success: true, data: [] }
   }
 
-  const combined = [...(staff ?? []), ...(messengers ?? [])].sort(
-    (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  )
+  // Both staff and messengers are scoped to THIS employee's own office — an
+  // employee never sees another office's staff or messengers here. A messenger's
+  // ability to actually pick up/drop off elsewhere is unaffected: that's
+  // assignment-based (assigned_messenger_id), not filtered by this office_id.
+  const { data, error } = await client
+    .from('users')
+    .select('user_id, email, full_name, role, status, office_id, created_at, offices!users_office_id_fkey(name, code)')
+    .eq('org_id', actor.orgId)
+    .eq('office_id', officeId)
+    .in('role', ['employee_sub_user', 'messenger'])
+    .order('created_at', { ascending: false })
 
-  return { success: true, data: combined }
+  if (error) {
+    throw createError({ statusCode: 500, message: error.message || 'Failed to fetch staff and messenger accounts' })
+  }
+
+  return { success: true, data: data ?? [] }
 })

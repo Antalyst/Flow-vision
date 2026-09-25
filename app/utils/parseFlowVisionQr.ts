@@ -11,6 +11,11 @@ export function buildDocumentTrackQrPayload(documentId: string): string {
   return `flowvision://track/doc?id=${documentId}`
 }
 
+/** Canonical staff identity QR — a staff member's own printable/downloadable code. */
+export function buildStaffQrPayload(userId: string): string {
+  return `flowvision://track/staff?id=${userId}`
+}
+
 /** Extract office UUID from `flowvision://track/checkpoint?office_id={uuid}`. */
 export function extractCheckpointOfficeId(raw: string): string | null {
   const trimmed = raw.trim()

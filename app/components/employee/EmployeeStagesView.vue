@@ -470,6 +470,10 @@
 
           </div>
 
+          <p v-if="createStageError" class="mx-6 mb-3 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
+            {{ createStageError }}
+          </p>
+
           <!-- Drawer Footer -->
           <footer class="flex justify-end gap-3 border-t px-6 py-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'">
             <button
@@ -483,7 +487,7 @@
 
             <button
               type="submit"
-              :disabled="!stageForm.name || !stageForm.office_id || creating"
+              :disabled="!stageForm.name || !stageForm.office_id || !selectedCheckpoints.length || creating"
               class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="creating" name="ph:spinner-gap-light" class="h-3.5 w-3.5 animate-spin" />
@@ -688,11 +692,13 @@ const openDrawer = () => {
   stageForm.name = ''
   stageForm.office_id = myOffices.value[0]?.id ? String(myOffices.value[0].id) : ''
   selectedCheckpoints.value = []
+  createStageError.value = ''
   drawerOpen.value = true
 }
 
 const closeDrawer = () => {
   drawerOpen.value = false
+  createStageError.value = ''
 }
 
 // ── Checkpoint management ──────────────────────────────────────────────
@@ -746,8 +752,18 @@ const moveStage = (stageId: number, dir: -1 | 1) => {
 }
 
 // ── Create Stage API ───────────────────────────────────────────────────
+const createStageError = ref('')
+
 const handleCreateStage = async () => {
-  if (!stageForm.name.trim() || !stageForm.office_id || creating.value) return
+  createStageError.value = ''
+
+  if (!stageForm.name.trim() || !stageForm.office_id) return
+  if (!selectedCheckpoints.value.length) {
+    createStageError.value = 'Add at least one office stop before creating this route.'
+    return
+  }
+  if (creating.value) return
+
   creating.value = true
 
   try {
@@ -770,8 +786,9 @@ const handleCreateStage = async () => {
       closeDrawer()
       await fetchStages()
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error('[EmployeeStages] create error:', err)
+    createStageError.value = err?.data?.message || 'Failed to create route'
   } finally {
     creating.value = false
   }

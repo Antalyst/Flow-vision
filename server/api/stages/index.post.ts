@@ -35,6 +35,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // A route with zero stops can never be validated at pickup/dropoff time
+    // (stage_steps has nothing to match against), which silently breaks the
+    // entire pickup→dropoff flow for any document that uses it. Block it here.
+    if (workflow_items.length === 0) {
+      throw createError({
+        statusCode: 400,
+        message: 'Add at least one office stop before creating this route.',
+      })
+    }
+
     // ── Validate office_id belongs to the same org (cross-tenant guard) ──
     // The DB trigger will also reject a mismatch, but catching it here returns
     // a clean 400 before the stage row is inserted.

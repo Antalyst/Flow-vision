@@ -334,6 +334,10 @@
             </section>
           </div>
 
+          <p v-if="createStageError" class="mx-5 mb-3 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
+            {{ createStageError }}
+          </p>
+
           <footer class="flex justify-end gap-3 border-t px-5 py-4" :class="borderClass">
             <button
               type="button"
@@ -343,8 +347,12 @@
             >
               Cancel
             </button>
-            <button type="submit" class="rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover">
-              Create Route
+            <button
+              type="submit"
+              :disabled="!selectedWorkflowOffices.length || creatingStage"
+              class="rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {{ creatingStage ? 'Creating…' : 'Create Route' }}
             </button>
           </footer>
         </form>
@@ -408,6 +416,7 @@ const inputClass = computed(() => (
 const openStageDrawer = () => {
   stageForm.name = ''
   selectedWorkflowOffices.value = []
+  createStageError.value = ''
   clearDrawerDragState()
   isStageDrawerOpen.value = true
 }
@@ -415,6 +424,7 @@ const openStageDrawer = () => {
 const closeStageDrawer = () => {
   isStageDrawerOpen.value = false
   selectedWorkflowOffices.value = []
+  createStageError.value = ''
   clearDrawerDragState()
 }
 
@@ -491,25 +501,40 @@ const handleWorkflowItemDrop = (targetIndex: number) => {
   clearDrawerDragState()
 }
 
+const createStageError = ref('')
+const creatingStage = ref(false)
+
 const handleCreateStage = async () => {
+  createStageError.value = ''
+
   if (!stageForm.name.trim()) return
-
-  const workflow_items = selectedWorkflowOffices.value.map((item) => ({
-    office_id: item.id,
-    step_number: item.step_number,
-  }))
-
-  const res = await stageStore.createStage({
-    stage_name: stageForm.name.trim(),
-    workflow_items,
-  })
-
-  if (res?.success) {
-    closeStageDrawer()
+  if (!selectedWorkflowOffices.value.length) {
+    createStageError.value = 'Add at least one office stop before creating this route.'
     return
   }
+  if (creatingStage.value) return
 
-  console.error('Create stage failed:', res?.error)
+  creatingStage.value = true
+  try {
+    const workflow_items = selectedWorkflowOffices.value.map((item) => ({
+      office_id: item.id,
+      step_number: item.step_number,
+    }))
+
+    const res = await stageStore.createStage({
+      stage_name: stageForm.name.trim(),
+      workflow_items,
+    })
+
+    if (res?.success) {
+      closeStageDrawer()
+      return
+    }
+
+    createStageError.value = typeof res?.error === 'string' ? res.error : 'Failed to create stage'
+  } finally {
+    creatingStage.value = false
+  }
 }
 
 const handleDeleteStage = async (stageId: number) => {

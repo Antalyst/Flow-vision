@@ -237,6 +237,31 @@
               </div>
             </section>
 
+            <!-- Delete pending document (uploaded by mistake, not yet picked up) -->
+            <section
+              v-if="displayTrackingStatus === 'CREATED'"
+              class="stagger-block rounded-2xl border border-danger/20 bg-danger/5 p-5"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-[13px] font-bold uppercase tracking-widest text-danger">
+                    Delete Document
+                  </p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    Uploaded the wrong file? This entry hasn't been picked up yet, so it can still be removed.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-5 py-3 text-sm font-bold text-danger shadow-sm transition-colors hover:bg-danger/20"
+                  @click="showDeleteConfirm = true"
+                >
+                  <Icon name="ph:trash-fill" class="h-4 w-4" />
+                  Delete
+                </button>
+              </div>
+            </section>
+
             <!-- Compliance flag action -->
             <section
               v-if="showComplianceActions"
@@ -319,6 +344,46 @@
           </footer>
         </div>
       </aside>
+    </Transition>
+
+    <!-- Delete confirmation -->
+    <Transition name="preview-fade">
+      <div v-if="showDeleteConfirm" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div
+          class="w-full max-w-sm rounded-2xl border p-8 text-center"
+          :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
+        >
+          <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-danger/10 border border-danger/20 text-danger">
+            <Icon name="ph:warning-circle-light" class="h-7 w-7" />
+          </div>
+          <h3 class="text-base font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">Delete this document?</h3>
+          <p class="text-sm mb-6" :class="mutedClass">
+            <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ document?.title }}</strong> will be permanently removed. This action cannot be undone.
+          </p>
+          <p v-if="deleteError" class="mb-4 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
+            {{ deleteError }}
+          </p>
+          <div class="flex justify-center gap-3">
+            <button
+              type="button"
+              class="rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors border border-transparent"
+              :class="isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'"
+              @click="showDeleteConfirm = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              :disabled="deleting"
+              class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              @click="handleDelete"
+            >
+              <Icon v-if="deleting" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
+              Delete Document
+            </button>
+          </div>
+        </div>
+      </div>
     </Transition>
   </Teleport>
 </template>
@@ -404,7 +469,28 @@ const emit = defineEmits<{
   (e: 'flag-issue'): void
   (e: 'compliance-updated', payload: { tracking_status: string; status?: string; checkpoint_cleared_step?: number | null }): void
   (e: 'liaison-assigned', payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }): void
+  (e: 'deleted', documentId: string): void
 }>()
+
+const showDeleteConfirm = ref(false)
+const deleting = ref(false)
+const deleteError = ref('')
+
+async function handleDelete() {
+  if (!props.document?.id || deleting.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    await $fetch(`/api/documents/${props.document.id}`, { method: 'DELETE' })
+    showDeleteConfirm.value = false
+    emit('deleted', props.document.id)
+    emit('close')
+  } catch (err: any) {
+    deleteError.value = err?.data?.message || 'Failed to delete document'
+  } finally {
+    deleting.value = false
+  }
+}
 
 function handleLiaisonAssigned(payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }) {
   emit('liaison-assigned', payload)

@@ -178,6 +178,16 @@ export default defineEventHandler(async (event) => {
         if (stepRow?.office_id) {
           officeId   = String(stepRow.office_id)
           officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
+        } else {
+          // Bound to a route, but that route has no configured stop for the next
+          // step (empty/incomplete route, or already past its last real stop).
+          // Falling back to doc.office_id here is what causes dropoff to reject a
+          // genuinely-correct scan later — fail loudly now instead.
+          throw createError({
+            statusCode: 422,
+            message: `"${doc.title}" has no next checkpoint configured on its route. Ask an office admin to fix this document's route before it can be picked up.`,
+            data: { code: 'ROUTE_NOT_CONFIGURED' },
+          })
         }
       }
 
@@ -546,6 +556,16 @@ export default defineEventHandler(async (event) => {
     if (stepRow?.office_id) {
       officeId   = String(stepRow.office_id)
       officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
+    } else {
+      // Bound to a route, but that route has no configured stop for the next
+      // step (empty/incomplete route, or already past its last real stop).
+      // Falling back to doc.office_id here is what causes dropoff to reject a
+      // genuinely-correct scan later — fail loudly now instead.
+      throw createError({
+        statusCode: 422,
+        message: `"${doc.title}" has no next checkpoint configured on its route. Ask an office admin to fix this document's route before it can be picked up.`,
+        data: { code: 'ROUTE_NOT_CONFIGURED' },
+      })
     }
   }
 

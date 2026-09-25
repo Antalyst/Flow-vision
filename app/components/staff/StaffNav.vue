@@ -38,6 +38,7 @@ const navGroups = [
   {
     title: 'Account',
     items: [
+      { to: '/staff/qr', label: 'My QR Code', icon: 'ph:qr-code-light' },
       { to: '/staff/settings', label: 'Settings', icon: 'ph:gear-six-light' },
     ],
   },

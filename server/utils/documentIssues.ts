@@ -154,6 +154,60 @@ export async function assertReportingOfficeAccess(
   return { id: String(office.id), name: office.name, code: office.code ?? null }
 }
 
+export interface PreviousRouteOffice {
+  officeId: string
+  officeName: string
+  /** The document's current_step value once rewound to this office. */
+  newStep: number
+}
+
+/**
+ * Resolves the office one step BACK from a document's current position —
+ * i.e. whoever handed it off most recently. Used to auto-route a flagged
+ * document back to whoever sent it, rather than requiring a manual pick.
+ * Mirrors the computation already used to populate the compliance chat's
+ * target-office picker (see /api/documents/issues/chat-targets.get.ts).
+ */
+export async function resolvePreviousRouteOffice(
+  client: SupabaseClient,
+  documentId: string,
+): Promise<PreviousRouteOffice | null> {
+  const { data: docRow } = await client
+    .from('documents')
+    .select('current_step, stage_id, origin_office_id')
+    .eq('id', documentId)
+    .maybeSingle()
+
+  if (!docRow) return null
+
+  const currentStep = Number((docRow as { current_step?: number }).current_step ?? 0)
+  const stageId = (docRow as { stage_id?: string | null }).stage_id ?? null
+  const originOfficeId = (docRow as { origin_office_id?: string | null }).origin_office_id ?? null
+  const newStep = Math.max(currentStep - 1, 0)
+
+  let previousOfficeId: string | null = null
+
+  if (stageId && currentStep > 1) {
+    const { data: prevStep } = await client
+      .from('stage_steps')
+      .select('office_id')
+      .eq('stage_id', stageId)
+      .eq('step_number', currentStep - 1)
+      .maybeSingle()
+
+    if (prevStep?.office_id) previousOfficeId = String(prevStep.office_id)
+  } else if (originOfficeId && currentStep <= 1) {
+    previousOfficeId = String(originOfficeId)
+  }
+
+  if (!previousOfficeId) return null
+
+  const { data: office } = await client.from('offices').select('name').eq('id', previousOfficeId).maybeSingle()
+  if (!office) return null
+
+  return { officeId: previousOfficeId, officeName: office.name, newStep }
+}
+
 /**
  * Broadcast a payload to Supabase Realtime channels so connected clients
  * in the same org receive updates instantly.

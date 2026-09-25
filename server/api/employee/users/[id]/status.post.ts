@@ -29,13 +29,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: Tenant boundary mismatch' })
   }
 
-  // Staff belong to exactly one office — an employee can only manage staff at
-  // their OWN office, never another office's staff. Messengers are unaffected.
-  if (target.role === 'employee_sub_user') {
-    const ownedOfficeId = await resolveOwnedOfficeId(adminClient, actor.orgId, actor.userId)
-    if (!ownedOfficeId || String(target.office_id) !== String(ownedOfficeId)) {
-      throw createError({ statusCode: 403, message: 'Forbidden: this staff member belongs to a different office' })
-    }
+  // Staff and messengers both belong to exactly one office — an employee can
+  // only manage accounts at their OWN office, never another office's.
+  const ownedOfficeId = await resolveOwnedOfficeId(adminClient, actor.orgId, actor.userId)
+  if (!ownedOfficeId || String(target.office_id) !== String(ownedOfficeId)) {
+    throw createError({ statusCode: 403, message: 'Forbidden: this account belongs to a different office' })
   }
 
   const { data: updated, error } = await adminClient

@@ -58,13 +58,23 @@
       {{ assignSuccessMessage }}
     </p>
   </section>
+
+  <DocumentQrStickerModal
+    :is-open="showQrSticker"
+    :title="props.document?.title ?? 'Document'"
+    :qr-payload="qrPayload"
+    @close="showQrSticker = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import DocumentQrStickerModal from './DocumentQrStickerModal.vue'
+import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
 
 interface AssignableDocument {
   id: string
+  title?: string
   tracking_status?: string
   current_step?: number | null
   checkpoint_cleared_step?: number | null
@@ -109,9 +119,12 @@ const selectedLiaisonId = ref('')
 const assigning = ref(false)
 const assignError = ref('')
 const assignSuccessMessage = ref('')
+const showQrSticker = ref(false)
+const qrPayload = computed(() => props.document?.id ? buildDocumentTrackQrPayload(props.document.id) : '')
 
 function roleLabel(role: string) {
-  if (role === 'employee' || role === 'employee_sub_user') return 'Employee'
+  if (role === 'employee') return 'Employee'
+  if (role === 'employee_sub_user') return 'Staff'
   if (role === 'messenger') return 'Messenger'
   if (role === 'client') return 'Client Admin'
   return role
@@ -155,6 +168,7 @@ async function handleAssign() {
       liaison_name: res.data.liaison.full_name,
     })
     selectedLiaisonId.value = ''
+    showQrSticker.value = true
   } catch (err: any) {
     assignError.value = err?.data?.message || 'Failed to assign messenger.'
   } finally {

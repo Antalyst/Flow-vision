@@ -295,6 +295,7 @@
       @flag-issue="issueChatRef?.openReportForm()"
       @compliance-updated="handleIssueUpdated"
       @liaison-assigned="fetchDocs"
+      @deleted="handleDocumentDeleted"
     >
       <template #footer>
         <DocumentIssueChatPanel
@@ -582,6 +583,10 @@ const closeDocumentPreview = () => {
   const query = { ...route.query }
   delete query.document
   router.replace({ query })
+}
+
+const handleDocumentDeleted = (documentId: string) => {
+  docs.value = docs.value.filter((d) => d.id !== documentId)
 }
 
 const openDocumentFromQuery = async () => {

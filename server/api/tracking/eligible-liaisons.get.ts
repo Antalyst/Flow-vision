@@ -4,10 +4,10 @@
  * Lists users the caller is allowed to assign as the Liaison for this document's
  * current leg — i.e. the picker list for `POST /api/tracking/assign-liaison`.
  *
- * "Eligible" = same organisation, role = messenger, AND already staff of the
- * document's current office (`users.office_id` matches exactly). Messengers from
- * a different office, unassigned/floating users, and non-messenger roles never
- * appear — an office can only hand a document to its own messengers.
+ * "Eligible" = same organisation, role IN (messenger, employee_sub_user), AND
+ * already staff of the document's current office (`users.office_id` matches
+ * exactly). Messengers/staff from a different office, and unassigned/floating
+ * users, never appear — an office can only hand a document to its own people.
  *
  * Same authorization as assign-liaison: client admins may query any document in
  * their org; employees only for documents currently at an office assigned to them.
@@ -69,13 +69,15 @@ export default defineEventHandler(async (event) => {
     .from('users')
     .select('user_id, full_name, email, role, office_id, status')
     .eq('org_id', actor.orgId)
-    .eq('role', 'messenger')
+    .in('role', ['messenger', 'employee_sub_user'])
     .eq('office_id', effectiveOfficeId)
     .order('full_name', { ascending: true })
 
   if (candErr) throw createError({ statusCode: 500, message: candErr.message })
 
-  const active = (candidates ?? []).filter((u) => u.status !== 0)
+  // Exclude the actor themselves here — they're already offered separately
+  // below as the "(Myself)" option, so this avoids listing them twice.
+  const active = (candidates ?? []).filter((u) => u.status !== 0 && String(u.user_id) !== String(actor.userId))
 
   const mapped = active.map((u) => ({
     user_id: u.user_id,

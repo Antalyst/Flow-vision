@@ -3,6 +3,7 @@
     :is-open="isOpen"
     :document="document"
     @close="emit('close')"
+    @deleted="emit('deleted', $event)"
   />
 </template>
 
@@ -14,5 +15,5 @@ defineProps<{
   document: any | null
 }>()
 
-const emit = defineEmits<{ (e: 'close'): void }>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'deleted', documentId: string): void }>()
 </script>

@@ -131,9 +131,9 @@ export const useStageStore = defineStore('stage', {
           success: false,
           error: res?.message || res || 'Failed to create stage',
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating stage:', error)
-        return { success: false, error }
+        return { success: false, error: error?.data?.message || 'Failed to create stage' }
       }
     },
 
