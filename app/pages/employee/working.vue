@@ -8,10 +8,10 @@
           <Icon name="ph:briefcase-light" class="h-3.5 w-3.5 text-candy-orange" />
           <span>Employee Portal</span>
           <Icon name="ph:caret-right-light" class="h-3 w-3 opacity-50" />
-          <span :class="headingClass">Current Working</span>
+          <span :class="headingClass">Under Process</span>
         </div>
         <h1 class="text-3xl font-bold tracking-tight leading-tight" :class="headingClass">
-          Current Working
+          Under Process
         </h1>
         <p class="mt-1.5 text-sm" :class="mutedClass">
           Documents on your desk right now — {{ lastSyncedAt ? `updated ${lastSyncedLabel}` : 'updating…' }}.

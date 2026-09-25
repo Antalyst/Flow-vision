@@ -186,7 +186,7 @@
         </div>
       </section>
 
-      <!-- ── Current Working Preferences ──────────────────────────────── -->
+
       <section
         ref="section3El"
         class="rounded-2xl border overflow-hidden"
@@ -200,8 +200,8 @@
             <Icon name="ph:kanban-light" class="h-4.5 w-4.5 text-candy-orange" />
           </span>
           <div>
-            <h2 class="text-sm font-bold" :class="headingClass">Current Working Preferences</h2>
-            <p class="text-sm" :class="mutedClass">Controls what you see on your Current Working page.</p>
+            <h2 class="text-sm font-bold" :class="headingClass">Under Process Preferences</h2>
+            <p class="text-sm" :class="mutedClass">Controls what you see on your Under Process page.</p>
           </div>
         </div>
 

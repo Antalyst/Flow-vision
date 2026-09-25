@@ -52,7 +52,7 @@
             </div>
             <div class="p-5 rounded-2xl bg-white/50 dark:bg-white/5 border border-neutral-200/50 dark:border-white/5 backdrop-blur-sm">
               <Icon name="ph:kanban-fill" class="h-8 w-8 text-candy-orange mb-4" />
-              <h3 class="font-primary font-bold text-lg mb-2">Current Working</h3>
+              <h3 class="font-primary font-bold text-lg mb-2">Under Process</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">Real-time Kanban-style tracking for active document loads.</p>
             </div>
           </div>

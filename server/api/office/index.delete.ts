@@ -13,6 +13,18 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Historical/log records reference office_id but shouldn't block deletion —
+    // clear the reference (keeping the record itself) rather than losing the
+    // audit trail. Live business relationships (documents, stage_steps, users,
+    // stages) are intentionally NOT cleared here: those FK violations are a
+    // real signal that the office is still in active use and must be
+    // reassigned before it can be deleted.
+    await Promise.all([
+      client.from('activity_logs').update({ office_id: null }).eq('office_id', id),
+      client.from('notifications').update({ office_id: null }).eq('office_id', id),
+      client.from('document_tracking_events').update({ office_id: null }).eq('office_id', id),
+    ])
+
     const { data, error } = await client
       .from('offices')
       .delete()
@@ -20,9 +32,15 @@ export default defineEventHandler(async (event) => {
       .select('*')
 
     if (error) {
+      if (error.code === '23503') {
+        throw createError({
+          statusCode: 409,
+          message: 'This office still has documents or team members assigned to it. Reassign them before deleting this office.',
+        })
+      }
       throw createError({
         statusCode: 500,
-        message: error.message || 'Error deleting office',
+        message: 'We could not delete this office. Please try again.',
       })
     }
 
