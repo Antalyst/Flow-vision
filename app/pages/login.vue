@@ -90,20 +90,13 @@
               >
               <span class="font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">Remember me</span>
             </label>
-            <button type="button" class="font-dashboard text-[14px] font-medium text-neutral-700 transition hover:text-candy-orange dark:text-white-muted">
-              Forgot Password
-            </button>
+        
           </div>
 
           <button type="submit" :class="primaryBtnClass">
             Log In
           </button>
         </form>
-
-        <p class="mt-5 font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">
-          Don't Have Account?
-      
-        </p>
       </div>
     </section>
   </main>
