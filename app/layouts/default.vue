@@ -65,12 +65,7 @@
             >
               Sign in
             </NuxtLink>
-            <NuxtLink
-              to="/register"
-              class="rounded-full bg-candy-orange px-3 py-1 font-dashboard text-[13px] font-bold uppercase tracking-wider text-white-pure shadow-md shadow-candy-orange/10 transition-transform hover:scale-105 active:scale-95 hover:bg-candy-hover sm:px-4 sm:py-1.5 sm:text-[14px]"
-            >
-              Get started!
-            </NuxtLink>
+          
           </div>
 
           <button
@@ -107,9 +102,7 @@
 
         <div class="flex gap-2">
             <NuxtLink to="/login" class="px-4 py-2 text-md font-medium hover:text-candy-orange transition">Sign in</NuxtLink>
-            <NuxtLink to="/register" class="px-5 py-2 text-md font-medium bg-white text-onyx-black rounded-full hover:bg-candy-orange hover:text-white transition shadow-sm">
-              Get started
-            </NuxtLink>
+           
         </div>
       </div>
 

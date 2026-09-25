@@ -102,9 +102,7 @@
 
         <p class="mt-5 font-dashboard text-[14px] text-neutral-700 dark:text-white-muted">
           Don't Have Account?
-          <NuxtLink to="/register" class="font-semibold text-candy-orange transition hover:text-candy-hover">
-            Register
-          </NuxtLink>
+      
         </p>
       </div>
     </section>

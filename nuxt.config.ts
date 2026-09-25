@@ -4,6 +4,10 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
 
+  devServer: {
+    host: 'localhost',
+  },
+
   vite: {
     server: {
       hmr: {
