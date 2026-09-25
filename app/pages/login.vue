@@ -134,6 +134,7 @@ const getPostLoginRoute = (role = '') => {
     employee: '/employee/dashboard',
     employee_sub_user: '/employee/dashboard',
     messenger: '/messenger/dashboard',
+    superadmin: '/superadmin/dashboard',
   }
   return map[role.toLowerCase().trim()] ?? '/'
 }

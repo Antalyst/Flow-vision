@@ -1,3 +1,9 @@
 <template>
-    <h1>hellow world</h1>
+  <div />
 </template>
+
+<script setup>
+definePageMeta({ layout: false })
+
+await navigateTo('/superadmin/dashboard', { replace: true })
+</script>
