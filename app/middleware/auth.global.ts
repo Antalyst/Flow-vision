@@ -4,6 +4,7 @@ const ROLE_HOME: Record<string, string> = {
   employee: '/employee/dashboard',
   employee_sub_user: '/employee/dashboard',
   messenger: '/messenger/dashboard',
+  superadmin: '/superadmin/dashboard',
 }
 
 // Role → protected URL zone prefix it exclusively owns
@@ -12,6 +13,7 @@ const ROLE_ZONE: Record<string, string> = {
   employee: '/employee',
   employee_sub_user: '/employee',
   messenger: '/messenger',
+  superadmin: '/superadmin',
 }
 
 const ALL_ZONES = Object.values(ROLE_ZONE)
