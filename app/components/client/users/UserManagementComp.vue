@@ -5,10 +5,10 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
-        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Team Members</h1>
-        <p class="mt-1 text-sm" :class="mutedClass">
+        <h1 class="text-2xl text-white font-bold tracking-tight sm:text-3xl" :class="mutedClass">
           {{ auth.currentOrg?.name || '—' }}
-        </p>
+        </h1>
+        <p class="mt-1 text-gray-500 text-sm" >Departments</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <button
@@ -20,14 +20,14 @@
           <Icon name="ph:upload-simple-light" class="h-4 w-4" />
           Import CSV
         </button>
-       
+
         <button
           type="button"
           class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-candy-orange px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98]"
           @click="openProvisionDrawer('employee')"
         >
           <Icon name="ph:plus-bold" class="h-4 w-4" />
-          Add Employee
+          Add Office
         </button>
       </div>
     </div>
@@ -709,7 +709,7 @@ const importSummary    = ref<{ created: number; total: number } | null>(null)
 
 // ── Constants ──────────────────────────────────────────────────────────
 const TABS = [
-  { value: 'all',       label: 'All Members' },
+  { value: 'all',       label: 'All Offices' },
   { value: 'employee',  label: 'Employees'   },
 ] as const
 
@@ -733,21 +733,21 @@ const tabCount = (tab: string) => {
 
 const stats = computed(() => [
   {
-    label: 'Total Members',
+    label: 'Total Offices',
     value: members.value.length,
     icon: 'ph:users-three-fill',
     iconBg: 'bg-candy-orange/10',
     iconColor: 'text-candy-orange',
   },
   {
-    label: 'Employees',
+    label: 'Total Employees',
     value: employees.value.length,
     icon: 'ph:briefcase-fill',
     iconBg: isDark.value ? 'bg-white/10' : 'bg-gray-200',
     iconColor: isDark.value ? 'text-gray-300' : 'text-gray-600',
   },
   {
-    label: 'Messengers',
+    label: 'Total Messengers',
     value: messengers.value.length,
     icon: 'ph:motorcycle-fill',
     iconBg: 'bg-candy-orange/10',

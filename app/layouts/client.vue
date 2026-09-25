@@ -77,16 +77,7 @@
             <div class="flex items-center gap-2">
               <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
                 <span class="w-1.5 h-1.5 rounded-full bg-candy-orange"></span>
-                Client
-              </span>
-              <span
-                v-if="auth.user?.org_id"
-                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold truncate max-w-[100px]"
-                :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
-                :title="`Org ID: ${auth.user.org_id}`"
-              >
-                <Icon name="ph:buildings-light" class="w-3 h-3 flex-shrink-0" />
-                Org {{ auth.user.org_id }}
+                Organization Admin
               </span>
             </div>
           </div>
