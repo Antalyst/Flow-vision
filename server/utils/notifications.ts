@@ -11,6 +11,19 @@ export interface BroadcastPickupInput {
   documentTitle: string
 }
 
+/** Plain-language label for a raw `tracking_status` value — never show the enum to a user. */
+export function humanizeTrackingStatus(status: string): string {
+  switch (String(status || '').toUpperCase()) {
+    case 'CREATED':               return 'Registered'
+    case 'PICKED_UP':             return 'Picked Up'
+    case 'IN_TRANSIT':            return 'On the Way'
+    case 'ARRIVED_AT_OFFICE':     return 'Arrived at Office'
+    case 'DISCREPANCY_REPORTED':  return 'Issue Reported'
+    case 'COMPLETED':             return 'Completed'
+    default:                      return 'Updated'
+  }
+}
+
 const NOTIFICATION_COLUMNS =
   'id, org_id, office_id, document_id, target_role, title, message, user_id, is_claimed, is_read, claimed_by_user_id, created_at, metadata, documents(tracking_status)'
 
@@ -537,15 +550,16 @@ export async function notifyClientStatusUpdate(
 ): Promise<string | null> {
   if (!input.clientUserId) return null
 
+  const plainStatus = humanizeTrackingStatus(input.trackingStatus)
   const row = {
     org_id: input.orgId,
     document_id: input.documentId,
     user_id: input.clientUserId,
     target_role: 'client',
-    title: `Document Update: ${input.trackingStatus}`,
+    title: `Document Update: ${plainStatus}`,
     message:
       input.message ??
-      `Your document "${input.documentTitle}" status has been updated to "${input.trackingStatus}".`,
+      `Your document "${input.documentTitle}" is now "${plainStatus}".`,
     is_read: false,
     is_claimed: false,
     claimed_by_user_id: null,

@@ -9,11 +9,13 @@ export default defineEventHandler(async (event) => {
 
   const validRanges = ['day', 'week', 'month', 'all']
   const range = validRanges.includes(datePreset) ? datePreset as 'day' | 'week' | 'month' | 'all' : 'week'
+  const mineOnly = query.mine === 'true'
 
   const logs = await fetchActivityLogsForActor(event, {
     datePreset: range,
     actionType,
     limit,
+    mineOnly,
   })
 
   return { success: true, logs }

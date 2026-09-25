@@ -56,12 +56,17 @@
     <!-- C. KPI Cards                                                      -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div
+        <button
           v-for="(card, i) in kpiCards"
           :key="card.label"
-          class="flex items-start gap-4 rounded-2xl border p-5 shadow-card transition-all"
-          :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
+          type="button"
+          class="flex items-start gap-4 rounded-2xl border p-5 text-left shadow-card transition-all hover:-translate-y-0.5 hover:border-candy-orange/40 focus:outline-none focus:ring-2 focus:ring-candy-orange"
+          :class="[
+            isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure',
+            card.isActive ? 'ring-1 ring-inset ring-candy-orange border-candy-orange/40' : '',
+          ]"
           :style="{ transitionDelay: `${i * 40}ms` }"
+          @click="applyKpiFilter(card)"
         >
           <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" :class="card.iconBg">
             <Icon :name="card.icon" class="h-5 w-5" :class="card.iconColor" />
@@ -74,7 +79,7 @@
             </p>
             <p class="mt-0.5 text-xs" :class="card.trendColor">{{ card.trend }}</p>
           </div>
-        </div>
+        </button>
       </div>
 
     <!-- ══════════════════════════════════════════════════════════════════ -->
@@ -112,15 +117,14 @@
           :class="inputClass"
         >
           <option value="all">All Tracking</option>
-          <option value="CREATED">Created</option>
+          <option value="CREATED">Registered</option>
           <option value="PICKED_UP">Picked Up</option>
-          <option value="IN_TRANSIT">In Transit</option>
-          <option value="ARRIVED_AT_OFFICE">At Office</option>
-          <option value="DISCREPANCY_REPORTED">Flagged</option>
+          <option value="IN_TRANSIT">On the Way</option>
+          <option value="ARRIVED_AT_OFFICE">Received by Office</option>
+          <option value="DISCREPANCY_REPORTED">Issue Reported</option>
           <option value="COMPLETED">Completed</option>
         </select>
       </div>
-
 
       <!-- Status quick filter pills -->
       <div class="flex flex-wrap items-center gap-2">
@@ -137,21 +141,6 @@
           {{ s.label }}
         </button>
       </div>
-
-      <!-- Tracking filter -->
-      <select
-        v-model="trackingFilter"
-        class="rounded-none border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange sm:w-44"
-        :class="inputClass"
-      >
-        <option value="all">All Tracking</option>
-        <option value="CREATED">Registered</option>
-        <option value="PICKED_UP">Picked Up</option>
-        <option value="IN_TRANSIT">On the Way</option>
-        <option value="ARRIVED_AT_OFFICE">Received by Office</option>
-        <option value="DISCREPANCY_REPORTED">Issue Reported</option>
-        <option value="COMPLETED">Completed</option>
-      </select>
     </div>
 
     <!-- Active Semantic Search Indicator -->
@@ -441,6 +430,8 @@ const statusPills = [
 ]
 
 // ── KPI cards ─────────────────────────────────────────────────────────
+// Each card carries the filter state it represents so clicking it can
+// drive the same office/tracking filters used by the dashboard deep links.
 const kpiCards = computed(() => [
   {
     label: 'Total Docs',
@@ -450,6 +441,9 @@ const kpiCards = computed(() => [
     iconColor: 'text-candy-orange',
     trend: 'In your offices',
     trendColor: 'text-candy-orange',
+    office: 'all',
+    tracking: 'all',
+    isActive: officeFilter.value === 'all' && trackingFilter.value === 'all',
   },
   {
     label: 'My Uploads',
@@ -459,6 +453,9 @@ const kpiCards = computed(() => [
     iconColor: 'text-candy-orange',
     trend: 'Registered by you',
     trendColor: isDark.value ? 'text-gray-400' : 'text-white-muted',
+    office: 'own',
+    tracking: 'all',
+    isActive: officeFilter.value === 'own',
   },
   {
     label: 'On the Way',
@@ -468,6 +465,9 @@ const kpiCards = computed(() => [
     iconColor: 'text-candy-orange',
     trend: 'Moving now',
     trendColor: 'text-candy-orange',
+    office: 'all',
+    tracking: 'IN_TRANSIT',
+    isActive: officeFilter.value === 'all' && trackingFilter.value === 'IN_TRANSIT',
   },
   {
     label: 'Completed',
@@ -477,8 +477,17 @@ const kpiCards = computed(() => [
     iconColor: 'text-success',
     trend: 'Fully delivered',
     trendColor: 'text-success',
+    office: 'all',
+    tracking: 'COMPLETED',
+    isActive: officeFilter.value === 'all' && trackingFilter.value === 'COMPLETED',
   },
 ])
+
+const applyKpiFilter = (card: { office: string; tracking: string }) => {
+  officeFilter.value = card.office
+  trackingFilter.value = card.tracking
+  router.replace({ query: { ...route.query, office: card.office, tracking: card.tracking } })
+}
 
 // ── Filtered docs ─────────────────────────────────────────────────────
 const filtered = computed(() => {

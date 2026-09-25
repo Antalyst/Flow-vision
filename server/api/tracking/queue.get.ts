@@ -28,6 +28,9 @@ import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/acto
  *   scope   'GLOBAL' | 'LOCAL'   default 'GLOBAL'
  *   status  string               comma-separated tracking statuses to filter
  *   limit   number               default 100, max 500
+ *   id      string               exact document id — used to resolve a single deep-linked
+ *                                 document that may otherwise fall outside the `limit` window;
+ *                                 role/scope filters below still apply as normal.
  */
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -36,6 +39,7 @@ export default defineEventHandler(async (event) => {
   const scope        = parseScope(query.scope as string | undefined)
   const limit        = Math.min(Number(query.limit ?? 100), 500)
   const statusFilter = (query.status as string | undefined)?.split(',').map((s) => s.trim()).filter(Boolean) ?? []
+  const idFilter      = (query.id as string | undefined)?.trim() || null
 
   // ── Resolve actor from session ────────────────────────────────────────────
   const actor = await resolveActorContextWithOffices(event, client)
@@ -64,6 +68,11 @@ export default defineEventHandler(async (event) => {
   // Apply tracking status filter (e.g. hide COMPLETED from active queue)
   if (statusFilter.length > 0) {
     dbQuery = dbQuery.in('tracking_status', statusFilter)
+  }
+
+  // Narrow to one exact document (deep-link resolution) — role/scope filters below still apply.
+  if (idFilter) {
+    dbQuery = dbQuery.eq('id', idFilter)
   }
 
   // ── Role + scope filters ──────────────────────────────────────────────────

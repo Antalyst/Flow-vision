@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
 
   let dbQuery = db
     .from('documents')
-    .select('id, title, tracking_status, status, created_at, current_office_id')
+    .select('id, title, tracking_status, status, priority, created_at, user_id, current_office_id')
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })
     .limit(200)
@@ -44,5 +44,22 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await dbQuery
   if (error) throw createError({ statusCode: 500, message: error.message })
 
-  return { success: true, data: data ?? [] }
+  const rows = data ?? []
+
+  const uploaderIds = [...new Set(rows.map((d) => d.user_id).filter(Boolean))]
+  let nameById: Record<string, string> = {}
+  if (uploaderIds.length > 0) {
+    const { data: users } = await db.from('users').select('user_id, full_name').in('user_id', uploaderIds)
+    nameById = (users ?? []).reduce((acc: Record<string, string>, u: any) => {
+      acc[String(u.user_id)] = u.full_name
+      return acc
+    }, {})
+  }
+
+  const enriched = rows.map((doc) => ({
+    ...doc,
+    uploader_name: doc.user_id ? (nameById[String(doc.user_id)] ?? null) : null,
+  }))
+
+  return { success: true, data: enriched }
 })

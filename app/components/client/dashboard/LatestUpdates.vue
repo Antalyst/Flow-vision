@@ -1,69 +1,44 @@
 <script setup lang="ts">
+interface Alert {
+  id: string
+  title: string
+  message: string
+  time: string
+  createdAt: string
+  tone: 'amber' | 'orange' | 'zinc' | 'emerald' | 'red'
+}
+
+const props = defineProps<{
+  alerts?: Alert[]
+  loading?: boolean
+}>()
+
+const toneDotClass: Record<Alert['tone'], string> = {
+  amber: 'bg-amber-500',
+  orange: 'bg-candy-orange',
+  zinc: 'bg-zinc-400',
+  emerald: 'bg-emerald-500',
+  red: 'bg-red-500',
+}
+
 const activeTab = ref('today')
 const searchQuery = ref('')
 
-const activities = ref([
-  {
-    id: 1,
-    title: 'Document Updated',
-    description: 'Document #2319 SLA updated',
-    time: '11:20 AM',
-    day: 'today',
-    type: 'update',
-    color: 'bg-candy-orange',
-    iconColor: 'text-candy-orange',
-  },
-  {
-    id: 2,
-    title: 'New Client Added',
-    description: 'PT. Alpha Indonesia registered',
-    time: '11:15 AM',
-    day: 'today',
-    type: 'client',
-    color: 'bg-blue-500',
-    iconColor: 'text-blue-500',
-  },
-  {
-    id: 3,
-    title: 'Agent Reassigned',
-    description: 'Document #2322 moved to Michael Wong',
-    time: '11:00 AM',
-    day: 'today',
-    type: 'reassign',
-    color: 'bg-purple-500',
-    iconColor: 'text-purple-500',
-  },
-  {
-    id: 4,
-    title: 'Might Miss Deadline',
-    description: 'Document #2320 "Login issue"',
-    time: '4:45 PM',
-    day: 'yesterday',
-    type: 'risk',
-    color: 'bg-red-500',
-    iconColor: 'text-red-500',
-  },
-  {
-    id: 5,
-    title: 'Knowledge Base',
-    description: 'New article published: "Login Troubleshooting"',
-    time: '2:30 PM',
-    day: 'yesterday',
-    type: 'knowledge',
-    color: 'bg-emerald-500',
-    iconColor: 'text-emerald-500',
-  },
-  {
-    id: 6,
-    title: 'Customer Feedback',
-    description: '"Great support response, thanks Sarah!"',
-    time: 'Monday',
-    day: 'week',
-    type: 'feedback',
-    color: 'bg-teal-500',
-    iconColor: 'text-teal-500',
-  },
-])
+function dayBucket(iso: string): 'today' | 'yesterday' | 'week' {
+  const now = new Date()
+  const d = new Date(iso)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diffDays = Math.round((startOfToday.getTime() - startOfDay.getTime()) / 86_400_000)
+  if (diffDays <= 0) return 'today'
+  if (diffDays === 1) return 'yesterday'
+  return 'week'
+}
+
+const activities = computed(() => (props.alerts ?? []).map((a) => ({
+  ...a,
+  day: dayBucket(a.createdAt),
+})))
 
 const filteredActivities = computed(() => {
   let rows = activities.value
@@ -80,7 +55,7 @@ const filteredActivities = computed(() => {
     rows = rows.filter(
       (a) =>
         a.title.toLowerCase().includes(query) ||
-        a.description.toLowerCase().includes(query),
+        a.message.toLowerCase().includes(query),
     )
   }
 
@@ -99,9 +74,6 @@ const activityCountLabel = computed(() => {
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Latest Updates</h3>
-      <button class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-onyx-black/40 transition-colors">
-        <Icon name="ph:dots-three-bold" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
-      </button>
     </div>
 
     <!-- Tab pills -->
@@ -144,8 +116,13 @@ const activityCountLabel = computed(() => {
       <span class="font-bold text-gray-900 dark:text-white">{{ filteredActivities.length }}</span> {{ activityCountLabel }}
     </p>
 
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="flex-1 space-y-3">
+      <div v-for="n in 4" :key="n" class="h-12 animate-pulse rounded-xl bg-gray-100 dark:bg-onyx-black/40" />
+    </div>
+
     <!-- Timeline feed -->
-    <div class="flex-1 overflow-y-auto space-y-1">
+    <div v-else-if="filteredActivities.length" class="flex-1 overflow-y-auto space-y-1">
       <div
         v-for="(activity, index) in filteredActivities"
         :key="activity.id"
@@ -153,7 +130,7 @@ const activityCountLabel = computed(() => {
       >
         <!-- Timeline dot -->
         <div class="flex flex-col items-center pt-1">
-          <div class="w-2.5 h-2.5 rounded-full" :class="activity.color"></div>
+          <div class="w-2.5 h-2.5 rounded-full" :class="toneDotClass[activity.tone]"></div>
           <div
             v-if="index < filteredActivities.length - 1"
             class="w-px flex-1 bg-gray-200 dark:bg-onyx-border mt-2"
@@ -166,9 +143,18 @@ const activityCountLabel = computed(() => {
             <h4 class="text-xs font-bold text-gray-900 dark:text-white">{{ activity.title }}</h4>
             <span class="text-[13px] text-gray-400 dark:text-gray-500 font-medium whitespace-nowrap">{{ activity.time }}</span>
           </div>
-          <p class="text-[14px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ activity.description }}</p>
+          <p class="text-[14px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ activity.message }}</p>
         </div>
       </div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else class="flex flex-1 flex-col items-center justify-center py-10 text-center">
+      <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-candy-orange/10">
+        <Icon name="ph:pulse" class="h-6 w-6 text-candy-orange" />
+      </div>
+      <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">No activity yet</p>
+      <p class="mt-1 text-[13px] text-gray-400 dark:text-gray-500">Activity will show up here as documents move.</p>
     </div>
   </div>
 </template>

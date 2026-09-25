@@ -222,7 +222,7 @@
                   <span>
                     No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
                     <template v-if="routeTab === 'local'">
-                      <NuxtLink to="/employee/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Stages.
+                      <NuxtLink to="/client/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Document Routes.
                     </template>
                   </span>
                 </div>
@@ -415,6 +415,32 @@
                   </div>
                 </div>
               </Transition>
+
+              <!-- Optional: how long this document should take, end to end -->
+              <div class="mt-4">
+                <span class="text-sm font-semibold" :class="headingClass">Expected Completion Time</span>
+                <p class="mt-0.5 text-sm" :class="mutedClass">
+                  Optional — how long should this document take, start to finish? We'll alert you, the office holding it, and an admin if it runs over.
+                </p>
+                <div class="mt-2 flex items-center gap-2">
+                  <input
+                    v-model.number="expectedCompletionAmount"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 3"
+                    class="w-28 rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                    :class="inputClass"
+                  >
+                  <select
+                    v-model="expectedCompletionUnit"
+                    class="rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                    :class="inputClass"
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <!-- 4. Document Category -->
@@ -649,6 +675,16 @@ const routeTabs = [
 // ── Form state ────────────────────────────────────────────────────────
 const fileInput              = ref<HTMLInputElement | null>(null)
 const selectedFile           = ref<File | null>(null)
+
+// ── Optional per-document expected completion time (Part 7 of the plan) ──
+const expectedCompletionAmount = ref<number | null>(null)
+const expectedCompletionUnit   = ref<'hours' | 'days'>('days')
+const expectedCompletionHours  = computed(() => {
+  if (!expectedCompletionAmount.value || expectedCompletionAmount.value <= 0) return null
+  return expectedCompletionUnit.value === 'days'
+    ? expectedCompletionAmount.value * 24
+    : expectedCompletionAmount.value
+})
 const selectedOriginOfficeId = computed(() => {
   return props.officeId ? String(props.officeId) : ''
 })
@@ -865,6 +901,8 @@ const handleClose = () => {
   printQrDataUrl.value = ''
   errorMessage.value = ''
   aiAnalysis.value = null
+  expectedCompletionAmount.value = null
+  expectedCompletionUnit.value = 'days'
   emit('close')
 }
 
@@ -974,7 +1012,10 @@ const handlePrintAndSubmit = async () => {
     fd.append('qr_code_data',     trackingCode)
     fd.append('user_id',          String(auth.user?.user_id ?? ''))
     fd.append('org_id',           String(auth.user?.org_id ?? ''))
-    
+    if (expectedCompletionHours.value) {
+      fd.append('expected_completion_hours', String(expectedCompletionHours.value))
+    }
+
     if (isExcelFile.value) {
       if (manualTitle.value) fd.append('manual_title', manualTitle.value)
       if (manualDescription.value) fd.append('manual_description', manualDescription.value)
@@ -996,6 +1037,8 @@ const handlePrintAndSubmit = async () => {
       selectedCategoryId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
+      expectedCompletionAmount.value = null
+      expectedCompletionUnit.value = 'days'
     } else {
       errorMessage.value = 'Upload failed. Please try again.'
       currentTrackingId.value = generateTrackingId()

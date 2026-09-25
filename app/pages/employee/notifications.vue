@@ -94,20 +94,21 @@
       <!-- Notification list -->
       <div v-else ref="listEl" class="divide-y" :class="isDark ? 'divide-onyx-border' : 'divide-gray-100'">
         <div
-          v-for="notif in notifications"
+          v-for="notif in sortedNotifications"
           :key="notif.id"
-          class="flex flex-col gap-4 px-6 py-5 transition-colors md:flex-row md:items-center md:justify-between"
+          class="flex flex-col gap-4 border-l-4 px-6 py-5 transition-colors md:flex-row md:items-center md:justify-between"
           :class="[
+            severityBorderClass(notif.title),
             isDark ? 'hover:bg-white/[0.025]' : 'hover:bg-gray-50/80',
-            !notif.is_read ? 'border-l-2 border-l-candy-orange bg-candy-orange/5' : ''
+            !notif.is_read ? 'bg-candy-orange/5' : ''
           ]"
         >
           <div class="flex items-start gap-4 min-w-0 flex-1">
             <!-- Icon -->
             <div
               class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border mt-0.5"
-              :class="!notif.is_read 
-                ? 'border-candy-orange/20 bg-candy-orange/10' 
+              :class="!notif.is_read
+                ? 'border-candy-orange/20 bg-candy-orange/10'
                 : isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-100'"
             >
               <Icon
@@ -120,6 +121,13 @@
             <div class="min-w-0 flex-1">
               <div class="mb-0.5 flex items-center gap-2">
                 <span v-if="!notif.is_read" class="h-2 w-2 flex-shrink-0 rounded-full bg-candy-orange" />
+                <span
+                  v-if="classifyNotificationSeverity(notif.title) !== 'info'"
+                  class="rounded-full px-2 py-0.5 text-[13px] font-bold uppercase tracking-wide"
+                  :class="classifyNotificationSeverity(notif.title) === 'urgent' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'"
+                >
+                  {{ classifyNotificationSeverity(notif.title) === 'urgent' ? 'Urgent' : 'Needs Action' }}
+                </span>
                 <h4 class="truncate text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
                   {{ notif.title }}
                 </h4>
@@ -169,7 +177,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { gsap } from 'gsap'
-import { isUnreadNotification } from '~/composables/useNotifications'
+import { isUnreadNotification, classifyNotificationSeverity, sortNotificationsBySeverity } from '~/composables/useNotifications'
 
 definePageMeta({ layout: 'employee' })
 
@@ -186,6 +194,15 @@ const {
   markAsRead,
   startAutoRefresh,
 } = useEmployeeNotifications()
+
+const sortedNotifications = computed(() => sortNotificationsBySeverity(notifications.value))
+
+function severityBorderClass(title) {
+  const severity = classifyNotificationSeverity(title)
+  if (severity === 'urgent') return 'border-l-danger'
+  if (severity === 'action') return 'border-l-warning'
+  return isDark.value ? 'border-l-onyx-border' : 'border-l-gray-100'
+}
 
 // GSAP refs
 const pageRoot = ref<HTMLElement | null>(null)

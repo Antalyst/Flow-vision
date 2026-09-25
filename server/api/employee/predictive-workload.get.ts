@@ -67,14 +67,39 @@ export default defineEventHandler(async (event) => {
     if (key in counts) counts[key]++
   }
 
+  const labels = Object.keys(counts)
+  const values = Object.values(counts)
+
+  // ── Forecast the next few days from recent momentum ───────────────────────
+  // Only appended when the selected window actually reaches today — forecasting
+  // "what's next" after an arbitrary past end date wouldn't mean anything.
+  const FORECAST_DAYS = 3
+  let predictedCount = 0
+  if (endStr === toDateOnly(today)) {
+    const last = values[values.length - 1] ?? 0
+    const prev = values[values.length - 2] ?? last
+    const momentum = (last - prev) / 2
+
+    let cursor = last
+    for (let i = 1; i <= FORECAST_DAYS; i++) {
+      cursor = Math.max(0, Math.round(cursor + momentum * (i === 1 ? 1 : 0.5)))
+      const d = new Date(rangeEnd)
+      d.setUTCDate(d.getUTCDate() + i)
+      labels.push(toDateOnly(d))
+      values.push(cursor)
+      predictedCount++
+    }
+  }
+
   return {
     success: true,
     scope,
     start: startStr,
     end: endStr,
     data: {
-      labels: Object.keys(counts),
-      values: Object.values(counts),
+      labels,
+      values,
+      predictedCount,
     },
   }
 })
