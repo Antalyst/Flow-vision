@@ -3,6 +3,7 @@
     <!-- Camera viewport -->
     <div
       class="relative overflow-hidden rounded-2xl bg-black/95 shadow-xl w-full max-w-[400px] aspect-square mx-auto"
+      :class="{ 'mirror-feed': isFrontFacingCamera }"
     >
       <!-- html5-qrcode target (Web Viewport) -->
       <div v-show="!isNativeCapacitor" :id="scannerId" class="absolute inset-0 w-full h-full" />
@@ -127,6 +128,12 @@ const permissionDenied = ref(false)
 const result      = ref<string | null>(null)
 const torchOn     = ref(false)
 const { defaultCameraDeviceId } = useMessengerSettings()
+
+// Only mirror for an actual front/selfie camera — the scanner defaults to
+// the rear ("environment") camera for scanning a QR on a desk/document, and
+// mirroring that flips left/right relative to reality, making it hard to
+// line the code up in frame. A front camera still gets the natural mirror.
+const isFrontFacingCamera = computed(() => defaultCameraDeviceId.value === 'user')
 
 const primaryBgClass = computed(() => props.themeColor === 'orange' ? 'bg-candy-orange' : props.themeColor === 'blue' ? 'bg-blue-500' : 'bg-amber-500')
 const primaryTextClass = computed(() => props.themeColor === 'orange' ? 'text-candy-orange' : props.themeColor === 'blue' ? 'text-blue-500' : 'text-amber-500')
@@ -276,11 +283,13 @@ defineExpose({ rescan, stopScanner })
 </script>
 
 <style scoped>
-/* Force the web video feed to mirror horizontally. 
-   This makes laptop webcams feel natural (like a mirror), 
-   and doesn't affect Native Capacitor since it uses the OS camera app. */
-:deep(video) {
-  transform: scaleX(-1) !important;
+/* Mirror the web video feed only when a front/selfie camera is active —
+   that's the only case where a mirrored preview feels natural. The default
+   rear camera (used to scan a QR on a desk/document) must stay unmirrored
+   so what's on screen matches reality. Doesn't affect Native Capacitor,
+   which uses the OS camera app instead of this <video> element. */
+.mirror-feed :deep(video) {
+  transform: scaleX(-1);
 }
 
 @keyframes scanLaser {
