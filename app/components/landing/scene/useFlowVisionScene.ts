@@ -91,6 +91,7 @@ export async function createFlowVisionScene(
 
   const documentCount = options.lowPower ? 5 : 9
   const particleCount = options.lowPower ? 24 : 56
+  const idleOrbitRadius = options.lowPower ? 1.05 : 1.7
 
   const departmentAnchors = DEPARTMENTS.map((dept, i) => new THREE.Vector3(
     Math.sin(dept.angle) * ROUTE_RADIUS,
@@ -190,8 +191,12 @@ export async function createFlowVisionScene(
 
       if (state === 'idle') {
         const angle = elapsed * 0.15 + (i / documentCount) * Math.PI * 2
-        position.set(Math.sin(angle) * 1.7, Math.sin(elapsed * 0.6 + documentPhases[i] * 6) * 0.2, Math.cos(angle) * 1.7)
-        scale = 0.5
+        position.set(
+          Math.sin(angle) * idleOrbitRadius,
+          Math.sin(elapsed * 0.6 + documentPhases[i] * 6) * 0.2,
+          Math.cos(angle) * idleOrbitRadius,
+        )
+        scale = options.lowPower ? 0.38 : 0.5
       }
       else if (state === 'capture') {
         const localT = staggeredT(t, i, documentCount)
