@@ -449,11 +449,40 @@
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
-            <!-- 4. QR CODE PLACEMENT                                      -->
+            <!-- 4. ASSIGN MESSENGER (optional)                            -->
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <div class="rounded-2xl border p-5" :class="cardClass">
+              <div class="mb-3 flex items-start gap-2.5">
+                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">4</span>
+                <div>
+                  <p class="text-sm font-semibold" :class="headingClass">Assign Messenger <span class="font-normal" :class="mutedClass">(optional)</span></p>
+                  <p class="mt-0.5 text-xs" :class="mutedClass">
+                    Choose who from your office will carry this document. You can also assign one later.
+                  </p>
+                </div>
+              </div>
+              <div class="relative">
+                <select
+                  v-model="selectedMessengerId"
+                  class="w-full appearance-none rounded-xl border px-3.5 py-2.5 pr-9 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                  :class="isDark ? 'border-onyx-border bg-onyx-black text-white' : 'border-gray-200 bg-white text-gray-900'"
+                >
+                  <option value="">Not now — assign later</option>
+                  <option v-for="m in officeMessengers" :key="m.user_id" :value="m.user_id">{{ m.full_name }}</option>
+                </select>
+                <Icon name="ph:caret-down-bold" class="pointer-events-none absolute right-3.5 top-1/2 h-3 w-3 -translate-y-1/2" :class="mutedClass" />
+                <p v-if="!officeMessengers.length" class="mt-1.5 text-xs" :class="mutedClass">
+                  No messengers registered at your office yet.
+                </p>
+              </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════════════════════ -->
+            <!-- 5. QR CODE PLACEMENT                                      -->
             <!-- ══════════════════════════════════════════════════════════ -->
             <div class="rounded-2xl border p-5" :class="cardClass">
               <div class="mb-3.5 flex items-start gap-2.5">
-                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">4</span>
+                <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">5</span>
                 <div>
                   <p class="text-sm font-semibold" :class="headingClass">QR Code Placement</p>
                   <p v-if="isExcelFile" class="mt-0.5 text-xs" :class="mutedClass">Excel file detected — added on a separate page.</p>
@@ -618,6 +647,13 @@
 
     <!-- QR-only fallback print template -->
     <DocumentPrintCanvas :qr-data-url="printQrDataUrl" :qr-size="selectedQrSize" />
+
+    <DocumentQrStickerModal
+      :is-open="showAssignedQr"
+      :title="lastUploadedTitle"
+      :qr-payload="lastUploadedQrPayload"
+      @close="showAssignedQr = false"
+    />
   </Teleport>
 </template>
 
@@ -628,6 +664,8 @@ import { PDFDocument } from 'pdf-lib'
 import { renderAsync } from 'docx-preview'
 import DocumentLivePreview from '~/components/client/documents/documentLivePreview.vue'
 import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanvas.vue'
+import DocumentQrStickerModal from '~/components/documents/DocumentQrStickerModal.vue'
+import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
@@ -667,6 +705,23 @@ const { isDark }  = useTheme()
 
 // Sub-users get their own Staff portal (see /staff/routes) instead of /employee/stages.
 const stagesPath = computed(() => auth.user?.role === 'employee_sub_user' ? '/staff/routes' : '/employee/stages')
+
+// ── Assign Messenger (optional, at upload time) ────────────────────────
+interface OfficeMessenger { user_id: string; full_name: string; email: string }
+const officeMessengers = ref<OfficeMessenger[]>([])
+const selectedMessengerId = ref('')
+const showAssignedQr = ref(false)
+const lastUploadedTitle = ref('')
+const lastUploadedQrPayload = ref('')
+
+async function fetchOfficeMessengers() {
+  try {
+    const res = await $fetch<{ success: boolean; data: OfficeMessenger[] }>('/api/employee/office-messengers')
+    officeMessengers.value = res.data || []
+  } catch (err) {
+    console.error('Failed to fetch office messengers:', err)
+  }
+}
 
 // ── Route scope tab ───────────────────────────────────────────────────
 type RouteTab = 'global' | 'local'
@@ -823,6 +878,7 @@ watch(
     if (!stageStore.stages.length) stageStore.fetchStages()
     if (!officeStore.offices.length) officeStore.fetchOffices()
     if (!categoriesStore.categories.length) categoriesStore.fetchCategories()
+    fetchOfficeMessengers()
   }
 )
 
@@ -889,6 +945,7 @@ const handleClose = () => {
   // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
   selectedCategoryId.value = ''
+  selectedMessengerId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   printQrDataUrl.value = ''
@@ -1007,7 +1064,7 @@ const handlePrintAndSubmit = async () => {
     formData.append('user_id',          String(auth.user?.user_id ?? ''))
     formData.append('org_id',           String(auth.user?.org_id ?? ''))
     
-    const res = await $fetch<{ success: boolean; data?: any }>('/api/documents/upload', {
+    const res = await $fetch<{ success: boolean; data?: any; metadata?: any }>('/api/documents/upload', {
       method: 'POST',
       body: formData,
     })
@@ -1016,11 +1073,31 @@ const handlePrintAndSubmit = async () => {
       if (res.data?.title || res.data?.description) {
         aiAnalysis.value = { title: res.data.title, description: res.data.description }
       }
+
+      const newDocumentId = res.metadata?.id
+      const newDocumentTitle = res.metadata?.title || 'Document'
+
+      if (newDocumentId && selectedMessengerId.value) {
+        try {
+          await $fetch('/api/tracking/assign-liaison', {
+            method: 'POST',
+            body: { document_id: newDocumentId, liaison_user_id: selectedMessengerId.value },
+          })
+          lastUploadedTitle.value = newDocumentTitle
+          lastUploadedQrPayload.value = buildDocumentTrackQrPayload(newDocumentId)
+          showAssignedQr.value = true
+        } catch (assignErr: any) {
+          console.error('Failed to assign messenger:', assignErr)
+          errorMessage.value = `Document saved, but assigning the messenger failed: ${assignErr?.data?.message || 'please assign one from the document view.'}`
+        }
+      }
+
       emit('uploaded')
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
       selectedCategoryId.value = ''
+      selectedMessengerId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
     } else {

@@ -2,7 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext } from '~~/server/utils/actorContext'
 import { hash } from 'bcrypt-ts'
 import { createClient } from '@supabase/supabase-js'
-import { resolveOwnedOfficeId } from '~~/server/utils/employeeProvisioning'
+import { resolveOwnedOfficeId, generateOfficeCode } from '~~/server/utils/employeeProvisioning'
 
 const CREATABLE_ROLES = ['employee_sub_user', 'messenger'] as const
 type CreatableRole = typeof CREATABLE_ROLES[number]
@@ -95,6 +95,27 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       message: `Failed to create account: ${error.message}`,
     })
+  }
+
+  // Staff automatically get their own desk under the office — this is what
+  // shows up in Staff Desks and what a local route can use as a checkpoint.
+  // Auto-creating it here means there's no separate "register a desk"
+  // step required before staff are usable in a local route.
+  if (targetRole === 'employee_sub_user') {
+    const { error: deskError } = await adminClient
+      .from('offices')
+      .insert({
+        name: `${newUser.full_name}'s Desk`,
+        org_id: actor.orgId,
+        parent_office_id: officeId,
+        assigned_user: newUser.user_id,
+        code: generateOfficeCode(),
+        created_by: actor.userId,
+      })
+
+    if (deskError) {
+      console.error('[employee/users] Failed to auto-create staff desk:', deskError.message)
+    }
   }
 
   return { success: true, data: newUser }

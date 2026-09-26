@@ -138,7 +138,7 @@ export async function resolveActorContextWithOffices(
   // 2. Fetch offices assigned to this employee via assigned_user
   const { data: officeRows, error: officeErr } = await client
     .from('offices')
-    .select('id')
+    .select('id, parent_office_id')
     .eq('org_id', base.orgId)
     .eq('assigned_user', base.userId)
 
@@ -148,6 +148,13 @@ export async function resolveActorContextWithOffices(
     for (const o of officeRows) {
       if (o?.id != null && String(o.id).trim()) {
         officeIdSet.add(String(o.id).trim())
+      }
+      // Self-heal: if this is the staff member's own auto-created desk and
+      // users.office_id wasn't backfilled, still credit them with their real
+      // parent branch office so LOCAL-scope queries (e.g. /api/stages) find
+      // routes scoped to that office, not just the desk itself.
+      if (o?.parent_office_id != null && String(o.parent_office_id).trim()) {
+        officeIdSet.add(String(o.parent_office_id).trim())
       }
     }
   }

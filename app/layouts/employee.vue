@@ -21,8 +21,6 @@
         </span>
       </div>
     </div>
-
-    <!-- ── Mobile slide-out drawer ───────────────────────────────────── -->
     <Teleport to="body">
       <Transition name="overlay">
         <div
@@ -77,14 +75,14 @@
 
           <!-- Role badge + org scope pill -->
           <div v-if="!isSidebarMinimized" class="flex flex-col gap-2 mb-5">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col items- gap-2">
               <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
                 <span class="w-1.5 h-1.5 rounded-full bg-candy-orange"></span>
                 Employee
               </span>
               <span
                 v-if="auth.currentOrg?.name"
-                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold truncate max-w-[140px]"
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
                 :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
                 :title="auth.currentOrg.name"
               >

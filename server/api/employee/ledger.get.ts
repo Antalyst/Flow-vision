@@ -47,7 +47,8 @@ export default defineEventHandler(async (event) => {
       .select(
         'id, title, description, status, tracking_status, current_step, ' +
         'qr_code_data, office_id, origin_office_id, current_office_id, ' +
-        'stage_id, created_at, user_id, creator_role, priority, target_completion_date',
+        'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
+        'assigned_messenger_id',
       )
       .eq('org_id', actor.orgId)
       .order('created_at', { ascending: false })
@@ -59,14 +60,17 @@ export default defineEventHandler(async (event) => {
 
     const rows = allDocs ?? []
 
-    // Resolve uploader names
-    const uploaderIds = [...new Set(rows.map((d: any) => d.user_id).filter(Boolean))]
+    // Resolve uploader + assigned messenger names in one pass
+    const peopleIds = [...new Set([
+      ...rows.map((d: any) => d.user_id),
+      ...rows.map((d: any) => d.assigned_messenger_id),
+    ].filter(Boolean))]
     let nameById: Record<string, string> = {}
-    if (uploaderIds.length > 0) {
+    if (peopleIds.length > 0) {
       const { data: users } = await client
         .from('users')
         .select('user_id, full_name')
-        .in('user_id', uploaderIds)
+        .in('user_id', peopleIds)
       nameById = (users ?? []).reduce((acc: Record<string, string>, u: any) => {
         acc[String(u.user_id)] = u.full_name
         return acc
@@ -92,6 +96,7 @@ export default defineEventHandler(async (event) => {
     const enriched = rows.map((doc: any) => ({
       ...doc,
       uploader_name:   nameById[String(doc.user_id)] ?? null,
+      messenger_name:  doc.assigned_messenger_id ? (nameById[String(doc.assigned_messenger_id)] ?? null) : null,
       office_label:    doc.office_id         ? (officeLabelById[String(doc.office_id)]         ?? null) : null,
       origin_label:    doc.origin_office_id  ? (officeLabelById[String(doc.origin_office_id)]  ?? null) : null,
       current_label:   doc.current_office_id ? (officeLabelById[String(doc.current_office_id)] ?? null) : null,
@@ -117,7 +122,8 @@ export default defineEventHandler(async (event) => {
     .select(
       'id, title, description, status, tracking_status, current_step, ' +
       'qr_code_data, office_id, origin_office_id, current_office_id, ' +
-      'stage_id, created_at, user_id, creator_role, priority, target_completion_date',
+      'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
+      'assigned_messenger_id',
     )
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })
@@ -158,8 +164,20 @@ export default defineEventHandler(async (event) => {
     }, {})
   }
 
+  // Resolve assigned messenger names
+  const messengerIds = [...new Set((documents ?? []).map((d: any) => d.assigned_messenger_id).filter(Boolean))]
+  let messengerNameById: Record<string, string> = {}
+  if (messengerIds.length > 0) {
+    const { data: messengerRows } = await client.from('users').select('user_id, full_name').in('user_id', messengerIds)
+    messengerNameById = (messengerRows ?? []).reduce((acc: Record<string, string>, u: any) => {
+      acc[String(u.user_id)] = u.full_name
+      return acc
+    }, {})
+  }
+
   const enriched = (documents ?? []).map((doc: any) => ({
     ...doc,
+    messenger_name: doc.assigned_messenger_id ? (messengerNameById[String(doc.assigned_messenger_id)] ?? null) : null,
     office_label:  doc.office_id        ? (officeNameById[String(doc.office_id)]        ?? `Office #${doc.office_id}`) : null,
     origin_label:  doc.origin_office_id ? (officeNameById[String(doc.origin_office_id)] ?? null)                        : null,
     current_label: doc.current_office_id? (officeNameById[String(doc.current_office_id)]?? null)                        : null,

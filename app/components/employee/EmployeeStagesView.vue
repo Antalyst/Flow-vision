@@ -364,27 +364,62 @@
               />
             </div>
 
-            <!-- Owning Office -->
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-                Owning Office <span class="text-danger">*</span>
-              </label>
-              <select
-                v-model="stageForm.office_id"
-                class="w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none transition-colors focus:border-candy-orange"
-                :class="inputClass"
-                required
-              >
-                <option value="">Select office branch…</option>
-                <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ formatOfficeName(o.name) }}</option>
-              </select>
+            <!-- Staff: always an internal route for their one office — nothing to pick -->
+            <div v-if="isStaffUser" class="rounded-xl border p-3.5 text-xs" :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'">
+              <Icon name="ph:buildings-light" class="mr-1 inline h-3.5 w-3.5 text-candy-orange" />
+              This is an internal route for <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ formatOfficeName(myOffices[0]?.name) || 'your office' }}</strong> — only checkpoints inside your own office can be used to route documents there.
             </div>
+
+            <!-- Employee: choose Local (one of my offices) vs Organisation-wide -->
+            <template v-else>
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
+                  Route Scope
+                </label>
+                <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+                  <button
+                    type="button"
+                    class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                    :class="routeScope === 'local' ? 'bg-candy-orange text-white' : mutedText"
+                    @click="routeScope = 'local'"
+                  >
+                    Local (My Office)
+                  </button>
+                  <button
+                    type="button"
+                    class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                    :class="routeScope === 'global' ? 'bg-candy-orange text-white' : mutedText"
+                    @click="routeScope = 'global'"
+                  >
+                    Organisation-wide
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="routeScope === 'local'" class="space-y-1.5">
+                <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
+                  Owning Office <span class="text-danger">*</span>
+                </label>
+                <select
+                  v-model="stageForm.office_id"
+                  class="w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none transition-colors focus:border-candy-orange"
+                  :class="inputClass"
+                  required
+                >
+                  <option value="">Select office branch…</option>
+                  <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ formatOfficeName(o.name) }}</option>
+                </select>
+              </div>
+              <p v-else class="text-xs" :class="mutedText">
+                Available to every office in your organisation — anyone can use this route template.
+              </p>
+            </template>
 
             <!-- Available Checkpoints Pool -->
             <div class="space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-                  Available Checkpoints
+                  {{ isLocalRoute ? 'Available Staff Desks' : 'Available Offices' }}
                 </span>
                 <span class="text-[11px]" :class="mutedText">Click to add to route sequence</span>
               </div>
@@ -406,7 +441,9 @@
                 </button>
 
                 <div v-if="!allOffices.length" class="rounded-xl border border-dashed p-4 text-center text-xs" :class="mutedText">
-                  No offices available in organisation.
+                  {{ isLocalRoute
+                    ? 'No staff desks registered under this office yet — register one in Staff Desks first.'
+                    : 'No other offices found in your organisation yet.' }}
                 </div>
               </div>
             </div>
@@ -487,7 +524,7 @@
 
             <button
               type="submit"
-              :disabled="!stageForm.name || !stageForm.office_id || !selectedCheckpoints.length || creating"
+              :disabled="!canSubmitStage || creating"
               class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-candy-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon v-if="creating" name="ph:spinner-gap-light" class="h-3.5 w-3.5 animate-spin" />
@@ -502,7 +539,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useOfficeStore } from '~/stores/office'
 
@@ -552,11 +589,27 @@ const stageForm = reactive({
 const selectedCheckpoints = ref<OfficeRecord[]>([])
 
 // ── Computed ───────────────────────────────────────────────────────────
-// Route creation is always local (Owning Office is required), so the checkpoint
-// pool is always branch offices — matches what "Owning Office" already offers.
-const allOffices = computed(() =>
-  (officeStore.offices as unknown as OfficeRecord[]).filter((o) => (o as any).parent_office_id)
-)
+// The checkpoint pool depends on route scope:
+//   - Local (staff, or an employee's local route): the office's own registered
+//     staff desks (offices whose parent_office_id is that owning office) —
+//     an internal route only ever hops between desks inside the same branch.
+//   - Organisation-wide: the org's actual branches (top-level offices, no
+//     parent_office_id) — an org route hops between branches, not desks.
+const isLocalRoute = computed(() => isStaffUser.value || routeScope.value === 'local')
+
+const allOffices = computed(() => {
+  const offices = officeStore.offices as unknown as (OfficeRecord & { parent_office_id?: string | null })[]
+
+  if (isLocalRoute.value) {
+    const localOwningOfficeId = isStaffUser.value
+      ? myOffices.value[0]?.id
+      : (stageForm.office_id || myOffices.value[0]?.id)
+    if (!localOwningOfficeId) return []
+    return offices.filter((o) => String(o.parent_office_id ?? '') === String(localOwningOfficeId))
+  }
+
+  return offices.filter((o) => !o.parent_office_id)
+})
 
 const totalStagesCount = computed(() => stages.value.length)
 const globalStagesCount = computed(() => stages.value.filter(s => !s.office_id).length)
@@ -665,8 +718,11 @@ const fetchStages = async () => {
 
   loading.value = true
   try {
+    // LOCAL scope: org-wide (global) route templates + only the local routes
+    // scoped to this actor's own office(s) — a local route created by one
+    // office/staff member must never be visible to another office.
     const res = await $fetch<{ success: boolean; data: StageRecord[] }>('/api/stages', {
-      params: { orgId, scope: 'all' },
+      params: { orgId, scope: 'LOCAL' },
     })
     stages.value = res.data ?? []
 
@@ -693,6 +749,7 @@ const openDrawer = () => {
   stageForm.office_id = myOffices.value[0]?.id ? String(myOffices.value[0].id) : ''
   selectedCheckpoints.value = []
   createStageError.value = ''
+  routeScope.value = 'local'
   drawerOpen.value = true
 }
 
@@ -754,12 +811,38 @@ const moveStage = (stageId: number, dir: -1 | 1) => {
 // ── Create Stage API ───────────────────────────────────────────────────
 const createStageError = ref('')
 
+// Staff always create an internal route scoped to their one office; a full
+// employee chooses between a local (one of their own offices) or an
+// organisation-wide route template.
+const isStaffUser = computed(() => auth.user?.role === 'employee_sub_user')
+const routeScope = ref<'local' | 'global'>('local')
+
+// The checkpoint pool changes with scope/owning office — clear any already-picked
+// checkpoints so a route can't end up mixing stops from two different pools.
+watch([routeScope, () => stageForm.office_id], () => {
+  selectedCheckpoints.value = []
+})
+
+const resolvedStageOfficeId = computed(() => {
+  if (isStaffUser.value) return myOffices.value[0]?.id ? String(myOffices.value[0].id) : ''
+  if (routeScope.value === 'global') return ''
+  return stageForm.office_id
+})
+
+const canSubmitStage = computed(() => {
+  if (!stageForm.name.trim() || !selectedCheckpoints.value.length) return false
+  if (isStaffUser.value) return !!resolvedStageOfficeId.value
+  if (routeScope.value === 'local') return !!stageForm.office_id
+  return true
+})
+
 const handleCreateStage = async () => {
   createStageError.value = ''
 
-  if (!stageForm.name.trim() || !stageForm.office_id) return
-  if (!selectedCheckpoints.value.length) {
-    createStageError.value = 'Add at least one office stop before creating this route.'
+  if (!canSubmitStage.value) {
+    if (!selectedCheckpoints.value.length && stageForm.name.trim()) {
+      createStageError.value = 'Add at least one office stop before creating this route.'
+    }
     return
   }
   if (creating.value) return
@@ -777,7 +860,7 @@ const handleCreateStage = async () => {
       body: {
         stage_name:    stageForm.name.trim(),
         org_id:        auth.user?.org_id,
-        office_id:     stageForm.office_id,
+        office_id:     resolvedStageOfficeId.value || null,
         workflow_items,
       },
     })

@@ -288,8 +288,33 @@
               </div>
             </section>
 
-            <!-- Office-assigned Liaison: direct assignment, no accept/claim step -->
+            <!-- Already assigned (e.g. chosen at upload time) — just show the pickup QR -->
+            <section
+              v-if="hasAssignedMessenger && isPickupEligible"
+              class="stagger-block rounded-2xl border p-5"
+              :class="cellClass"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-[13px] font-bold uppercase tracking-widest text-success">Ready for Pickup</p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    Assigned to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ document.messenger_name || 'a messenger' }}</strong> — show them this QR to scan.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-candy-hover"
+                  @click="showPickupQr = true"
+                >
+                  <Icon name="ph:qr-code-fill" class="h-4 w-4" />
+                  Show Pickup QR
+                </button>
+              </div>
+            </section>
+
+            <!-- Not yet assigned: office-assigned Liaison picker, direct assignment -->
             <AssignLiaisonPanel
+              v-else
               :document="document"
               @assigned="handleLiaisonAssigned"
             />
@@ -385,6 +410,13 @@
         </div>
       </div>
     </Transition>
+
+    <DocumentQrStickerModal
+      :is-open="showPickupQr"
+      :title="document?.title ?? 'Document'"
+      :qr-payload="pickupQrPayload"
+      @close="showPickupQr = false"
+    />
   </Teleport>
 </template>
 
@@ -395,8 +427,10 @@ import gsap from 'gsap'
 import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
+import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
 import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
 import AssignLiaisonPanel from './AssignLiaisonPanel.vue'
+import DocumentQrStickerModal from './DocumentQrStickerModal.vue'
 
 interface MessagingOffice { id: string; name: string }
 
@@ -416,6 +450,8 @@ export interface PreviewDocument {
   current_office_id?: string | number | null
   user_id?: string | number
   uploader_name?: string | null
+  assigned_messenger_id?: string | null
+  messenger_name?: string | null
   office_label?: string | null
   origin_label?: string | null
   current_label?: string | null
@@ -520,6 +556,22 @@ const displayPriority = computed(() => props.document?.priority?.trim() || 'Not 
 const displayTrackingStatus = computed(
   () => props.document?.tracking_status || 'CREATED',
 )
+
+// Mirrors AssignLiaisonPanel's own eligibility rule: CREATED, or
+// ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step.
+const isPickupEligible = computed(() => {
+  const doc = props.document
+  if (!doc) return false
+  if (doc.tracking_status === 'CREATED') return true
+  if (doc.tracking_status === 'ARRIVED_AT_OFFICE') {
+    return (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0)
+  }
+  return false
+})
+const hasAssignedMessenger = computed(() => Boolean(props.document?.assigned_messenger_id))
+
+const showPickupQr = ref(false)
+const pickupQrPayload = computed(() => props.document?.id ? buildDocumentTrackQrPayload(props.document.id) : '')
 
 // Optional per-document expected completion time — see docs/tracking-ux-improvement-plan.md Part 7.
 const isOverdue = computed(() => {
