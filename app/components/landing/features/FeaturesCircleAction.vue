@@ -1,10 +1,7 @@
 <template>
   <button
     type="button"
-    class="group flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-300 ease-out"
-    :class="isLandingDark
-      ? 'bg-neutral-800 text-candy-orange hover:bg-candy-orange hover:text-neutral-950'
-      : 'bg-zinc-100 text-candy-orange hover:bg-candy-orange hover:text-white'"
+    class="group flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-flow-muted/20 text-flow-signal transition-all duration-300 ease-out hover:border-flow-signal hover:bg-flow-signal hover:text-flow-void"
     :aria-label="ariaLabel"
     @click="emit('click', $event)"
   >
@@ -16,8 +13,6 @@
 </template>
 
 <script setup lang="ts">
-const { isLandingDark } = useLandingTheme()
-
 withDefaults(defineProps<{
   ariaLabel?: string
 }>(), {

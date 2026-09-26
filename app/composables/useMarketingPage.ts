@@ -10,8 +10,9 @@ export const MARKETING_ROUTES = [
 /** True for homepage and marketing sub-pages that share the landing shell. */
 export function useMarketingPage() {
   const route = useRoute()
-  const isMarketingPage = computed(() =>
-    (MARKETING_ROUTES as readonly string[]).includes(route.path),
-  )
+  const isMarketingPage = computed(() => {
+    const path = route.path.length > 1 ? route.path.replace(/\/+$/, '') : route.path
+    return (MARKETING_ROUTES as readonly string[]).includes(path)
+  })
   return { isMarketingPage }
 }

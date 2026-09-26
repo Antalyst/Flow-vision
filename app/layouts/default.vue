@@ -2,27 +2,9 @@
   <div
     class="w-full min-h-screen transition-colors duration-300"
     :class="isMarketingPage
-      ? [
-        isLandingDark ? 'dark bg-onyx-black text-white-pure font-dashboard' : 'bg-white-surface text-zinc-900 font-dashboard',
-        'relative',
-      ]
+      ? ['dark bg-flow-void text-flow-ink font-dashboard', 'relative']
       : 'overflow-x-hidden font-primary bg-white-pure dark:bg-onyx-black'"
   >
-    <!-- Landing atmosphere vignette -->
-    <div
-      v-if="isMarketingPage && isLandingDark"
-      class="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-zinc-800/20 via-transparent to-[#09090b]"
-      aria-hidden="true"
-    />
-
-    <!-- Ghost grid texture (landing) -->
-    <div
-      v-if="isMarketingPage"
-      class="pointer-events-none absolute inset-0 z-0"
-      :class="isLandingDark ? 'grid-bg-lines-dark opacity-[0.03]' : 'grid-bg-lines opacity-[0.35]'"
-      aria-hidden="true"
-    />
-
     <!-- Sticky navigation (landing) — top-locked, solid capsule -->
     <div
       v-if="isMarketingPage"
@@ -35,16 +17,9 @@
         >
           <NuxtLink to="/" class="flex shrink-0 items-center">
             <img
-              src="/logo/new-logo-dark.png"
-              alt="FlowVision"
-              class="h-7 w-auto sm:h-8"
-              :class="isLandingDark ? 'hidden' : 'block'"
-            >
-            <img
               src="/logo/new-logo.png"
               alt="FlowVision"
               class="h-7 w-auto sm:h-8"
-              :class="isLandingDark ? 'block' : 'hidden'"
             >
           </NuxtLink>
 
@@ -53,24 +28,24 @@
               v-for="link in landingNavLinks"
               :key="link.label"
               :to="link.to"
-              class="font-dashboard text-[14px] font-semibold uppercase tracking-wider transition-colors hover:text-candy-orange"
-              :class="route.path === link.to ? 'text-candy-orange' : 'text-white-muted'"
+              class="font-dashboard text-[14px] font-semibold uppercase tracking-wider transition-colors hover:text-flow-signal"
+              :class="route.path === link.to ? 'text-flow-signal' : 'text-flow-muted'"
             >{{ link.label }}</NuxtLink>
           </div>
 
           <div class="ml-auto hidden shrink-0 items-center gap-2 sm:gap-3 md:ml-0 md:flex md:gap-4">
             <NuxtLink
               to="/login"
-              class="font-dashboard text-[13px] font-semibold uppercase tracking-wider text-white-muted transition-colors hover:text-candy-orange sm:text-[14px]"
+              class="font-dashboard text-[13px] font-semibold uppercase tracking-wider text-flow-muted transition-colors hover:text-flow-signal sm:text-[14px]"
             >
               Sign in
             </NuxtLink>
-          
+
           </div>
 
           <button
             type="button"
-            class="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full text-white-muted transition-colors hover:text-candy-orange md:hidden"
+            class="ml-auto inline-flex h-9 w-9 items-center justify-center rounded-full text-flow-muted transition-colors hover:text-flow-signal md:hidden"
             :aria-expanded="mobileMenuOpen"
             aria-controls="mobile-navigation"
             aria-label="Open navigation menu"
@@ -187,7 +162,7 @@
 <script setup>
 const route = useRoute()
 const { isMarketingPage } = useMarketingPage()
-const { isLandingDark, toggleLandingTheme, navCapsuleClass } = useLandingTheme()
+const { navCapsuleClass } = useLandingTheme()
 const mobileMenuOpen = ref(false)
 
 const landingNavLinks = [
@@ -215,18 +190,5 @@ watch(() => route.fullPath, () => {
 .mobile-menu-enter-from,
 .mobile-menu-leave-to {
   opacity: 0;
-}
-.grid-bg-lines {
-  background-image:
-    linear-gradient(to right, rgb(228 228 231 / 0.55) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(228 228 231 / 0.55) 1px, transparent 1px);
-  background-size: 100px 100px;
-}
-
-.grid-bg-lines-dark {
-  background-image:
-    linear-gradient(to right, rgb(255 255 255 / 0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.35) 1px, transparent 1px);
-  background-size: 100px 100px;
 }
 </style>

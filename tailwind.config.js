@@ -68,6 +68,14 @@
           success: '#16A34A',
           warning: '#F59E0B',
           danger: '#DC2626',
+
+          // --- FLOWVISION MARKETING PALETTE (landing "/" + "/features" only — dashboard
+          // surfaces keep the onyx/candy tokens above untouched) ---
+          'flow-void': '#050505', // marketing canvas background
+          'flow-ink': '#F5F5F0', // primary text
+          'flow-muted': '#8B8B87', // muted/supporting text
+          'flow-signal': '#FF6A2A', // accent used as a signal (active document/route, CTAs) — never a background flood
+          'flow-warm': '#FFF8EF', // warm highlight
         },
         boxShadow: {
           card: '0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)',

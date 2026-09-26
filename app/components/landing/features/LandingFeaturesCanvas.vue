@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="features-canvas-page relative w-full pb-24 font-dashboard"
-    :class="isLandingDark ? 'bg-neutral-950' : 'bg-white-surface'"
-  >
+  <div class="features-canvas-page relative w-full bg-flow-void pb-24 font-dashboard">
     <FeaturesPageHeader ref="heroRef" />
 
     <div class="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
@@ -56,7 +53,6 @@
 import { gsap } from 'gsap'
 import { FEATURES_ARCHITECTURAL_SECTIONS } from '~/composables/useFeaturesPage'
 
-const { isLandingDark } = useLandingTheme()
 const { openRegister } = useAuthModals()
 
 const heroRef = ref<{ sectionRef: HTMLElement | null } | null>(null)

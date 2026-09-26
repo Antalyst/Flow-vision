@@ -1,9 +1,6 @@
 <template>
   <div class="features-tracking-diagram w-full">
-    <div
-      class="relative overflow-hidden rounded-2xl p-4 sm:p-6"
-      :class="wellClass"
-    >
+    <div class="relative overflow-hidden rounded-2xl border border-flow-muted/15 bg-flow-void p-4 sm:p-6">
       <svg
         viewBox="0 0 720 280"
         class="h-auto w-full"
@@ -12,9 +9,9 @@
       >
         <defs>
           <linearGradient id="flow-line" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#F47D2F" stop-opacity="0.2" />
-            <stop offset="50%" stop-color="#F47D2F" stop-opacity="0.9" />
-            <stop offset="100%" stop-color="#F47D2F" stop-opacity="0.2" />
+            <stop offset="0%" stop-color="#FF6A2A" stop-opacity="0.2" />
+            <stop offset="50%" stop-color="#FF6A2A" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="#FF6A2A" stop-opacity="0.2" />
           </linearGradient>
           <filter id="node-glow">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -39,7 +36,7 @@
         <circle
           v-if="activeNode"
           r="4"
-          fill="#F47D2F"
+          fill="#FF6A2A"
           filter="url(#node-glow)"
         >
           <animateMotion
@@ -81,8 +78,7 @@
             :x="node.x"
             :y="node.y + 12"
             text-anchor="middle"
-            class="text-[12px]"
-            :class="isLandingDark ? 'fill-neutral-500' : 'fill-zinc-500'"
+            class="fill-flow-muted text-[12px]"
             style="font-family: Inter, system-ui, sans-serif"
           >
             {{ node.sublabel }}
@@ -90,15 +86,12 @@
         </g>
       </svg>
 
-      <div
-        class="mt-6 rounded-2xl p-5 sm:p-6"
-        :class="detailClass"
-      >
-        <p class="text-xs text-neutral-500">
+      <div class="mt-6 rounded-2xl border border-flow-muted/15 bg-flow-void p-5 sm:p-6">
+        <p class="text-xs text-flow-muted">
           {{ activeNodeData?.label ?? 'Overview' }}
         </p>
-        <p class="mt-2 text-sm leading-relaxed" :class="descClass">
-          {{ activeNodeData?.description ?? 'Every packet traverses authenticated hops with immutable audit lineage and sub-second SLA telemetry.' }}
+        <p class="mt-2 text-sm leading-relaxed text-flow-muted">
+          {{ activeNodeData?.description ?? 'Every step is scanned, timestamped, and logged, so the current status is always accurate.' }}
         </p>
       </div>
     </div>
@@ -106,8 +99,6 @@
 </template>
 
 <script setup lang="ts">
-const { isLandingDark } = useLandingTheme()
-
 type NodeId = 'client' | 'office-a' | 'transit' | 'office-b' | 'messenger' | 'archive'
 
 const nodes: Array<{
@@ -122,31 +113,31 @@ const nodes: Array<{
     id: 'client',
     label: 'Client Portal',
     sublabel: 'Submit & track',
-    description: 'Clients initiate custody with encrypted upload, policy checks, and live status subscriptions.',
+    description: 'Clients submit documents online and follow their status the moment they arrive.',
     x: 80,
     y: 140,
   },
   {
     id: 'office-a',
-    label: 'Office Node A',
+    label: 'Office A',
     sublabel: 'Intake & classify',
-    description: 'Edge AI classifies documents locally, assigns routing priority, and seals checksum metadata.',
+    description: 'FlowVision reads each document as it comes in and sorts it automatically.',
     x: 220,
     y: 80,
   },
   {
     id: 'transit',
-    label: 'Transit Mesh',
+    label: 'In Transit',
     sublabel: 'Courier relay',
-    description: 'QR-authenticated handoffs bind courier identity, GPS, and timestamp at every physical touchpoint.',
+    description: 'A QR scan at every handoff confirms who has the document, and when.',
     x: 360,
     y: 140,
   },
   {
     id: 'office-b',
-    label: 'Office Node B',
+    label: 'Office B',
     sublabel: 'Review & approve',
-    description: 'Downstream offices receive pre-scored packets with SLA countdowns and bottleneck forecasts.',
+    description: 'Receiving offices see documents arrive with their SLA countdown already running.',
     x: 500,
     y: 80,
   },
@@ -154,15 +145,15 @@ const nodes: Array<{
     id: 'messenger',
     label: 'Messenger',
     sublabel: 'Last-mile scan',
-    description: 'Field couriers close the loop with zero-ambiguity pickup and delivery proof.',
+    description: 'A final scan closes the loop with clear proof of pickup and delivery.',
     x: 580,
     y: 200,
   },
   {
     id: 'archive',
-    label: 'Archive Vault',
-    sublabel: 'Immutable store',
-    description: 'Completed records enter checksum-sealed long-term retention with full lineage export.',
+    label: 'Archive',
+    sublabel: 'Permanent record',
+    description: 'Completed documents are stored securely with a full history of every step.',
     x: 660,
     y: 140,
   },
@@ -188,32 +179,14 @@ const pulsePath = computed(() => {
   return edge?.d ?? edges[2].d
 })
 
-const edgeStroke = computed(() =>
-  isLandingDark.value ? 'rgba(115,115,115,0.5)' : 'rgba(0,0,0,0.2)',
-)
-
-const wellClass = computed(() =>
-  isLandingDark.value ? 'bg-neutral-950' : 'bg-zinc-50 border border-zinc-200',
-)
-
-const detailClass = computed(() =>
-  isLandingDark.value ? 'bg-neutral-900' : 'bg-white border border-zinc-200',
-)
-
-const descClass = computed(() =>
-  isLandingDark.value ? 'text-neutral-400' : 'text-zinc-600',
-)
+const edgeStroke = 'rgba(139,139,135,0.5)'
 
 function nodeFill(id: NodeId) {
-  const active = activeNode.value === id
-  if (isLandingDark.value) {
-    return active ? 'rgba(244,125,47,0.15)' : 'rgba(23,23,23,0.95)'
-  }
-  return active ? 'rgba(244,125,47,0.12)' : 'rgba(255,255,255,0.95)'
+  return activeNode.value === id ? 'rgba(255,106,42,0.15)' : 'rgba(5,5,5,0.95)'
 }
 
 function nodeStroke(id: NodeId) {
-  return activeNode.value === id ? '#F47D2F' : (isLandingDark.value ? 'rgba(64,64,64,1)' : 'rgba(0,0,0,0.1)')
+  return activeNode.value === id ? '#FF6A2A' : 'rgba(139,139,135,0.35)'
 }
 
 function isEdgeActive(edge: { from: string, to: string }) {

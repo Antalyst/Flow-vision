@@ -4,15 +4,11 @@
     class="features-tab-nav sticky top-[4.25rem] z-40 sm:top-[4.75rem]"
     aria-label="Feature categories"
   >
-    <div
-      class="inline-flex max-w-full rounded-full p-1"
-      :class="isLandingDark ? 'bg-neutral-900' : 'bg-zinc-100 border border-zinc-200'"
-      role="tablist"
-    >
+    <div class="inline-flex max-w-full rounded-full border border-flow-muted/15 bg-flow-void p-1" role="tablist">
       <div class="relative flex gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <span
           v-if="indicatorStyle"
-          class="pointer-events-none absolute inset-y-0.5 rounded-full bg-candy-orange transition-all duration-300 ease-out"
+          class="pointer-events-none absolute inset-y-0.5 rounded-full bg-flow-signal transition-all duration-300 ease-out"
           :style="indicatorStyle"
           aria-hidden="true"
         />
@@ -25,11 +21,7 @@
           role="tab"
           :aria-selected="modelValue === node.id"
           class="relative z-10 shrink-0 rounded-full px-4 py-2 text-xs font-medium tracking-tight transition-colors duration-300 ease-out sm:px-5 sm:py-2.5"
-          :class="modelValue === node.id
-            ? 'text-white'
-            : isLandingDark
-              ? 'text-neutral-400 hover:text-neutral-200'
-              : 'text-zinc-500 hover:text-zinc-800'"
+          :class="modelValue === node.id ? 'text-flow-void' : 'text-flow-muted hover:text-flow-ink'"
           @click="emit('update:modelValue', node.id)"
         >
           <span class="flex items-center gap-1.5 whitespace-nowrap">
@@ -53,8 +45,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: FeatureFilterId]
 }>()
-
-const { isLandingDark } = useLandingTheme()
 
 const navRef = ref<HTMLElement | null>(null)
 const tabRefs = ref<(HTMLElement | null)[]>([])

@@ -28,23 +28,13 @@
 </template>
 
 <script setup lang="ts">
-const { isLandingDark } = useLandingTheme()
-
 defineProps<{
   title: string
   description?: string
   eyebrow?: string
 }>()
 
-const titleClass = computed(() =>
-  isLandingDark.value ? 'text-white' : 'text-zinc-900',
-)
-
-const descClass = computed(() =>
-  isLandingDark.value ? 'text-neutral-400' : 'text-zinc-600',
-)
-
-const eyebrowClass = computed(() =>
-  isLandingDark.value ? 'text-neutral-500' : 'text-zinc-500',
-)
+const titleClass = 'text-flow-ink'
+const descClass = 'text-flow-muted'
+const eyebrowClass = 'text-flow-muted'
 </script>

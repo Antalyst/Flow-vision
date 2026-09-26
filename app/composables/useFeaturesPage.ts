@@ -37,12 +37,12 @@ export function useFeaturesPage() {
   const activeFilter = useState<FeatureFilterId>('features:active-filter', () => 'all')
 
   const filterNodes: FeatureFilterNode[] = [
-    { id: 'all', label: 'All Modules', icon: 'ph:squares-four-fill' },
-    { id: 'routing', label: 'Routing Mesh', icon: 'ph:graph-fill' },
+    { id: 'all', label: 'All', icon: 'ph:squares-four-fill' },
+    { id: 'routing', label: 'Routing', icon: 'ph:graph-fill' },
     { id: 'qr', label: 'QR Verify', icon: 'ph:qr-code-fill' },
-    { id: 'ai', label: 'AI Nodes', icon: 'ph:cpu-fill' },
-    { id: 'sla', label: 'SLA Intel', icon: 'ph:timer-fill' },
-    { id: 'nlq', label: 'NLQ Engine', icon: 'ph:chat-circle-text-fill' },
+    { id: 'ai', label: 'AI Tools', icon: 'ph:cpu-fill' },
+    { id: 'sla', label: 'SLA Tracking', icon: 'ph:timer-fill' },
+    { id: 'nlq', label: 'Ask a Question', icon: 'ph:chat-circle-text-fill' },
   ]
 
   function isDimmed(panelId: string) {
@@ -71,10 +71,10 @@ export function useFeaturesPage() {
 }
 
 export const FEATURES_TOP_METRICS = [
-  { icon: 'ph:package-fill', label: 'Active packets in mesh', value: '2,847', delta: '+12%' },
+  { icon: 'ph:package-fill', label: 'Documents in motion', value: '2,847', delta: '+12%' },
   { icon: 'ph:check-circle-fill', label: 'On-time delivery rate', value: '96.4%', delta: '+2.1%' },
-  { icon: 'ph:cpu-fill', label: 'Edge nodes online', value: '48', delta: '100%' },
-  { icon: 'ph:bell-fill', label: 'Open SLA alerts', value: '7', delta: '−3 today' },
+  { icon: 'ph:cpu-fill', label: 'Offices connected', value: '48', delta: '100%' },
+  { icon: 'ph:bell-fill', label: 'Alerts needing attention', value: '7', delta: '−3 today' },
 ] as const
 
 export const FEATURES_ARCHITECTURE_SATELLITES = [
@@ -97,9 +97,9 @@ export const FEATURES_QR_PATTERN = [
 export const FEATURES_SLA_BARS = [62, 78, 71, 85, 92, 88, 95] as const
 
 export const FEATURES_DASHBOARD_STATS = [
-  { label: 'Active packets', value: '2,847', delta: '+12% vs last week' },
+  { label: 'Documents in motion', value: '2,847', delta: '+12% vs last week' },
   { label: 'On-time rate', value: '96.4%', delta: '+2.1% improvement' },
-  { label: 'Open alerts', value: '7', delta: '3 resolved today' },
+  { label: 'Alerts', value: '7', delta: '3 resolved today' },
 ] as const
 
 export const FEATURES_THROUGHPUT_BARS = [45, 62, 55, 78, 70, 85, 92, 68, 74, 88, 95, 82] as const
@@ -134,11 +134,11 @@ export const FEATURES_NLQ_SPOTLIGHT = {
   id: 'nlq',
   category: 'Query Engine',
   title: 'Natural Language Query (NLQ)',
-  description: 'Zero SQL — conversational reporting for every role. Ask complex custody questions in plain language and receive structured answers instantly.',
+  description: 'No SQL needed. Anyone on your team can ask a question in plain language and get a clear answer instantly.',
   image: `${ASSETS}/Natural Language Query.png`,
   query: 'Show all documents delayed more than 48h in Region 3',
   result: '14 documents matched · avg delay 62h · 3 offices flagged for reroute',
-  tags: ['Zero SQL', 'Conversational', 'Role-based'],
+  tags: ['No SQL needed', 'Plain language', 'For every role'],
 } as const
 
 /** @deprecated Use FEATURES_AI_CAPABILITIES */
@@ -147,22 +147,22 @@ export const FEATURES_CAPABILITIES = FEATURES_AI_CAPABILITIES
 export const FEATURES_SECTION_A: FeatureSectionGroup = {
   id: 'core-infrastructure',
   eyebrow: 'Section A',
-  title: 'Core Layer & Infrastructure',
-  description: 'Deterministic routing and live network visibility — the foundation that keeps documents moving through your office mesh with telemetry at every hop.',
+  title: 'Routing & Visibility',
+  description: 'Automatic routing and a live view of your network — the foundation that keeps documents moving between offices.',
   features: [
     {
       id: 'routing',
-      category: 'Core Layer',
-      title: 'Unified Routing Mesh',
-      description: 'Traverses documents through a deterministic graph of local government offices with live telemetry monitoring at every hop.',
-      tags: ['Multi-hop', 'SLA Telemetry', 'Deterministic Graph'],
+      category: 'Routing',
+      title: 'Automatic Routing',
+      description: 'Documents move between offices automatically, with live status at every step.',
+      tags: ['Multi-office', 'Live status', 'Automatic'],
       variant: 'default',
     },
     {
       id: 'topology',
       category: 'Network Visibility',
-      title: 'Real-Time Network Topology',
-      description: 'A visual map interface allowing system operators to view the entire office network framework and pinpoint systemic bottlenecks before processing delays occur.',
+      title: 'Live Network View',
+      description: 'A live map of your entire office network, so you can spot slowdowns before they cause delays.',
       variant: 'diagram',
     },
   ],
@@ -171,23 +171,23 @@ export const FEATURES_SECTION_A: FeatureSectionGroup = {
 export const FEATURES_SECTION_B: FeatureSectionGroup = {
   id: 'verification-custody',
   eyebrow: 'Section B',
-  title: 'Verification & Chain of Custody',
-  description: 'Physical-to-digital validation loops and cryptographically tracked custody chains that eliminate ambiguity at every touchpoint.',
+  title: 'Verification & Custody',
+  description: 'Every physical handoff is scanned and logged, so there\'s never any doubt about who has a document and when.',
   features: [
     {
       id: 'qr-checkpoints',
       category: 'Verification',
       title: 'Smart QR Checkpoints',
-      description: 'Physical-to-digital validation loops handled at touchpoints — intake, local transit, official handoff, and final drop-off.',
+      description: 'A quick scan at intake, transit, handoff, and drop-off keeps every step on record.',
       tags: ['Intake', 'Transit', 'Handoff', 'Drop-off'],
       variant: 'qr',
     },
     {
       id: 'zero-ambiguity',
       category: 'Chain of Custody',
-      title: 'Zero-Ambiguity Auditing',
-      description: 'Formulates a cryptographically tracked chain of custody binding the courier identity, precise physical office location coordinates, and timestamps to the active record document.',
-      tags: ['Cryptographic', 'GPS-bound', 'Immutable audit'],
+      title: 'Clear Audit Trail',
+      description: 'Every scan securely links the courier, location, and time to the document, building a complete history automatically.',
+      tags: ['Secure', 'Location-tracked', 'Full history'],
       variant: 'default',
     },
   ],
@@ -197,22 +197,22 @@ export const FEATURES_SECTION_C: FeatureSectionGroup = {
   id: 'document-management',
   eyebrow: 'Section C',
   title: 'Smart Document Management',
-  description: 'Lightweight ingestion and automated policy validation — so clerks can register physical files and enforce compliance without heavy digitization overhead.',
+  description: 'Simple intake and automatic compliance checks, so staff can register physical files without extra paperwork.',
   features: [
     {
       id: 'physical-ingest',
       category: 'Ingestion',
-      title: 'Physical Document Registration Ingest',
-      description: 'Custom ingestion layer where clerks record physical files entering the pipeline without requiring heavy optical digitization steps.',
-      tags: ['Clerk-first', 'Lightweight', 'No OCR required'],
+      title: 'Quick Document Registration',
+      description: 'Staff can register a physical document the moment it arrives, no scanning or digitizing required.',
+      tags: ['Fast', 'Simple', 'No scanning required'],
       variant: 'default',
     },
     {
       id: 'policy-mesh',
       category: 'Compliance',
-      title: 'Policy Verification Mesh',
-      description: 'Systemic validation flags checking for necessary routing signatures, required processing parameters, and compliance rule status checks automatically upon intake.',
-      tags: ['Auto-validation', 'Routing signatures', 'Compliance rules'],
+      title: 'Automatic Compliance Checks',
+      description: 'Every document is automatically checked against your compliance rules the moment it\'s registered.',
+      tags: ['Automatic', 'Rule-based', 'Instant checks'],
       variant: 'default',
     },
   ],
@@ -221,15 +221,15 @@ export const FEATURES_SECTION_C: FeatureSectionGroup = {
 export const FEATURES_SECTION_D: FeatureSectionGroup = {
   id: 'operations-sla',
   eyebrow: 'Section D',
-  title: 'Operations Console & SLA Intelligence',
-  description: 'Algorithmic countdown timers and breach forecasting that keep operators ahead of deadlines — with live throughput telemetry across the network.',
+  title: 'Operations & SLA Tracking',
+  description: 'Countdown timers and early warnings keep your team ahead of deadlines, with a live view of throughput across every office.',
   features: [
     {
       id: 'sla-intelligence',
-      category: 'SLA Intelligence',
-      title: 'SLA Intelligence Tracking',
-      description: 'Algorithmic count-down timers and priority breach forecasting monitors to explicitly warn clerks when time thresholds are near failure limits.',
-      tags: ['Countdown timers', 'Breach forecast', 'Priority alerts'],
+      category: 'SLA Tracking',
+      title: 'On-Time Tracking',
+      description: 'A countdown timer warns staff before a deadline is at risk, so nothing slips through unnoticed.',
+      tags: ['Countdown timer', 'Early warning', 'Priority alerts'],
       variant: 'analytics',
     },
   ],
