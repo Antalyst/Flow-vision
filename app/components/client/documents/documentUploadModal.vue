@@ -467,6 +467,30 @@
               </select>
             </div>
 
+            <!-- 4b. Messenger for First Delivery (optional, at creation time) -->
+            <div>
+              <span class="text-sm font-semibold" :class="headingClass">
+                Messenger for First Delivery <span class="font-normal" :class="mutedClass">(optional)</span>
+              </span>
+              <p class="mt-0.5 text-sm" :class="mutedClass">
+                Choose who will carry this document to its first destination. You can also assign one later.
+              </p>
+              <div class="relative mt-2">
+                <select
+                  v-model="selectedMessengerId"
+                  class="w-full appearance-none rounded-xl border px-3 py-2 pr-9 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                  :class="inputClass"
+                >
+                  <option value="">Not now — assign later</option>
+                  <option v-for="m in eligibleMessengers" :key="m.user_id" :value="m.user_id">{{ m.full_name }}</option>
+                </select>
+                <Icon name="ph:caret-down-bold" class="pointer-events-none absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2" :class="mutedClass" />
+              </div>
+              <p v-if="!eligibleMessengers.length" class="mt-1.5 text-sm" :class="mutedClass">
+                No messengers available yet.
+              </p>
+            </div>
+
             <!-- 5. QR Code Placement Strategy -->
             <div>
               <span class="text-sm font-semibold" :class="headingClass">Where to Put the QR Code</span>
@@ -701,6 +725,25 @@ const printQrDataUrl         = ref('')
 const manualTitle            = ref('')
 const manualDescription      = ref('')
 
+// ── Messenger for first delivery (optional, at creation time) ──────────
+// Reuses the SAME eligible-liaison endpoint/rules as the post-creation
+// AssignLiaisonPanel — never a separate, drifting eligibility list.
+interface EligibleMessenger { user_id: string; full_name: string; email: string | null; role: string }
+const eligibleMessengers = ref<EligibleMessenger[]>([])
+const selectedMessengerId = ref('')
+
+async function fetchEligibleMessengers() {
+  try {
+    const res = await $fetch<{ success: boolean; data: { candidates: EligibleMessenger[] } }>(
+      '/api/tracking/eligible-liaisons',
+      { query: selectedOriginOfficeId.value ? { office_id: selectedOriginOfficeId.value } : {} },
+    )
+    eligibleMessengers.value = res.data.candidates || []
+  } catch (err) {
+    console.error('Failed to fetch eligible messengers:', err)
+  }
+}
+
 const isExcelFile = computed(() => {
   if (!selectedFile.value) return false
   const name = selectedFile.value.name.toLowerCase()
@@ -830,6 +873,7 @@ watch(
     if (!stageStore.stages.length) stageStore.fetchStages()
     if (!officeStore.offices.length) officeStore.fetchOffices()
     if (!categoriesStore.categories.length) categoriesStore.fetchCategories()
+    fetchEligibleMessengers()
   }
 )
 
@@ -903,6 +947,7 @@ const handleClose = () => {
   aiAnalysis.value = null
   expectedCompletionAmount.value = null
   expectedCompletionUnit.value = 'days'
+  selectedMessengerId.value = ''
   emit('close')
 }
 
@@ -1015,13 +1060,20 @@ const handlePrintAndSubmit = async () => {
     if (expectedCompletionHours.value) {
       fd.append('expected_completion_hours', String(expectedCompletionHours.value))
     }
+    if (selectedMessengerId.value) {
+      fd.append('assigned_messenger_id', selectedMessengerId.value)
+    }
 
     if (isExcelFile.value) {
       if (manualTitle.value) fd.append('manual_title', manualTitle.value)
       if (manualDescription.value) fd.append('manual_description', manualDescription.value)
     }
 
-    const res = await $fetch<{ success: boolean; data?: any }>('/api/documents/upload', {
+    const res = await $fetch<{
+      success: boolean
+      data?: any
+      messenger_assignment_error?: string | null
+    }>('/api/documents/upload', {
       method: 'POST',
       body: fd,
     })
@@ -1030,11 +1082,15 @@ const handlePrintAndSubmit = async () => {
       if (res.data?.title || res.data?.description) {
         aiAnalysis.value = { title: res.data.title, description: res.data.description }
       }
+      if (res.messenger_assignment_error) {
+        errorMessage.value = `Document saved, but assigning the messenger failed: ${res.messenger_assignment_error}`
+      }
       emit('uploaded')
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
       selectedCategoryId.value = ''
+      selectedMessengerId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
       expectedCompletionAmount.value = null

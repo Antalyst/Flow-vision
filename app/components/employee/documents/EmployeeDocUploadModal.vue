@@ -455,9 +455,9 @@
               <div class="mb-3 flex items-start gap-2.5">
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">4</span>
                 <div>
-                  <p class="text-sm font-semibold" :class="headingClass">Assign Messenger <span class="font-normal" :class="mutedClass">(optional)</span></p>
+                  <p class="text-sm font-semibold" :class="headingClass">Messenger for First Delivery <span class="font-normal" :class="mutedClass">(optional)</span></p>
                   <p class="mt-0.5 text-xs" :class="mutedClass">
-                    Choose who from your office will carry this document. You can also assign one later.
+                    Choose who will carry this document to its first destination. You can also assign one later.
                   </p>
                 </div>
               </div>
@@ -472,7 +472,7 @@
                 </select>
                 <Icon name="ph:caret-down-bold" class="pointer-events-none absolute right-3.5 top-1/2 h-3 w-3 -translate-y-1/2" :class="mutedClass" />
                 <p v-if="!officeMessengers.length" class="mt-1.5 text-xs" :class="mutedClass">
-                  No messengers registered at your office yet.
+                  No messengers available for your office yet.
                 </p>
               </div>
             </div>
@@ -707,7 +707,9 @@ const { isDark }  = useTheme()
 const stagesPath = computed(() => auth.user?.role === 'employee_sub_user' ? '/staff/routes' : '/employee/stages')
 
 // ── Assign Messenger (optional, at upload time) ────────────────────────
-interface OfficeMessenger { user_id: string; full_name: string; email: string }
+// Reuses the SAME eligible-liaison endpoint/rules as the post-creation
+// AssignLiaisonPanel — never a separate, drifting eligibility list.
+interface OfficeMessenger { user_id: string; full_name: string; email: string | null; role: string }
 const officeMessengers = ref<OfficeMessenger[]>([])
 const selectedMessengerId = ref('')
 const showAssignedQr = ref(false)
@@ -715,11 +717,18 @@ const lastUploadedTitle = ref('')
 const lastUploadedQrPayload = ref('')
 
 async function fetchOfficeMessengers() {
+  if (!selectedOriginOfficeId.value) {
+    officeMessengers.value = []
+    return
+  }
   try {
-    const res = await $fetch<{ success: boolean; data: OfficeMessenger[] }>('/api/employee/office-messengers')
-    officeMessengers.value = res.data || []
+    const res = await $fetch<{ success: boolean; data: { candidates: OfficeMessenger[] } }>(
+      '/api/tracking/eligible-liaisons',
+      { query: { office_id: selectedOriginOfficeId.value } },
+    )
+    officeMessengers.value = res.data.candidates || []
   } catch (err) {
-    console.error('Failed to fetch office messengers:', err)
+    console.error('Failed to fetch eligible messengers:', err)
   }
 }
 
@@ -1063,8 +1072,17 @@ const handlePrintAndSubmit = async () => {
     formData.append('qr_code_data', trackingCode)
     formData.append('user_id',          String(auth.user?.user_id ?? ''))
     formData.append('org_id',           String(auth.user?.org_id ?? ''))
-    
-    const res = await $fetch<{ success: boolean; data?: any; metadata?: any }>('/api/documents/upload', {
+    if (selectedMessengerId.value) {
+      formData.append('assigned_messenger_id', selectedMessengerId.value)
+    }
+
+    const res = await $fetch<{
+      success: boolean
+      data?: any
+      metadata?: any
+      assigned_messenger?: { user_id: string; full_name: string | null } | null
+      messenger_assignment_error?: string | null
+    }>('/api/documents/upload', {
       method: 'POST',
       body: formData,
     })
@@ -1077,19 +1095,15 @@ const handlePrintAndSubmit = async () => {
       const newDocumentId = res.metadata?.id
       const newDocumentTitle = res.metadata?.title || 'Document'
 
-      if (newDocumentId && selectedMessengerId.value) {
-        try {
-          await $fetch('/api/tracking/assign-liaison', {
-            method: 'POST',
-            body: { document_id: newDocumentId, liaison_user_id: selectedMessengerId.value },
-          })
-          lastUploadedTitle.value = newDocumentTitle
-          lastUploadedQrPayload.value = buildDocumentTrackQrPayload(newDocumentId)
-          showAssignedQr.value = true
-        } catch (assignErr: any) {
-          console.error('Failed to assign messenger:', assignErr)
-          errorMessage.value = `Document saved, but assigning the messenger failed: ${assignErr?.data?.message || 'please assign one from the document view.'}`
-        }
+      if (res.messenger_assignment_error) {
+        // Document was created — only the optional initial assignment failed.
+        // Never implies the document itself is missing; the user can still
+        // assign a messenger the normal way from the document details.
+        errorMessage.value = `Document saved, but assigning the messenger failed: ${res.messenger_assignment_error}`
+      } else if (res.assigned_messenger && newDocumentId) {
+        lastUploadedTitle.value = newDocumentTitle
+        lastUploadedQrPayload.value = buildDocumentTrackQrPayload(newDocumentId)
+        showAssignedQr.value = true
       }
 
       emit('uploaded')

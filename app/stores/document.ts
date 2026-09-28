@@ -16,6 +16,12 @@ export interface DocumentRecord {
   uploader_name?: string | null
   created_at?: string
   priority?: string
+  assigned_messenger_id?: string | null
+  messenger_name?: string | null
+  current_desk_id?: string | null
+  current_handler_id?: string | null
+  checkpoint_cleared_step?: number | null
+  current_step?: number
 }
 
 interface DocumentState {

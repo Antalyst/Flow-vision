@@ -204,7 +204,7 @@
       :is-open="!!activeDocument"
       :document="activeDocument"
       @close="closeDocumentPreview"
-      @liaison-assigned="documentStore.fetchDocuments()"
+      @liaison-assigned="handleLiaisonAssigned"
       @deleted="documentStore.fetchDocuments()"
     />
 
@@ -354,6 +354,21 @@ const closeDocumentPreview = () => {
 
 const handleUploadSuccess = () => {
   isUploadModalOpen.value = false
+  documentStore.fetchDocuments()
+}
+
+// Patch the open drawer immediately with the new assignment — fetchDocuments()
+// alone replaces documentStore.documents with new object references but never
+// touches activeDocument, so the drawer kept showing the pre-assignment
+// (stale) document until closed and reopened.
+const handleLiaisonAssigned = (payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }) => {
+  if (activeDocument.value && activeDocument.value.id === payload.document_id) {
+    activeDocument.value = {
+      ...activeDocument.value,
+      assigned_messenger_id: payload.liaison_user_id,
+      messenger_name: payload.liaison_name,
+    }
+  }
   documentStore.fetchDocuments()
 }
 

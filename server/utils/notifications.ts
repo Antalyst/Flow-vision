@@ -1096,6 +1096,49 @@ export async function markEmployeeNotificationRead(
   return !error
 }
 
+/**
+ * Bulk mark-all-read for a client or messenger (both direct-address: user_id = them).
+ * Scoped identically to fetchClientNotifications / fetchMessengerNotifications above.
+ */
+export async function markAllClientNotificationsRead(
+  orgId: string,
+  userId: string,
+): Promise<boolean> {
+  const db = getServiceSupabase()
+
+  const { error } = await db
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .eq('is_read', false)
+
+  return !error
+}
+
+/**
+ * Bulk mark-all-read for an employee's inbound office queue.
+ * Scoped identically to fetchEmployeeNotifications above.
+ */
+export async function markAllEmployeeNotificationsRead(
+  orgId: string,
+  officeIds: string[],
+): Promise<boolean> {
+  if (officeIds.length === 0) return true
+
+  const db = getServiceSupabase()
+
+  const { error } = await db
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('org_id', orgId)
+    .ilike('target_role', 'employee')
+    .in('office_id', officeIds)
+    .eq('is_read', false)
+
+  return !error
+}
+
 export interface ClaimPickupResult {
   success: boolean
   code?: string

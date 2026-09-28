@@ -30,6 +30,7 @@ export interface DocumentRow {
   tracking_status: string | null
   origin_office_id: string | null
   current_office_id: string | null
+  current_desk_id: string | null
 }
 
 /** Realtime channel name shared by server broadcast + client subscriptions. */
@@ -54,7 +55,7 @@ export async function assertDocumentOrgAccess(
 
   const { data: document, error } = await client
     .from('documents')
-    .select('id, org_id, title, tracking_status, origin_office_id, current_office_id')
+    .select('id, org_id, title, tracking_status, origin_office_id, current_office_id, current_desk_id')
     .eq('id', documentId)
     .maybeSingle()
 

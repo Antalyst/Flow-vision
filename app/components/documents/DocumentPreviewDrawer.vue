@@ -91,6 +91,14 @@
                   <span class="text-xs font-semibold" :class="mutedClass">Receiving Office</span>
                   <span class="truncate text-sm font-semibold">{{ targetOfficeLabel }}</span>
                 </div>
+                <div v-if="currentDesk" class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Current Desk</span>
+                  <span class="truncate text-sm font-semibold text-candy-orange">{{ currentDesk.name }}</span>
+                </div>
+                <div v-if="currentDesk" class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Currently Handled By</span>
+                  <span class="truncate text-sm font-semibold">{{ currentDesk.assigned_user?.full_name || 'Unassigned' }}</span>
+                </div>
                 <div v-if="document.target_completion_date" class="flex items-center justify-between gap-3 px-4 py-3">
                   <span class="text-xs font-semibold" :class="mutedClass">Expected Completion</span>
                   <span class="text-sm font-semibold" :class="isOverdue ? 'text-danger' : ''">
@@ -300,6 +308,9 @@
                   <p class="mt-1 text-sm" :class="mutedClass">
                     Assigned to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ document.messenger_name || 'a messenger' }}</strong> — show them this QR to scan.
                   </p>
+                  <p v-if="nextDestinationLabel" class="mt-1 text-sm" :class="mutedClass">
+                    Delivering to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ nextDestinationLabel }}</strong>.
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -316,8 +327,36 @@
             <AssignLiaisonPanel
               v-else
               :document="document"
+              :next-destination-label="nextDestinationLabel"
               @assigned="handleLiaisonAssigned"
             />
+
+            <!-- Desk-to-desk transfer: only the staff member currently handling -->
+            <!-- this document at their desk may hand it off to another desk. -->
+            <section
+              v-if="isCurrentDeskHandler"
+              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Transfer Document</p>
+                  <p class="mt-1 text-sm" :class="mutedClass">
+                    Scan the QR code of the desk you're handing this document to.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-candy-hover"
+                  @click="openTransferScanner"
+                >
+                  <Icon name="ph:arrows-left-right-fill" class="h-4 w-4" />
+                  Transfer to Another Desk
+                </button>
+              </div>
+              <p v-if="transferSuccessMessage" class="mt-3 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+                {{ transferSuccessMessage }}
+              </p>
+            </section>
 
             <slot name="extra" />
 
@@ -417,6 +456,27 @@
       :qr-payload="pickupQrPayload"
       @close="showPickupQr = false"
     />
+
+    <!-- Desk transfer scanner overlay -->
+    <div
+      v-if="isTransferScannerOpen"
+      class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-black/90 backdrop-blur-sm px-6"
+    >
+      <button
+        type="button"
+        class="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/10 hover:text-white"
+        aria-label="Close"
+        @click="closeTransferScanner"
+      >
+        <Icon name="ph:x-bold" class="h-5 w-5" />
+      </button>
+      <p class="text-sm font-semibold text-white">Scan the destination desk's QR code</p>
+      <QrScanner theme-color="orange" @scan="handleTransferScan" />
+      <p v-if="transferring" class="text-xs font-semibold text-white/70">Transferring…</p>
+      <p v-if="transferError" class="max-w-sm rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-center text-sm text-danger">
+        {{ transferError }}
+      </p>
+    </div>
   </Teleport>
 </template>
 
@@ -426,11 +486,13 @@ import QRCode from 'qrcode'
 import gsap from 'gsap'
 import { useOfficeStore } from '~/stores/office'
 import { useStageStore } from '~/stores/stage'
+import { useAuthStore } from '~/stores/auth'
 import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
 import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
 import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
 import AssignLiaisonPanel from './AssignLiaisonPanel.vue'
 import DocumentQrStickerModal from './DocumentQrStickerModal.vue'
+import QrScanner from '~/components/messenger/QrScanner.vue'
 
 interface MessagingOffice { id: string; name: string }
 
@@ -448,6 +510,8 @@ export interface PreviewDocument {
   office_id?: string | number | null
   origin_office_id?: string | number | null
   current_office_id?: string | number | null
+  current_desk_id?: string | null
+  current_handler_id?: string | null
   user_id?: string | number
   uploader_name?: string | null
   assigned_messenger_id?: string | null
@@ -507,6 +571,82 @@ const emit = defineEmits<{
   (e: 'liaison-assigned', payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }): void
   (e: 'deleted', documentId: string): void
 }>()
+
+const auth = useAuthStore()
+
+// ── Current desk / handler display + transfer ─────────────────────────
+interface CurrentDeskInfo {
+  id: string
+  name: string
+  code: string
+  office: { id: string; name: string } | null
+  assigned_user: { user_id: string; full_name: string } | null
+}
+
+const currentDesk = ref<CurrentDeskInfo | null>(null)
+const currentDeskLoading = ref(false)
+const isTransferScannerOpen = ref(false)
+const transferring = ref(false)
+const transferError = ref('')
+const transferSuccessMessage = ref('')
+
+const isCurrentDeskHandler = computed(() =>
+  !!props.document?.current_handler_id &&
+  !!auth.user?.user_id &&
+  String(props.document.current_handler_id) === String(auth.user.user_id),
+)
+
+async function fetchCurrentDesk(deskId: string | null | undefined) {
+  if (!deskId) {
+    currentDesk.value = null
+    return
+  }
+  currentDeskLoading.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: CurrentDeskInfo }>(`/api/desks/${deskId}`)
+    currentDesk.value = res.data
+  } catch {
+    currentDesk.value = null
+  } finally {
+    currentDeskLoading.value = false
+  }
+}
+
+watch(
+  () => props.document?.current_desk_id,
+  (deskId) => fetchCurrentDesk(deskId),
+  { immediate: true },
+)
+
+function openTransferScanner() {
+  transferError.value = ''
+  transferSuccessMessage.value = ''
+  isTransferScannerOpen.value = true
+}
+
+function closeTransferScanner() {
+  isTransferScannerOpen.value = false
+}
+
+async function handleTransferScan(raw: string) {
+  if (!props.document?.id || transferring.value) return
+  transferring.value = true
+  transferError.value = ''
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/tracking/desk-transfer', {
+      method: 'POST',
+      body: { documentId: props.document.id, destinationDeskQr: raw },
+    })
+    transferSuccessMessage.value = res.message
+    isTransferScannerOpen.value = false
+    await fetchCurrentDesk(props.document.current_desk_id)
+    emit('compliance-updated', { tracking_status: props.document.tracking_status ?? 'ARRIVED_AT_OFFICE' })
+  } catch (err: any) {
+    transferError.value = err?.data?.message || 'We could not transfer this document. Please try again.'
+  } finally {
+    transferring.value = false
+  }
+}
 
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
@@ -699,6 +839,17 @@ const isFinalCheckpoint = computed(() => {
   const officeId = doc.current_office_id ?? doc.office_id
   const finalStep = steps.value.find((s) => s.step_number === maxStep)
   return cursor >= maxStep && finalStep && String(finalStep.office_id) === String(officeId ?? '')
+})
+
+// Same "next step" arithmetic used server-side (assign-liaison.post.ts /
+// complete-checkpoint.post.ts: `current_step + 1` against stage_steps) so the
+// label shown here can never drift from what the server will actually assign
+// against. Purely a display label — the server remains the sole authority.
+const nextDestinationLabel = computed(() => {
+  const doc = props.document
+  if (!doc) return null
+  const nextStepNumber = (doc.current_step ?? 0) + 1
+  return steps.value.find((s) => s.step_number === nextStepNumber)?.office_name ?? null
 })
 
 async function handleApproveCheckpoint() {

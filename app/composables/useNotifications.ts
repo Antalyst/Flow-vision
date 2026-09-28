@@ -157,6 +157,7 @@ export function useMessengerNotifications() {
   const loading = useState('messenger:notifications-loading', () => false)
   const error = useState<string | null>('messenger:notifications-error', () => null)
   const markingId = useState<string | null>('messenger:notifications-marking', () => null)
+  const markingAll = useState('messenger:notifications-marking-all', () => false)
   const lastFetchedAt = useState<number | null>('messenger:notifications-fetched-at', () => null)
 
   const unreadCount = computed(() =>
@@ -209,6 +210,19 @@ export function useMessengerNotifications() {
     }
   }
 
+  async function markAllAsRead() {
+    markingAll.value = true
+    try {
+      await $fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      await fetchNotifications(true)
+    } finally {
+      markingAll.value = false
+    }
+  }
+
   function startAutoRefresh(intervalMs = 15000) {
     if (!import.meta.client) return
     const { pushBroadcastNotifications } = useMessengerSettings()
@@ -234,9 +248,11 @@ export function useMessengerNotifications() {
     loading,
     error,
     markingId,
+    markingAll,
     lastFetchedAt,
     fetchNotifications,
     markAsRead,
+    markAllAsRead,
     startAutoRefresh,
     stopAutoRefresh,
   }
@@ -248,6 +264,7 @@ export function useEmployeeNotifications() {
   const loading = useState('employee:notifications-loading', () => false)
   const error = useState<string | null>('employee:notifications-error', () => null)
   const markingId = useState<string | null>('employee:notifications-marking', () => null)
+  const markingAll = useState('employee:notifications-marking-all', () => false)
   const lastFetchedAt = useState<number | null>('employee:notifications-fetched-at', () => null)
 
   const unreadCount = computed(() =>
@@ -291,6 +308,19 @@ export function useEmployeeNotifications() {
     }
   }
 
+  async function markAllAsRead() {
+    markingAll.value = true
+    try {
+      await $fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      await fetchNotifications(true)
+    } finally {
+      markingAll.value = false
+    }
+  }
+
   function startAutoRefresh(intervalMs = 15000) {
     if (!import.meta.client) return
     stopAutoRefresh()
@@ -314,9 +344,11 @@ export function useEmployeeNotifications() {
     loading,
     error,
     markingId,
+    markingAll,
     lastFetchedAt,
     fetchNotifications,
     markAsRead,
+    markAllAsRead,
     startAutoRefresh,
     stopAutoRefresh,
   }
@@ -359,6 +391,7 @@ export function useClientNotifications() {
   const loading = useState('client:notifications-loading', () => false)
   const error = useState<string | null>('client:notifications-error', () => null)
   const markingId = useState<string | null>('client:notifications-marking', () => null)
+  const markingAll = useState('client:notifications-marking-all', () => false)
   const lastFetchedAt = useState<number | null>('client:notifications-fetched-at', () => null)
 
   const unreadCount = computed(() =>
@@ -399,6 +432,19 @@ export function useClientNotifications() {
     }
   }
 
+  async function markAllAsRead() {
+    markingAll.value = true
+    try {
+      await $fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      await fetchNotifications(true)
+    } finally {
+      markingAll.value = false
+    }
+  }
+
   function startAutoRefresh(intervalMs = 15000) {
     if (!import.meta.client) return
     stopAutoRefresh()
@@ -422,9 +468,11 @@ export function useClientNotifications() {
     loading,
     error,
     markingId,
+    markingAll,
     lastFetchedAt,
     fetchNotifications,
     markAsRead,
+    markAllAsRead,
     startAutoRefresh,
     stopAutoRefresh,
   }

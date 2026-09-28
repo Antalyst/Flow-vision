@@ -2,6 +2,7 @@ export type FlowVisionQrPayload =
   | { type: 'document'; qr: string }
   | { type: 'office'; id: string }
   | { type: 'checkpoint'; office_id: string }
+  | { type: 'desk'; id: string; qr: string }
   | { type: 'unknown' }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -14,6 +15,24 @@ export function buildDocumentTrackQrPayload(documentId: string): string {
 /** Canonical staff identity QR — a staff member's own printable/downloadable code. */
 export function buildStaffQrPayload(userId: string): string {
   return `flowvision://track/staff?id=${userId}`
+}
+
+/** Canonical desk QR — identifies the desk only, never org/office/user/role. */
+export function buildDeskQrPayload(deskId: string): string {
+  return `flowvision://desk?id=${deskId}`
+}
+
+/** Extract desk UUID from `flowvision://desk?id={uuid}`. */
+export function extractDeskId(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!/^flowvision:\/\/desk\b/i.test(trimmed)) return null
+  try {
+    const url = new URL(trimmed.replace(/^flowvision:\/\//i, 'https://flowvision.local/'))
+    const deskId = url.searchParams.get('id')?.trim()
+    return deskId && UUID_RE.test(deskId) ? deskId : null
+  } catch {
+    return null
+  }
 }
 
 /** Extract office UUID from `flowvision://track/checkpoint?office_id={uuid}`. */
@@ -51,6 +70,11 @@ export function parseFlowVisionQr(raw: string): FlowVisionQrPayload {
   const documentId = extractDocumentTrackId(trimmed)
   if (documentId) {
     return { type: 'document', qr: buildDocumentTrackQrPayload(documentId) }
+  }
+
+  const deskId = extractDeskId(trimmed)
+  if (deskId) {
+    return { type: 'desk', id: deskId, qr: buildDeskQrPayload(deskId) }
   }
 
   const checkpointOfficeId = extractCheckpointOfficeId(trimmed)

@@ -501,6 +501,7 @@ import {
   buildDocumentTrackQrPayload,
   extractCheckpointOfficeId,
   extractDocumentTrackId,
+  extractDeskId,
   parseFlowVisionQr,
 } from '~/utils/parseFlowVisionQr'
 
@@ -660,6 +661,25 @@ const handleDocumentDropOff = async (officeId: string) => {
   }
 }
 
+// Same handshake as an office QR drop-off, but the Liaison scanned a specific
+// desk inside the destination office — the server resolves desk → office and
+// additionally records current_desk_id/current_handler_id.
+const handleDeskDelivery = async (deskId: string) => {
+  const res = await $fetch<any>('/api/tracking/dropoff', {
+    method: 'POST',
+    body: { desk_id: deskId },
+  })
+  resultData.value = res
+  scanState.value = 'success'
+  await loadCustody()
+  if (messengerStore.focusedDocumentId) {
+    const stillInTransit = custodyDocs.value.some((d) => d.id === messengerStore.focusedDocumentId && d.tracking_status === 'IN_TRANSIT')
+    if (!stillInTransit) {
+      messengerStore.clearFocus()
+    }
+  }
+}
+
 const applyScanError = (err: any) => {
   const msg = err?.data?.message ?? err?.message ?? 'An unexpected error occurred.'
   const code = err?.data?.data?.code ?? ''
@@ -708,6 +728,24 @@ const handleScan = async (raw: string) => {
       } else {
         await handleCheckpointPickup(targetOfficeId)
       }
+      return
+    }
+
+    if (scannedText.startsWith('flowvision://desk')) {
+      const deskId = extractDeskId(scannedText)
+      if (!deskId) {
+        errorMessage.value = 'Invalid FlowVision QR format. Please scan a valid desk QR code.'
+        scanState.value = 'error'
+        return
+      }
+
+      if (mode.value !== 'dropoff') {
+        errorMessage.value = 'You scanned a desk QR. Switch to Drop-off mode to deliver a document there.'
+        scanState.value = 'error'
+        return
+      }
+
+      await handleDeskDelivery(deskId)
       return
     }
 

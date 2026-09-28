@@ -34,8 +34,10 @@ import { randomUUID } from 'node:crypto'
 import { PDFDocument } from 'pdf-lib'
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { emitDocumentRegisteredEmail } from '~~/server/utils/email/emailEvents'
+import { emitDocumentRegisteredEmail, emitLiaisonAssignedEmail } from '~~/server/utils/email/emailEvents'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
+import { resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { notifyLiaisonAssigned } from '~~/server/utils/notifications'
 
 const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
@@ -115,6 +117,7 @@ export default defineEventHandler(async (event) => {
   const stageIdRaw = get('stage_id')
   const originOfficeId = get('origin_office_id')
   const categoryId = get('category_id')
+  const initialLiaisonUserId = get('assigned_messenger_id')   // optional — messenger for the first leg
 
   const aiSkipped = getBool('ai_skipped')
   const manualTitle = get('title')
@@ -495,11 +498,84 @@ export default defineEventHandler(async (event) => {
       console.warn('[Scan Register] Non-fatal: registration email failed:', emailErr)
     }
 
+    // Optional initial messenger assignment (first leg) — identical validation
+    // to POST /api/tracking/assign-liaison via resolveAndAssociateLiaison. The
+    // document is already committed above; a failure here is reported back as
+    // a warning, never a silent or document-destroying failure.
+    let assignedMessenger: { user_id: string; full_name: string | null } | null = null
+    let messengerAssignmentError: string | null = null
+
+    if (initialLiaisonUserId) {
+      try {
+        const liaison = await resolveAndAssociateLiaison(client, {
+          orgId,
+          liaisonUserId: initialLiaisonUserId,
+          effectiveOfficeId: resolvedOriginOfficeId,
+        })
+
+        const { error: assignUpdateErr } = await client
+          .from('documents')
+          .update({ assigned_messenger_id: liaison.user_id })
+          .eq('id', supabaseDoc.id)
+
+        if (assignUpdateErr) throw new Error(assignUpdateErr.message)
+
+        assignedMessenger = { user_id: liaison.user_id, full_name: liaison.full_name }
+
+        const assignMessage = `${actorName ?? 'The creator'} assigned ${liaison.full_name ?? 'a messenger'} to deliver "${title}" for its first leg.`
+        await logActivitySafe({
+          orgId,
+          officeId: resolvedRole === 'client' ? null : effectiveOfficeId,
+          userId,
+          userName: actorName,
+          actorName,
+          actionType: 'assign_liaison',
+          details: assignMessage,
+          message: assignMessage,
+          documentId: supabaseDoc.id,
+          metadata: { liaison_user_id: liaison.user_id, liaison_name: liaison.full_name, initial_assignment: true },
+        }, client)
+
+        await notifyLiaisonAssigned({
+          orgId,
+          documentId: supabaseDoc.id,
+          documentTitle: title,
+          liaisonUserId: liaison.user_id,
+          assignedByOfficeName: resolvedOfficeName,
+          destinationOfficeName: resolvedRouteSteps[0]?.office_name ?? null,
+        })
+
+        try {
+          await emitLiaisonAssignedEmail({
+            orgId,
+            documentId: supabaseDoc.id,
+            title,
+            trackingCode: qrCode,
+            creatorUserId: userId,
+            creatorRole: resolvedRole,
+            status: 'CREATED',
+            currentStep: 0,
+            liaisonUserId: liaison.user_id,
+            liaisonName: liaison.full_name,
+            currentOfficeName: resolvedOfficeName,
+            destinationOfficeName: resolvedRouteSteps[0]?.office_name ?? null,
+          })
+        } catch (emailErr) {
+          console.warn('[Scan Register] Non-fatal: initial-assignment email failed:', emailErr)
+        }
+      } catch (assignErr: any) {
+        messengerAssignmentError = assignErr?.message || 'We could not assign that messenger. Please assign one from the document details instead.'
+        console.warn('[Scan Register] Initial messenger assignment failed (document still created):', messengerAssignmentError)
+      }
+    }
+
     return {
       success: true,
       message: (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user')
-        ? `Scanned document registered at "${resolvedOfficeName}". Assign a Liaison to start the delivery.`
-        : 'Scanned document registered org-wide. Assign a Liaison to start the delivery.',
+        ? `Scanned document registered at "${resolvedOfficeName}". Assign a messenger to start the delivery.`
+        : 'Scanned document registered org-wide. Assign a messenger to start the delivery.',
+      assigned_messenger: assignedMessenger,
+      messenger_assignment_error: messengerAssignmentError,
       scope: {
         role: resolvedRole,
         org_id: orgId,
@@ -511,6 +587,7 @@ export default defineEventHandler(async (event) => {
       },
       metadata: {
         ...supabaseDoc,
+        assigned_messenger_id: assignedMessenger?.user_id ?? null,
         mysql_storage_id: mysqlInsertedId,
         activity_log_id: activityLogId,
         notification_id: notificationId,
