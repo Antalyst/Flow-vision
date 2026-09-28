@@ -56,7 +56,7 @@
     </div>
 
     <!-- ── KPI Cards ─────────────────────────────────────────────────── -->
-    <div ref="kpiEl" class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div ref="kpiEl" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div
         v-for="card in kpiCards"
         :key="card.label"
@@ -123,13 +123,13 @@ const loadingOffice = ref(true)
 
 const recentDocs = computed(() => docs.value.slice(0, 8))
 
+// docs.value is already own-uploads-only (see fetchDashboard), so "total"
+// and "mine" would otherwise be the same number — just one card for it.
 const kpiCards = computed(() => {
-  const mine = docs.value.filter((d) => d.is_own_upload)
   const inTransit = docs.value.filter((d) => ['PICKED_UP', 'IN_TRANSIT'].includes(d.tracking_status))
   const completed = docs.value.filter((d) => d.tracking_status === 'COMPLETED')
   return [
-    { label: 'Org Documents', value: docs.value.length, icon: 'ph:files-light' },
-    { label: 'My Uploads', value: mine.length, icon: 'ph:upload-simple-light' },
+    { label: 'My Uploads', value: docs.value.length, icon: 'ph:upload-simple-light' },
     { label: 'In Transit', value: inTransit.length, icon: 'ph:truck-light' },
     { label: 'Completed', value: completed.length, icon: 'ph:check-circle-light' },
   ]
@@ -173,8 +173,11 @@ async function fetchDashboard() {
   if (!orgId || !userId) return
   loading.value = true
   try {
-    const res = await $fetch('/api/employee/ledger', { params: { orgId, userId, scope: 'GLOBAL', limit: 200 } })
-    docs.value = res.data || []
+    // LOCAL (not GLOBAL) narrows to their own office, but a staff account
+    // should only ever see documents they personally created — not every
+    // document that happens to pass through their office too.
+    const res = await $fetch('/api/employee/ledger', { params: { orgId, userId, scope: 'LOCAL', limit: 200 } })
+    docs.value = (res.data || []).filter((d) => d.is_own_upload)
   } catch (err) {
     console.error('Failed to load staff dashboard:', err)
   } finally {

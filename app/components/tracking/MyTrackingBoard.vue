@@ -7,6 +7,8 @@ const props = defineProps({
   // ?document=<id> deep link, which already opens DocumentPreviewDrawer.
   documentLinkBase: { type: String, required: true },
   uploadLinkBase: { type: String, required: true },
+  // Staff portal only: hide even same-office documents that aren't theirs.
+  ownUploadsOnly: { type: Boolean, default: false },
 })
 
 const { isDark } = useTheme()
@@ -23,7 +25,9 @@ async function fetchDocuments() {
   error.value = null
   try {
     const res = await $fetch(props.fetchUrl, { credentials: 'include' })
-    documents.value = res.data ?? []
+    documents.value = props.ownUploadsOnly
+      ? (res.data ?? []).filter((d) => d.is_own_upload)
+      : (res.data ?? [])
   } catch (err) {
     error.value = err?.data?.message ?? err?.message ?? 'Failed to load your documents.'
     documents.value = []

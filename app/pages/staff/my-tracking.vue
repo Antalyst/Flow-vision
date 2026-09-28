@@ -4,7 +4,7 @@
       <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
       <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">My Tracking</h1>
       <p class="mt-1 text-sm" :class="mutedClass">
-        Documents you've registered, or that are currently at your desk — and where each one stands.
+        Documents you've registered, and where each one stands.
       </p>
     </div>
 
@@ -29,6 +29,7 @@
       fetch-url="/api/employee/ledger?scope=LOCAL&limit=200"
       document-link-base="/staff/documents"
       upload-link-base="/staff/documents"
+      own-uploads-only
     />
     <ActivityTimeline v-else mine-only-locked />
   </section>
@@ -37,7 +38,7 @@
 <script setup lang="ts">
 useSeoMeta({
   title: 'FlowVision | My Tracking',
-  description: 'Documents you registered or that are at your desk, plus your personal activity history.'
+  description: 'Documents you registered, plus your personal activity history.'
 })
 import MyTrackingBoard from '~/components/tracking/MyTrackingBoard.vue'
 import ActivityTimeline from '~/components/activity/ActivityTimeline.vue'

@@ -1,5 +1,5 @@
 <template>
-  <EmployeeDocumentsPage scan-base-path="/staff/scan" ledger-scope="GLOBAL" />
+  <EmployeeDocumentsPage scan-base-path="/staff/scan" ledger-scope="LOCAL" own-uploads-only />
 </template>
 
 <script setup lang="ts">
@@ -7,7 +7,7 @@ import EmployeeDocumentsPage from '~/components/employee/documents/index.vue'
 
 useSeoMeta({
   title: 'FlowVision | Documents',
-  description: 'Create, upload, and track documents across your organization.'
+  description: 'Documents you created.'
 })
 
 definePageMeta({ layout: 'staff' })

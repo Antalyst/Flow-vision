@@ -13,7 +13,9 @@
         <div class="mb-3 h-1 w-14 rounded-full bg-candy-orange" />
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Documents</h1>
         <p class="mt-1 text-sm" :class="mutedText">
-          {{ props.ledgerScope === 'GLOBAL' ? 'Every document across your organization.' : 'Documents from the offices assigned to you.' }}
+          {{ props.ownUploadsOnly
+            ? 'Documents you created.'
+            : props.ledgerScope === 'GLOBAL' ? 'Every document across your organization.' : 'Documents from the offices assigned to you.' }}
         </p>
       </div>
 
@@ -380,15 +382,18 @@ interface LedgerDoc {
 interface OfficeRecord { id: string; name: string; code?: string }
 
 // ── Props ─────────────────────────────────────────────────────────────
-// Lets the Staff portal reuse this exact view (org-wide ledger, own scan page)
-// without duplicating 600+ lines — same pattern as LiaisonDeliveriesBoard's
-// scanBasePath prop.
+// Lets the Staff portal reuse this exact view (own scan page, own-uploads-only
+// ledger) without duplicating 600+ lines — same pattern as
+// LiaisonDeliveriesBoard's scanBasePath prop.
 const props = withDefaults(defineProps<{
   scanBasePath?: string
   ledgerScope?: Scope
+  /** Staff portal only: hide even same-office documents that aren't theirs. */
+  ownUploadsOnly?: boolean
 }>(), {
   scanBasePath: '/employee/scan',
   ledgerScope: 'LOCAL',
+  ownUploadsOnly: false,
 })
 
 // ── Stores & composables ──────────────────────────────────────────────
@@ -622,7 +627,9 @@ const fetchDocs = async () => {
     const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/employee/ledger', {
       params: { orgId, userId, scope: props.ledgerScope, limit: 200 },
     })
-    docs.value = res.data ?? []
+    docs.value = props.ownUploadsOnly
+      ? (res.data ?? []).filter((d: any) => d.is_own_upload)
+      : (res.data ?? [])
   } catch (err) {
     console.error('[EmployeeDocs] fetchDocs:', err)
   } finally {
