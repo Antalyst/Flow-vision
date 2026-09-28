@@ -216,10 +216,10 @@ const mobileMenuOpen = ref(false)
 const isSidebarMinimized = ref(false)
 
 const mobileNavItems = [
-  { to: '/staff/dashboard',  label: 'Dashboard',  icon: 'ph:squares-four-fill' },
-  { to: '/staff/documents',  label: 'Documents',  icon: 'ph:files-fill' },
-  { to: '/staff/deliveries', label: 'Deliveries', icon: 'ph:package-fill' },
-  { to: '/staff/settings',   label: 'Settings',   icon: 'ph:gear-six-fill' },
+  { to: '/staff/dashboard',     label: 'Dashboard',     icon: 'ph:squares-four-fill' },
+  { to: '/staff/documents',     label: 'Documents',     icon: 'ph:files-fill' },
+  { to: '/staff/notifications', label: 'Notifications', icon: 'ph:bell-fill' },
+  { to: '/staff/settings',      label: 'Settings',      icon: 'ph:gear-six-fill' },
 ]
 
 const isActive = (to) => route.path === to || route.path.startsWith(`${to}/`)

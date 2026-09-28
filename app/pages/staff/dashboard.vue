@@ -127,8 +127,8 @@ const loadingOffice = ref(true)
 
 const recentDocs = computed(() => docs.value.slice(0, 8))
 
-// docs.value is already own-uploads-only (see fetchDashboard), so "total"
-// and "mine" would otherwise be the same number — just one card for it.
+// docs.value is already scoped to "mine or arrived at my desk" (see
+// fetchDashboard), so "total" and "mine" would double up — just one card.
 const kpiCards = computed(() => {
   const inTransit = docs.value.filter((d) => ['PICKED_UP', 'IN_TRANSIT'].includes(d.tracking_status))
   const completed = docs.value.filter((d) => d.tracking_status === 'COMPLETED')
@@ -181,7 +181,7 @@ async function fetchDashboard() {
     // should only ever see documents they personally created — not every
     // document that happens to pass through their office too.
     const res = await $fetch('/api/employee/ledger', { params: { orgId, userId, scope: 'LOCAL', limit: 200 } })
-    docs.value = (res.data || []).filter((d) => d.is_own_upload)
+    docs.value = (res.data || []).filter((d) => d.is_own_upload || d.is_at_my_office)
   } catch (err) {
     console.error('Failed to load staff dashboard:', err)
   } finally {

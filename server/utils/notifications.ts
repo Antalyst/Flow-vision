@@ -889,7 +889,8 @@ export async function fetchEmployeeNotifications(
     throw createError({ statusCode: 401, message: 'Authentication required.' })
   }
 
-  if (userRole.toLowerCase() !== 'employee') {
+  const normalizedRole = userRole.toLowerCase()
+  if (normalizedRole !== 'employee' && normalizedRole !== 'employee_sub_user') {
     throw createError({ statusCode: 403, message: 'Only employees can view office inbound notifications.' })
   }
 

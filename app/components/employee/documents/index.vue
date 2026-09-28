@@ -14,7 +14,7 @@
         <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Documents</h1>
         <p class="mt-1 text-sm" :class="mutedText">
           {{ props.ownUploadsOnly
-            ? 'Documents you created.'
+            ? 'Documents you created, plus anything that has arrived at your desk.'
             : props.ledgerScope === 'GLOBAL' ? 'Every document across your organization.' : 'Documents from the offices assigned to you.' }}
         </p>
       </div>
@@ -369,6 +369,7 @@ interface LedgerDoc {
   origin_label?: string
   current_label?: string
   is_own_upload: boolean
+  is_at_my_office?: boolean
   priority?: string
   uploader_name?: string | null
   assigned_messenger_id?: string | null
@@ -627,8 +628,11 @@ const fetchDocs = async () => {
     const res = await $fetch<{ success: boolean; data: LedgerDoc[] }>('/api/employee/ledger', {
       params: { orgId, userId, scope: props.ledgerScope, limit: 200 },
     })
+    // Own uploads, plus anything that has actually arrived at their own
+    // desk/office and needs action — not the full "touches my office at any
+    // point" breadth of LOCAL scope, which would leak other staff's traffic.
     docs.value = props.ownUploadsOnly
-      ? (res.data ?? []).filter((d: any) => d.is_own_upload)
+      ? (res.data ?? []).filter((d: any) => d.is_own_upload || d.is_at_my_office)
       : (res.data ?? [])
   } catch (err) {
     console.error('[EmployeeDocs] fetchDocs:', err)

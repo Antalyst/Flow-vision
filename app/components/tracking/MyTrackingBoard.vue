@@ -26,7 +26,7 @@ async function fetchDocuments() {
   try {
     const res = await $fetch(props.fetchUrl, { credentials: 'include' })
     documents.value = props.ownUploadsOnly
-      ? (res.data ?? []).filter((d) => d.is_own_upload)
+      ? (res.data ?? []).filter((d) => d.is_own_upload || d.is_at_my_office)
       : (res.data ?? [])
   } catch (err) {
     error.value = err?.data?.message ?? err?.message ?? 'Failed to load your documents.'

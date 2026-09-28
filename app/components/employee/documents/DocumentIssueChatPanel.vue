@@ -4,21 +4,6 @@
     :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50/80'"
   >
 
-    <!-- ── Report trigger ─────────────────────────────────────────────── -->
-    <div v-if="canReportDiscrepancy" class="px-6 py-4">
-      <button
-        type="button"
-        class="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-danger px-4 py-3.5 text-sm font-bold text-white transition-colors duration-200 hover:bg-danger/90 active:scale-[0.98]"
-        @click="openReportForm"
-      >
-        <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
-        Mark Reviewed & Release Pickup
-      </button>
-      <p class="mt-2 text-center text-sm" :class="mutedText">
-        Report missing signatures, incomplete forms, or damaged hard copies.
-      </p>
-    </div>
-
     <!-- ── Active issue chat terminal ─────────────────────────────────── -->
     <div
       v-if="activeIssue"
@@ -341,12 +326,6 @@ const inputClass = computed(() =>
   isDark.value
     ? 'border-white/10 bg-onyx-black text-white placeholder:text-gray-500'
     : 'border-gray-200 bg-white text-gray-900 placeholder:text-gray-400'
-)
-
-const canReportDiscrepancy = computed(() =>
-  props.document.tracking_status === 'ARRIVED_AT_OFFICE' &&
-  !activeIssue.value &&
-  !showReportForm.value
 )
 
 const canSubmitReport = computed(() =>

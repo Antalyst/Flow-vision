@@ -12,6 +12,8 @@
  * see FLOWVISION FIX — MOVE INITIAL MESSENGER ASSIGNMENT TO DOCUMENT CREATION.
  */
 
+import { resolveBranchOfficeId } from './officeHierarchy'
+
 // 'client' included: an org-wide client admin can be a document's creator, and the
 // business rule explicitly allows a creator to become their own document's Liaison.
 export const ELIGIBLE_LIAISON_ROLES = ['employee', 'employee_sub_user', 'messenger', 'client']
@@ -36,7 +38,16 @@ export async function resolveAndAssociateLiaison(
   client: any,
   params: { orgId: string; liaisonUserId: string; effectiveOfficeId: string | null },
 ): Promise<LiaisonRow> {
-  const { orgId, liaisonUserId, effectiveOfficeId } = params
+  const { orgId, liaisonUserId, effectiveOfficeId: rawEffectiveOfficeId } = params
+
+  // Messengers/sub-users are registered under the BRANCH office, never one of
+  // its desks (see officeHierarchy.ts) — a document sitting at "Desk One"
+  // must validate/associate against "Treasurer", or every existing messenger
+  // there would be rejected as "a different office" and a first-time
+  // association would tie the messenger to the desk instead of the branch.
+  const effectiveOfficeId = rawEffectiveOfficeId
+    ? await resolveBranchOfficeId(client, rawEffectiveOfficeId)
+    : null
 
   const { data: liaison, error: liaisonErr } = await client
     .from('users')

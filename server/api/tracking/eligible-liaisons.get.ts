@@ -24,6 +24,7 @@
 
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
+import { resolveBranchOfficeId } from '~~/server/utils/officeHierarchy'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -89,16 +90,24 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Messengers/sub-users are registered under the BRANCH office, never under
+  // one of its desks — a document sitting at "Desk One" must still pull up
+  // "Treasurer"'s messengers, or a desk-level location would never match any
+  // real messenger row. See officeHierarchy.ts.
+  const branchOfficeId = effectiveOfficeId
+    ? await resolveBranchOfficeId(client, effectiveOfficeId)
+    : null
+
   // No office context: an org-wide client-admin document has no single office
   // of staff to filter by, so offer every messenger/sub-user in the org instead
   // of an empty list — a client's reach is the whole organisation.
-  const { data: candidates, error: candErr } = effectiveOfficeId
+  const { data: candidates, error: candErr } = branchOfficeId
     ? await client
         .from('users')
         .select('user_id, full_name, email, role, office_id, status')
         .eq('org_id', actor.orgId)
         .in('role', ['messenger', 'employee_sub_user'])
-        .eq('office_id', effectiveOfficeId)
+        .eq('office_id', branchOfficeId)
         .order('full_name', { ascending: true })
     : await client
         .from('users')

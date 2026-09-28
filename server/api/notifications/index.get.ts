@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (userRole === 'employee') {
+  if (userRole === 'employee' || userRole === 'employee_sub_user') {
     const unreadOnly = query.unread !== 'false'
     const notifications = await fetchEmployeeNotifications(event, { unreadOnly })
 

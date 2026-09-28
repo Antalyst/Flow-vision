@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
         'id, title, description, status, tracking_status, current_step, ' +
         'qr_code_data, office_id, origin_office_id, current_office_id, ' +
         'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
-        'assigned_messenger_id',
+        'assigned_messenger_id, checkpoint_cleared_step',
       )
       .eq('org_id', actor.orgId)
       .order('created_at', { ascending: false })
@@ -101,6 +101,18 @@ export default defineEventHandler(async (event) => {
       origin_label:    doc.origin_office_id  ? (officeLabelById[String(doc.origin_office_id)]  ?? null) : null,
       current_label:   doc.current_office_id ? (officeLabelById[String(doc.current_office_id)] ?? null) : null,
       is_own_upload:   String(doc.user_id) === String(actor.userId),
+      // current_office_id is the ONLY field that tracks live location — it's
+      // updated on every dropoff. office_id is set once at creation to the
+      // origin office and never changes again, so matching against it would
+      // wrongly keep showing a document to staff at its origin office forever,
+      // even after it has physically moved on to somewhere else.
+      // tracking_status !== 'CREATED' excludes a co-worker's freshly registered
+      // document — current_office_id is set to the origin office the instant
+      // it's created (before anyone has picked it up), which would otherwise
+      // make it show up for every other staffer at that same office even
+      // though it was never actually handed/dropped off to them.
+      is_at_my_office: doc.tracking_status !== 'CREATED' &&
+        actor.officeIds.some((id: string) => String(id) === String(doc.current_office_id)),
     }))
 
     return {
@@ -123,7 +135,7 @@ export default defineEventHandler(async (event) => {
       'id, title, description, status, tracking_status, current_step, ' +
       'qr_code_data, office_id, origin_office_id, current_office_id, ' +
       'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
-      'assigned_messenger_id',
+      'assigned_messenger_id, checkpoint_cleared_step',
     )
     .eq('org_id', actor.orgId)
     .order('created_at', { ascending: false })
@@ -182,6 +194,18 @@ export default defineEventHandler(async (event) => {
     origin_label:  doc.origin_office_id ? (officeNameById[String(doc.origin_office_id)] ?? null)                        : null,
     current_label: doc.current_office_id? (officeNameById[String(doc.current_office_id)]?? null)                        : null,
     is_own_upload: String(doc.user_id) === String(actor.userId),
+    // Own uploads OR the document's live location is one of the actor's
+    // offices — current_office_id is the only field that tracks where a
+    // document physically is right now (updated on every dropoff). office_id
+    // is pinned to the origin office at creation and never changes, so it's
+    // deliberately excluded here — matching it would keep showing a document
+    // to origin-office staff forever, even after it moved on elsewhere.
+    // tracking_status !== 'CREATED' excludes a co-worker's freshly registered
+    // document — current_office_id is already set to the origin office at
+    // creation time, before anyone has picked it up, which isn't a real
+    // "dropped off to this office" event yet.
+    is_at_my_office: doc.tracking_status !== 'CREATED' &&
+      actor.officeIds.some((id) => String(id) === String(doc.current_office_id)),
   }))
 
   return {

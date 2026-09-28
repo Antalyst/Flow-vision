@@ -385,6 +385,118 @@ export function useEmployeeNotificationBadge() {
   return { count: unreadCount, refresh }
 }
 
+/**
+ * Staff (employee_sub_user) inbound notification store — same office-scoped
+ * feed as useEmployeeNotifications (the server resolves their own office via
+ * users.office_id), kept under its own useState keys so a staff account that
+ * also happens to share a browser session tab with an employee view never
+ * cross-pollinates cached notification state.
+ */
+export function useStaffNotifications() {
+  const notifications = useState<NotificationRow[]>('staff:notifications', () => [])
+  const loading = useState('staff:notifications-loading', () => false)
+  const error = useState<string | null>('staff:notifications-error', () => null)
+  const markingId = useState<string | null>('staff:notifications-marking', () => null)
+  const markingAll = useState('staff:notifications-marking-all', () => false)
+  const lastFetchedAt = useState<number | null>('staff:notifications-fetched-at', () => null)
+
+  const unreadCount = computed(() =>
+    notifications.value.filter((n) => isUnreadNotification(n.is_read)).length,
+  )
+
+  let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+  async function fetchNotifications(force = false) {
+    if (loading.value && !force) return
+
+    const previous = notifications.value
+    loading.value = true
+    error.value = null
+    try {
+      const rows = await loadEmployeeNotificationsFromApi()
+      const next = Array.isArray(rows) ? [...rows] : []
+      notifyOnFreshEmployeeAlerts(previous, next)
+      notifications.value = next
+      lastFetchedAt.value = Date.now()
+    } catch (err: unknown) {
+      const e = err as { data?: { message?: string }, message?: string }
+      error.value = e?.data?.message ?? e?.message ?? 'Failed to load notifications.'
+      notifications.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function markAsRead(notificationId: string) {
+    markingId.value = notificationId
+    try {
+      await $fetch('/api/notifications/mark-read', {
+        method: 'POST',
+        body: { notification_id: notificationId },
+        credentials: 'include',
+      })
+      await fetchNotifications(true)
+    } finally {
+      markingId.value = null
+    }
+  }
+
+  async function markAllAsRead() {
+    markingAll.value = true
+    try {
+      await $fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      await fetchNotifications(true)
+    } finally {
+      markingAll.value = false
+    }
+  }
+
+  function startAutoRefresh(intervalMs = 15000) {
+    if (!import.meta.client) return
+    stopAutoRefresh()
+    refreshTimer = setInterval(() => {
+      fetchNotifications()
+    }, intervalMs)
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer)
+      refreshTimer = null
+    }
+  }
+
+  onUnmounted(stopAutoRefresh)
+
+  return {
+    notifications,
+    unreadCount,
+    loading,
+    error,
+    markingId,
+    markingAll,
+    lastFetchedAt,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    startAutoRefresh,
+    stopAutoRefresh,
+  }
+}
+
+export function useStaffNotificationBadge() {
+  const { unreadCount, fetchNotifications } = useStaffNotifications()
+
+  async function refresh() {
+    await fetchNotifications()
+  }
+
+  return { count: unreadCount, refresh }
+}
+
 /** Shared client document-update notification store */
 export function useClientNotifications() {
   const notifications = useState<NotificationRow[]>('client:notifications', () => [])

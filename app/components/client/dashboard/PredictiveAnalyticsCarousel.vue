@@ -268,7 +268,7 @@ const microBlocks = computed(() => {
   return [
     { label: 'Busiest Hour', value: m?.peakLoadHour ?? '—', icon: 'ph:clock-fill' },
     { label: 'How Busy, on Average', value: m?.avgCongestionIndex?.toFixed(2) ?? '0.00', icon: 'ph:chart-line-up-fill' },
-    { label: 'Risk of Delay', value: `${m?.bottleneckRiskRate ?? 0}%`, icon: 'ph:warning-fill' },
+    { label: 'Average of Delay', value: `${m?.bottleneckRiskRate ?? 0}%`, icon: 'ph:warning-fill' },
   ]
 })
 

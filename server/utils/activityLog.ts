@@ -188,7 +188,7 @@ export async function fetchActivityLogsForActor(
   } else if (userRole === 'client') {
     const actor = await resolveActorContext(event, client)
     query = query.eq('org_id', actor.orgId)
-  } else if (userRole === 'employee') {
+  } else if (userRole === 'employee' || userRole === 'employee_sub_user') {
     const withOffices = await resolveActorContextWithOffices(event, client)
     query = query.eq('org_id', withOffices.orgId)
 
