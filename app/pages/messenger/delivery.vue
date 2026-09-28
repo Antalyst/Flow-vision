@@ -43,7 +43,6 @@
         <h1 class="mt-2 text-xl font-bold leading-tight" :class="headingClass">
           {{ trip.title }}
         </h1>
-        <p class="mt-2 font-mono text-xs" :class="mutedClass">Tracking ID: {{ trip.tracking_id }}</p>
         <div class="mt-4 flex flex-wrap items-center gap-2">
           <span
             class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide"
@@ -162,8 +161,8 @@
             class="w-full max-w-md rounded-2xl border p-6 shadow-2xl"
             :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-zinc-200 bg-white-pure'"
           >
-            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
-              <Icon name="ph:warning-fill" class="h-6 w-6 text-amber-500" />
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-warning/10">
+              <Icon name="ph:warning-fill" class="h-6 w-6 text-warning" />
             </div>
             <h3 class="text-lg font-bold" :class="headingClass">Trip No Longer Active</h3>
             <p class="mt-2 text-sm leading-relaxed" :class="mutedClass">
@@ -237,7 +236,7 @@ const statusBadgeClass = computed(() => {
     return 'border-candy-orange/40 bg-candy-orange/10 text-candy-orange'
   }
   if (trip.value?.tracking_status === 'PICKED_UP') {
-    return 'border-amber-500/30 bg-amber-500/10 text-amber-500'
+    return 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
   }
   return isDark.value ? 'border-onyx-border text-white-muted' : 'border-zinc-200 text-gray-500'
 })

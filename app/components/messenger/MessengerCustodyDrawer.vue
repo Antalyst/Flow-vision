@@ -28,7 +28,6 @@
               <Icon name="ph:x-bold" class="h-4 w-4" />
             </button>
           </div>
-          <p class="mt-2 font-mono text-[14px]" :class="mutedClass">ID: {{ document.tracking_id }}</p>
         </header>
 
         <div class="flex-1 space-y-5 overflow-y-auto px-5 py-5">

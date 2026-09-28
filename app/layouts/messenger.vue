@@ -15,7 +15,7 @@
         <img :src="brandLogo" alt="FlowVision" class="w-8 h-8" />
         <span class="text-base font-bold tracking-tight text-gray-900 dark:text-white">FlowVision</span>
       </div>
-      <span class="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+      <span class="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
         Messenger
       </span>
     </div>
@@ -67,17 +67,9 @@
 
           <!-- Role + org badges -->
           <div class="flex flex-wrap items-center gap-2 mb-5">
-            <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-candy-orange"></span>
               Messenger
-            </span>
-            <span
-              v-if="auth.user?.org_id"
-              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13px] font-semibold"
-              :class="isDark ? 'bg-white/5 text-gray-400' : 'bg-gray-100 text-gray-500'"
-            >
-              <Icon name="ph:buildings-light" class="w-3 h-3" />
-              Org {{ auth.user.org_id }}
             </span>
           </div>
         </div>
@@ -109,7 +101,7 @@
             class="w-full max-w-sm rounded-xl border p-8 text-center"
             :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
           >
-            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-amber-500/60" />
+            <Icon name="ph:buildings-slash-light" class="mx-auto mb-4 w-12 h-12 text-candy-orange/60" />
             <h2 class="text-lg font-bold mb-2" :class="isDark ? 'text-white' : 'text-gray-900'">No organisation assigned</h2>
             <p class="text-sm" :class="isDark ? 'text-gray-400' : 'text-gray-500'">
               Your account hasn't been linked to an organisation yet. Contact your administrator.
@@ -134,7 +126,7 @@
           :key="item.to"
           :to="item.to"
           class="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors min-w-[56px]"
-          :class="isActive(item.to) ? 'text-amber-500' : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'"
+          :class="isActive(item.to) ? 'text-candy-orange' : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'"
         >
           <Icon :name="item.icon" class="w-5 h-5" />
           <span class="text-[13px] font-semibold">{{ item.label }}</span>

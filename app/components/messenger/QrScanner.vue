@@ -136,11 +136,12 @@ const { defaultCameraDeviceId } = useMessengerSettings()
 // (Previously this mirrored the front camera; that was the actual bug —
 // see the camera diagnostic notes on startScanner() below.)
 
-const primaryBgClass = computed(() => props.themeColor === 'orange' ? 'bg-candy-orange' : props.themeColor === 'blue' ? 'bg-blue-500' : 'bg-amber-500')
-const primaryTextClass = computed(() => props.themeColor === 'orange' ? 'text-candy-orange' : props.themeColor === 'blue' ? 'text-blue-500' : 'text-amber-500')
-const primaryBorderClass = computed(() => props.themeColor === 'orange' ? 'border-candy-orange' : props.themeColor === 'blue' ? 'border-blue-400' : 'border-amber-400')
-const primaryShadowClass = computed(() => props.themeColor === 'orange' ? 'shadow-candy-orange/20' : props.themeColor === 'blue' ? 'shadow-blue-500/20' : 'shadow-[0_4px_14px_rgba(245,158,11,0.2)]')
-const hoverPrimaryBgClass = computed(() => props.themeColor === 'orange' ? 'hover:bg-[#D96518]' : props.themeColor === 'blue' ? 'hover:bg-blue-600' : 'hover:bg-amber-600')
+// Flat brand color only — no colored glow shadows (see redesign skill).
+const primaryBgClass = computed(() => 'bg-candy-orange')
+const primaryTextClass = computed(() => 'text-candy-orange')
+const primaryBorderClass = computed(() => 'border-candy-orange')
+const primaryShadowClass = computed(() => 'shadow-sm')
+const hoverPrimaryBgClass = computed(() => 'hover:bg-candy-hover')
 
 // 1. Detect if running inside a Capacitor wrapper environment
 const isNativeCapacitor = ref(false)

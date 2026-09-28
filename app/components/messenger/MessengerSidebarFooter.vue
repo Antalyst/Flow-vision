@@ -1,7 +1,7 @@
 <template>
   <AppSidebarProfile
     :user="user"
-    accent="amber"
+    accent="orange"
     fallback-name="Messenger"
     @logout="emit('logout')"
   />

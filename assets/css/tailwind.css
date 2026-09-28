@@ -50,7 +50,7 @@
 
 @layer components {
   .dashboard-card {
-    @apply bg-white-pure dark:bg-onyx-card rounded-none border border-onyx-border/20 dark:border-onyx-border shadow-card;
+    @apply bg-white-pure dark:bg-onyx-card rounded-2xl border border-onyx-border/20 dark:border-onyx-border shadow-card;
   }
 
   .dashboard-card-hover {
@@ -58,11 +58,11 @@
   }
 
   .matrix-card {
-    @apply rounded-none border border-zinc-200 bg-white-surface shadow-card transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card;
+    @apply rounded-2xl border border-zinc-200 bg-white-surface shadow-card transition-colors duration-300 dark:border-onyx-border dark:bg-onyx-card;
   }
 
   .matrix-card-glass {
-    @apply rounded-none border border-zinc-200 bg-white-surface/90 shadow-card backdrop-blur-xl transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-card/70;
+    @apply rounded-2xl border border-zinc-200 bg-white-surface/90 shadow-card backdrop-blur-xl transition-colors duration-300 dark:border-onyx-border/80 dark:bg-onyx-card/70;
   }
 
   .nav-item {

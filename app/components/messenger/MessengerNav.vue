@@ -1,5 +1,5 @@
 <template>
-  <AppSidebarNav :groups="navGroups" accent="amber" />
+  <AppSidebarNav :groups="navGroups" accent="orange" />
 </template>
 
 <script setup>

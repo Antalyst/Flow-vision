@@ -1,17 +1,11 @@
 <template>
   <div class="space-y-6 pb-24 md:pb-8">
     <div>
-      <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-        <Icon name="ph:gear-six-light" class="h-4 w-4 text-candy-orange" />
-        <span>Messenger Portal</span>
-        <Icon name="ph:caret-right-light" class="h-3 w-3" />
-        <span class="font-medium" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">Settings</span>
-      </div>
       <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
-        Messenger Settings
+        Settings
       </h1>
       <p class="mt-1 text-sm" :class="mutedClass">
-        Configure alerts, scanner hardware, and on-device cache for your delivery workflow.
+        Alerts, scanner camera, and on-device cache.
       </p>
     </div>
 
@@ -23,13 +17,10 @@
       <!-- Notifications -->
       <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/10">
             <Icon name="ph:bell-ringing-light" class="h-5 w-5 text-candy-orange" />
           </span>
-          <div>
-            <h2 class="text-sm font-bold" :class="headingClass">Notification Preferences</h2>
-            <p class="text-xs" :class="mutedClass">Controls apply to this device and messenger account.</p>
-          </div>
+          <h2 class="text-sm font-bold" :class="headingClass">Notifications</h2>
         </div>
 
         <div class="space-y-4">
@@ -53,18 +44,15 @@
       <!-- Camera -->
       <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/10">
             <Icon name="ph:camera-light" class="h-5 w-5 text-candy-orange" />
           </span>
-          <div>
-            <h2 class="text-sm font-bold" :class="headingClass">Camera &amp; Scanner Hardware</h2>
-            <p class="text-xs" :class="mutedClass">Choose the default lens used by the QR scanner.</p>
-          </div>
+          <h2 class="text-sm font-bold" :class="headingClass">Scanner Camera</h2>
         </div>
 
         <div
           v-if="cameraError"
-          class="mb-4 rounded-none border border-amber-500 bg-transparent px-4 py-3 text-sm text-amber-600 dark:text-amber-400"
+          class="mb-4 rounded-xl border border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning"
         >
           {{ cameraError }}
         </div>
@@ -72,11 +60,11 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label class="flex-1">
             <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wide" :class="mutedClass">
-              Default Camera Device
+              Default Camera
             </span>
             <select
               v-model="selectedCameraId"
-              class="w-full rounded-none border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-0"
+              class="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
               :class="inputClass"
               :disabled="loadingCameras || savingCamera"
               @change="onCameraChange"
@@ -97,13 +85,13 @@
 
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-none border px-4 py-2.5 text-sm font-semibold transition hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
             :class="isDark ? 'border-onyx-border bg-onyx-card text-gray-300' : 'border-gray-200 bg-white text-gray-600'"
             :disabled="loadingCameras"
             @click="loadCameras"
           >
             <Icon name="ph:arrows-clockwise-light" class="h-4 w-4" :class="loadingCameras ? 'animate-spin' : ''" />
-            Refresh Devices
+            Refresh
           </button>
         </div>
       </section>
@@ -111,26 +99,24 @@
       <!-- Cache -->
       <section class="dashboard-card p-6">
         <div class="mb-5 flex items-center gap-3">
-          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-none border border-candy-orange bg-transparent">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-candy-orange/10">
             <Icon name="ph:database-light" class="h-5 w-5 text-candy-orange" />
           </span>
           <div>
-            <h2 class="text-sm font-bold" :class="headingClass">Local Cache &amp; Data Storage</h2>
-            <p class="text-xs" :class="mutedClass">
-              Clears synchronized notification memory and offline route cache on this device.
-            </p>
+            <h2 class="text-sm font-bold" :class="headingClass">Local Cache</h2>
+            <p class="text-xs" :class="mutedClass">Clears notifications and offline route cache on this device.</p>
           </div>
         </div>
 
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-none bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure transition hover:bg-opacity-90 disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure transition hover:bg-candy-hover disabled:opacity-50"
           :disabled="clearingCache"
           @click="onClearCache"
         >
           <Icon v-if="clearingCache" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
           <Icon v-else name="ph:broom-light" class="h-4 w-4" />
-          Clear Synchronized Cache
+          Clear Cache
         </button>
       </section>
     </template>
@@ -141,7 +127,7 @@
     <Transition name="toast-fade">
       <div
         v-if="toast.visible"
-        class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2 rounded-none border px-4 py-3 text-sm font-semibold shadow-none md:bottom-8"
+        class="fixed bottom-24 left-1/2 z-[100] flex max-w-sm -translate-x-1/2 items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold shadow-sm md:bottom-8"
         :class="toastClass"
         role="status"
       >
@@ -193,9 +179,9 @@ const selectedCameraId = ref('')
 const toastClass = computed(() => {
   switch (toast.type) {
     case 'warning':
-      return 'border-amber-500/40 bg-amber-950 text-amber-200'
+      return 'border-warning/40 bg-warning/10 text-warning'
     case 'error':
-      return 'border-red-500/40 bg-red-950 text-red-200'
+      return 'border-danger/40 bg-danger/10 text-danger'
     default:
       return isDark.value
         ? 'border-emerald-500/30 bg-onyx-card text-emerald-300'
@@ -278,7 +264,7 @@ async function onClearCache() {
     showToast(
       clearedKeys > 0
         ? `Cache cleared (${clearedKeys} offline ${clearedKeys === 1 ? 'entry' : 'entries'} removed).`
-        : 'Synchronized cache cleared successfully.',
+        : 'Cache cleared.',
     )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to clear cache.'

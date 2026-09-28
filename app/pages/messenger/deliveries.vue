@@ -2,30 +2,21 @@
   <div class="space-y-6 pb-24 md:pb-8">
     <!-- Header -->
     <div>
-      <div class="mb-2 flex items-center gap-2 text-sm" :class="mutedClass">
-        <Icon name="ph:package-light" class="h-4 w-4 text-candy-orange" />
-        <span>Messenger Portal</span>
-        <Icon name="ph:caret-right-light" class="h-3 w-3" />
-        <span class="font-medium" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">Deliveries</span>
-      </div>
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
-            Batch Delivery Dispatch
+            Deliveries
           </h1>
           <p class="mt-1 text-sm" :class="mutedClass">
-            Manage your acquired batch load, select active delivery focus, and process station handshakes.
+            Documents assigned to you, ready to pick up or drop off.
           </p>
         </div>
-        <div v-if="allDocs.length" class="flex items-center gap-2 text-xs font-semibold">
-          <span class="px-2.5 py-1 rounded-none border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
-            {{ custody.assigned_pending_pickup.length }} Assigned to You
+        <div v-if="allDocs.length" class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span class="px-3 py-1.5 rounded-full border border-success/30 bg-success/10 text-success">
+            {{ custody.assigned_pending_pickup.length }} Ready for Pickup
           </span>
-          <span class="px-2.5 py-1 rounded-none border border-candy-orange/40 bg-candy-orange/10 text-candy-orange">
-            {{ custody.in_transit.length }} In Transit
-          </span>
-          <span class="px-2.5 py-1 rounded-none border border-amber-500/30 bg-amber-500/10 text-amber-400">
-            {{ custody.awaiting_scan.length }} Awaiting Scan
+          <span class="px-3 py-1.5 rounded-full border border-candy-orange/30 bg-candy-orange/10 text-candy-orange">
+            {{ custody.in_transit.length + custody.awaiting_scan.length }} In Progress
           </span>
         </div>
       </div>
@@ -40,10 +31,10 @@
     <!-- Empty State -->
     <div
       v-else-if="!allDocs.length"
-      class="dashboard-card rounded-none border border-dashed p-12 text-center text-sm"
+      class="dashboard-card border border-dashed p-12 text-center text-sm"
       :class="isDark ? 'border-onyx-border text-white-muted' : 'border-zinc-200 text-gray-400'"
     >
-      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange">
+      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-candy-orange/10 text-candy-orange">
         <Icon name="ph:package-light" class="h-6 w-6" />
       </div>
       <p class="font-bold text-base" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
@@ -55,193 +46,143 @@
     </div>
 
     <div v-else class="space-y-6">
-      <!-- ── 🎯 ACTIVE DELIVERY FOCUS CARD (Rendered only when a document is focused) ── -->
-      <section
-        v-if="focusedDoc"
-        class="relative overflow-hidden rounded-none border-2 border-candy-orange bg-black p-6 shadow-xl shadow-candy-orange/10"
-      >
-        <!-- Background accent glow -->
-        <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-candy-orange/10 blur-3xl pointer-events-none" />
-
-        <div class="relative z-10 flex flex-col gap-5">
-          <!-- Top Row: Focus Badge, SLA Priority & Controls -->
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div class="flex items-center gap-2">
-              <span class="flex h-7 w-7 items-center justify-center bg-candy-orange text-black font-black text-sm">
-                🎯
+      <!-- ── Current Delivery (focused document) ── -->
+      <section v-if="focusedDoc" class="dashboard-card border-2 border-candy-orange p-5 sm:p-6">
+        <div class="flex flex-col gap-4">
+          <!-- Top Row: Section Label & Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-4" :class="isDark ? 'border-onyx-border' : 'border-zinc-200'">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-candy-orange text-white-pure">
+                <Icon name="ph:crosshair-bold" class="h-4 w-4" />
               </span>
-              <div>
-                <p class="text-[14px] font-black uppercase tracking-wider text-candy-orange">
-                  Active Delivery Focus
-                </p>
-                <p class="text-[13px] text-white/60">Primary Target for Current Leg</p>
-              </div>
+              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+                Current Delivery
+              </p>
             </div>
 
-            <div class="flex items-center gap-2">
-              <!-- SLA Priority Tag -->
-              <span
-                class="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] font-extrabold uppercase tracking-wider border"
-                :class="getPriorityBadgeClass(focusedDoc.priority)"
-              >
-                <Icon name="ph:fire-simple-fill" class="h-3 w-3" />
-                {{ focusedDoc.priority || 'Medium' }} SLA Priority
-              </span>
-
-              <!-- Status Tag -->
-              <span
-                class="px-2.5 py-1 text-[13px] font-bold uppercase tracking-wider border"
-                :class="focusedDoc.tracking_status === 'IN_TRANSIT'
-                  ? 'border-candy-orange bg-candy-orange/10 text-candy-orange'
-                  : focusedDoc.tracking_status === 'PICKED_UP'
-                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                    : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'"
-              >
-                {{ focusedDoc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : focusedDoc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
-              </span>
-
-              <!-- Change Focus CTA -->
+            <div class="flex items-center gap-1.5">
               <button
                 type="button"
-                class="inline-flex items-center gap-1 px-2 py-1 text-[13px] font-bold uppercase tracking-wider text-white/80 hover:text-white hover:bg-white/10 transition border border-white/20"
-                title="Choose another document from manifest"
+                class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                :class="isDark ? 'text-white-muted hover:bg-white/10 hover:text-white-pure' : 'text-gray-500 hover:bg-gray-100 hover:text-onyx-black'"
+                title="Choose another document from your list"
                 @click="manifestExpanded = true"
               >
-                <Icon name="ph:arrows-down-up-light" class="h-3.5 w-3.5 text-candy-orange" />
+                <Icon name="ph:arrows-down-up-light" class="h-3.5 w-3.5" />
                 Change Focus
               </button>
 
-              <!-- Clear Focus Button -->
               <button
                 type="button"
-                class="inline-flex items-center gap-1 px-2 py-1 text-[13px] font-bold uppercase tracking-wider text-white/60 hover:text-white hover:bg-white/10 transition border border-white/10"
-                title="Clear current target focus"
+                class="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                :class="isDark ? 'text-white-muted hover:bg-white/10 hover:text-white-pure' : 'text-gray-500 hover:bg-gray-100 hover:text-onyx-black'"
+                title="Clear current delivery focus"
                 @click="messengerStore.clearFocus()"
               >
                 <Icon name="ph:x-circle-light" class="h-3.5 w-3.5" />
-                Clear Focus
+                Clear
               </button>
             </div>
           </div>
 
-          <!-- ── 🟦 / 🟩 Context-Aware Action Banner ── -->
-          <div
-            class="flex items-center gap-3 px-4 py-3 rounded-none font-bold text-xs uppercase tracking-wider border shadow-md"
-            :class="focusedScanMode === 'pickup'
-              ? 'border-cyan-500 bg-cyan-950/80 text-cyan-300 shadow-cyan-950/40'
-              : 'border-emerald-500 bg-emerald-950/80 text-emerald-300 shadow-emerald-950/40'"
-          >
+          <!-- Title -->
+          <h2 class="text-lg font-bold leading-snug" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
+            {{ focusedDoc.title }}
+          </h2>
+
+          <!-- Status + Priority -->
+          <div class="flex flex-wrap items-center gap-2">
             <span
-              class="flex h-6 w-6 items-center justify-center rounded-none text-black font-black text-xs flex-shrink-0"
-              :class="focusedScanMode === 'pickup' ? 'bg-cyan-400' : 'bg-emerald-400'"
+              class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border"
+              :class="focusedDoc.tracking_status === 'IN_TRANSIT' || focusedDoc.tracking_status === 'PICKED_UP'
+                ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
+                : 'border-success/30 bg-success/10 text-success'"
             >
-              <Icon :name="focusedScanMode === 'pickup' ? 'ph:hand-bold' : 'ph:buildings-bold'" class="h-3.5 w-3.5" />
+              {{ focusedDoc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : focusedDoc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
             </span>
 
-            <div class="min-w-0 flex-1">
-              <span v-if="focusedScanMode === 'pickup'" class="tracking-wide">
-                🟦 Action Needed: Pickup from <strong class="text-white underline decoration-cyan-400">{{ focusedDoc.origin_office_name || 'Origin Office' }}</strong>
-              </span>
-              <span v-else class="tracking-wide">
-                🟩 Action Needed: Drop-off at <strong class="text-white underline decoration-emerald-400">{{ focusedDoc.destination_office_name || 'Destination Office' }}</strong>
-              </span>
-            </div>
+            <span
+              v-if="(focusedDoc.priority || '').toLowerCase().trim() === 'urgent' || (focusedDoc.priority || '').toLowerCase().trim() === 'high'"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border"
+              :class="getPriorityBadgeClass(focusedDoc.priority)"
+            >
+              <Icon name="ph:warning-fill" class="h-3 w-3" />
+              {{ focusedDoc.priority }} Priority
+            </span>
           </div>
 
-          <!-- Middle Row: Document Details & Target Destination Station -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            <!-- Document Meta -->
-            <div class="md:col-span-6 space-y-1.5">
-              <h2 class="text-xl font-extrabold text-white leading-snug">
-                {{ focusedDoc.title }}
-              </h2>
-              <div class="flex flex-wrap items-center gap-3 text-xs text-white/60 font-mono">
-                <span>ID: {{ focusedDoc.tracking_id }}</span>
-                <span>•</span>
-                <span class="text-amber-400 font-semibold">
-                  Step {{ focusedDoc.current_step }} / {{ focusedDoc.total_steps || '—' }}
-                </span>
-                <span v-if="focusedDoc.target_completion_date || focusedDoc.target_date">
-                  • Target: {{ formatDateSafe(focusedDoc.target_completion_date || focusedDoc.target_date) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Target Destination Station Spotlight -->
-            <div class="md:col-span-6 rounded-none border border-candy-orange/40 bg-white/5 p-4">
-              <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
-                Target Destination Station
-              </p>
-              <div class="mt-1.5 flex items-center gap-2">
-                <Icon name="ph:map-pin-fill" class="h-5 w-5 text-candy-orange flex-shrink-0" />
-                <p class="text-base font-extrabold text-white truncate">
-                  {{ focusedDoc.destination_office_name || 'Destination Station Unassigned' }}
-                </p>
-              </div>
-              <p v-if="focusedDoc.origin_office_name" class="mt-1 text-[14px] text-white/50">
-                Dispatched from: {{ focusedDoc.origin_office_name }}
-              </p>
-            </div>
+          <!-- Action Banner -->
+          <div class="flex items-center gap-3 rounded-xl border border-candy-orange/30 bg-candy-orange/10 px-4 py-3 text-sm font-semibold text-candy-orange">
+            <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-candy-orange text-white-pure">
+              <Icon :name="focusedScanMode === 'pickup' ? 'ph:hand-bold' : 'ph:buildings-bold'" class="h-4 w-4" />
+            </span>
+            <span v-if="focusedScanMode === 'pickup'">
+              Pick up from <strong>{{ focusedDoc.origin_office_name || 'Origin Office' }}</strong>
+            </span>
+            <span v-else>
+              Drop off at <strong>{{ focusedDoc.destination_office_name || 'Destination Office' }}</strong>
+            </span>
           </div>
 
-          <!-- Bottom Row: Primary Context-Aware CTAs -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+          <!-- Next Stop -->
+          <div class="rounded-xl border-2 border-candy-orange/40 bg-candy-orange/5 p-4" :class="isDark ? 'bg-candy-orange/10' : ''">
+            <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+              Next Stop
+            </p>
+            <div class="mt-1.5 flex items-center gap-2">
+              <Icon name="ph:map-pin-fill" class="h-5 w-5 text-candy-orange flex-shrink-0" />
+              <p class="text-base font-bold truncate" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
+                {{ focusedDoc.destination_office_name || 'Not yet assigned' }}
+              </p>
+            </div>
+            <p v-if="focusedDoc.origin_office_name" class="mt-1 text-xs" :class="mutedClass">
+              From: {{ focusedDoc.origin_office_name }}
+            </p>
+          </div>
+
+          <!-- CTAs -->
+          <div class="flex flex-col sm:flex-row items-stretch gap-3 pt-1">
             <button
               type="button"
-              class="flex-1 flex items-center justify-center gap-2 rounded-none px-6 py-3.5 text-xs font-black uppercase tracking-wider text-black transition active:scale-[0.99] shadow-lg"
-              :class="focusedScanMode === 'pickup'
-                ? 'bg-cyan-400 hover:bg-cyan-300 shadow-cyan-400/20'
-                : 'bg-emerald-400 hover:bg-emerald-300 shadow-emerald-400/20'"
+              class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-candy-orange px-6 py-3.5 text-sm font-bold text-white-pure transition hover:bg-candy-hover active:scale-[0.99]"
               @click="goToScan(focusedDoc)"
             >
               <Icon name="ph:scan-fill" class="h-4 w-4" />
-              <span v-if="focusedScanMode === 'pickup'">
-                Scan Pickup (from {{ focusedDoc.origin_office_name || 'Origin' }})
-              </span>
-              <span v-else>
-                Scan Drop-off (at {{ focusedDoc.destination_office_name || 'Destination' }})
-              </span>
+              {{ focusedScanMode === 'pickup' ? 'Scan Pickup' : 'Scan Drop-off' }}
             </button>
 
             <NuxtLink
               :to="`/messenger/delivery?document_id=${focusedDoc.id}`"
-              class="inline-flex items-center justify-center gap-2 rounded-none border border-white/20 bg-white/5 px-5 py-3.5 text-xs font-bold text-white transition hover:bg-white/10 hover:border-white/40 active:scale-[0.99]"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-sm font-semibold transition"
+              :class="isDark ? 'border-onyx-border text-white-muted hover:bg-white/10 hover:text-white-pure' : 'border-zinc-200 text-gray-600 hover:bg-gray-100 hover:text-onyx-black'"
             >
-              <Icon name="ph:path-light" class="h-4 w-4 text-candy-orange" />
-              View Route Vector
+              <Icon name="ph:arrow-square-out-light" class="h-4 w-4" />
+              Details
             </NuxtLink>
           </div>
         </div>
       </section>
 
-      <!-- ── 📋 IN-TRANSIT MANIFEST (MANUAL FOCUS QUEUE) ─────────────── -->
-      <section
-        class="dashboard-card border rounded-none overflow-hidden transition"
-        :class="isDark ? 'border-onyx-border bg-onyx-black' : 'border-zinc-200 bg-white-pure'"
-      >
-        <!-- Manifest Header / Toggle -->
+      <!-- ── Your Documents ── -->
+      <section class="dashboard-card overflow-hidden">
+        <!-- Header / Toggle -->
         <button
           type="button"
-          class="w-full flex items-center justify-between p-5 text-left border-b transition hover:bg-white/5"
-          :class="isDark ? 'border-onyx-border' : 'border-zinc-200'"
+          class="w-full flex items-center justify-between p-5 text-left border-b transition"
+          :class="isDark ? 'border-onyx-border hover:bg-white/5' : 'border-zinc-200 hover:bg-gray-50'"
           @click="manifestExpanded = !manifestExpanded"
         >
           <div class="flex items-center gap-3">
-            <div class="flex h-8 w-8 items-center justify-center rounded-none bg-candy-orange/10 text-candy-orange font-bold">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-candy-orange/10 text-candy-orange">
               <Icon name="ph:list-bullets-bold" class="h-4 w-4" />
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-sm" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
-                  In-Transit Manifest Queue
-                </h3>
-                <span class="rounded-none bg-candy-orange/20 px-2 py-0.5 text-[14px] font-bold text-candy-orange">
-                  {{ allDocs.length }} {{ allDocs.length === 1 ? 'Document' : 'Documents' }}
-                </span>
-              </div>
-              <p class="text-xs mt-0.5" :class="mutedClass">
-                Batch custody roster. Click "🎯 Focus Delivery" on any item to designate it as your active destination target.
-              </p>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-sm" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
+                Your Documents
+              </h3>
+              <span class="rounded-full bg-candy-orange/15 px-2 py-0.5 text-xs font-bold text-candy-orange">
+                {{ allDocs.length }}
+              </span>
             </div>
           </div>
 
@@ -251,88 +192,74 @@
           />
         </button>
 
-        <!-- Manifest Body -->
+        <!-- Document Cards -->
         <div v-show="manifestExpanded" class="p-4 space-y-3">
           <div
             v-for="doc in allDocs"
             :key="doc.id"
-            class="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-none transition"
+            class="rounded-2xl border p-4 transition"
             :class="messengerStore.isFocused(doc.id)
-              ? 'border-candy-orange bg-candy-orange/10 ring-1 ring-candy-orange/40 shadow-inner'
-              : (isDark ? 'border-onyx-border/80 bg-onyx-card/60 hover:border-candy-orange/50' : 'border-zinc-200 bg-white-surface hover:border-candy-orange/40')"
+              ? 'border-candy-orange bg-candy-orange/10'
+              : (isDark ? 'border-onyx-border bg-onyx-card/60' : 'border-zinc-200 bg-white-surface')"
           >
-            <!-- Left Info -->
-            <div class="space-y-1.5 min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span
-                  v-if="messengerStore.isFocused(doc.id)"
-                  class="inline-flex items-center gap-1 rounded-none bg-candy-orange px-2 py-0.5 text-[13px] font-black uppercase tracking-wider text-black shadow"
-                >
-                  🎯 Active Focus Target
-                </span>
-                <span
-                  class="rounded-none px-2 py-0.5 text-[13px] font-bold uppercase"
-                  :class="doc.tracking_status === 'IN_TRANSIT'
-                    ? 'bg-candy-orange/10 text-candy-orange border border-candy-orange/30'
-                    : doc.tracking_status === 'PICKED_UP'
-                      ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
-                      : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/30'"
-                >
-                  {{ doc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : doc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
-                </span>
-                <span
-                  class="inline-flex items-center gap-1 px-2 py-0.5 text-[13px] font-bold uppercase border"
-                  :class="getPriorityBadgeClass(doc.priority)"
-                >
-                  {{ doc.priority || 'Medium' }} Priority
-                </span>
-              </div>
-
-              <h4 class="font-bold text-sm truncate" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
-                {{ doc.title }}
-              </h4>
-
-              <div class="flex flex-wrap items-center gap-3 text-xs" :class="mutedClass">
-                <span class="font-mono text-[14px]">ID: {{ doc.tracking_id }}</span>
-                <span>•</span>
-                <span>Next Station: <strong class="text-candy-orange">{{ doc.destination_office_name || '—' }}</strong></span>
-                <span>•</span>
-                <span>Step {{ doc.current_step }}/{{ doc.total_steps || '—' }}</span>
-                <span v-if="doc.target_completion_date || doc.target_date">
-                  • Target: {{ formatDateSafe(doc.target_completion_date || doc.target_date) }}
-                </span>
-              </div>
+            <!-- Status -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border"
+                :class="doc.tracking_status === 'IN_TRANSIT' || doc.tracking_status === 'PICKED_UP'
+                  ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
+                  : 'border-success/30 bg-success/10 text-success'"
+              >
+                {{ doc.tracking_status === 'IN_TRANSIT' ? 'On the Way' : doc.tracking_status === 'PICKED_UP' ? 'Awaiting Scan' : 'Ready for Pickup' }}
+              </span>
+              <span
+                v-if="messengerStore.isFocused(doc.id)"
+                class="inline-flex items-center gap-1 rounded-full bg-candy-orange px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white-pure"
+              >
+                <Icon name="ph:crosshair-bold" class="h-3 w-3" />
+                Current
+              </span>
             </div>
 
-            <!-- Right Actions -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <!-- Focus Delivery Action Button -->
+            <!-- Title -->
+            <h4 class="mt-2.5 font-bold text-[15px] leading-snug" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
+              {{ doc.title }}
+            </h4>
+
+            <!-- Next stop -->
+            <p class="mt-1 flex items-center gap-1.5 text-sm" :class="mutedClass">
+              <Icon name="ph:map-pin-fill" class="h-4 w-4 flex-shrink-0 text-candy-orange" />
+              <span class="truncate">{{ doc.destination_office_name || 'Destination not set' }}</span>
+            </p>
+
+            <!-- Actions -->
+            <div class="mt-3.5 flex items-center gap-2">
               <button
                 v-if="!messengerStore.isFocused(doc.id)"
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-none border border-candy-orange bg-candy-orange/10 px-3.5 py-2 text-xs font-bold text-candy-orange transition hover:bg-candy-orange hover:text-black active:scale-[0.98]"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-candy-orange bg-candy-orange/10 px-3.5 py-3 text-sm font-bold text-candy-orange transition hover:bg-candy-orange hover:text-white-pure active:scale-[0.98]"
                 @click="messengerStore.setFocus(doc.id, doc)"
               >
-                <Icon name="ph:crosshair-bold" class="h-3.5 w-3.5" />
-                🎯 Focus Delivery
+                <Icon name="ph:crosshair-bold" class="h-4 w-4" />
+                Select
               </button>
 
               <button
                 v-else
                 type="button"
-                class="inline-flex items-center gap-1 rounded-none border border-candy-orange/50 bg-candy-orange/20 px-3 py-2 text-xs font-bold text-candy-orange hover:bg-candy-orange/30 transition"
-                title="Click to clear focus"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-candy-orange/50 bg-candy-orange/20 px-3.5 py-3 text-sm font-bold text-candy-orange transition hover:bg-candy-orange/30"
+                title="Clear current delivery focus"
                 @click="messengerStore.clearFocus()"
               >
-                <Icon name="ph:check-bold" class="h-3.5 w-3.5" />
-                Targeted (Clear)
+                <Icon name="ph:x-circle-bold" class="h-4 w-4" />
+                Clear
               </button>
 
               <NuxtLink
                 :to="`/messenger/delivery?document_id=${doc.id}`"
-                class="inline-flex items-center gap-1 rounded-none border px-3 py-2 text-xs font-semibold transition"
-                :class="isDark ? 'border-onyx-border text-white/80 hover:bg-white/10 hover:text-white' : 'border-zinc-200 text-gray-700 hover:bg-gray-100'"
-                title="View Trip Details"
+                class="inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-3 text-sm font-semibold transition"
+                :class="isDark ? 'border-onyx-border text-white-muted hover:bg-white/10 hover:text-white-pure' : 'border-zinc-200 text-gray-600 hover:bg-gray-100 hover:text-onyx-black'"
+                title="View delivery details"
               >
                 <Icon name="ph:arrow-square-out-light" class="h-4 w-4" />
                 Details
@@ -385,12 +312,12 @@ const skeletonClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx
 function getPriorityBadgeClass(priority?: string | null) {
   const p = (priority || '').toLowerCase().trim()
   if (p === 'urgent' || p === 'high') {
-    return 'border-rose-500/40 bg-rose-500/10 text-rose-400'
+    return 'border-warning/40 bg-warning/10 text-warning'
   }
   if (p === 'low') {
-    return 'border-zinc-500/40 bg-zinc-500/10 text-zinc-400'
+    return 'border-zinc-400/30 bg-zinc-400/10 text-zinc-500'
   }
-  return 'border-amber-500/40 bg-amber-500/10 text-amber-400'
+  return 'border-zinc-400/30 bg-zinc-400/10 text-zinc-500'
 }
 
 function formatDateSafe(val?: string | null): string {
