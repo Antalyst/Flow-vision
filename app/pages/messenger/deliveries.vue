@@ -7,12 +7,10 @@
           <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white-pure' : 'text-onyx-black'">
             Deliveries
           </h1>
-          <p class="mt-1 text-sm" :class="mutedClass">
-            Documents assigned to you, ready to pick up or drop off.
-          </p>
+         
         </div>
         <div v-if="allDocs.length" class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <span class="px-3 py-1.5 rounded-full border border-success/30 bg-success/10 text-success">
+          <span class="px-3 py-1.5 rounded-full  bg-success text-white">
             {{ custody.assigned_pending_pickup.length }} Ready for Pickup
           </span>
           <span class="px-3 py-1.5 rounded-full border border-candy-orange/30 bg-candy-orange/10 text-candy-orange">

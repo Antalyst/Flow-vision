@@ -5,9 +5,6 @@
         <h1 class="text-2xl font-bold tracking-tight" :class="isDark ? 'text-white' : 'text-gray-900'">
           Hello, {{ auth.user?.full_name?.split(' ')[0] || 'Messenger' }}!
         </h1>
-        <p class="mt-1 text-sm" :class="mutedClass">
-          Documents in your custody, ready to pick up or drop off.
-        </p>
       </div>
 
       <div

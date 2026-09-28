@@ -141,11 +141,11 @@
       <div class="mx-auto max-w-3xl">
         <button
           type="button"
-          class="flex w-full items-center justify-center gap-3 rounded-2xl bg-candy-orange px-6 py-4 text-base font-bold text-white-pure shadow-lg shadow-candy-orange/30 transition hover:bg-opacity-90 active:scale-[0.99]"
+          class="flex w-full items-center justify-center gap-3 rounded-2xl bg-candy-orange px-4 py-2 text-base font-bold text-white-pure shadow-lg shadow-candy-orange/30 transition hover:bg-opacity-90 active:scale-[0.99]"
           @click="goToDropoffScan"
         >
           <Icon name="ph:scan-fill" class="h-6 w-6" />
-          Arrived at Destination: Scan Drop-off QR
+          Scan Drop-off QR
         </button>
       </div>
     </div>

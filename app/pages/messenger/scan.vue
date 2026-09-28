@@ -100,7 +100,7 @@
       >
         <div class="flex items-center gap-2 text-white/70">
           <Icon name="ph:info-light" class="h-4 w-4 flex-shrink-0 text-candy-orange" />
-          <span>No document selected.</span>
+          <span>Select Document</span>
         </div>
         <button
           type="button"
@@ -333,7 +333,7 @@
       >
         <Icon name="ph:qr-code-light" class="h-4 w-4 flex-shrink-0" />
         <span>
-          <strong v-if="mode === 'pickup'">Point your camera at the document or checkpoint QR</strong>
+          <strong v-if="mode === 'pickup'">Point your camera at the QR</strong>
           <strong v-else>Point your camera at the office wall QR</strong>
         </span>
       </div>
