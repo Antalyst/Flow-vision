@@ -42,9 +42,9 @@
       class="flex items-center gap-4 rounded-2xl border p-5"
       :class="isDark ? 'bg-onyx-card border-onyx-border' : 'bg-white border-gray-200'"
     >
-      <sqpan class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
+      <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-candy-orange/10 border border-candy-orange/20">
         <Icon name="ph:buildings-light" class="h-5 w-5 text-candy-orange" />
-      </sqpan>
+      </span>
       <div class="min-w-0 flex-1">
         <p class="text-xs font-semibold uppercase tracking-wide" :class="mutedText">Your account belongs to</p>
         <p v-if="loadingOffice" class="mt-0.5 text-sm" :class="mutedText">Loading…</p>
@@ -52,6 +52,10 @@
           {{ myOffice.name }}
         </p>
         <p v-else class="mt-0.5 text-sm" :class="mutedText">No office on record yet.</p>
+        <p v-if="myOffice?.desk_name" class="mt-0.5 truncate text-sm" :class="mutedText">
+          <Icon name="ph:desktop-light" class="mr-1 inline h-3.5 w-3.5 text-candy-orange" />
+          {{ myOffice.desk_name }}
+        </p>
       </div>
     </div>
 

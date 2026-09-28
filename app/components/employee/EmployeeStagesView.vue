@@ -364,56 +364,63 @@
               />
             </div>
 
-            <!-- Staff: always an internal route for their one office — nothing to pick -->
-            <div v-if="isStaffUser" class="rounded-xl border p-3.5 text-xs" :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'">
+            <!-- Route Scope: Local (one office) vs Organisation-wide — staff get the -->
+            <!-- same choice as full employees now, just auto-resolved to their one -->
+            <!-- office when Local is picked (nothing to select from). -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
+                Route Scope
+              </label>
+              <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
+                <button
+                  type="button"
+                  class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                  :class="routeScope === 'local' ? 'bg-candy-orange text-white' : mutedText"
+                  @click="routeScope = 'local'"
+                >
+                  {{ isStaffUser ? 'Internal (My Office)' : 'Local (My Office)' }}
+                </button>
+                <button
+                  type="button"
+                  class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+                  :class="routeScope === 'global' ? 'bg-candy-orange text-white' : mutedText"
+                  @click="routeScope = 'global'"
+                >
+                  Organisation-wide
+                </button>
+              </div>
+            </div>
+
+            <!-- Local + staff: nothing to pick, just one office -->
+            <div
+              v-if="routeScope === 'local' && isStaffUser"
+              class="rounded-xl border p-3.5 text-xs"
+              :class="isDark ? 'border-onyx-border bg-onyx-black/40 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-600'"
+            >
               <Icon name="ph:buildings-light" class="mr-1 inline h-3.5 w-3.5 text-candy-orange" />
               This is an internal route for <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ formatOfficeName(myOffices[0]?.name) || 'your office' }}</strong> — only checkpoints inside your own office can be used to route documents there.
             </div>
 
-            <!-- Employee: choose Local (one of my offices) vs Organisation-wide -->
-            <template v-else>
-              <div class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-                  Route Scope
-                </label>
-                <div class="flex rounded-xl border p-1" :class="isDark ? 'border-onyx-border bg-onyx-black/40' : 'border-gray-200 bg-gray-50'">
-                  <button
-                    type="button"
-                    class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
-                    :class="routeScope === 'local' ? 'bg-candy-orange text-white' : mutedText"
-                    @click="routeScope = 'local'"
-                  >
-                    Local (My Office)
-                  </button>
-                  <button
-                    type="button"
-                    class="flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
-                    :class="routeScope === 'global' ? 'bg-candy-orange text-white' : mutedText"
-                    @click="routeScope = 'global'"
-                  >
-                    Organisation-wide
-                  </button>
-                </div>
-              </div>
+            <!-- Local + employee: pick which of their offices owns it -->
+            <div v-else-if="routeScope === 'local'" class="space-y-1.5">
+              <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
+                Owning Office <span class="text-danger">*</span>
+              </label>
+              <select
+                v-model="stageForm.office_id"
+                class="w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none transition-colors focus:border-candy-orange"
+                :class="inputClass"
+                required
+              >
+                <option value="">Select office branch…</option>
+                <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ formatOfficeName(o.name) }}</option>
+              </select>
+            </div>
 
-              <div v-if="routeScope === 'local'" class="space-y-1.5">
-                <label class="block text-xs font-bold uppercase tracking-wider" :class="isDark ? 'text-gray-200' : 'text-gray-700'">
-                  Owning Office <span class="text-danger">*</span>
-                </label>
-                <select
-                  v-model="stageForm.office_id"
-                  class="w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none transition-colors focus:border-candy-orange"
-                  :class="inputClass"
-                  required
-                >
-                  <option value="">Select office branch…</option>
-                  <option v-for="o in myOffices" :key="o.id" :value="String(o.id)">{{ formatOfficeName(o.name) }}</option>
-                </select>
-              </div>
-              <p v-else class="text-xs" :class="mutedText">
-                Available to every office in your organisation — anyone can use this route template.
-              </p>
-            </template>
+            <!-- Global: same for everyone -->
+            <p v-else class="text-xs" :class="mutedText">
+              Available to every office in your organisation — anyone can use this route template.
+            </p>
 
             <!-- Available Checkpoints Pool -->
             <div class="space-y-2">
@@ -595,7 +602,7 @@ const selectedCheckpoints = ref<OfficeRecord[]>([])
 //     an internal route only ever hops between desks inside the same branch.
 //   - Organisation-wide: the org's actual branches (top-level offices, no
 //     parent_office_id) — an org route hops between branches, not desks.
-const isLocalRoute = computed(() => isStaffUser.value || routeScope.value === 'local')
+const isLocalRoute = computed(() => routeScope.value === 'local')
 
 const allOffices = computed(() => {
   const offices = officeStore.offices as unknown as (OfficeRecord & { parent_office_id?: string | null })[]
@@ -824,16 +831,16 @@ watch([routeScope, () => stageForm.office_id], () => {
 })
 
 const resolvedStageOfficeId = computed(() => {
-  if (isStaffUser.value) return myOffices.value[0]?.id ? String(myOffices.value[0].id) : ''
   if (routeScope.value === 'global') return ''
+  // Local: staff have exactly one office to resolve to; employees pick from theirs.
+  if (isStaffUser.value) return myOffices.value[0]?.id ? String(myOffices.value[0].id) : ''
   return stageForm.office_id
 })
 
 const canSubmitStage = computed(() => {
   if (!stageForm.name.trim() || !selectedCheckpoints.value.length) return false
-  if (isStaffUser.value) return !!resolvedStageOfficeId.value
-  if (routeScope.value === 'local') return !!stageForm.office_id
-  return true
+  if (routeScope.value === 'global') return true
+  return !!resolvedStageOfficeId.value
 })
 
 const handleCreateStage = async () => {

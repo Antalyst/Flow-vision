@@ -6,10 +6,16 @@
   >
     <div class="flex items-start justify-between gap-3">
       <div>
-        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Assign Messenger</p>
+        <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">
+          {{ document?.assigned_messenger_id ? 'Reassign Messenger' : 'Assign Messenger' }}
+        </p>
         <p class="mt-1 text-sm" :class="mutedClass">
-          Choose who will carry this document to its next stop. They're notified right away —
-          no accept step.
+          <template v-if="document?.assigned_messenger_id">
+            They haven't scanned pickup yet, so you can still switch to someone else. The new messenger is notified right away.
+          </template>
+          <template v-else>
+            Choose who will carry this document to its next stop. They're notified right away — no accept step.
+          </template>
         </p>
       </div>
     </div>
@@ -97,6 +103,8 @@ interface LiaisonCandidate {
 const props = defineProps<{
   document: AssignableDocument | null
   nextDestinationLabel?: string | null
+  /** Explicit reassignment request — bypasses the "already assigned" block below. */
+  forceShow?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -110,13 +118,15 @@ const cellClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-car
 // Same eligibility rule enforced server-side in assign-liaison.post.ts: CREATED, or
 // ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step —
 // AND, independent of whatever the parent's document prop currently shows,
-// never offer the picker while a messenger is already assigned for this leg.
-// (A stale/un-refreshed parent object was previously the only thing stopping
-// this panel from showing right after a successful assignment.)
+// never offer the picker while a messenger is already assigned for this leg,
+// UNLESS the caller explicitly asked to reassign (forceShow) — the server has
+// no objection to overwriting assigned_messenger_id before pickup, it's only
+// this panel that otherwise hides once someone's assigned (originally to stop
+// it reappearing right after a successful assignment on a stale parent prop).
 const isEligibleForAssignment = computed(() => {
   const doc = props.document
   if (!doc) return false
-  if (doc.assigned_messenger_id) return false
+  if (doc.assigned_messenger_id && !props.forceShow) return false
   if (doc.tracking_status === 'CREATED') return true
   if (doc.tracking_status === 'ARRIVED_AT_OFFICE') {
     return (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0)

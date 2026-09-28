@@ -337,7 +337,8 @@
               </div>
             </section>
 
-            <!-- Already assigned (e.g. chosen at upload time) — just show the pickup QR -->
+            <!-- Already assigned (e.g. chosen at upload time) — pickup QR, plus a -->
+            <!-- way to switch messengers as long as they haven't scanned pickup yet. -->
             <section
               v-if="hasAssignedMessenger && isPickupEligible"
               class="stagger-block rounded-2xl border p-5"
@@ -353,22 +354,35 @@
                     Delivering to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ nextDestinationLabel }}</strong>.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-candy-hover"
-                  @click="showPickupQr = true"
-                >
-                  <Icon name="ph:qr-code-fill" class="h-4 w-4" />
-                  Show Pickup QR
-                </button>
+                <div class="flex flex-none items-center gap-2">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors"
+                    :class="isDark ? 'border-onyx-border text-gray-200 hover:bg-onyx-black' : 'border-gray-200 text-gray-700 hover:bg-gray-50'"
+                    @click="showReassignPanel = !showReassignPanel"
+                  >
+                    <Icon name="ph:arrows-clockwise-bold" class="h-4 w-4" />
+                    {{ showReassignPanel ? 'Cancel' : 'Reassign' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-candy-hover"
+                    @click="showPickupQr = true"
+                  >
+                    <Icon name="ph:qr-code-fill" class="h-4 w-4" />
+                    Show Pickup QR
+                  </button>
+                </div>
               </div>
             </section>
 
-            <!-- Not yet assigned: office-assigned Liaison picker, direct assignment -->
+            <!-- Not yet assigned: office-assigned Liaison picker, direct assignment. -->
+            <!-- Also shown on demand (forceShow) when "Reassign" above is clicked. -->
             <AssignLiaisonPanel
-              v-else
+              v-if="!hasAssignedMessenger || (isPickupEligible && showReassignPanel)"
               :document="document"
               :next-destination-label="nextDestinationLabel"
+              :force-show="showReassignPanel"
               @assigned="handleLiaisonAssigned"
             />
 
@@ -726,7 +740,10 @@ async function handleDelete() {
   }
 }
 
+const showReassignPanel = ref(false)
+
 function handleLiaisonAssigned(payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }) {
+  showReassignPanel.value = false
   emit('liaison-assigned', payload)
 }
 
@@ -994,7 +1011,10 @@ const originDisplay = computed(() => {
     actorLine = `Picked up by ${o.departed_by}`
     timeLine = o.departed_at ? `Picked up: ${formatStopTime(o.departed_at)}` : ''
   } else if (o.pending_messenger_name) {
-    actorLine = `Picked up by ${o.pending_messenger_name}`
+    // Assigned only — no scan has happened yet, so this must not read like
+    // a completed pickup (that was the actual bug: "Picked up by X" shown
+    // for a document that hadn't been scanned at all).
+    actorLine = `Assigned to ${o.pending_messenger_name}`
     timeLine = o.pending_assigned_at ? `Assigned: ${formatStopTime(o.pending_assigned_at)}` : ''
   }
 
@@ -1155,6 +1175,7 @@ const handleDownloadPdf = async () => {
 watch(
   () => [props.isOpen, props.document?.id] as const,
   ([open]) => {
+    showReassignPanel.value = false
     if (open) fetchTimeline()
     else selectedPipelineOffice.value = null
   },

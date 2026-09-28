@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext } from '~~/server/utils/actorContext'
+import { resolveOfficeDisplayLabel } from '~~/server/utils/officeLabel'
 
 /**
  * GET /api/staff/my-office
@@ -38,6 +39,12 @@ export default defineEventHandler(async (event) => {
     .maybeSingle()
 
   if (officeError) throw createError({ statusCode: 500, message: officeError.message })
+  if (!office) return { success: true, data: null }
 
-  return { success: true, data: office ?? null }
+  // Their personal desk — a separate `offices` row (parent_office_id = this
+  // office, assigned_user = them), auto-created at account creation. Same
+  // reverse lookup used to label a document's origin (see officeLabel.ts).
+  const { desk_name } = await resolveOfficeDisplayLabel(client, office.id, actor.userId)
+
+  return { success: true, data: { ...office, desk_name } }
 })
