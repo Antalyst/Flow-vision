@@ -47,6 +47,28 @@
           '2xl':['1.75rem',  { lineHeight: '2.25rem' }],  // was 1.5rem / 24px
           '3xl':['2.125rem', { lineHeight: '2.5rem'  }],  // was 1.875rem / 30px
           '4xl':['2.5rem',   { lineHeight: '2.75rem' }],  // was 2.25rem / 36px
+
+          // --- FLOWVISION MARKETING TYPE SCALE (fluid 320px → 2200px) ---
+          // Floors stay at or above the app's bumped minimums (14px labels, 17px body).
+          'flow-display': ['clamp(2.75rem, 1.35rem + 4.6vw, 7rem)', { lineHeight: '1', letterSpacing: '-0.035em' }],
+          'flow-h1': ['clamp(2.25rem, 1.3rem + 3.1vw, 5rem)', { lineHeight: '1.04', letterSpacing: '-0.03em' }],
+          'flow-h2': ['clamp(2rem, 1.35rem + 2.1vw, 3.75rem)', { lineHeight: '1.06', letterSpacing: '-0.025em' }],
+          'flow-h3': ['clamp(1.5rem, 1.2rem + 0.95vw, 2.25rem)', { lineHeight: '1.15', letterSpacing: '-0.015em' }],
+          'flow-lead': ['clamp(1.125rem, 1rem + 0.4vw, 1.375rem)', { lineHeight: '1.6' }],
+          'flow-body': ['1.0625rem', { lineHeight: '1.7' }],
+          'flow-label': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.16em' }],
+        },
+        maxWidth: {
+          flow: '2200px',
+        },
+        transitionTimingFunction: {
+          flow: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        },
+        transitionDuration: {
+          400: '400ms',
+          600: '600ms',
+          900: '900ms',
+          1400: '1400ms',
         },
         colors: {
           // --- THE ONYX PALETTE (Dark Context Foundations) ---
@@ -75,6 +97,7 @@
           'flow-ink': '#F5F5F0', // primary text
           'flow-muted': '#8B8B87', // muted/supporting text
           'flow-signal': '#FF6A2A', // accent used as a signal (active document/route, CTAs) — never a background flood
+          'flow-signal-hover': '#FF7D45', // primary button hover — lightens on dark rather than darkening
           'flow-warm': '#FFF8EF', // warm highlight
         },
         boxShadow: {
