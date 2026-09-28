@@ -80,6 +80,10 @@
                   <span class="text-sm font-semibold">{{ formatDate(document.created_at) }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-3 px-4 py-3">
+                  <span class="text-xs font-semibold" :class="mutedClass">Owner</span>
+                  <span class="truncate text-sm font-semibold">{{ ownerLabel }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3 px-4 py-3">
                   <span class="text-xs font-semibold" :class="mutedClass">Document Route</span>
                   <span class="text-sm font-semibold">{{ stageName || 'Unassigned' }}</span>
                 </div>
@@ -131,7 +135,42 @@
                 />
               </div>
 
-              <div v-else-if="stepsDisplay.length" class="relative mt-6">
+              <div v-else-if="stepsDisplay.length || originDisplay" class="relative mt-6">
+                <!-- Origin node: the office that registered this document,
+                     shown before the numbered route stops. Labeled "My Office"
+                     when the viewer belongs to that office. -->
+                <div v-if="originDisplay" class="group relative flex w-full gap-4 pb-7 text-left">
+                  <div class="relative flex flex-none flex-col items-center">
+                    <span
+                      class="relative z-10 flex h-7 w-7 flex-none items-center justify-center rounded-full text-xs font-bold transition-all duration-300"
+                      :class="originDisplay.departed ? 'bg-success text-white' : 'bg-candy-orange text-white ring-4 ring-candy-orange/20'"
+                    >
+                      <Icon :name="originDisplay.departed ? 'ph:check-bold' : 'ph:house-fill'" class="h-3.5 w-3.5" />
+                    </span>
+                    <span
+                      v-if="stepsDisplay.length"
+                      class="mt-1 w-0.5 flex-1"
+                      :class="originDisplay.departed ? 'bg-success' : (isDark ? 'bg-white/10' : 'bg-gray-200')"
+                    />
+                  </div>
+
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-[15px] font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                      {{ originDisplay.label }}
+                    </p>
+                    <p class="text-xs font-bold uppercase tracking-wide" :class="originDisplay.departed ? 'text-success' : 'text-candy-orange'">
+                      {{ originDisplay.departed ? 'Delivered' : 'Origin' }}
+                    </p>
+                    <p v-if="originDisplay.actorLine" class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                      <Icon name="ph:user-fill" class="h-3.5 w-3.5 flex-none text-candy-orange" />
+                      {{ originDisplay.actorLine }}
+                    </p>
+                    <p v-if="originDisplay.timeLine" class="mt-0.5 text-xs" :class="mutedClass">
+                      {{ originDisplay.timeLine }}
+                    </p>
+                  </div>
+                </div>
+
                 <button
                   v-for="(step, index) in stepsDisplay"
                   :key="`${step.office_id}-${index}`"
@@ -178,13 +217,15 @@
                       {{ step.statusLabel }}
                     </p>
 
-                    <p v-if="step.actorLine" class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
-                      <Icon name="ph:user-fill" class="h-3.5 w-3.5 flex-none text-candy-orange" />
-                      {{ step.actorLine }}
-                    </p>
-                    <p v-if="step.timeLine" class="mt-0.5 text-xs" :class="mutedClass">
-                      {{ step.timeLine }}
-                    </p>
+                    <div v-for="(fact, factIndex) in step.facts" :key="factIndex" :class="factIndex > 0 ? 'mt-2.5' : ''">
+                      <p v-if="fact.actorLine" class="mt-1.5 flex items-center gap-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
+                        <Icon name="ph:user-fill" class="h-3.5 w-3.5 flex-none text-candy-orange" />
+                        {{ fact.actorLine }}
+                      </p>
+                      <p v-if="fact.timeLine" class="mt-0.5 text-xs" :class="mutedClass">
+                        {{ fact.timeLine }}
+                      </p>
+                    </div>
                   </div>
                 </button>
               </div>
@@ -531,6 +572,22 @@ interface StageStep {
   arrived_at?: string | null
   released_at?: string | null
   released_by?: string | null
+  released_status?: string | null
+  pending_next_messenger_name?: string | null
+  pending_next_assigned_at?: string | null
+}
+
+interface OriginInfo {
+  office_id: string | number | null
+  office_name: string
+  is_my_office: boolean
+  registered_by: string | null
+  registered_at: string | null
+  pending_messenger_name: string | null
+  pending_assigned_at: string | null
+  departed: boolean
+  departed_by: string | null
+  departed_at: string | null
 }
 
 interface TimelineSummary {
@@ -686,6 +743,7 @@ const selectedPipelineOffice = ref<SelectedPipelineOffice | null>(null)
 const timelineRouteSteps = ref<StageStep[]>([])
 const timelineSummary = ref<TimelineSummary | null>(null)
 const timelineLoading = ref(false)
+const originData = ref<OriginInfo | null>(null)
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
 
@@ -772,6 +830,14 @@ const targetOfficeLabel = computed(() => {
   )
 })
 
+// The registering office, server-resolved so "My Office" reflects the
+// VIEWER's own office rather than a client-side guess (see originDisplay).
+const ownerLabel = computed(() => {
+  const o = originData.value
+  if (!o) return '—'
+  return o.is_my_office ? 'My Office' : o.office_name
+})
+
 // Timeline endpoint gives us the real per-checkpoint history (who picked it
 // up, when it arrived, when it was released) — richer than the plain
 // office/step list from the stage store, and it's what the "Delivery
@@ -781,22 +847,25 @@ async function fetchTimeline() {
   if (!documentId) {
     timelineRouteSteps.value = []
     timelineSummary.value = null
+    originData.value = null
     return
   }
   timelineLoading.value = true
   try {
     const res = await $fetch<{
       success: boolean
-      data: { routeSteps: StageStep[]; summary: TimelineSummary }
+      data: { routeSteps: StageStep[]; summary: TimelineSummary; origin: OriginInfo | null }
     }>('/api/tracking/timeline', { params: { documentId } })
     timelineRouteSteps.value = (res.data.routeSteps ?? [])
       .map((step) => ({ ...step, office_name: step.office_name || resolveOffice(step.office_id) }))
       .sort((a, b) => a.step_number - b.step_number)
     timelineSummary.value = res.data.summary
+    originData.value = res.data.origin ?? null
   } catch (err) {
     console.error('[DocumentPreviewDrawer] timeline fetch error:', err)
     timelineRouteSteps.value = []
     timelineSummary.value = null
+    originData.value = null
   } finally {
     timelineLoading.value = false
   }
@@ -903,10 +972,37 @@ const selectPipelineOffice = (step: StageStep) => {
       }
 }
 
+// The origin block shown above Stop 1: the office that registered the
+// document, who it's assigned to (or was picked up by) for the first leg,
+// and when. "My Office" vs. the real office name is resolved server-side
+// (timeline.get.ts) from the viewer's own office IDs, not guessed here.
+const originDisplay = computed(() => {
+  const o = originData.value
+  if (!o) return null
+
+  const label = o.is_my_office ? 'My Office' : o.office_name
+
+  let actorLine = ''
+  let timeLine = ''
+  if (o.departed && o.departed_by) {
+    actorLine = `Picked up by ${o.departed_by}`
+    timeLine = o.departed_at ? `Picked up: ${formatStopTime(o.departed_at)}` : ''
+  } else if (o.pending_messenger_name) {
+    actorLine = `Picked up by ${o.pending_messenger_name}`
+    timeLine = o.pending_assigned_at ? `Assigned: ${formatStopTime(o.pending_assigned_at)}` : ''
+  }
+
+  return { ...o, label, actorLine, timeLine }
+})
+
 // Enriches each route step with the display strings the vertical stepper
-// needs: a status label/color, who handled it, and a human time line built
-// from this step's own arrival/release plus the *previous* step's release
-// (the moment it was actually picked up and sent here).
+// needs: a status label/color, and up to two "facts" — who dropped the
+// document off HERE (arrival), and separately who it's now going out for
+// delivery with (either already picked up for the next leg, or assigned
+// and waiting on the pickup scan). Kept as two distinct facts rather than
+// one line, since conflating "delivered by" with "currently held by" is
+// exactly what made the previous single "Picked up by X" label read as if
+// the courier owned the document.
 const stepsDisplay = computed(() => {
   return steps.value.map((step, index) => {
     const prior = steps.value[index - 1]
@@ -924,22 +1020,37 @@ const stepsDisplay = computed(() => {
       statusClass = 'text-candy-orange'
     }
 
-    const actorName = step.delivered_by || (current ? prior?.released_by : null)
-    const actorLine = !upcoming && actorName ? `Picked up by ${actorName}` : ''
+    const facts: Array<{ actorLine: string, timeLine: string }> = []
 
-    let timeLine = ''
     if (upcoming) {
-      timeLine = 'Not yet started'
+      facts.push({ actorLine: '', timeLine: 'Not yet started' })
     } else {
-      const pickupAt = prior?.released_at || null
-      const bits: string[] = []
-      if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
-      if (step.arrived_at) bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
-      else if (pickupAt) bits.push('In transit now')
-      timeLine = bits.join(' · ')
+      const deliveredBy = step.delivered_by || (current ? prior?.released_by : null)
+      if (deliveredBy) {
+        const pickupAt = prior?.released_at || null
+        const bits: string[] = []
+        if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
+        if (step.arrived_at) bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
+        else if (pickupAt) bits.push('In transit now')
+        facts.push({ actorLine: `Dropped off by ${deliveredBy}`, timeLine: bits.join(' · ') })
+      }
+
+      if (step.pending_next_messenger_name) {
+        // Assigned for the next leg but not yet scanned for pickup.
+        facts.push({
+          actorLine: `Out for delivery — assigned to ${step.pending_next_messenger_name}`,
+          timeLine: step.pending_next_assigned_at ? `Assigned: ${formatStopTime(step.pending_next_assigned_at)}` : '',
+        })
+      } else if (step.released_status === 'PICKED_UP' && step.released_by) {
+        // Already scanned and on its way to the next stop.
+        facts.push({
+          actorLine: `Out for delivery — picked up by ${step.released_by}`,
+          timeLine: step.released_at ? `Picked up: ${formatStopTime(step.released_at)}` : '',
+        })
+      }
     }
 
-    return { ...step, done, current, upcoming, statusLabel, statusClass, actorLine, timeLine }
+    return { ...step, done, current, upcoming, statusLabel, statusClass, facts }
   })
 })
 

@@ -4,9 +4,10 @@ import { extractTextFromFile } from '~~/server/utils/documentParser'
 export interface DocumentAnalysis {
   title: string
   description: string
+  status: 'SUCCESS' | 'FAILED' | 'EMPTY_CONTENT'
 }
 
-const FALLBACK_ANALYSIS: DocumentAnalysis = {
+const FALLBACK_TEXT = {
   title: 'Untitled Document',
   description: 'The document contents could not be automatically analyzed. Please review and update the details manually.',
 }
@@ -26,17 +27,24 @@ const resolveExtension = (mimeType: string): string => {
   return MIME_TO_EXTENSION[mimeType?.toLowerCase?.()] || '.txt'
 }
 
-const normalizeAnalysis = (raw: any): DocumentAnalysis => {
+const normalizeAnalysis = (raw: any): Omit<DocumentAnalysis, 'status'> => {
   const title = typeof raw?.title === 'string' && raw.title.trim()
     ? raw.title.trim()
-    : FALLBACK_ANALYSIS.title
+    : FALLBACK_TEXT.title
 
   const description = typeof raw?.description === 'string' && raw.description.trim()
     ? raw.description.trim()
-    : FALLBACK_ANALYSIS.description
+    : FALLBACK_TEXT.description
 
   return { title, description }
 }
+
+// Groq retired `llama-3.3-70b-versatile` for free/developer accounts on
+// 2026-08-16 — every call was throwing (404) and getting silently caught
+// below, which is why uploads were saving as "Untitled Document" with no
+// visible error anywhere. If Groq retires this one too, the error logging
+// in the catch blocks below will now actually surface it.
+const GROQ_MODEL = 'openai/gpt-oss-120b'
 
 /**
  * Analyze raw extracted document text and return a clean title + 2-sentence summary.
@@ -44,13 +52,13 @@ const normalizeAnalysis = (raw: any): DocumentAnalysis => {
  */
 export const analyzeDocument = async (text: string): Promise<DocumentAnalysis> => {
   const trimmed = (text || '').trim()
-  if (!trimmed) return { ...FALLBACK_ANALYSIS }
+  if (!trimmed) return { ...FALLBACK_TEXT, status: 'EMPTY_CONTENT' }
 
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: GROQ_MODEL,
       temperature: 0.2,
       max_tokens: 1000,
       messages: [
@@ -68,10 +76,13 @@ export const analyzeDocument = async (text: string): Promise<DocumentAnalysis> =
     })
 
     const content = completion.choices[0]?.message?.content || '{}'
-    return normalizeAnalysis(JSON.parse(content))
-  } catch (error) {
-    console.error('[aiAnalyzer] analyzeDocument failed:', error)
-    return { ...FALLBACK_ANALYSIS }
+    return { ...normalizeAnalysis(JSON.parse(content)), status: 'SUCCESS' }
+  } catch (error: any) {
+    console.error(
+      '[aiAnalyzer] analyzeDocument failed:',
+      error?.status ?? '', error?.message ?? error, error?.error ?? '',
+    )
+    return { ...FALLBACK_TEXT, status: 'FAILED' }
   }
 }
 
@@ -84,7 +95,7 @@ export async function analyzeDocumentBuffer(
   mimeType: string
 ): Promise<DocumentAnalysis> {
   if (!fileBuffer || !fileBuffer.length) {
-    return { ...FALLBACK_ANALYSIS }
+    return { ...FALLBACK_TEXT, status: 'EMPTY_CONTENT' }
   }
 
   try {
@@ -94,11 +105,11 @@ export async function analyzeDocumentBuffer(
     })
 
     const context = extractedText?.trim() || ''
-    if (!context) return { ...FALLBACK_ANALYSIS }
+    if (!context) return { ...FALLBACK_TEXT, status: 'EMPTY_CONTENT' }
 
     return await analyzeDocument(context)
-  } catch (error) {
-    console.error('[aiAnalyzer] analyzeDocumentBuffer failed:', error)
-    return { ...FALLBACK_ANALYSIS }
+  } catch (error: any) {
+    console.error('[aiAnalyzer] analyzeDocumentBuffer failed:', error?.message ?? error)
+    return { ...FALLBACK_TEXT, status: 'FAILED' }
   }
 }

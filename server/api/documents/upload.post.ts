@@ -146,14 +146,14 @@ export default defineEventHandler(async (event) => {
   const fileName = fileItem.filename || 'unnamed'
   const mimeType = fileItem.type    || 'application/octet-stream'
 
-  // Validate allowed file types (Word & Excel only)
+  // Validate allowed file types (Word, Excel & PDF)
   const fileExt = fileName.split('.').pop()?.toLowerCase() || ''
-  const ALLOWED_DOCUMENT_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+  const ALLOWED_DOCUMENT_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv', 'pdf']
 
   if (!ALLOWED_DOCUMENT_EXTENSIONS.includes(fileExt)) {
     throw createError({
       statusCode: 400,
-      message: 'INVALID_FILE_TYPE: Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.',
+      message: 'INVALID_FILE_TYPE: Only Word (.doc, .docx), Excel (.xls, .xlsx, .csv) and PDF documents are accepted.',
     })
   }
 
@@ -374,11 +374,12 @@ export default defineEventHandler(async (event) => {
   // Step 6 — AI Document Analysis (or Manual Override)
   // ─────────────────────────────────────────────────────────────────────
 
-  let aiAnalysis = { title: '', description: '' }
+  let aiAnalysis: { title: string, description: string, status: string }
   if (manualTitle || manualDescription) {
     aiAnalysis = {
       title: manualTitle || fileName,
-      description: manualDescription || 'Manually uploaded document.'
+      description: manualDescription || 'Manually uploaded document.',
+      status: 'MANUAL',
     }
   } else {
     aiAnalysis = await analyzeDocumentBuffer(fileItem.data, mimeType)
@@ -425,6 +426,7 @@ export default defineEventHandler(async (event) => {
         category_id:       categoryId || null,
         title:             aiAnalysis.title,
         description:       aiAnalysis.description,
+        ai_analysis_status: aiAnalysis.status,
         qr_code_data:      qrCode,
         status:            'Pending',
         tracking_status:   'CREATED',

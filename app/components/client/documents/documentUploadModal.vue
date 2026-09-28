@@ -70,13 +70,13 @@
                 <p class="text-sm font-semibold" :class="headingClass">
                   {{ selectedFile ? selectedFile.name : 'Drop a file here or click to browse' }}
                 </p>
-                <p class="mt-1 text-xs" :class="mutedClass">Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) supported</p>
+                <p class="mt-1 text-xs" :class="mutedClass">Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) supported</p>
               </div>
               <input
                 ref="fileInput"
                 type="file"
                 class="hidden"
-                accept=".doc,.docx,.xls,.xlsx,.csv"
+                accept=".doc,.docx,.xls,.xlsx,.csv,.pdf"
                 @change="handleFileChange"
               />
             </label>
@@ -123,7 +123,7 @@
 
                 <!-- Manual override for AI analysis -->
                 <div class="space-y-3 pt-3 border-t border-candy-orange/20">
-                  <p class="text-sm font-medium text-candy-orange/80">Manual Document Details</p>
+                  <p class="text-sm font-medium text-candy-orange/80">Manual Document Details <span class="font-normal opacity-70">(required for spreadsheets)</span></p>
                   <div>
                     <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
                     <input
@@ -236,7 +236,7 @@
                   :class="selectedStageId === String(stage.stage_id)
                     ? isDark
                       ? 'border-candy-orange bg-candy-orange/10'
-                      : 'border-candy-orange bg-orange-50'
+                      : 'border-candy-orange bg-candy-orange/10'
                     : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
                   @click="selectRoute(stage)"
                 >
@@ -308,10 +308,10 @@
                   class="mt-4 overflow-hidden rounded-2xl border"
                   :class="isDark
                     ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
-                    : 'border-orange-200 bg-orange-50/60'"
+                    : 'border-candy-orange/20 bg-candy-orange/5'"
                 >
                   <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-candy-orange/15'">
                     <div class="flex items-center gap-2">
                       <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
                       <span class="text-sm font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
@@ -366,7 +366,7 @@
                               ? 'border-candy-orange bg-candy-orange text-white'
                               : isDark
                                 ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
-                                : 'border-candy-orange bg-orange-50 text-candy-orange'"
+                                : 'border-candy-orange bg-candy-orange/10 text-candy-orange'"
                           >
                             <Icon
                               v-if="idx === selectedTimelineSteps.length - 1"
@@ -398,7 +398,7 @@
                   </div>
 
                   <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-sm" :class="isDark ? 'border-candy-orange/15' : 'border-orange-200/70'">
+                  <div class="border-t px-4 py-2.5 text-sm" :class="isDark ? 'border-candy-orange/15' : 'border-candy-orange/15'">
                     <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
                       <span class="flex items-center gap-1">
                         <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
@@ -608,7 +608,7 @@
               <div
                 v-if="selectedStageId"
                 class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold text-candy-orange"
-                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'"
               >
                 <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
                 <span class="truncate">{{ selectedRouteName }}</span>
@@ -884,7 +884,7 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv', 'pdf']
 
 const isValidDocumentFile = (file: File | null | undefined): boolean => {
   if (!file) return false
@@ -900,7 +900,7 @@ const handleFileChange = (e: Event) => {
   }
 
   if (!isValidDocumentFile(file)) {
-    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) documents are accepted.'
     clearFile()
     return
   }
@@ -916,7 +916,7 @@ const handleDrop = (e: DragEvent) => {
   if (!file) return
 
   if (!isValidDocumentFile(file)) {
-    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) documents are accepted.'
     clearFile()
     return
   }

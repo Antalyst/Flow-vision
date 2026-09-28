@@ -148,9 +148,13 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Messenger assignment on PICKED_UP ─────────────────────────────────
+  // ARRIVED_AT_OFFICE also clears it, matching dropoff.post.ts and
+  // complete-checkpoint.post.ts — otherwise a document driven through this
+  // endpoint can be left with a stale assigned_messenger_id after arrival.
   const messengerUpdate =
-    nextStatus === 'PICKED_UP'  ? { assigned_messenger_id: actorId }  :
-    nextStatus === 'COMPLETED'  ? { assigned_messenger_id: null }      :
+    nextStatus === 'PICKED_UP'          ? { assigned_messenger_id: actorId } :
+    nextStatus === 'ARRIVED_AT_OFFICE'  ? { assigned_messenger_id: null }    :
+    nextStatus === 'COMPLETED'          ? { assigned_messenger_id: null }    :
     {}
 
   // ── Atomic writes ─────────────────────────────────────────────────────

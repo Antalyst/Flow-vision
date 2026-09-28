@@ -1,5 +1,12 @@
 // server/utils/documentParser.ts
 import mammoth from 'mammoth'
+// Import the implementation directly, NOT the package root: pdf-parse's own
+// index.js has a `!module.parent` "debug mode" check meant to only run when
+// the package is executed directly — under Nitro/Vite's CJS-in-ESM interop,
+// module.parent is never set, so that check misfires on every import and
+// tries to read a nonexistent bundled test fixture (test/data/*.pdf),
+// crashing the whole server. This path skips that wrapper entirely.
+import pdfParse from 'pdf-parse/lib/pdf-parse.js'
 
 export const extractTextFromFile = async (file: { filename: string, data: Buffer }) => {
   const filename = file.filename.toLowerCase()
@@ -7,7 +14,8 @@ export const extractTextFromFile = async (file: { filename: string, data: Buffer
 
   try {
     if (filename.endsWith('.pdf')) {
-      text = `PDF document (${file.filename}): server-side text extraction is disabled.`
+      const result = await pdfParse(file.data)
+      text = result.text
     } else if (filename.endsWith('.docx') || filename.endsWith('.doc')) {
       const result = await mammoth.extractRawText({ buffer: file.data })
       text = result.value

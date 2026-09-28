@@ -1,4 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 
 /**
  * GET /api/tracking/timeline
@@ -19,14 +20,14 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'documentId is required' })
   }
 
-  // ── Auth: actor must belong to document's org ─────────────────────────
-  const actorId = getCookie(event, 'user_session')
-  if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })
+  // ── Auth: actor must belong to document's org (also resolves the actor's
+  // own office IDs, needed below to label the origin stop "My Office") ─────
+  const actor = await resolveActorContextWithOffices(event, client)
 
   // ── Fetch the document with stage info ────────────────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at')
+    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at, origin_office_id, office_id, user_id')
     .eq('id', documentId)
     .single()
 
@@ -35,13 +36,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Org isolation check
-  const { data: actorRow } = await client
-    .from('users')
-    .select('org_id, full_name')
-    .eq('user_id', actorId)
-    .single()
-
-  if (!actorRow || String(actorRow.org_id) !== String(doc.org_id)) {
+  if (String(actor.orgId) !== String(doc.org_id)) {
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
@@ -54,6 +49,40 @@ export default defineEventHandler(async (event) => {
 
   if (eventsErr) {
     throw createError({ statusCode: 500, message: eventsErr.message })
+  }
+
+  const eventsAsc = events ?? []
+
+  // ── Resolve assigned messenger display name ────────────────────────────
+  let messengerName: string | null = null
+  if (doc.assigned_messenger_id) {
+    const { data: mRow } = await client
+      .from('users')
+      .select('full_name')
+      .eq('user_id', doc.assigned_messenger_id)
+      .single()
+    messengerName = mRow?.full_name ?? null
+  }
+
+  // ── Resolve when the CURRENT assignment was made ────────────────────────
+  // `assigned_messenger_id` is reused for every leg of the route (cleared on
+  // arrival, re-set on the next assign-liaison call), so at most one
+  // assignment is ever "live" at a time — there is never ambiguity about
+  // which assign_liaison log entry this is. No new column needed: every
+  // assignment code path (assign-liaison.post.ts, upload.post.ts,
+  // scan/register.post.ts) already writes an activity_logs row tagged
+  // action_type='assign_liaison' with document_id + created_at.
+  let currentAssignmentAt: string | null = null
+  if (doc.assigned_messenger_id) {
+    const { data: assignLog } = await client
+      .from('activity_logs')
+      .select('created_at')
+      .eq('document_id', documentId)
+      .eq('action_type', 'assign_liaison')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    currentAssignmentAt = assignLog?.created_at ?? null
   }
 
   // ── Fetch stage route (the planned path) ──────────────────────────────
@@ -81,7 +110,6 @@ export default defineEventHandler(async (event) => {
     // the document originates there rather than being carried in. A stop's
     // "release" is whichever PICKED_UP or COMPLETED event for that same
     // step happens next in the log after its arrival.
-    const eventsAsc = events ?? []
     const matchesStep = (e: any, step: { step_number: number, office_id: number, office_name: string }) => {
       if (e.step_index !== null && e.step_index !== undefined) return Number(e.step_index) === step.step_number
       if (e.office_id !== null && e.office_id !== undefined) return String(e.office_id) === String(step.office_id)
@@ -101,15 +129,15 @@ export default defineEventHandler(async (event) => {
       let releasedBy: string | null = null
       let releasedStatus: string | null = null
       if (arrivedAt) {
+        // Step-matched only — an earlier version fell back to "any later
+        // PICKED_UP/COMPLETED event" with no step check, which could
+        // misattribute a different stop's pickup to this one. Showing
+        // nothing is safer than showing the wrong courier's name.
         const releaseEvent = eventsAsc.find(
           (e: any) =>
             (e.status === 'PICKED_UP' || e.status === 'COMPLETED')
             && new Date(e.created_at).getTime() >= new Date(arrivedAt).getTime()
             && matchesStep(e, step),
-        ) ?? eventsAsc.find(
-          (e: any) =>
-            (e.status === 'PICKED_UP' || e.status === 'COMPLETED')
-            && new Date(e.created_at).getTime() > new Date(arrivedAt).getTime(),
         )
         if (releaseEvent) {
           releasedAt = releaseEvent.created_at
@@ -118,6 +146,15 @@ export default defineEventHandler(async (event) => {
         }
       }
 
+      // "Out for delivery" pending state: this stop is the document's
+      // current location, a messenger has been assigned for the next leg,
+      // but they haven't scanned pickup yet (no release event recorded).
+      const isPendingNextLeg =
+        step.step_number === doc.current_step &&
+        doc.tracking_status === 'ARRIVED_AT_OFFICE' &&
+        !releasedStatus &&
+        !!doc.assigned_messenger_id
+
       return {
         ...step,
         delivered_by: deliveredBy,
@@ -125,19 +162,53 @@ export default defineEventHandler(async (event) => {
         released_at: releasedAt,
         released_by: releasedBy,
         released_status: releasedStatus,
+        pending_next_messenger_name: isPendingNextLeg ? messengerName : null,
+        pending_next_assigned_at: isPendingNextLeg ? currentAssignmentAt : null,
       }
     })
   }
 
-  // ── Resolve assigned messenger display name ────────────────────────────
-  let messengerName: string | null = null
-  if (doc.assigned_messenger_id) {
-    const { data: mRow } = await client
-      .from('users')
-      .select('full_name')
-      .eq('user_id', doc.assigned_messenger_id)
-      .single()
-    messengerName = mRow?.full_name ?? null
+  // ── Build the origin block (the registering office, before Stop 1) ─────
+  // Kept separate from routeSteps rather than folded in as a numbered
+  // stop — the origin is where the document was PHYSICALLY REGISTERED,
+  // which is not necessarily the route's own first configured stop.
+  const originOfficeId = doc.origin_office_id ?? doc.office_id ?? null
+
+  let originOfficeName: string | null = null
+  if (originOfficeId) {
+    const { data: originOfficeRow } = await client
+      .from('offices')
+      .select('name')
+      .eq('id', originOfficeId)
+      .maybeSingle()
+    originOfficeName = originOfficeRow?.name ?? null
+  }
+
+  const createdEvent = eventsAsc.find((e: any) => e.status === 'CREATED')
+  // The event that carried the document away from the origin for leg 1
+  // (step_index 0, or null on older rows written before step_index existed).
+  const originDepartureEvent = eventsAsc.find(
+    (e: any) => e.status === 'PICKED_UP' && (e.step_index === 0 || e.step_index === null),
+  )
+
+  // Pending-assignment sub-state gated strictly to "still at the origin,
+  // not yet picked up for leg 1" — assigned_messenger_id alone is NOT a
+  // safe signal here, since it's reused for every later leg too; checking
+  // it without this gate would show a downstream courier as if departing
+  // the origin (the exact misattribution this endpoint is meant to fix).
+  const isPendingFirstLeg = doc.current_step === 0 && doc.tracking_status === 'CREATED' && !!doc.assigned_messenger_id
+
+  const origin = {
+    office_id: originOfficeId,
+    office_name: originOfficeId ? (originOfficeName ?? `Office #${originOfficeId}`) : 'Org-wide',
+    is_my_office: originOfficeId ? actor.officeIds.includes(String(originOfficeId)) : false,
+    registered_by: createdEvent?.actor_name ?? null,
+    registered_at: createdEvent?.created_at ?? doc.created_at,
+    pending_messenger_name: isPendingFirstLeg ? messengerName : null,
+    pending_assigned_at: isPendingFirstLeg ? currentAssignmentAt : null,
+    departed: doc.current_step >= 1,
+    departed_by: originDepartureEvent?.actor_name ?? null,
+    departed_at: originDepartureEvent?.created_at ?? null,
   }
 
   return {
@@ -147,7 +218,8 @@ export default defineEventHandler(async (event) => {
         ...doc,
         messenger_name: messengerName,
       },
-      events:    events ?? [],
+      origin,
+      events:    eventsAsc,
       routeSteps,
       summary: {
         total_steps:    routeSteps.length,

@@ -74,7 +74,7 @@
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">1</span>
                 <div>
                   <p class="text-sm font-semibold" :class="headingClass">Document File</p>
-                  <p class="mt-0.5 text-xs" :class="mutedClass">Word or Excel — swap it any time before saving.</p>
+                  <p class="mt-0.5 text-xs" :class="mutedClass">Word, Excel, or PDF — swap it any time before saving.</p>
                 </div>
               </div>
 
@@ -83,7 +83,7 @@
                 ref="fileInput"
                 type="file"
                 class="hidden"
-                accept=".doc,.docx,.xls,.xlsx,.csv"
+                accept=".doc,.docx,.xls,.xlsx,.csv,.pdf"
                 @change="handleFileChange"
               />
 
@@ -100,7 +100,7 @@
                 <Icon name="ph:cloud-arrow-up-light" class="h-9 w-9 text-candy-orange" />
                 <div>
                   <p class="text-sm font-semibold" :class="headingClass">Drop a file here or click to browse</p>
-                  <p class="mt-1 text-xs" :class="mutedClass">Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) supported</p>
+                  <p class="mt-1 text-xs" :class="mutedClass">Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) supported</p>
                 </div>
               </label>
 
@@ -141,7 +141,7 @@
 
                   <!-- Manual override for AI analysis -->
                   <div class="space-y-3 border-t pt-3" :class="borderClass">
-                    <p class="text-sm font-semibold" :class="headingClass">Manual Document Details</p>
+                    <p class="text-sm font-semibold" :class="headingClass">Manual Document Details <span class="font-normal" :class="mutedClass">(required for spreadsheets)</span></p>
                     <div>
                       <label class="block text-xs font-semibold mb-1" :class="headingClass">Title</label>
                       <input
@@ -273,7 +273,7 @@
                   :class="selectedStageId === String(stage.stage_id)
                     ? isDark
                       ? 'border-candy-orange bg-candy-orange/10'
-                      : 'border-candy-orange bg-orange-50'
+                      : 'border-candy-orange bg-candy-orange/10'
                     : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
                   @click="selectRoute(stage)"
                 >
@@ -613,7 +613,7 @@
               <div
                 v-if="selectedStageId"
                 class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold text-candy-orange"
-                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-orange-200 bg-orange-50'"
+                :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'"
               >
                 <Icon name="ph:path-light" class="h-3 w-3 flex-none" />
                 <span class="truncate">{{ selectedRouteName }}</span>
@@ -898,7 +898,7 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv']
+const ALLOWED_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'csv', 'pdf']
 
 const isValidDocumentFile = (file: File | null | undefined): boolean => {
   if (!file) return false
@@ -914,7 +914,7 @@ const handleFileChange = (e: Event) => {
   }
 
   if (!isValidDocumentFile(file)) {
-    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) documents are accepted.'
     clearFile()
     return
   }
@@ -930,7 +930,7 @@ const handleDrop = (e: DragEvent) => {
   if (!file) return
 
   if (!isValidDocumentFile(file)) {
-    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx) and Excel (.xls, .xlsx, .csv) documents are accepted.'
+    errorMessage.value = 'Invalid file format. Only Word (.doc, .docx), PDF, and Excel (.xls, .xlsx, .csv) documents are accepted.'
     clearFile()
     return
   }
