@@ -38,10 +38,7 @@ import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { notifyDocumentCreator, notifyLiaisonAssigned } from '~~/server/utils/notifications'
 import { emitLiaisonAssignedEmail } from '~~/server/utils/email/emailEvents'
-
-// 'client' included: an org-wide client admin can be a document's creator, and the
-// business rule explicitly allows a creator to become their own document's Liaison.
-const ELIGIBLE_LIAISON_ROLES = ['employee', 'employee_sub_user', 'messenger', 'client']
+import { resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -129,9 +126,12 @@ export default defineEventHandler(async (event) => {
     : doc.office_id ? String(doc.office_id)
     : null
 
-  // Staff (employee_sub_user) operate org-wide, same as a client admin — they can
-  // assign a Liaison on any document in their org, not just ones at their own desk.
-  if (actor.userRole === 'employee') {
+  // Employees and staff (employee_sub_user) may only assign a Liaison on a
+  // document currently at an office assigned to them — office scope, not org
+  // scope. `actor.officeIds` already covers both roles (resolveActorContextWithOffices
+  // resolves employee_sub_user's single `users.office_id` the same way it
+  // resolves an employee's `offices.assigned_user` rows).
+  if (actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
     if (!effectiveOfficeId || !actor.officeIds.includes(effectiveOfficeId)) {
       throw createError({
         statusCode: 403,
@@ -142,65 +142,12 @@ export default defineEventHandler(async (event) => {
   }
   // client admins may assign anywhere within their own organisation — no further check.
 
-  // ── Load & validate the candidate Liaison ───────────────────────────────
-  const { data: liaison, error: liaisonErr } = await client
-    .from('users')
-    .select('user_id, org_id, role, full_name, office_id, status')
-    .eq('user_id', liaisonUserId)
-    .maybeSingle()
-
-  if (liaisonErr) throw createError({ statusCode: 500, message: 'We could not load this messenger. Please try again.' })
-  if (!liaison) throw createError({ statusCode: 404, message: 'We could not find this messenger.' })
-
-  if (String(liaison.org_id) !== actor.orgId) {
-    throw createError({
-      statusCode: 403,
-      message: 'This messenger belongs to a different office and cannot be assigned here.',
-      data: { code: 'SECURITY_ORG_MISMATCH' },
-    })
-  }
-
-  if (!ELIGIBLE_LIAISON_ROLES.includes(String(liaison.role))) {
-    throw createError({
-      statusCode: 422,
-      message: 'This user cannot be assigned as a messenger.',
-      data: { code: 'INELIGIBLE_USER' },
-    })
-  }
-
-  if (liaison.status === 0) {
-    throw createError({
-      statusCode: 422,
-      message: 'This messenger account is inactive.',
-      data: { code: 'INACTIVE_USER' },
-    })
-  }
-
-  const liaisonOfficeId = liaison.office_id ? String(liaison.office_id) : null
-
-  if (effectiveOfficeId && liaisonOfficeId && liaisonOfficeId !== effectiveOfficeId) {
-    throw createError({
-      statusCode: 403,
-      message: 'This user already belongs to a different office and cannot be assigned here.',
-      data: { code: 'LIAISON_OFFICE_MISMATCH' },
-    })
-  }
-
-  // First-time association: an unaffiliated user (no office_id yet) becomes tied to
-  // this office by virtue of being selected as its Liaison. Never overwrites an
-  // existing, different office association (rejected above). Client admins are
-  // org-wide by design (never office-scoped), so they're exempt from this — an
-  // office assigning a client as Liaison shouldn't pin them to that one office.
-  if (effectiveOfficeId && !liaisonOfficeId && liaison.role !== 'client') {
-    const { error: assocErr } = await client
-      .from('users')
-      .update({ office_id: effectiveOfficeId })
-      .eq('user_id', liaison.user_id)
-
-    if (assocErr) {
-      console.warn('[assign-liaison] Non-fatal: could not persist office association:', assocErr.message)
-    }
-  }
+  // ── Load & validate the candidate Liaison (shared with creation-time assignment) ──
+  const liaison = await resolveAndAssociateLiaison(client, {
+    orgId: actor.orgId,
+    liaisonUserId,
+    effectiveOfficeId,
+  })
 
   // ── Assign — this write is already authoritative, no accept/claim step ─
   const { data: updatedDoc, error: updateErr } = await client

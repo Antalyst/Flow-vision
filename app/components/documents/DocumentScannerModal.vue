@@ -331,6 +331,15 @@
                   <option v-for="stage in visibleStages" :key="stage.stage_id" :value="String(stage.stage_id)">{{ stage.name }}</option>
                 </select>
               </label>
+
+              <label class="block">
+                <span class="text-sm font-semibold" :class="headingClass">Messenger for First Delivery <span class="font-normal" :class="mutedClass">(optional)</span></span>
+                <select v-model="assignedMessengerId" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass">
+                  <option value="">Not now — assign later</option>
+                  <option v-for="m in eligibleMessengers" :key="m.user_id" :value="m.user_id">{{ m.full_name }}</option>
+                </select>
+                <p class="mt-1 text-xs" :class="mutedClass">Choose who will carry this document to its first destination.</p>
+              </label>
             </template>
 
             <p v-if="registerError" class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">
@@ -465,15 +474,42 @@ async function startCamera() {
   cameraStarting.value = true
   cameraReady.value = false
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      audio: false,
-    })
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+    } catch (preferredErr: any) {
+      // The rear-camera-preferred request can fail on devices where that
+      // exact combination of constraints can't be satisfied (e.g. no camera
+      // reports itself as "environment"). Fall back to any available camera
+      // rather than blocking the whole capture flow — same recovery already
+      // used by the QR scanner's camera picker.
+      const name = preferredErr?.name || ''
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') throw preferredErr
+      mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    }
     await nextTick()
     if (videoRef.value) {
       videoRef.value.srcObject = mediaStream
       await videoRef.value.play()
       cameraReady.value = true
+    }
+
+    // Diagnostic only (dev builds): `facingMode: { ideal: 'environment' }` is
+    // a hint, not a guarantee — confirm what the browser actually granted.
+    // No mirroring is ever applied here regardless of which camera this
+    // resolves to: this view photographs an external document, never the
+    // user, so an un-mirrored feed is always the correct one to show.
+    if (import.meta.dev) {
+      const track = mediaStream?.getVideoTracks()[0]
+      const settings = track?.getSettings?.() ?? {}
+      // eslint-disable-next-line no-console
+      console.info('[DocumentScannerModal] resolved camera track:', {
+        facingMode: settings.facingMode ?? '(not reported by this browser)',
+        width: settings.width,
+        height: settings.height,
+      })
     }
   } catch (err: any) {
     const name = err?.name || ''
@@ -665,6 +701,31 @@ const stageId = ref('')
 const categoryId = ref('')
 const originOfficeId = ref('')
 
+// ── Messenger for first delivery (optional) — reuses the SAME
+// eligible-liaison endpoint/rules as the post-creation AssignLiaisonPanel.
+interface EligibleMessenger { user_id: string; full_name: string; email: string | null; role: string }
+const eligibleMessengers = ref<EligibleMessenger[]>([])
+const assignedMessengerId = ref('')
+
+async function fetchEligibleMessengers() {
+  try {
+    const res = await $fetch<{ success: boolean; data: { candidates: EligibleMessenger[] } }>(
+      '/api/tracking/eligible-liaisons',
+      { query: originOfficeId.value ? { office_id: originOfficeId.value } : {} },
+    )
+    eligibleMessengers.value = res.data.candidates || []
+  } catch (err) {
+    console.error('[DocumentScannerModal] Failed to fetch eligible messengers:', err)
+  }
+}
+
+watch(step, (s) => {
+  if (s === 'review') fetchEligibleMessengers()
+})
+watch(originOfficeId, () => {
+  if (step.value === 'review') fetchEligibleMessengers()
+})
+
 const priorityOptions = [
   { value: 'High' as Priority, label: 'High', icon: 'ph:warning-circle-fill' },
   { value: 'Medium' as Priority, label: 'Medium', icon: 'ph:minus-circle-fill' },
@@ -754,16 +815,28 @@ async function handleRegister() {
     fd.append('contains_letterhead', String(containsLetterhead.value))
     fd.append('contains_stamp', String(containsStamp.value))
     fd.append('contains_seal', String(containsSeal.value))
+    if (assignedMessengerId.value) fd.append('assigned_messenger_id', assignedMessengerId.value)
     if (analysis.value) {
       fd.append('model', analysis.value.model)
       fd.append('confidence', String(analysis.value.confidence))
       fd.append('raw_response', JSON.stringify(analysis.value.raw_response ?? {}))
     }
 
-    const res = await $fetch<{ success: boolean; metadata: { title: string; qr_code_data: string } }>('/api/documents/scan/register', {
+    const res = await $fetch<{
+      success: boolean
+      metadata: { title: string; qr_code_data: string }
+      messenger_assignment_error?: string | null
+    }>('/api/documents/scan/register', {
       method: 'POST',
       body: fd,
     })
+
+    if (res.messenger_assignment_error) {
+      // Document was created — only the optional initial assignment failed.
+      // Never claim a messenger was assigned when it wasn't; a normal
+      // assignment can still be done afterward from the document details.
+      console.warn('[DocumentScannerModal] Initial messenger assignment failed:', res.messenger_assignment_error)
+    }
 
     registeredTitle.value = res.metadata.title
     registeredQr.value = res.metadata.qr_code_data
@@ -814,6 +887,7 @@ function resetAll() {
   stageId.value = ''
   categoryId.value = ''
   originOfficeId.value = ''
+  assignedMessengerId.value = ''
   registerError.value = ''
   showSticker.value = false
   registeredTitle.value = ''

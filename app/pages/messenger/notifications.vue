@@ -27,15 +27,27 @@
         <p class="text-xs" :class="mutedClass">
           {{ notificationsList.length }} notification{{ notificationsList.length === 1 ? '' : 's' }}
         </p>
-        <button
-          type="button"
-          class="rounded-none border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
-          :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
-          :disabled="loading"
-          @click="refreshList"
-        >
-          Refresh
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="unreadCount > 0"
+            type="button"
+            class="rounded-none border px-3 py-1 text-xs font-semibold transition hover:opacity-80 disabled:opacity-50"
+            :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
+            :disabled="markingAll"
+            @click="markAllAsRead"
+          >
+            {{ markingAll ? 'Marking…' : 'Mark All Read' }}
+          </button>
+          <button
+            type="button"
+            class="rounded-none border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
+            :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
+            :disabled="loading"
+            @click="refreshList"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div v-if="loading && notificationsList.length === 0" class="py-10 text-center text-sm" :class="mutedClass">
@@ -119,13 +131,16 @@ const notificationsState = useState<NotificationRow[]>('messenger:notifications'
 const loadingState = useState('messenger:notifications-loading', () => false)
 const errorState = useState<string | null>('messenger:notifications-error', () => null)
 const markingIdState = useState<string | null>('messenger:notifications-marking', () => null)
+const markingAllState = useState('messenger:notifications-marking-all', () => false)
 
-const { fetchNotifications, markAsRead, startAutoRefresh } = useMessengerNotifications()
+const { fetchNotifications, markAsRead, markAllAsRead, startAutoRefresh } = useMessengerNotifications()
 
 const notificationsList = computed(() => notificationsState.value ?? [])
 const loading = computed(() => loadingState.value)
 const error = computed(() => errorState.value)
 const markingId = computed(() => markingIdState.value)
+const markingAll = computed(() => markingAllState.value)
+const unreadCount = computed(() => notificationsList.value.filter((n) => isUnreadNotification(n.is_read)).length)
 
 function formatReceived(iso: string) {
   if (!iso) return ''

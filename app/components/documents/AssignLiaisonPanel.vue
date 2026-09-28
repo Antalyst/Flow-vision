@@ -14,6 +14,11 @@
       </div>
     </div>
 
+    <div v-if="nextDestinationLabel" class="mt-4 rounded-lg border border-candy-orange/20 bg-candy-orange/5 px-4 py-3">
+      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Next Destination</p>
+      <p class="mt-0.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ nextDestinationLabel }}</p>
+    </div>
+
     <div v-if="loadingCandidates" class="mt-4 text-sm" :class="mutedClass">Loading available messengers…</div>
 
     <p v-else-if="loadError" class="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500">
@@ -78,6 +83,7 @@ interface AssignableDocument {
   tracking_status?: string
   current_step?: number | null
   checkpoint_cleared_step?: number | null
+  assigned_messenger_id?: string | null
 }
 
 interface LiaisonCandidate {
@@ -90,6 +96,7 @@ interface LiaisonCandidate {
 
 const props = defineProps<{
   document: AssignableDocument | null
+  nextDestinationLabel?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -101,10 +108,15 @@ const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gra
 const cellClass = computed(() => (isDark.value ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'))
 
 // Same eligibility rule enforced server-side in assign-liaison.post.ts: CREATED, or
-// ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step.
+// ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step —
+// AND, independent of whatever the parent's document prop currently shows,
+// never offer the picker while a messenger is already assigned for this leg.
+// (A stale/un-refreshed parent object was previously the only thing stopping
+// this panel from showing right after a successful assignment.)
 const isEligibleForAssignment = computed(() => {
   const doc = props.document
   if (!doc) return false
+  if (doc.assigned_messenger_id) return false
   if (doc.tracking_status === 'CREATED') return true
   if (doc.tracking_status === 'ARRIVED_AT_OFFICE') {
     return (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0)

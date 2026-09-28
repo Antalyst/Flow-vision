@@ -76,13 +76,15 @@ export default defineEventHandler(async (event) => {
       document_id:           documentId,
       org_id:                actor.orgId,
       reported_by_office_id: reportedOfficeId,
+      reported_by_desk_id:   document.current_desk_id ?? null,
+      reported_by_user_id:   actor.userId,
       target_office_id:      targetOfficeId,
       issue_type:            issueType,
       details:               details || null,
       title,
       status:                'OPEN',
     })
-    .select('id, document_id, org_id, reported_by_office_id, target_office_id, issue_type, details, title, status, created_at')
+    .select('id, document_id, org_id, reported_by_office_id, reported_by_desk_id, reported_by_user_id, target_office_id, issue_type, details, title, status, created_at')
     .single()
 
   if (issueErr || !issue) {

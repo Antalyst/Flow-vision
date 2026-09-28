@@ -48,16 +48,29 @@
             {{ unreadCount === 0 ? 'All caught up' : `${unreadCount} unread alert${unreadCount === 1 ? '' : 's'}` }}
           </p>
         </div>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
-          :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
-          :disabled="loading"
-          @click="refreshAlerts"
-        >
-          <Icon name="ph:arrows-clockwise-light" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
-          Refresh
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="unreadCount > 0"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+            :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+            :disabled="markingAll"
+            @click="markAllAsRead"
+          >
+            <Icon name="ph:checks-light" class="h-3.5 w-3.5" />
+            {{ markingAll ? 'Marking…' : 'Mark All Read' }}
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors hover:border-candy-orange hover:text-candy-orange disabled:opacity-50"
+            :class="isDark ? 'border-onyx-border text-gray-300' : 'border-gray-200 text-gray-600'"
+            :disabled="loading"
+            @click="refreshAlerts"
+          >
+            <Icon name="ph:arrows-clockwise-light" class="h-3.5 w-3.5" :class="loading ? 'animate-spin' : ''" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <!-- Loading state -->
@@ -190,8 +203,10 @@ const {
   loading,
   error,
   markingId,
+  markingAll,
   fetchNotifications,
   markAsRead,
+  markAllAsRead,
   startAutoRefresh,
 } = useEmployeeNotifications()
 

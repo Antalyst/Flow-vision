@@ -27,15 +27,27 @@
         <p class="text-xs" :class="mutedClass">
           {{ unreadCount }} unread update{{ unreadCount === 1 ? '' : 's' }}
         </p>
-        <button
-          type="button"
-          class="rounded-xl border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
-          :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
-          :disabled="loading"
-          @click="refreshAlerts"
-        >
-          Refresh
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-if="unreadCount > 0"
+            type="button"
+            class="rounded-xl border px-3 py-1 text-xs font-semibold transition hover:opacity-80 disabled:opacity-50"
+            :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
+            :disabled="markingAll"
+            @click="markAllAsRead"
+          >
+            {{ markingAll ? 'Marking…' : 'Mark All Read' }}
+          </button>
+          <button
+            type="button"
+            class="rounded-xl border px-3 py-1 text-xs font-semibold transition hover:opacity-80"
+            :class="isDark ? 'border-zinc-700 text-zinc-300' : 'border-gray-200 text-gray-600'"
+            :disabled="loading"
+            @click="refreshAlerts"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div v-if="loading && notifications.length === 0" class="py-10 text-center text-sm" :class="mutedClass">
@@ -138,8 +150,10 @@ const {
   loading,
   error,
   markingId,
+  markingAll,
   fetchNotifications,
   markAsRead,
+  markAllAsRead,
   startAutoRefresh,
 } = useClientNotifications()
 

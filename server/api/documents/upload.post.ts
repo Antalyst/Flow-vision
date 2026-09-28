@@ -34,9 +34,11 @@ import { randomUUID } from 'node:crypto'
 import { serverSupabaseClient } from '#supabase/server'
 import { analyzeDocumentBuffer } from '~~/server/utils/aiAnalyzer'
 import { logActivitySafe } from '~~/server/utils/activityLog'
-import { emitDocumentRegisteredEmail } from '~~/server/utils/email/emailEvents'
+import { emitDocumentRegisteredEmail, emitLiaisonAssignedEmail } from '~~/server/utils/email/emailEvents'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
+import { resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { notifyLiaisonAssigned } from '~~/server/utils/notifications'
 
 const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
 type AllowedRole = (typeof ALLOWED_ROLES)[number]
@@ -124,6 +126,7 @@ export default defineEventHandler(async (event) => {
   const manualTitle       = get('manual_title')
   const manualDescription = get('manual_description')
   const categoryId        = get('category_id')
+  const initialLiaisonUserId = get('assigned_messenger_id')   // optional — messenger for the first leg
   const expectedCompletionHoursRaw = get('expected_completion_hours')
 
   // Optional, uploader-set end-to-end time budget for this specific document —
@@ -571,6 +574,82 @@ export default defineEventHandler(async (event) => {
     }
 
     // ─────────────────────────────────────────────────────────────────
+    // Optional initial messenger assignment (first leg) — same validation
+    // as POST /api/tracking/assign-liaison, reused via resolveAndAssociateLiaison
+    // so the rules can never drift between the two call sites. The document
+    // is ALREADY committed above — a failure here must never look like the
+    // whole registration failed; it's reported back as a warning so the
+    // creator can assign a messenger the normal way (AssignLiaisonPanel)
+    // instead of silently leaving them thinking one was assigned.
+    // ─────────────────────────────────────────────────────────────────
+    let assignedMessenger: { user_id: string; full_name: string | null } | null = null
+    let messengerAssignmentError: string | null = null
+
+    if (initialLiaisonUserId) {
+      try {
+        const liaison = await resolveAndAssociateLiaison(client, {
+          orgId: String(orgId),
+          liaisonUserId: initialLiaisonUserId,
+          effectiveOfficeId: resolvedOriginOfficeId,
+        })
+
+        const { error: assignUpdateErr } = await client
+          .from('documents')
+          .update({ assigned_messenger_id: liaison.user_id })
+          .eq('id', supabaseDoc.id)
+
+        if (assignUpdateErr) throw new Error(assignUpdateErr.message)
+
+        assignedMessenger = { user_id: liaison.user_id, full_name: liaison.full_name }
+
+        const assignMessage = `${actorName ?? 'The creator'} assigned ${liaison.full_name ?? 'a messenger'} to deliver "${docTitle}" for its first leg.`
+        await logActivitySafe({
+          orgId: String(orgId),
+          officeId: resolvedRole === 'client' ? null : effectiveOfficeId,
+          userId,
+          userName: actorName,
+          actorName,
+          actionType: 'assign_liaison',
+          details: assignMessage,
+          message: assignMessage,
+          documentId: supabaseDoc.id,
+          metadata: { liaison_user_id: liaison.user_id, liaison_name: liaison.full_name, initial_assignment: true },
+        }, client)
+
+        await notifyLiaisonAssigned({
+          orgId: String(orgId),
+          documentId: supabaseDoc.id,
+          documentTitle: docTitle,
+          liaisonUserId: liaison.user_id,
+          assignedByOfficeName: resolvedOfficeName,
+          destinationOfficeName: resolvedRouteSteps[0]?.office_name ?? null,
+        })
+
+        try {
+          await emitLiaisonAssignedEmail({
+            orgId: String(orgId),
+            documentId: supabaseDoc.id,
+            title: docTitle,
+            trackingCode: qrCode,
+            creatorUserId: userId,
+            creatorRole: resolvedRole,
+            status: 'CREATED',
+            currentStep: 0,
+            liaisonUserId: liaison.user_id,
+            liaisonName: liaison.full_name,
+            currentOfficeName: resolvedOfficeName,
+            destinationOfficeName: resolvedRouteSteps[0]?.office_name ?? null,
+          })
+        } catch (emailErr) {
+          console.warn('[Upload] Non-fatal: initial-assignment email failed:', emailErr)
+        }
+      } catch (assignErr: any) {
+        messengerAssignmentError = assignErr?.message || 'We could not assign that messenger. Please assign one from the document details instead.'
+        console.warn('[Upload] Initial messenger assignment failed (document still created):', messengerAssignmentError)
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
     // Response
     // ─────────────────────────────────────────────────────────────────
 
@@ -579,6 +658,8 @@ export default defineEventHandler(async (event) => {
       message: (resolvedRole === 'employee' || resolvedRole === 'employee_sub_user')
         ? `Document registered at "${resolvedOfficeName}". Assign a messenger to start the delivery.`
         : 'Document registered successfully. Assign a messenger to start the delivery.',
+      assigned_messenger: assignedMessenger,
+      messenger_assignment_error: messengerAssignmentError,
       scope: {
         role:              resolvedRole,
         org_id:            orgId,
@@ -596,6 +677,7 @@ export default defineEventHandler(async (event) => {
       },
       metadata: {
         ...supabaseDoc,
+        assigned_messenger_id: assignedMessenger?.user_id ?? null,
         mysql_storage_id: mysqlInsertedId,
         activity_log_id: activityLogId,
         notification_id: notificationId,

@@ -3,7 +3,6 @@
     <!-- Camera viewport -->
     <div
       class="relative overflow-hidden rounded-2xl bg-black/95 shadow-xl w-full max-w-[400px] aspect-square mx-auto"
-      :class="{ 'mirror-feed': isFrontFacingCamera }"
     >
       <!-- html5-qrcode target (Web Viewport) -->
       <div v-show="!isNativeCapacitor" :id="scannerId" class="absolute inset-0 w-full h-full" />
@@ -107,7 +106,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
-import { resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
+import { findRearCameraDeviceId, resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
 
 const props = defineProps<{
   scannerId?: string
@@ -129,11 +128,13 @@ const result      = ref<string | null>(null)
 const torchOn     = ref(false)
 const { defaultCameraDeviceId } = useMessengerSettings()
 
-// Only mirror for an actual front/selfie camera — the scanner defaults to
-// the rear ("environment") camera for scanning a QR on a desk/document, and
-// mirroring that flips left/right relative to reality, making it hard to
-// line the code up in frame. A front camera still gets the natural mirror.
-const isFrontFacingCamera = computed(() => defaultCameraDeviceId.value === 'user')
+// No mirroring, ever, for either camera. FlowVision only ever points the
+// camera at an external QR code / document — never at the user's own face —
+// so there is no "selfie" convention to satisfy. Mirroring an external QR
+// code flips its printed text/pattern backwards relative to reality, which
+// is precisely the "inverted camera" symptom this component must avoid.
+// (Previously this mirrored the front camera; that was the actual bug —
+// see the camera diagnostic notes on startScanner() below.)
 
 const primaryBgClass = computed(() => props.themeColor === 'orange' ? 'bg-candy-orange' : props.themeColor === 'blue' ? 'bg-blue-500' : 'bg-amber-500')
 const primaryTextClass = computed(() => props.themeColor === 'orange' ? 'text-candy-orange' : props.themeColor === 'blue' ? 'text-blue-500' : 'text-amber-500')
@@ -212,22 +213,68 @@ const startScanner = async () => {
     return
   }
 
+  const startConfig = {
+    fps:    props.fps ?? 12,
+    qrbox:  { width: props.qrboxSize ?? 220, height: props.qrboxSize ?? 220 },
+    aspectRatio: 1,
+    disableFlip: false,
+  }
+
   try {
     const { Html5Qrcode } = await import('html5-qrcode')
     scannerInstance = new Html5Qrcode(id)
 
-    await scannerInstance.start(
-      getCameraConfig(),
-      {
-        fps:    props.fps ?? 12,
-        qrbox:  { width: props.qrboxSize ?? 220, height: props.qrboxSize ?? 220 },
-        aspectRatio: 1,
-        disableFlip: false,
-      },
-      onDecodeSuccess,
-      onDecodeError,
-    )
+    try {
+      await scannerInstance.start(getCameraConfig(), startConfig, onDecodeSuccess, onDecodeError)
+    } catch (preferredErr: any) {
+      // The preferred camera (e.g. a specific saved device, or the rear
+      // camera on a device that doesn't report one) can fail to open even
+      // though camera access is otherwise granted — fall back to whatever
+      // camera the browser can actually provide rather than dead-ending.
+      const msg = String(preferredErr?.message ?? preferredErr ?? '')
+      if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('notallowed')) {
+        throw preferredErr
+      }
+      const cameras = await Html5Qrcode.getCameras().catch(() => [])
+      if (!cameras.length) throw preferredErr
+      await scannerInstance.start(cameras[0].id, startConfig, onDecodeSuccess, onDecodeError)
+    }
     isScanning.value = true
+
+    // ── Camera diagnostic (dev-only) ────────────────────────────────────
+    // `facingMode: 'environment'` is only a hint — verify what the browser
+    // actually granted. If we asked for the rear camera by default and it
+    // silently gave us the front one instead, retry once against a device
+    // whose *label* says rear/back/environment, when one is enumerable now
+    // that permission has been granted (labels are blank before that).
+    try {
+      const settings = scannerInstance.getRunningTrackSettings?.() ?? {}
+      if (import.meta.dev) {
+        // eslint-disable-next-line no-console
+        console.info('[QrScanner] resolved camera track:', {
+          facingMode: settings.facingMode ?? '(not reported by this browser)',
+          deviceId: settings.deviceId ? '(redacted)' : undefined,
+          width: settings.width,
+          height: settings.height,
+        })
+      }
+      const askedForRearByDefault = defaultCameraDeviceId.value === 'environment'
+      if (askedForRearByDefault && settings.facingMode === 'user') {
+        const rearDeviceId = await findRearCameraDeviceId()
+        if (rearDeviceId) {
+          if (import.meta.dev) {
+            // eslint-disable-next-line no-console
+            console.info('[QrScanner] Browser granted the front camera despite requesting "environment" — retrying with the labeled rear device.')
+          }
+          await stopScanner()
+          scannerInstance = new Html5Qrcode(id)
+          await scannerInstance.start(rearDeviceId, startConfig, onDecodeSuccess, onDecodeError)
+          isScanning.value = true
+        }
+      }
+    } catch {
+      // Diagnostic/verification is best-effort only — never block scanning over it.
+    }
   } catch (err: any) {
     const msg = String(err?.message ?? err ?? 'Camera error')
     if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('notallowed')) {
@@ -283,15 +330,6 @@ defineExpose({ rescan, stopScanner })
 </script>
 
 <style scoped>
-/* Mirror the web video feed only when a front/selfie camera is active —
-   that's the only case where a mirrored preview feels natural. The default
-   rear camera (used to scan a QR on a desk/document) must stay unmirrored
-   so what's on screen matches reality. Doesn't affect Native Capacitor,
-   which uses the OS camera app instead of this <video> element. */
-.mirror-feed :deep(video) {
-  transform: scaleX(-1);
-}
-
 @keyframes scanLaser {
   0%   { top: 8%;  }
   50%  { top: 88%; }

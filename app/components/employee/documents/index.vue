@@ -294,7 +294,7 @@
       @close="closeDocumentPreview"
       @flag-issue="issueChatRef?.openReportForm()"
       @compliance-updated="handleIssueUpdated"
-      @liaison-assigned="fetchDocs"
+      @liaison-assigned="handleLiaisonAssigned"
       @deleted="handleDocumentDeleted"
     >
       <template #footer>
@@ -369,6 +369,12 @@ interface LedgerDoc {
   is_own_upload: boolean
   priority?: string
   uploader_name?: string | null
+  assigned_messenger_id?: string | null
+  messenger_name?: string | null
+  current_desk_id?: string | null
+  current_handler_id?: string | null
+  checkpoint_cleared_step?: number | null
+  current_step?: number
 }
 
 interface OfficeRecord { id: string; name: string; code?: string }
@@ -642,6 +648,30 @@ const reloadData = () => {
 
 const handleUploadSuccess = () => {
   isUploadOpen.value = false
+  fetchDocs()
+}
+
+// Patch the already-open drawer + list row immediately with the new
+// assignment, instead of only kicking off a background refetch — a full
+// fetchDocs() replaces `docs.value` with new object references, but never
+// touched `activeDocument`, so the drawer kept showing the pre-assignment
+// (stale) document until it was closed and reopened.
+const handleLiaisonAssigned = (payload: { document_id: string; liaison_user_id: string; liaison_name: string | null }) => {
+  if (activeDocument.value && activeDocument.value.id === payload.document_id) {
+    activeDocument.value = {
+      ...activeDocument.value,
+      assigned_messenger_id: payload.liaison_user_id,
+      messenger_name: payload.liaison_name,
+    }
+  }
+  const idx = docs.value.findIndex((d) => d.id === payload.document_id)
+  if (idx !== -1) {
+    docs.value[idx] = {
+      ...docs.value[idx],
+      assigned_messenger_id: payload.liaison_user_id,
+      messenger_name: payload.liaison_name,
+    }
+  }
   fetchDocs()
 }
 

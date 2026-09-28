@@ -8,6 +8,7 @@ import {
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
 import { emitArrivedEmail } from '~~/server/utils/email/emailEvents'
+import { getDeskByQr, getDeskWithOffice, type DeskWithOffice } from '~~/server/utils/deskAccess'
 
 /**
  * POST /api/tracking/dropoff
@@ -35,10 +36,33 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
-  const { office_id } = body
+  const deskQr = body?.desk_qr ? String(body.desk_qr).trim() : ''
+  const deskIdInput = body?.desk_id ? String(body.desk_id).trim() : ''
+  let office_id = body?.office_id ? String(body.office_id).trim() : ''
+
+  // ── Optional desk-level delivery ────────────────────────────────────────
+  // If the Liaison scanned a desk QR (or the client resolved one and sent its
+  // id), the desk's office is the authoritative destination office for every
+  // check below — desks are a sub-location INSIDE an office, never a second
+  // routing system (stage_steps still only ever lists offices).
+  let deliveryDesk: DeskWithOffice | null = null
+
+  if (deskQr || deskIdInput) {
+    deliveryDesk = deskQr
+      ? await getDeskByQr(client, deskQr)
+      : await getDeskWithOffice(client, deskIdInput)
+
+    if (!deliveryDesk) {
+      throw createError({ statusCode: 404, message: 'This desk could not be found.', data: { code: 'DESK_NOT_FOUND' } })
+    }
+    if (!deliveryDesk.is_active) {
+      throw createError({ statusCode: 422, message: 'This desk is currently inactive.', data: { code: 'DESK_INACTIVE' } })
+    }
+    office_id = String(deliveryDesk.office_id)
+  }
 
   if (!office_id) {
-    throw createError({ statusCode: 400, message: 'Please scan an office QR code to continue.' })
+    throw createError({ statusCode: 400, message: 'Please scan an office or desk QR code to continue.' })
   }
 
   // ── Auth: messenger only ──────────────────────────────────────────────
@@ -151,7 +175,9 @@ export default defineEventHandler(async (event) => {
   const isFinalStop = totalSteps > 0 && targetDoc.current_step >= totalSteps
   const finalStatus = 'ARRIVED_AT_OFFICE'
 
-  // ── Write ARRIVED_AT_OFFICE event ─────────────────────────────────────
+  // ── Write ARRIVED_AT_OFFICE event (+ desk arrival details, if scanned) ──
+  const deskArrivalNote = deliveryDesk ? ` Delivered to the ${deliveryDesk.name} desk.` : ''
+
   await client.from('document_tracking_events').insert({
     document_id:  targetDoc.id,
     org_id:       messengerOrgId,
@@ -162,8 +188,21 @@ export default defineEventHandler(async (event) => {
     actor_id:     actorId,
     actor_role:   'messenger',
     actor_name:   actorRow.full_name,
+    event_type:   deliveryDesk ? 'DOCUMENT_ARRIVED_AT_DESK' : null,
+    desk_id:      deliveryDesk?.id ?? null,
+    handler_id:   deliveryDesk?.assigned_user_id ?? null,
+    metadata:     deliveryDesk ? {
+      from_office_id: office.id,
+      to_office_id: office.id,
+      to_office_name: office.name,
+      to_desk_id: deliveryDesk.id,
+      to_desk_name: deliveryDesk.name,
+      to_handler_id: deliveryDesk.assigned_user_id,
+      liaison_id: actorId,
+      liaison_name: actorRow.full_name,
+    } : null,
     notes:        `Arrived and checked in at ${office.name}${office.code ? ` (${office.code})` : ''}` +
-      (isFinalStop ? ' — awaiting final desk review.' : '.'),
+      (isFinalStop ? ' — awaiting final desk review.' : '.') + deskArrivalNote,
   })
 
   // ── Update document state ─────────────────────────────────────────────
@@ -172,13 +211,15 @@ export default defineEventHandler(async (event) => {
     current_office_id: String(office_id),
     checkpoint_cleared_step: null,
     assigned_messenger_id: null,
+    current_desk_id: deliveryDesk?.id ?? null,
+    current_handler_id: deliveryDesk?.assigned_user_id ?? null,
   }
 
   const { data: updatedDoc, error: updateErr } = await client
     .from('documents')
     .update(docUpdate)
     .eq('id', targetDoc.id)
-    .select('id, title, tracking_status, current_step')
+    .select('id, title, tracking_status, current_step, current_desk_id, current_handler_id')
     .single()
 
   if (updateErr) throw createError({ statusCode: 500, message: 'We could not save this delivery. Please try again.' })
@@ -203,15 +244,34 @@ export default defineEventHandler(async (event) => {
   const destinationOfficeId = String(office_id)
   const destinationOfficeName = office.name
 
+  // Desk-aware wording for the creator: "arrived at the Evaluation Desk of the
+  // Budget Office and is now assigned to Maria Santos" — falls back to the
+  // existing office-only phrasing when no desk was scanned.
+  let deskHandlerName: string | null = null
+  if (deliveryDesk?.assigned_user_id) {
+    const { data: handlerRow } = await client
+      .from('users')
+      .select('full_name')
+      .eq('user_id', deliveryDesk.assigned_user_id)
+      .maybeSingle()
+    deskHandlerName = handlerRow?.full_name ?? null
+  }
+
+  const arrivalLocationLabel = deliveryDesk
+    ? `the ${deliveryDesk.name} desk of ${destinationOfficeName}`
+    : destinationOfficeName || 'the receiving office'
+  const handlerSuffix = deliveryDesk
+    ? (deskHandlerName ? ` and is now assigned to ${deskHandlerName}` : ' and is awaiting an assigned staff member')
+    : ''
+
   if (targetDoc.user_id) {
-    const destLabel = destinationOfficeName || 'the receiving office'
     await notifyDocumentOwner({
       orgId: messengerOrgId,
       documentId: targetDoc.id,
       documentTitle: targetDoc.title,
       userId: String(targetDoc.user_id),
-      title: `Document Received by ${destLabel}`,
-      message: `Your document "${targetDoc.title}" has been received by ${destLabel} and is waiting to be verified.`,
+      title: `Document Received by ${destinationOfficeName || 'the receiving office'}`,
+      message: `Your document "${targetDoc.title}" has arrived at ${arrivalLocationLabel}${handlerSuffix}.`,
       trackingStatus: finalStatus,
       targetOfficeId: destinationOfficeId,
       targetOfficeName: destinationOfficeName,
@@ -226,7 +286,7 @@ export default defineEventHandler(async (event) => {
     clientUserId: targetDoc.user_id ? String(targetDoc.user_id) : null,
     message: isFinalStop
       ? `Your document "${targetDoc.title}" has reached its final office (${office.name}) and will be verified shortly.`
-      : `Your document "${targetDoc.title}" has been received by ${office.name} and will be checked before continuing.`,
+      : `Your document "${targetDoc.title}" has arrived at ${arrivalLocationLabel}${handlerSuffix}.`,
   })
 
   try {
@@ -293,11 +353,13 @@ export default defineEventHandler(async (event) => {
     success:        true,
     is_final_stop:  isFinalStop,
     message:        isFinalStop
-      ? `Delivered to ${office.name}. Waiting for office staff to confirm receipt and complete delivery.`
-      : `Delivered to ${office.name}. Received by office — waiting to be checked before the next pickup.`,
+      ? `Delivered to ${arrivalLocationLabel}. Waiting for office staff to confirm receipt and complete delivery.`
+      : `Delivered to ${arrivalLocationLabel}. Received by office — waiting to be checked before the next pickup.`,
     data: {
       document: updatedDoc,
       office:   { id: office.id, name: office.name, code: office.code },
+      desk:     deliveryDesk ? { id: deliveryDesk.id, name: deliveryDesk.name, code: deliveryDesk.code } : null,
+      handler:  deliveryDesk?.assigned_user_id ? { id: deliveryDesk.assigned_user_id, name: deskHandlerName } : null,
       step:     targetDoc.current_step,
       total_steps: totalSteps,
     },

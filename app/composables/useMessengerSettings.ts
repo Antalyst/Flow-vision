@@ -57,6 +57,28 @@ function inferFacing(label: string): 'front' | 'rear' | 'unknown' {
   return 'unknown'
 }
 
+/**
+ * Best-effort robust rear-camera lookup for the QR scanner (see Step 3 of the
+ * camera diagnostic): `facingMode: { ideal: 'environment' }` is only a hint —
+ * some browsers/devices silently grant whatever camera they want. This scans
+ * device *labels* (only available after a getUserMedia permission prompt has
+ * already been granted at least once) for a rear/back/environment match and
+ * returns its deviceId so the caller can request that exact device instead of
+ * trusting the facingMode hint alone. Returns null if no such device is found
+ * (e.g. labels are still blank, or the device genuinely only has one camera) —
+ * callers should fall back to the plain facingMode hint in that case.
+ */
+export async function findRearCameraDeviceId(): Promise<string | null> {
+  if (!import.meta.client || !navigator.mediaDevices?.enumerateDevices) return null
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const rear = devices.find((d) => d.kind === 'videoinput' && inferFacing(d.label || '') === 'rear')
+    return rear?.deviceId || null
+  } catch {
+    return null
+  }
+}
+
 export function useMessengerSettings() {
   const auth = useAuthStore()
   const sessionCookie = useCookie<string | null>('user_session')
