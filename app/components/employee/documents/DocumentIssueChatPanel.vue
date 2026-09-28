@@ -12,7 +12,7 @@
         @click="openReportForm"
       >
         <Icon name="ph:warning-fill" class="h-5 w-5 transition-transform group-hover:scale-110" />
-        Flag Issue / Incomplete
+        Mark Reviewed & Release Pickup
       </button>
       <p class="mt-2 text-center text-sm" :class="mutedText">
         Report missing signatures, incomplete forms, or damaged hard copies.

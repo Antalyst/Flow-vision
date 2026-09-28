@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
+import { resolveOfficeDisplayLabel } from '~~/server/utils/officeLabel'
 
 /**
  * GET /api/tracking/timeline
@@ -102,14 +103,18 @@ export default defineEventHandler(async (event) => {
     }))
 
     // ── Fill in who handled each stop, and when it arrived / moved on ──────
-    // A stop's "arrival" is its ARRIVED_AT_OFFICE event, matched by
+    // A stop's "arrival" is its ARRIVED_AT_OFFICE event ONLY, matched by
     // step_index (the reliable join key — some flows, e.g. QR drop-off,
     // write office_id as null but always set step_index to the route step
     // number). Falls back to office_id/office_name for older rows without
-    // step_index. The very first stop instead uses the CREATED event, since
-    // the document originates there rather than being carried in. A stop's
-    // "release" is whichever PICKED_UP or COMPLETED event for that same
-    // step happens next in the log after its arrival.
+    // step_index. Stop 1 used to fall back to the CREATED event when it had
+    // no real arrival yet — that's wrong now that the origin block (below)
+    // exists separately: it made a document that had only just been
+    // *registered* (or was still in transit toward stop 1) look like it had
+    // already been delivered there, using the registering employee's name
+    // as if they'd dropped it off. A stop's "release" is whichever
+    // PICKED_UP or COMPLETED event for that same step happens next in the
+    // log after its arrival.
     const matchesStep = (e: any, step: { step_number: number, office_id: number, office_name: string }) => {
       if (e.step_index !== null && e.step_index !== undefined) return Number(e.step_index) === step.step_number
       if (e.office_id !== null && e.office_id !== undefined) return String(e.office_id) === String(step.office_id)
@@ -117,10 +122,7 @@ export default defineEventHandler(async (event) => {
     }
 
     routeSteps = rawSteps.map((step) => {
-      let arrivalEvent = eventsAsc.find((e: any) => e.status === 'ARRIVED_AT_OFFICE' && matchesStep(e, step))
-      if (!arrivalEvent && step.step_number === 1) {
-        arrivalEvent = eventsAsc.find((e: any) => e.status === 'CREATED')
-      }
+      const arrivalEvent = eventsAsc.find((e: any) => e.status === 'ARRIVED_AT_OFFICE' && matchesStep(e, step))
 
       const arrivedAt = arrivalEvent?.created_at ?? null
       const deliveredBy = arrivalEvent?.actor_name ?? null
@@ -155,6 +157,16 @@ export default defineEventHandler(async (event) => {
         !releasedStatus &&
         !!doc.assigned_messenger_id
 
+      // This stop is the courier's current destination but they haven't
+      // scanned drop-off yet — show who's currently carrying it rather than
+      // nothing (or, before the fix above, a false "already dropped off").
+      // The carrying courier stays the SAME name shown at pickup until a
+      // real drop-off event exists; it never gets replaced early.
+      const isInTransitToHere =
+        step.step_number === doc.current_step &&
+        doc.tracking_status === 'IN_TRANSIT' &&
+        !arrivedAt
+
       return {
         ...step,
         delivered_by: deliveredBy,
@@ -164,6 +176,7 @@ export default defineEventHandler(async (event) => {
         released_status: releasedStatus,
         pending_next_messenger_name: isPendingNextLeg ? messengerName : null,
         pending_next_assigned_at: isPendingNextLeg ? currentAssignmentAt : null,
+        in_transit_courier_name: isInTransitToHere ? messengerName : null,
       }
     })
   }
@@ -174,15 +187,12 @@ export default defineEventHandler(async (event) => {
   // which is not necessarily the route's own first configured stop.
   const originOfficeId = doc.origin_office_id ?? doc.office_id ?? null
 
-  let originOfficeName: string | null = null
-  if (originOfficeId) {
-    const { data: originOfficeRow } = await client
-      .from('offices')
-      .select('name')
-      .eq('id', originOfficeId)
-      .maybeSingle()
-    originOfficeName = originOfficeRow?.name ?? null
-  }
+  // Combines the office's own name with the CREATOR's personal desk name,
+  // when they have one (e.g. "Treasurer Office · Joeval's Desk") — see
+  // server/utils/officeLabel.ts for why this is a reverse lookup by creator
+  // rather than a walk up originOfficeId's own parent_office_id.
+  const originLabel = await resolveOfficeDisplayLabel(client, originOfficeId, doc.user_id)
+  const originOfficeName = originLabel.office_name
 
   const createdEvent = eventsAsc.find((e: any) => e.status === 'CREATED')
   // The event that carried the document away from the origin for leg 1
@@ -200,7 +210,12 @@ export default defineEventHandler(async (event) => {
 
   const origin = {
     office_id: originOfficeId,
-    office_name: originOfficeId ? (originOfficeName ?? `Office #${originOfficeId}`) : 'Org-wide',
+    // "{office} · {creator's desk}" when the creator has a personal desk
+    // under this office; otherwise just the office name. desk_name is also
+    // exposed on its own so the client can still show it as a sub-label
+    // even in the "My Office" case, where office_name is overridden.
+    office_name: originOfficeId ? originLabel.label : 'Org-wide',
+    desk_name: originLabel.desk_name,
     is_my_office: originOfficeId ? actor.officeIds.includes(String(originOfficeId)) : false,
     registered_by: createdEvent?.actor_name ?? null,
     registered_at: createdEvent?.created_at ?? doc.created_at,

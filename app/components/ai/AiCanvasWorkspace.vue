@@ -526,7 +526,7 @@ const props = withDefaults(
     /** Route to navigate to when the back button is pressed */
     backRoute?: string
     /** Caller role — drives labelling and suggestion chip copy */
-    roleContext?: 'client' | 'employee'
+    roleContext?: 'client' | 'employee' | 'staff'
   }>(),
   {
     scope:       'GLOBAL',

@@ -327,6 +327,25 @@
             <p v-else-if="isEditMode" class="-mt-3 text-sm" :class="mutedText">
               Leave password blank to keep the current password.
             </p>
+
+            <!-- Desk name: staff only, creation only — a desk is auto-created -->
+            <!-- for every new staff account; this just names it up front      -->
+            <!-- instead of requiring a separate trip to Office QR Codes.      -->
+            <label v-if="drawerRole === 'employee_sub_user' && !isEditMode" class="block">
+              <span class="text-sm font-semibold" :class="isDark ? 'text-gray-200' : 'text-gray-800'">
+                Desk Name <span class="font-normal" :class="mutedText">(optional)</span>
+              </span>
+              <input
+                v-model.trim="form.desk_name"
+                type="text"
+                placeholder="e.g. Front Counter A — defaults to &quot;{Name}'s Desk&quot;"
+                class="mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-candy-orange"
+                :class="inputClass"
+              />
+              <p class="mt-1.5 text-sm" :class="mutedText">
+                Every staff account gets its own desk with a QR code, shown under Office QR Codes.
+              </p>
+            </label>
           </div>
 
           <div v-if="errorMsg" class="mx-6 mb-4 rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-xs font-medium text-danger">
@@ -435,6 +454,7 @@ const form = reactive({
   full_name: '',
   email: '',
   password: '',
+  desk_name: '',
 })
 
 // GSAP refs
@@ -506,6 +526,7 @@ function resetForm() {
   form.full_name = ''
   form.email = ''
   form.password = ''
+  form.desk_name = ''
   confirmPassword.value = ''
 }
 

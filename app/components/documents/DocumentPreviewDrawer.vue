@@ -289,7 +289,7 @@
             <!-- Delete pending document (uploaded by mistake, not yet picked up) -->
             <section
               v-if="displayTrackingStatus === 'CREATED'"
-              class="stagger-block rounded-2xl border border-danger/20 bg-danger/5 p-5"
+              class="stagger-block rounded-2xl   p-5"
             >
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -302,7 +302,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-5 py-3 text-sm font-bold text-danger shadow-sm transition-colors hover:bg-danger/20"
+                  class="inline-flex items-center gap-2 rounded-xl  bg-danger px-5 py-3 text-sm font-bold  text-white shadow-sm transition-colors hover:bg-danger/20"
                   @click="showDeleteConfirm = true"
                 >
                   <Icon name="ph:trash-fill" class="h-4 w-4" />
@@ -328,7 +328,7 @@
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white-pure shadow-sm transition-colors hover:bg-candy-hover"
+                  class="inline-flex items-center gap-2 rounded-xl bg-danger px-5 py-3 text-sm font-bold text-white-pure shadow-sm transition-colors hover:bg-danger/90"
                   @click="emit('flag-issue')"
                 >
                   <Icon name="ph:warning-fill" class="h-4 w-4" />
@@ -580,6 +580,7 @@ interface StageStep {
 interface OriginInfo {
   office_id: string | number | null
   office_name: string
+  desk_name: string | null
   is_my_office: boolean
   registered_by: string | null
   registered_at: string | null
@@ -832,10 +833,14 @@ const targetOfficeLabel = computed(() => {
 
 // The registering office, server-resolved so "My Office" reflects the
 // VIEWER's own office rather than a client-side guess (see originDisplay).
+// The creator's personal desk (if any — see server/utils/officeLabel.ts)
+// is appended as a sub-label even in the "My Office" case, since that
+// override replaces the office name but the desk is still useful context.
 const ownerLabel = computed(() => {
   const o = originData.value
   if (!o) return '—'
-  return o.is_my_office ? 'My Office' : o.office_name
+  const base = o.is_my_office ? 'My Office' : o.office_name
+  return o.is_my_office && o.desk_name ? `${base} · ${o.desk_name}` : base
 })
 
 // Timeline endpoint gives us the real per-checkpoint history (who picked it
@@ -980,7 +985,8 @@ const originDisplay = computed(() => {
   const o = originData.value
   if (!o) return null
 
-  const label = o.is_my_office ? 'My Office' : o.office_name
+  const base = o.is_my_office ? 'My Office' : o.office_name
+  const label = o.is_my_office && o.desk_name ? `${base} · ${o.desk_name}` : base
 
   let actorLine = ''
   let timeLine = ''
@@ -1010,13 +1016,23 @@ const stepsDisplay = computed(() => {
     const current = isStepCurrent(step)
     const upcoming = isStepUpcoming(step)
 
+    // A step only counts as "arrived" with a REAL ARRIVED_AT_OFFICE event
+    // (step.delivered_by, from the server) — never inferred from who
+    // released the prior stop, which is who's carrying it TOWARD here, not
+    // who delivered it HERE. Conflating the two previously showed a courier
+    // still in transit as if they'd already dropped the document off.
+    const hasReallyArrived = !!step.delivered_by
+
     let statusLabel = 'Upcoming'
     let statusClass = mutedClass.value
     if (done) {
       statusLabel = 'Delivered'
       statusClass = 'text-success'
-    } else if (current) {
+    } else if (current && hasReallyArrived) {
       statusLabel = 'Current Checkpoint'
+      statusClass = 'text-candy-orange'
+    } else if (current) {
+      statusLabel = 'On the Way'
       statusClass = 'text-candy-orange'
     }
 
@@ -1024,17 +1040,19 @@ const stepsDisplay = computed(() => {
 
     if (upcoming) {
       facts.push({ actorLine: '', timeLine: 'Not yet started' })
-    } else {
-      const deliveredBy = step.delivered_by || (current ? prior?.released_by : null)
-      if (deliveredBy) {
-        const pickupAt = prior?.released_at || null
-        const bits: string[] = []
-        if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
-        if (step.arrived_at) bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
-        else if (pickupAt) bits.push('In transit now')
-        facts.push({ actorLine: `Dropped off by ${deliveredBy}`, timeLine: bits.join(' · ') })
-      }
+    } else if (hasReallyArrived) {
+      const pickupAt = prior?.released_at || null
+      const bits: string[] = []
+      if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
+      bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
+      facts.push({ actorLine: `Dropped off by ${step.delivered_by}`, timeLine: bits.join(' · ') })
+    } else if (current && step.in_transit_courier_name) {
+      // Picked up and heading here, but hasn't scanned drop-off yet — same
+      // courier stays shown until a real arrival event replaces this.
+      facts.push({ actorLine: `In transit — carried by ${step.in_transit_courier_name}`, timeLine: '' })
+    }
 
+    if (!upcoming) {
       if (step.pending_next_messenger_name) {
         // Assigned for the next leg but not yet scanned for pickup.
         facts.push({

@@ -28,9 +28,6 @@
               {{ scope === 'LOCAL' ? 'Office Document' : 'Organisation Document' }}
             </span>
             <h2 class="mt-2.5 text-xl font-bold" :class="headingClass">Upload Document</h2>
-            <p class="mt-0.5 text-xs" :class="mutedClass">
-              AI reads the file and fills in the details automatically.
-            </p>
           </div>
           <button
             type="button"
@@ -74,7 +71,7 @@
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">1</span>
                 <div>
                   <p class="text-sm font-semibold" :class="headingClass">Document File</p>
-                  <p class="mt-0.5 text-xs" :class="mutedClass">Word, Excel, or PDF — swap it any time before saving.</p>
+                
                 </div>
               </div>
 
@@ -211,9 +208,7 @@
                     <p class="text-sm font-semibold" :class="headingClass">
                       Delivery Route <span class="text-danger">*</span>
                     </p>
-                    <p class="mt-0.5 text-xs" :class="mutedClass">
-                      Which offices this document needs to pass through.
-                    </p>
+                   
                   </div>
                 </div>
 
@@ -455,10 +450,8 @@
               <div class="mb-3 flex items-start gap-2.5">
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">4</span>
                 <div>
-                  <p class="text-sm font-semibold" :class="headingClass">Messenger for First Delivery <span class="font-normal" :class="mutedClass">(optional)</span></p>
-                  <p class="mt-0.5 text-xs" :class="mutedClass">
-                    Choose who will carry this document to its first destination. You can also assign one later.
-                  </p>
+                  <p class="text-sm font-semibold" :class="headingClass">Messenger for First Delivery ></p>
+              
                 </div>
               </div>
               <div class="relative">
@@ -485,7 +478,7 @@
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">5</span>
                 <div>
                   <p class="text-sm font-semibold" :class="headingClass">QR Code Placement</p>
-                  <p v-if="isExcelFile" class="mt-0.5 text-xs" :class="mutedClass">Excel file detected — added on a separate page.</p>
+                  
                 </div>
               </div>
 
@@ -532,9 +525,6 @@
                   </span>
                   <span>
                     <span class="block text-sm font-semibold" :class="headingClass">On a Separate Page</span>
-                    <span class="block text-xs" :class="mutedClass">
-                      Keeps the original file untouched and adds one extra page for the QR code.
-                    </span>
                   </span>
                 </button>
               </div>

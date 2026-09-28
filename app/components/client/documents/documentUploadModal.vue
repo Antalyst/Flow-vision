@@ -470,11 +470,9 @@
             <!-- 4b. Messenger for First Delivery (optional, at creation time) -->
             <div>
               <span class="text-sm font-semibold" :class="headingClass">
-                Messenger for First Delivery <span class="font-normal" :class="mutedClass">(optional)</span>
+                Messenger for First Delivery
               </span>
-              <p class="mt-0.5 text-sm" :class="mutedClass">
-                Choose who will carry this document to its first destination. You can also assign one later.
-              </p>
+            
               <div class="relative mt-2">
                 <select
                   v-model="selectedMessengerId"

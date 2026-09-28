@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
 
-  const { email, password, full_name, role } = body
+  const { email, password, full_name, role, desk_name } = body
   const targetRole: CreatableRole = (CREATABLE_ROLES as readonly string[]).includes(role) ? role : 'employee_sub_user'
 
   if (!email || !password || !full_name) {
@@ -102,10 +102,11 @@ export default defineEventHandler(async (event) => {
   // Auto-creating it here means there's no separate "register a desk"
   // step required before staff are usable in a local route.
   if (targetRole === 'employee_sub_user') {
+    const deskName = String(desk_name ?? '').trim() || `${newUser.full_name}'s Desk`
     const { error: deskError } = await adminClient
       .from('offices')
       .insert({
-        name: `${newUser.full_name}'s Desk`,
+        name: deskName,
         org_id: actor.orgId,
         parent_office_id: officeId,
         assigned_user: newUser.user_id,

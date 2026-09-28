@@ -20,6 +20,7 @@ const navGroups = [
     title: 'Documents',
     items: [
       { to: '/staff/documents', label: 'Documents', icon: 'ph:files-light' },
+      { to: '/staff/my-tracking', label: 'My Tracking', icon: 'ph:map-trifold-light' },
       { to: '/staff/scan', label: 'Scan & Update', icon: 'ph:scan-light' },
     ],
   },
@@ -38,6 +39,7 @@ const navGroups = [
   {
     title: 'Account',
     items: [
+      { to: '/staff/ai', label: 'Ask AI', icon: 'ph:sparkle-light' },
       { to: '/staff/qr', label: 'My QR Code', icon: 'ph:qr-code-light' },
       { to: '/staff/settings', label: 'Settings', icon: 'ph:gear-six-light' },
     ],
