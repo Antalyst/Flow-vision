@@ -52,8 +52,8 @@
           <div v-if="selectedFile" class="w-full overflow-y-auto lg:h-full lg:w-7/12">
             <DocumentLivePreview
               :file="selectedFile"
-              :tracking-id="currentTrackingId"
-              :print-strategy="selectedStrategy"
+              tracking-id=""
+              print-strategy="standalone"
             />
           </div>
 
@@ -503,61 +503,19 @@
               <div class="mb-3.5 flex items-start gap-2.5">
                 <span class="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full text-[11px] font-bold" :class="stepBadgeClass">5</span>
                 <div>
-                  <p class="text-sm font-semibold" :class="headingClass">QR Code Placement</p>
+                  <p class="text-sm font-semibold" :class="headingClass">QR Tracking Label</p>
                   
                 </div>
               </div>
 
-              <div class="space-y-2">
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200"
-                  :class="[
-                    selectedStrategy === 'embedded'
-                      ? 'border-candy-orange bg-candy-orange/10'
-                      : isDark ? 'border-onyx-border hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40',
-                    isExcelFile ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
-                  ]"
-                  :disabled="isExcelFile"
-                  @click="selectedStrategy = 'embedded'"
-                >
-                  <span
-                    class="flex h-[17px] w-[17px] flex-none items-center justify-center rounded-full"
-                    :class="selectedStrategy === 'embedded' ? 'bg-candy-orange' : (isDark ? 'border border-white/20' : 'border border-gray-300')"
-                  >
-                    <Icon v-if="selectedStrategy === 'embedded'" name="ph:check-bold" class="h-2.5 w-2.5 text-white" />
-                  </span>
-                  <span>
-                    <span class="block text-sm font-semibold" :class="headingClass">On the Document Itself</span>
-                    <span class="block text-xs" :class="mutedClass">
-                      {{ isExcelFile ? 'Not available for spreadsheet files.' : "Prints the QR code directly on the file's pages." }}
-                    </span>
-                  </span>
-                </button>
+              <p class="text-xs" :class="mutedClass">
+                After saving, your document prints first, followed by one extra page with its
+                <strong :class="headingClass">QR Tracking Label</strong> — the same QR messengers scan for pickup.
+              </p>
 
-                <button
-                  type="button"
-                  class="flex w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200"
-                  :class="selectedStrategy === 'standalone'
-                    ? 'border-candy-orange bg-candy-orange/10'
-                    : isDark ? 'border-onyx-border hover:border-candy-orange/40' : 'border-gray-200 hover:border-candy-orange/40'"
-                  @click="selectedStrategy = 'standalone'"
-                >
-                  <span
-                    class="flex h-[17px] w-[17px] flex-none items-center justify-center rounded-full"
-                    :class="selectedStrategy === 'standalone' ? 'bg-candy-orange' : (isDark ? 'border border-white/20' : 'border border-gray-300')"
-                  >
-                    <Icon v-if="selectedStrategy === 'standalone'" name="ph:check-bold" class="h-2.5 w-2.5 text-white" />
-                  </span>
-                  <span>
-                    <span class="block text-sm font-semibold" :class="headingClass">On a Separate Page</span>
-                  </span>
-                </button>
-              </div>
-
-              <!-- Standalone QR size -->
-              <div v-if="selectedStrategy === 'standalone'" class="mt-4 border-t pt-4" :class="borderClass">
-                <p class="mb-2 text-xs font-semibold" :class="headingClass">QR Code Size</p>
+              <!-- QR Tracking Label size -->
+              <div class="mt-4 border-t pt-4" :class="borderClass">
+                <p class="mb-2 text-xs font-semibold" :class="headingClass">QR Label Size</p>
                 <div class="grid grid-cols-3 gap-2.5">
                   <button
                     type="button"
@@ -654,7 +612,7 @@
             >
               <Icon v-if="uploading" name="ph:spinner-gap-light" class="h-4 w-4 animate-spin" />
               <Icon v-else name="ph:printer-light" class="h-4 w-4" />
-              {{ uploading ? 'Saving…' : 'Save & Print Routing Slip' }}
+              {{ uploading ? 'Saving…' : 'Save & Print' }}
             </button>
           </div>
         </footer>
@@ -662,7 +620,6 @@
     </Transition>
 
     <!-- QR-only fallback print template -->
-    <DocumentPrintCanvas :qr-data-url="printQrDataUrl" :qr-size="selectedQrSize" />
 
     <DocumentQrStickerModal
       :is-open="showAssignedQr"
@@ -674,15 +631,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
-import QRCode from 'qrcode'
-import { PDFDocument } from 'pdf-lib'
-import { renderAsync } from 'docx-preview'
+import { computed, ref, watch } from 'vue'
 import DocumentLivePreview from '~/components/client/documents/documentLivePreview.vue'
-import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanvas.vue'
 import DocumentQrStickerModal from '~/components/documents/DocumentQrStickerModal.vue'
 import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
-import { printRoutingSlipAfterUpload, type UploadResponseForSlip } from '~/utils/generateRoutingSheetPdf'
+import { printDocumentWithQrLabel, type QrLabelSize } from '~/utils/printDocumentWithQrLabel'
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
@@ -775,14 +728,11 @@ const expectedCompletionHours  = computed(() => {
     ? expectedCompletionAmount.value * 24
     : expectedCompletionAmount.value
 })
-const selectedStrategy       = ref<'embedded' | 'standalone'>('embedded')
-const selectedQrSize         = ref<50 | 120 | 200>(120)
-const currentTrackingId      = ref('')
+const selectedQrSize         = ref<QrLabelSize>(120)
 const isDragging             = ref(false)
 const errorMessage           = ref('')
 const uploading              = ref(false)
 const aiAnalysis             = ref<AiAnalysis | null>(null)
-const printQrDataUrl         = ref('')
 const manualTitle            = ref('')
 const manualDescription      = ref('')
 
@@ -794,14 +744,6 @@ const isExcelFile = computed(() => {
   return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv')
 })
 
-// Force standalone strategy for Excel files
-watch(isExcelFile, (isExcel) => {
-  if (isExcel) {
-    selectedStrategy.value = 'standalone'
-  }
-})
-
-const generateTrackingId = () => `FLOW-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
 // ── All stages (cast to enriched shape with optional office_id) ────────
 const allStages = computed<EnrichedStage[]>(() => stageStore.stages as unknown as EnrichedStage[])
@@ -946,7 +888,6 @@ const handleFileChange = (e: Event) => {
   }
 
   selectedFile.value = file
-  currentTrackingId.value = generateTrackingId()
   errorMessage.value = ''
 }
 
@@ -962,13 +903,11 @@ const handleDrop = (e: DragEvent) => {
   }
 
   selectedFile.value = file
-  currentTrackingId.value = generateTrackingId()
   errorMessage.value = ''
 }
 
 const clearFile = () => {
   selectedFile.value = null
-  currentTrackingId.value = ''
   manualTitle.value = ''
   manualDescription.value = ''
   if (fileInput.value) fileInput.value.value = ''
@@ -981,92 +920,15 @@ const handleClose = () => {
   selectedStageId.value = ''
   selectedCategoryId.value = ''
   selectedMessengerId.value = ''
-  selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
   expectedCompletionAmount.value = null
   expectedCompletionUnit.value = 'days'
-  printQrDataUrl.value = ''
   errorMessage.value = ''
   aiAnalysis.value = null
   emit('close')
 }
 
-// ── Print: Standalone trailer ─────────────────────────────────────────
-const printStandaloneDocument = async (file: File, qrDataUrl: string) => {
-  const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const buf = await file.arrayBuffer()
-  const sz  = selectedQrSize.value
-
-  if (ext === 'pdf') {
-    const pdf = await PDFDocument.load(buf)
-    const img = await pdf.embedPng(qrDataUrl)
-    const pg  = pdf.addPage()
-    const { width, height } = pg.getSize()
-    pg.drawImage(img, { x: (width - sz) / 2, y: (height - sz) / 2, width: sz, height: sz })
-    const url = URL.createObjectURL(new Blob([await pdf.save()], { type: 'application/pdf' }))
-    const win = window.open(url)
-    if (win) win.onload = () => { win.focus(); win.print() }
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
-    return
-  }
-
-  if (ext === 'docx') {
-    const div = document.createElement('div')
-    await renderAsync(buf, div)
-    const win = window.open('', '_blank')
-    if (win) {
-      win.document.write(`<html><head><style>@page{margin:0}body{margin:0;padding:0;background:#fff}.docx-wrapper{background:#fff!important;padding:0!important}.docx{box-shadow:none!important;margin:0!important;width:100%!important}</style></head><body>${div.innerHTML}<div style="page-break-before:always;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff"><img src="${qrDataUrl}" style="width:${sz}px;height:${sz}px"/></div></body></html>`)
-      win.document.close()
-      win.focus()
-      setTimeout(() => { win.print(); win.close() }, 500)
-    }
-    return
-  }
-
-  printQrDataUrl.value = qrDataUrl
-  await nextTick()
-  window.print()
-}
-
-// ── Print: Embedded QR stamp ──────────────────────────────────────────
-const printEmbeddedDocument = async (file: File, qrDataUrl: string) => {
-  const ext = file.name.split('.').pop()?.toLowerCase() || ''
-  const buf = await file.arrayBuffer()
-
-  if (ext === 'pdf') {
-    const pdf = await PDFDocument.load(buf)
-    const img = await pdf.embedPng(qrDataUrl)
-    const sz = 50, margin = 20
-    pdf.getPages().forEach((pg) => {
-      const { height } = pg.getSize()
-      pg.drawImage(img, { x: margin, y: height - sz - margin, width: sz, height: sz })
-    })
-    const url = URL.createObjectURL(new Blob([await pdf.save()], { type: 'application/pdf' }))
-    const win = window.open(url)
-    if (win) win.onload = () => { win.focus(); win.print() }
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
-    return
-  }
-
-  if (ext === 'docx') {
-    const div = document.createElement('div')
-    await renderAsync(buf, div)
-    const win = window.open('', '_blank')
-    if (win) {
-      win.document.write(`<html><head><style>@page{margin:0}body{margin:0;padding:0;background:#fff}.docx-wrapper{background:#fff!important;padding:0!important}.docx{box-shadow:none!important;margin:0!important;width:100%!important}</style></head><body><img src="${qrDataUrl}" style="position:absolute;top:20px;left:20px;width:50px;height:50px;z-index:9999"/>${div.innerHTML}</body></html>`)
-      win.document.close()
-      win.focus()
-      setTimeout(() => { win.print(); win.close() }, 500)
-    }
-    return
-  }
-
-  printQrDataUrl.value = qrDataUrl
-  await nextTick()
-  window.print()
-}
-
-// ── Submit: print → persist ───────────────────────────────────────────
+// ── Submit: persist → print ───────────────────────────────────────────
 const handlePrintAndSubmit = async () => {
   if (!canSubmit.value) return
 
@@ -1090,7 +952,8 @@ const handlePrintAndSubmit = async () => {
 
     // Printing happens AFTER the upload: the server assigns the document's real QR
     // payload, so anything printed before it exists would scan to nothing.
-    const routeNameForSlip = selectedRouteName.value
+    const fileToPrint = selectedFile.value!
+    const qrSizeToPrint = selectedQrSize.value
 
     formData.append('user_id',         String(auth.user?.user_id ?? ''))
     formData.append('org_id',           String(auth.user?.org_id ?? ''))
@@ -1098,8 +961,9 @@ const handlePrintAndSubmit = async () => {
       formData.append('assigned_messenger_id', selectedMessengerId.value)
     }
 
-    const res = await $fetch<UploadResponseForSlip & {
+    const res = await $fetch<{
       success: boolean
+      metadata?: { id?: string; title?: string; description?: string | null; qr_code_data?: string }
       assigned_messenger?: { user_id: string; full_name: string | null } | null
       messenger_assignment_error?: string | null
     }>('/api/documents/upload', {
@@ -1111,14 +975,20 @@ const handlePrintAndSubmit = async () => {
       if (res.metadata?.title || res.metadata?.description) {
         aiAnalysis.value = { title: res.metadata.title ?? '', description: res.metadata.description ?? '' }
       }
-      try {
-        await printRoutingSlipAfterUpload(res, {
-          routeName: routeNameForSlip || undefined,
-          creatorName: auth.user?.full_name || undefined,
-        })
-      } catch (printErr) {
-        console.error('[EmployeeDocUploadModal] Routing Slip print failed:', printErr)
-        errorMessage.value = 'Document saved, but the Routing Slip could not be printed. Open the document and use Download Routing Slip.'
+      if (res.metadata?.qr_code_data) {
+        try {
+          const { printedDocument } = await printDocumentWithQrLabel(fileToPrint, {
+            qrPayload: res.metadata.qr_code_data,
+            title: res.metadata.title || fileToPrint.name,
+            qrSize: qrSizeToPrint,
+          })
+          if (!printedDocument) {
+            errorMessage.value = "Document saved. This file type can't be printed from the browser, so only the QR Tracking Label was printed — print the document itself separately."
+          }
+        } catch (printErr) {
+          console.error('[EmployeeDocUploadModal] print failed:', printErr)
+          errorMessage.value = 'Document saved, but printing failed. Open the document to print its QR Tracking Label.'
+        }
       }
 
       const newDocumentId = res.metadata?.id
@@ -1141,17 +1011,13 @@ const handlePrintAndSubmit = async () => {
       selectedStageId.value = ''
       selectedCategoryId.value = ''
       selectedMessengerId.value = ''
-      currentTrackingId.value = ''
-      printQrDataUrl.value = ''
       expectedCompletionAmount.value = null
       expectedCompletionUnit.value = 'days'
     } else {
       errorMessage.value = 'Upload failed. Please try again.'
-      currentTrackingId.value = generateTrackingId()
     }
   } catch (err: any) {
     errorMessage.value = err?.data?.message || 'Upload failed. Please try again.'
-    currentTrackingId.value = generateTrackingId()
   } finally {
     uploading.value = false
   }

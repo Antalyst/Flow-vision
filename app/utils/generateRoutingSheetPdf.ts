@@ -19,53 +19,6 @@ export interface RoutingSheetInput {
   routeSteps?: Array<{ step_number: number; office_name: string }>
 }
 
-/** The parts of the POST /api/documents/upload response the Routing Slip needs. */
-export interface UploadResponseForSlip {
-  metadata?: {
-    id?: string
-    title?: string
-    description?: string | null
-    qr_code_data?: string
-    created_at?: string
-    priority?: string | null
-  }
-  scope?: {
-    origin_office?: string | null
-    route_checkpoints?: Array<{ step: number; office_name: string }>
-  }
-}
-
-/**
- * Prints the Routing Slip for a document that was just uploaded. The QR is the
- * server-saved `qr_code_data` — the same payload the Routing Slip in the document
- * drawer uses — so the printed paper scans to the real document.
- * Returns false when the response has no saved document to print.
- */
-export async function printRoutingSlipAfterUpload(
-  res: UploadResponseForSlip,
-  extras: { routeName?: string; creatorName?: string } = {},
-): Promise<boolean> {
-  const doc = res.metadata
-  if (!doc?.id || !doc.qr_code_data) return false
-  await generateRoutingSheetPdf({
-    id: doc.id,
-    title: doc.title || 'Document',
-    description: doc.description || undefined,
-    creatorName: extras.creatorName,
-    routeName: extras.routeName,
-    targetOffice: res.scope?.origin_office || undefined,
-    originOffice: res.scope?.origin_office || undefined,
-    priority: doc.priority || undefined,
-    createdAt: doc.created_at,
-    qrPayload: doc.qr_code_data,
-    routeSteps: (res.scope?.route_checkpoints ?? []).map((s) => ({
-      step_number: s.step,
-      office_name: s.office_name,
-    })),
-  }, { mode: 'print' })
-  return true
-}
-
 function formatSheetDate(value?: string) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('en', {
@@ -83,38 +36,7 @@ function wrapText(doc: jsPDF, text: string, x: number, y: number, maxWidth: numb
   return y + lines.length * lineHeight
 }
 
-// Prints through a hidden iframe instead of window.open, so it still works when
-// called after an await (popup blockers only allow window.open on a direct click).
-// Browsers without an inline PDF viewer (most mobile browsers) can't print a PDF
-// from an iframe, so those get the file downloaded instead.
-function printPdf(doc: jsPDF, fileName: string) {
-  if (navigator.pdfViewerEnabled === false) {
-    doc.save(fileName)
-    return
-  }
-  const url = URL.createObjectURL(doc.output('blob'))
-  const iframe = document.createElement('iframe')
-  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;'
-  iframe.src = url
-  iframe.onload = () => {
-    try {
-      iframe.contentWindow?.focus()
-      iframe.contentWindow?.print()
-    } catch {
-      doc.save(fileName)
-    }
-  }
-  document.body.appendChild(iframe)
-  setTimeout(() => {
-    iframe.remove()
-    URL.revokeObjectURL(url)
-  }, 5 * 60 * 1000)
-}
-
-export async function generateRoutingSheetPdf(
-  input: RoutingSheetInput,
-  options: { mode?: 'download' | 'print' } = {},
-): Promise<void> {
+export async function generateRoutingSheetPdf(input: RoutingSheetInput): Promise<void> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 16
@@ -241,7 +163,5 @@ export async function generateRoutingSheetPdf(
   )
 
   const safeId = input.id.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 12)
-  const fileName = `FlowVision-Routing-${safeId || 'document'}.pdf`
-  if (options.mode === 'print') printPdf(doc, fileName)
-  else doc.save(fileName)
+  doc.save(`FlowVision-Routing-${safeId || 'document'}.pdf`)
 }
