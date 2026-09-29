@@ -164,7 +164,7 @@
           </div>
 
           <!-- SUCCESS ── Pickup -->
-          <div v-else-if="scanState === 'success' && mode === 'pickup'" class="p-5">
+          <div v-else-if="scanState === 'success' && resultMode === 'pickup'" class="p-5">
             <div class="flex items-start gap-3">
               <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success/10">
                 <Icon name="ph:check-circle-light" class="h-5 w-5 text-success" />
@@ -193,12 +193,17 @@
                   <Icon name="ph:motorcycle-light" class="h-3.5 w-3.5" />
                   In Transit
                 </div>
+                <p v-if="resultData?.document" class="mt-3 text-xs leading-relaxed text-white/70">
+                  Not delivered yet. At
+                  <strong class="text-white/90">{{ resultData?.destination?.office_name || 'the destination office' }}</strong>,
+                  switch to <strong class="text-white/90">Drop-off</strong> and scan the office's QR code to deliver it.
+                </p>
               </div>
             </div>
           </div>
 
           <!-- SUCCESS ── Dropoff -->
-          <div v-else-if="scanState === 'success' && mode === 'dropoff'" class="p-5">
+          <div v-else-if="scanState === 'success' && resultMode === 'dropoff'" class="p-5">
             <div class="flex items-start gap-3">
               <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-success/10">
                 <Icon
@@ -491,6 +496,12 @@ const initialMode: ScanMode = queryMode.value || messengerStore.focusedScanMode 
 const mode = ref<ScanMode>(initialMode)
 
 const scanState = ref<ScanState>('idle')
+// The mode the last scan was actually processed in. The result card must key
+// off this, not `mode`: loadCustody() re-resolves `mode` right after a
+// successful pickup (the doc is now IN_TRANSIT → 'dropoff'), which used to
+// re-render a pickup result as "Arrived at Office" even though nothing had
+// been delivered yet.
+const resultMode = ref<ScanMode>(initialMode)
 const rawScan = ref<string | null>(null)
 const resultData = ref<any>(null)
 const errorMessage = ref('')
@@ -637,7 +648,7 @@ const applyScanError = (err: any) => {
   const trackingStatus = err?.data?.data?.tracking_status ?? ''
 
   if (
-    mode.value === 'pickup' &&
+    resultMode.value === 'pickup' &&
     (trackingStatus === 'IN_TRANSIT' ||
       code === 'ALREADY_IN_TRANSIT' ||
       (msg.includes('IN_TRANSIT') && (msg.includes('INVALID_STATUS') || msg.includes('Cannot pick up'))))
@@ -659,6 +670,7 @@ const applyScanError = (err: any) => {
 // ── Scan handler ───────────────────────────────────────────────────────
 const handleScan = async (raw: string) => {
   rawScan.value = raw
+  resultMode.value = mode.value
   scanState.value = 'processing'
   resultData.value = null
   errorMessage.value = ''
