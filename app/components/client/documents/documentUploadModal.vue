@@ -631,7 +631,7 @@
             >
               <Icon v-if="uploading" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
               <Icon v-else name="ph:printer" class="h-4 w-4" />
-              {{ uploading ? 'Saving…' : 'Print & Save' }}
+              {{ uploading ? 'Saving…' : 'Save & Print Routing Slip' }}
             </button>
           </div>
         </footer>
@@ -650,6 +650,7 @@ import { PDFDocument } from 'pdf-lib'
 import { renderAsync } from 'docx-preview'
 import DocumentLivePreview from '~/components/client/documents/documentLivePreview.vue'
 import DocumentPrintCanvas from '~/components/client/documents/documentPrintCanvas.vue'
+import { printRoutingSlipAfterUpload, type UploadResponseForSlip } from '~/utils/generateRoutingSheetPdf'
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
 import { useAuthStore } from '~/stores/auth'
@@ -1030,17 +1031,9 @@ const handlePrintAndSubmit = async () => {
   if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
   if (!selectedCategoryId.value)     { errorMessage.value = 'Please select a document category.'; return }
 
-  const trackingCode = currentTrackingId.value || generateTrackingId()
-  currentTrackingId.value = trackingCode
-
-  let qrDataUrl = ''
-  try { qrDataUrl = await QRCode.toDataURL(trackingCode, { margin: 1, width: 320 }) } catch { /* non-fatal */ }
-
-  if (selectedStrategy.value === 'embedded') {
-    await printEmbeddedDocument(selectedFile.value, qrDataUrl)
-  } else {
-    await printStandaloneDocument(selectedFile.value, qrDataUrl)
-  }
+  // Printing happens AFTER the upload: the server assigns the document's real QR
+  // payload, so anything printed before it exists would scan to nothing.
+  const routeNameForSlip = selectedRouteName.value
 
   uploading.value = true
   try {
@@ -1052,8 +1045,7 @@ const handlePrintAndSubmit = async () => {
     }
     fd.append('stage_id',         selectedStageId.value)
     fd.append('category_id',      selectedCategoryId.value)
-    fd.append('qr_code_data',     trackingCode)
-    fd.append('user_id',          String(auth.user?.user_id ?? ''))
+    fd.append('user_id',         String(auth.user?.user_id ?? ''))
     fd.append('org_id',           String(auth.user?.org_id ?? ''))
     if (expectedCompletionHours.value) {
       fd.append('expected_completion_hours', String(expectedCompletionHours.value))
@@ -1067,9 +1059,8 @@ const handlePrintAndSubmit = async () => {
       if (manualDescription.value) fd.append('manual_description', manualDescription.value)
     }
 
-    const res = await $fetch<{
+    const res = await $fetch<UploadResponseForSlip & {
       success: boolean
-      data?: any
       messenger_assignment_error?: string | null
     }>('/api/documents/upload', {
       method: 'POST',
@@ -1077,8 +1068,17 @@ const handlePrintAndSubmit = async () => {
     })
 
     if (res.success) {
-      if (res.data?.title || res.data?.description) {
-        aiAnalysis.value = { title: res.data.title, description: res.data.description }
+      if (res.metadata?.title || res.metadata?.description) {
+        aiAnalysis.value = { title: res.metadata.title ?? '', description: res.metadata.description ?? '' }
+      }
+      try {
+        await printRoutingSlipAfterUpload(res, {
+          routeName: routeNameForSlip || undefined,
+          creatorName: auth.user?.full_name || undefined,
+        })
+      } catch (printErr) {
+        console.error('[DocumentUploadModal] Routing Slip print failed:', printErr)
+        errorMessage.value = 'Document saved, but the Routing Slip could not be printed. Open the document and use Download Routing Slip.'
       }
       if (res.messenger_assignment_error) {
         errorMessage.value = `Document saved, but assigning the messenger failed: ${res.messenger_assignment_error}`
