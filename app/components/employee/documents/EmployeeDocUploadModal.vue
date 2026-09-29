@@ -441,6 +441,32 @@
                   </div>
                 </div>
               </Transition>
+
+              <!-- Optional: how long this document should take, end to end -->
+              <div class="mt-4">
+                <span class="text-sm font-semibold" :class="headingClass">Expected Completion Time</span>
+                <p class="mt-0.5 text-xs" :class="mutedClass">
+                  Optional — how long should this document take, start to finish? We'll alert you, the office holding it, and an admin if it runs over.
+                </p>
+                <div class="mt-2 flex items-center gap-2">
+                  <input
+                    v-model.number="expectedCompletionAmount"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 3"
+                    class="w-28 rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                    :class="inputClass"
+                  >
+                  <select
+                    v-model="expectedCompletionUnit"
+                    class="rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                    :class="inputClass"
+                  >
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
@@ -739,6 +765,15 @@ const selectedOriginOfficeId = computed(() => {
   return ''
 })
 const selectedStageId        = ref<string>('')
+// Optional per-document expected completion time — mirrors the client upload modal.
+const expectedCompletionAmount = ref<number | null>(null)
+const expectedCompletionUnit   = ref<'hours' | 'days'>('days')
+const expectedCompletionHours  = computed(() => {
+  if (!expectedCompletionAmount.value || expectedCompletionAmount.value <= 0) return null
+  return expectedCompletionUnit.value === 'days'
+    ? expectedCompletionAmount.value * 24
+    : expectedCompletionAmount.value
+})
 const selectedStrategy       = ref<'embedded' | 'standalone'>('embedded')
 const selectedQrSize         = ref<50 | 120 | 200>(120)
 const currentTrackingId      = ref('')
@@ -947,6 +982,8 @@ const handleClose = () => {
   selectedMessengerId.value = ''
   selectedStrategy.value = 'embedded'
   selectedQrSize.value = 120
+  expectedCompletionAmount.value = null
+  expectedCompletionUnit.value = 'days'
   printQrDataUrl.value = ''
   errorMessage.value = ''
   aiAnalysis.value = null
@@ -1041,6 +1078,9 @@ const handlePrintAndSubmit = async () => {
     formData.append('stage_id', selectedStageId.value)
     formData.append('origin_office_id', selectedOriginOfficeId.value)
     formData.append('category_id', selectedCategoryId.value)
+    if (expectedCompletionHours.value) {
+      formData.append('expected_completion_hours', String(expectedCompletionHours.value))
+    }
 
     if (isExcelFile.value && (manualTitle.value || manualDescription.value)) {
       formData.append('manual_title', manualTitle.value)
@@ -1104,6 +1144,8 @@ const handlePrintAndSubmit = async () => {
       selectedMessengerId.value = ''
       currentTrackingId.value = ''
       printQrDataUrl.value = ''
+      expectedCompletionAmount.value = null
+      expectedCompletionUnit.value = 'days'
     } else {
       errorMessage.value = 'Upload failed. Please try again.'
       currentTrackingId.value = generateTrackingId()

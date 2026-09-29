@@ -1,9 +1,5 @@
 // server/utils/ttqt.ts
-import Groq from 'groq-sdk';
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+import { createChatCompletion } from './groq';
 
 export async function translateTextToQuery(userPrompt: string) {
   const systemInstruction = `
@@ -42,12 +38,11 @@ export async function translateTextToQuery(userPrompt: string) {
   `;
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await createChatCompletion({
       messages: [
         { role: 'system', content: systemInstruction },
         { role: 'user', content: userPrompt }
       ],
-      model: 'llama-3.3-70b-versatile',
       response_format: { type: "json_object" },
       temperature: 0.0, // Set to 0 for absolute precision and stability
     });

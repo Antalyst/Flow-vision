@@ -1,5 +1,5 @@
 import { defineEventHandler, readBody, createError } from 'h3'
-import Groq from 'groq-sdk'
+import { createChatCompletion } from '~~/server/utils/groq'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -12,13 +12,6 @@ export default defineEventHandler(async (event) => {
   if (!documents || !Array.isArray(documents) || documents.length === 0) {
     return { matches: [] } // No documents to search
   }
-
-  const groqApiKey = process.env.GROQ_API_KEY
-  if (!groqApiKey) {
-    throw createError({ statusCode: 500, message: 'GROQ_API_KEY is not configured.' })
-  }
-
-  const groq = new Groq({ apiKey: groqApiKey })
 
   // Prepare a condensed version of documents to save tokens
   const contextDocs = documents.map(doc => ({
@@ -56,9 +49,8 @@ If no documents match, return { "matches": [] }
 `
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await createChatCompletion({
       messages: [{ role: 'system', content: systemPrompt }],
-      model: 'llama-3.3-70b-versatile',
       temperature: 0.1,
       response_format: { type: 'json_object' }
     })

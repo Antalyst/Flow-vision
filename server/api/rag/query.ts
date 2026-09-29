@@ -1,5 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server';
-import Groq from 'groq-sdk';
+import { createChatCompletion } from '~~/server/utils/groq';
 import { translateTextToQuery } from '~~/server/utils/ttqt';
 import { generateDocumentTemplate } from '~~/server/utils/formatter';
 import { extractTextFromFile } from '~~/server/utils/documentParser';
@@ -18,6 +18,7 @@ import {
   fetchLatestDocumentPayload,
   persistMessage,
 } from '~~/server/utils/aiSession';
+import { getOrgKnowledgeContext } from '~~/server/utils/orgKnowledge';
 
 type AiScope = 'GLOBAL' | 'LOCAL'
 
@@ -193,6 +194,7 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // 1. Resolve multi-tenant context from trusted session cookies (fails closed).
   const { orgId, userId, role } = await resolveTenant(event);
+  const mysqlDb = event.context.db;
 
   // 1b. Read scope context from the request body.
   //     org_id is always from the session (trusted); officeIds are client-supplied
@@ -394,7 +396,11 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // ── Branch A: conversational NLP ──────────────────────────────────────────
   if (intent === 'conversation') {
-    const reply = await generateConversationalReply(aiPrompt, memory);
+    // Ground the answer in the org's uploaded AI Knowledge Base (Settings →
+    // AI Knowledge Base), when relevant content exists. Never blocks the
+    // turn — a lookup failure just means no extra context is added.
+    const knowledgeContext = await getOrgKnowledgeContext(mysqlDb, orgId, prompt);
+    const reply = await generateConversationalReply(aiPrompt, memory, knowledgeContext ?? undefined);
 
     try {
       await persistMessage(sessionId, 'assistant', reply);
@@ -430,8 +436,12 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     }
 
     // 2. Call LLM for Decision
-    const systemContext = `Here is the active system topology for the user's organization. Use it to answer their questions accurately:\n${topologyData}`;
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    // Also surface the org's uploaded AI Knowledge Base — questions phrased
+    // around "offices"/"hours"/etc. can land here instead of "conversation",
+    // and should still be answerable from the org's own documents.
+    const knowledgeContext = await getOrgKnowledgeContext(mysqlDb, orgId, prompt);
+    const systemContext = `Here is the active system topology for the user's organization. Use it to answer their questions accurately:\n${topologyData}` +
+      (knowledgeContext ? `\n\nHere is relevant content from the organization's uploaded knowledge base documents — use it to answer questions about how the org works, its policies, or requirements:\n${knowledgeContext}` : '');
     const decisionPrompt = `
       You are the central core engine of the FlowVision Workspace. You are provided with a complete, privacy-compliant snapshot of the organization's structural nodes (Stages, Offices, Steps) in your system prompt. Analyze the user's question, inspect this data footprint, and dynamically decide how the system should display the output.
       
@@ -461,24 +471,19 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
     `;
     
     let decision;
-    const candidateModels = Array.from(new Set([process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']));
-    for (const model of candidateModels) {
-      try {
-        const decisionCompletion = await groq.chat.completions.create({
-          messages: [
-            { role: 'system', content: decisionPrompt + '\n\n' + systemContext },
-            { role: 'user', content: prompt }
-          ],
-          model,
-          temperature: 0.1,
-          response_format: { type: 'json_object' }
-        });
-        const rawDecision = decisionCompletion.choices[0]?.message?.content || '{}';
-        decision = JSON.parse(rawDecision);
-        break;
-      } catch (error) {
-        console.warn(`[TopologyLookup] Decision engine attempt with ${model} failed:`, error);
-      }
+    try {
+      const decisionCompletion = await createChatCompletion({
+        messages: [
+          { role: 'system', content: decisionPrompt + '\n\n' + systemContext },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1,
+        response_format: { type: 'json_object' }
+      });
+      const rawDecision = decisionCompletion.choices[0]?.message?.content || '{}';
+      decision = JSON.parse(rawDecision);
+    } catch (error) {
+      console.warn('[TopologyLookup] Decision engine failed on all candidate models:', error);
     }
 
     if (!decision) {
@@ -567,7 +572,6 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // ── Branch B: structured NLQ data-builder & semantic search pipelines ───────
   const ttqtOutput = await translateTextToQuery(aiPrompt, memory);
-  const mysqlDb = event.context.db;
   if (!mysqlDb) {
     throw createError({
       statusCode: 500,
@@ -688,7 +692,24 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
 
   // ── Branch S: Semantic Search ───────────────────────────────────────────
   if (intent === 'semantic_search') {
-    const semanticReply = hydratedRows.length > 0 
+    // No tracked/registered documents matched — before giving up, fall back
+    // to the org's uploaded AI Knowledge Base (Settings → AI Knowledge Base).
+    // A "find X" / "according to our docs..." question is often really an
+    // org-info question the knowledge base can answer directly.
+    if (hydratedRows.length === 0) {
+      const knowledgeContext = await getOrgKnowledgeContext(mysqlDb, orgId, prompt);
+      if (knowledgeContext) {
+        const reply = await generateConversationalReply(aiPrompt, memory, knowledgeContext);
+        try {
+          await persistMessage(sessionId, 'assistant', reply);
+        } catch (error) {
+          console.error('Postgres Insertion Error Details:', error);
+        }
+        return { success: true, mode: 'conversation', session_id: sessionId, reply };
+      }
+    }
+
+    const semanticReply = hydratedRows.length > 0
       ? `I found ${hydratedRows.length} document(s) that match your semantic query. Check the items below:`
       : `I couldn't find any documents matching that specific semantic query in your records.`;
 
@@ -732,23 +753,17 @@ export default defineEventHandler(async (event): Promise<RagQueryResponse> => {
       4. Speak naturally directly to the user's prompt: "${prompt}"
     `;
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     let summaryText = 'Summary generation failed.';
-    const candidateModels = Array.from(new Set([process.env.GROQ_MODEL || 'llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b']));
-    for (const model of candidateModels) {
-      try {
-        const completion = await groq.chat.completions.create({
-          messages: [{ role: 'system', content: systemInstruction }],
-          model,
-          temperature: 0.3,
-        });
-        if (completion.choices[0]?.message?.content?.trim()) {
-          summaryText = completion.choices[0].message.content.trim();
-          break;
-        }
-      } catch (e) {
-        console.warn(`[Document Summary] generation with ${model} failed:`, e);
+    try {
+      const completion = await createChatCompletion({
+        messages: [{ role: 'system', content: systemInstruction }],
+        temperature: 0.3,
+      });
+      if (completion.choices[0]?.message?.content?.trim()) {
+        summaryText = completion.choices[0].message.content.trim();
       }
+    } catch (e) {
+      console.warn('[Document Summary] generation failed on all candidate models:', e);
     }
 
     let htmlContent = summaryText;

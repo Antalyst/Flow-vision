@@ -1,9 +1,5 @@
 // server/utils/formatter.ts
-import Groq from 'groq-sdk';
-
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+import { createChatCompletion } from './groq';
 
 export async function generateDocumentTemplate(userPrompt: string, dbRows: any[]) {
   const systemInstruction = `
@@ -53,17 +49,16 @@ export async function generateDocumentTemplate(userPrompt: string, dbRows: any[]
   const databaseContextString = JSON.stringify(dbRows, null, 2);
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await createChatCompletion({
       messages: [
         { role: 'system', content: systemInstruction },
-        { 
-          role: 'user', 
-          content: `User Request: "${userPrompt}"\n\nFetched Database Rows:\n${databaseContextString}` 
+        {
+          role: 'user',
+          content: `User Request: "${userPrompt}"\n\nFetched Database Rows:\n${databaseContextString}`
         }
       ],
-      model: 'llama-3.3-70b-versatile',
       response_format: { type: "json_object" },
-      temperature: 0.2, 
+      temperature: 0.2,
     });
 
     const rawResponse = chatCompletion.choices[0]?.message?.content || '{}';

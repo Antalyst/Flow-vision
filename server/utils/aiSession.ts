@@ -12,7 +12,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { H3Event } from 'h3'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const ALLOWED_ROLES = ['client', 'employee']
+const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user']
 const MEMORY_WINDOW = 5
 
 export interface TenantContext {

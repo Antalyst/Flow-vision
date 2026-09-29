@@ -198,6 +198,54 @@
       </section>
 
       <section class="rounded-2xl border p-6" :class="panelClass">
+        <h2 class="text-sm font-bold" :class="headingClass">AI Knowledge Base</h2>
+        <p class="mt-1 text-xs" :class="mutedClass">Upload PDF, Word (.docx), or Excel (.xlsx) files that describe how your organization works. The AI assistant reads these to answer employees' and clients' questions about your org.</p>
+
+        <div class="mt-4 flex gap-2 items-center mb-4">
+          <input
+            type="file"
+            accept=".pdf,.docx,.xlsx"
+            @change="onKnowledgeFileChange"
+            class="text-xs"
+            :class="mutedClass"
+            ref="knowledgeFileInput"
+          />
+          <button
+            @click="uploadKnowledgeFile"
+            class="flex-shrink-0 rounded-xl border bg-candy-orange px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-candy-hover active:scale-[0.98] disabled:opacity-50"
+            :disabled="!selectedKnowledgeFile || uploadingKnowledge"
+          >
+            {{ uploadingKnowledge ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+
+        <div class="rounded-xl border" :class="innerPanelClass">
+          <div v-if="loadingKnowledge" class="p-4 text-center text-xs" :class="mutedClass">Loading files...</div>
+          <div v-else-if="knowledgeFiles.length === 0" class="p-4 text-center text-xs" :class="mutedClass">No knowledge base files uploaded yet.</div>
+          <div v-else class="divide-y" :class="isDark ? 'divide-white/5' : 'divide-gray-100'">
+            <div v-for="f in knowledgeFiles" :key="f.id" class="flex items-center justify-between gap-3 px-4 py-3">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium" :class="headingClass">{{ f.file_name }}</p>
+                <p class="mt-0.5 text-xs" :class="mutedClass">
+                  {{ formatFileSize(f.file_size) }} · {{ formatDate(f.created_at) }}
+                  <span v-if="f.extraction_status !== 'ready'" class="text-danger"> · Text could not be read from this file</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                class="flex-shrink-0 text-gray-400 transition hover:text-danger disabled:opacity-50"
+                :disabled="deletingKnowledgeId === f.id"
+                @click="deleteKnowledgeFile(f.id)"
+              >
+                <Icon name="ph:spinner-gap" v-if="deletingKnowledgeId === f.id" class="h-4 w-4 animate-spin" />
+                <Icon name="ph:trash" v-else class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">Account</h2>
         <p class="mt-1 text-xs" :class="mutedClass">
           Signed in as <span class="font-medium" :class="headingClass">{{ auth.user?.email }}</span>
@@ -418,6 +466,85 @@ async function clearWhitelist() {
   }
 }
 
+const knowledgeFiles = ref<any[]>([])
+const loadingKnowledge = ref(false)
+const uploadingKnowledge = ref(false)
+const selectedKnowledgeFile = ref<File | null>(null)
+const knowledgeFileInput = ref<HTMLInputElement | null>(null)
+const deletingKnowledgeId = ref<number | null>(null)
+
+function onKnowledgeFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  selectedKnowledgeFile.value = target.files?.[0] ?? null
+}
+
+async function fetchKnowledgeFiles() {
+  loadingKnowledge.value = true
+  try {
+    const res = await $fetch<{ success: boolean; data: any[] }>('/api/org/knowledge')
+    knowledgeFiles.value = res.data ?? []
+  } catch (err) {
+    // ignore — matches whitelist fetch convention (non-fatal on load)
+  } finally {
+    loadingKnowledge.value = false
+  }
+}
+
+const MAX_KNOWLEDGE_FILE_MB = 150
+
+async function uploadKnowledgeFile() {
+  if (!selectedKnowledgeFile.value) return
+  if (selectedKnowledgeFile.value.size > MAX_KNOWLEDGE_FILE_MB * 1024 * 1024) {
+    showToast(`File is too large. The limit is ${MAX_KNOWLEDGE_FILE_MB}MB.`, 'error')
+    return
+  }
+  uploadingKnowledge.value = true
+  const formData = new FormData()
+  formData.append('file', selectedKnowledgeFile.value)
+
+  try {
+    const res = await $fetch<{ success: boolean; message: string }>('/api/org/knowledge/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    showToast(res.message || 'File uploaded.')
+    selectedKnowledgeFile.value = null
+    if (knowledgeFileInput.value) knowledgeFileInput.value.value = ''
+    await fetchKnowledgeFiles()
+  } catch (err: any) {
+    showToast(err.data?.statusMessage || err.message || 'Failed to upload file.', 'error')
+  } finally {
+    uploadingKnowledge.value = false
+  }
+}
+
+async function deleteKnowledgeFile(id: number) {
+  deletingKnowledgeId.value = id
+  try {
+    await $fetch(`/api/org/knowledge/${id}`, { method: 'DELETE' })
+    knowledgeFiles.value = knowledgeFiles.value.filter((f) => f.id !== id)
+    showToast('File removed.')
+  } catch (err: any) {
+    showToast(err.data?.statusMessage || err.message || 'Failed to delete file.', 'error')
+  } finally {
+    deletingKnowledgeId.value = null
+  }
+}
+
+function formatFileSize(bytes: number | null | undefined) {
+  if (!bytes) return '—'
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function formatDate(value: string) {
+  try {
+    return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch {
+    return value
+  }
+}
+
 async function copyOrgCode() {
   if (!auth.currentOrg?.code) return
   try {
@@ -442,6 +569,7 @@ onMounted(async () => {
   }
   
   await categoriesStore.fetchCategories()
+  await fetchKnowledgeFiles()
 })
 </script>
 

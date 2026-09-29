@@ -3,9 +3,7 @@
 // Lightweight gateway that decides whether a prompt is general conversation (NLP)
 // or an explicit structured data request (NLQ). This sits in FRONT of the TTQT /
 // document-builder chain so casual prompts ("hi", "thanks") never trigger a data dump.
-import Groq from 'groq-sdk'
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+import { createChatCompletion } from './groq'
 
 export type QueryIntent = 'conversation' | 'data_query' | 'document_revision' | 'semantic_search' | 'SYSTEM_TOPOLOGY' | 'document_summary'
 
@@ -69,9 +67,8 @@ export async function classifyIntent(
   ]
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await createChatCompletion({
       messages,
-      model: 'llama-3.3-70b-versatile',
       response_format: { type: 'json_object' },
       temperature: 0,
     })
@@ -97,7 +94,7 @@ export async function classifyIntent(
       target_entity
     }
   } catch (error) {
-    console.error('[IntentRouter] classification failed, defaulting to conversation:', error)
+    console.error('[IntentRouter] classification failed on all candidate models, defaulting to conversation:', error)
     // Fail safe: never dump data the user did not clearly request.
     return { intent: 'conversation' }
   }

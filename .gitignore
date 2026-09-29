@@ -23,6 +23,9 @@ logs
 .env.*
 !.env.example
 
-# Agnts special skills 
+# Agnts special skills
 .agents/
 .claude/
+
+# Local sample data (large, not for the repo)
+"Citizen's Charter 2023.pdf"

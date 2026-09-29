@@ -62,6 +62,46 @@ ALTER TABLE `document_storage`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `org_knowledge_files`
+--
+-- Org-level AI knowledge base: PDF / Word (.docx) / Excel (.xlsx) files an
+-- org admin (client role) uploads from Settings so the AI chat assistant can
+-- ground its answers about "how the org works" in real organization docs.
+--
+
+CREATE TABLE `org_knowledge_files` (
+  `id` int(11) NOT NULL,
+  `org_id` varchar(36) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_ext` varchar(10) NOT NULL,
+  `mime_type` varchar(150) DEFAULT NULL,
+  `file_size` int(11) DEFAULT NULL,
+  `file_blob` longblob NOT NULL,
+  `extracted_text` longtext DEFAULT NULL,
+  `extraction_status` varchar(20) NOT NULL DEFAULT 'ready',
+  `extraction_error` text DEFAULT NULL,
+  `uploaded_by` varchar(36) DEFAULT NULL,
+  `uploaded_by_name` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Indexes for table `org_knowledge_files`
+--
+ALTER TABLE `org_knowledge_files`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `org_id` (`org_id`);
+
+--
+-- AUTO_INCREMENT for table `org_knowledge_files`
+--
+ALTER TABLE `org_knowledge_files`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
