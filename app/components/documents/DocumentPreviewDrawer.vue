@@ -118,9 +118,11 @@
                 <h3 class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Delivery Progress</h3>
                 <span
                   v-if="stepsDisplay.length"
-                  class="flex-none rounded-full bg-candy-orange/10 px-3 py-1 text-xs font-bold text-candy-orange"
+                  class="flex-none rounded-full px-3 py-1 text-xs font-bold"
+                  :class="isRouteComplete ? 'bg-success/10 text-success' : 'bg-candy-orange/10 text-candy-orange'"
                 >
-                  Stop {{ currentStepNumber }} of {{ stepsDisplay.length }}
+                  <template v-if="isRouteComplete">Completed</template>
+                  <template v-else>Stop {{ currentStepNumber }} of {{ stepsDisplay.length }}</template>
                 </span>
               </div>
               <p class="mt-0.5 text-sm" :class="mutedClass">
@@ -611,6 +613,7 @@ interface TimelineSummary {
   tracking_status: string
   is_complete: boolean
   progress_pct: number
+  viewer_at_current_office?: boolean
 }
 
 interface SelectedPipelineOffice {
@@ -920,8 +923,12 @@ const pipelineProgressPct = computed(() => {
 
 const canMarkCheckpointDone = computed(() => {
   const doc = props.document
-  if (!doc || doc.tracking_status === 'COMPLETED') return false
-  if (doc.tracking_status !== 'ARRIVED_AT_OFFICE') return false
+  if (!doc || displayTrackingStatus.value !== 'ARRIVED_AT_OFFICE') return false
+  // Only the office physically holding the document reviews / completes it —
+  // e.g. the creator's office must not see "Approve & Complete" for a document
+  // sitting at another (final) office. complete-checkpoint.post.ts enforces the
+  // same rule; this just keeps the button off for everyone else.
+  if (!timelineSummary.value?.viewer_at_current_office) return false
   const step = doc.current_step ?? 0
   return (doc.checkpoint_cleared_step ?? null) !== step
 })
@@ -976,8 +983,14 @@ async function handleApproveCheckpoint() {
   }
 }
 
-const isStepDone = (step: StageStep) => step.step_number < currentStepNumber.value
-const isStepCurrent = (step: StageStep) => step.step_number === currentStepNumber.value
+// Once the final office approves, the whole road map is finished — the last
+// stop included — instead of leaving it looking like a live checkpoint.
+const isRouteComplete = computed(() => displayTrackingStatus.value === 'COMPLETED')
+
+const isStepDone = (step: StageStep) =>
+  isRouteComplete.value || step.step_number < currentStepNumber.value
+const isStepCurrent = (step: StageStep) =>
+  !isRouteComplete.value && step.step_number === currentStepNumber.value
 const isStepUpcoming = (step: StageStep) => step.step_number > currentStepNumber.value
 
 const isPipelineOfficeSelected = (step: StageStep) =>
@@ -1047,9 +1060,14 @@ const stepsDisplay = computed(() => {
     // still in transit as if they'd already dropped the document off.
     const hasReallyArrived = !!step.delivered_by
 
+    const isFinalStop = index === steps.value.length - 1
+
     let statusLabel = 'Upcoming'
     let statusClass = mutedClass.value
-    if (done) {
+    if (done && isFinalStop && isRouteComplete.value) {
+      statusLabel = 'Completed'
+      statusClass = 'text-success'
+    } else if (done) {
       statusLabel = 'Delivered'
       statusClass = 'text-success'
     } else if (current && hasReallyArrived) {
@@ -1088,6 +1106,12 @@ const stepsDisplay = computed(() => {
         facts.push({
           actorLine: `Out for delivery — picked up by ${step.released_by}`,
           timeLine: step.released_at ? `Picked up: ${formatStopTime(step.released_at)}` : '',
+        })
+      } else if (step.released_status === 'COMPLETED' && step.released_by) {
+        // Final office approved it — the route ends here.
+        facts.push({
+          actorLine: `Approved & completed by ${step.released_by}`,
+          timeLine: step.released_at ? `Completed: ${formatStopTime(step.released_at)}` : '',
         })
       }
     }

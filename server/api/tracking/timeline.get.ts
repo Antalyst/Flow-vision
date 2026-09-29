@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
   // ── Fetch the document with stage info ────────────────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at, origin_office_id, office_id, user_id')
+    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at, origin_office_id, office_id, current_office_id, user_id')
     .eq('id', documentId)
     .single()
 
@@ -241,6 +241,12 @@ export default defineEventHandler(async (event) => {
         current_step:   doc.current_step,
         tracking_status: doc.tracking_status,
         is_complete:    doc.tracking_status === 'COMPLETED',
+        // Whether the VIEWER belongs to the office physically holding the
+        // document right now — only that office may review / complete it
+        // (same rule complete-checkpoint.post.ts enforces server-side).
+        viewer_at_current_office: doc.current_office_id
+          ? actor.officeIds.includes(String(doc.current_office_id))
+          : false,
         progress_pct:   routeSteps.length
           ? Math.round((doc.current_step / routeSteps.length) * 100)
           : 0,

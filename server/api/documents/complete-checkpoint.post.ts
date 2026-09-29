@@ -7,6 +7,7 @@ import {
 } from '~~/server/utils/notifications'
 import { getRouteContext, isDocumentAtFinalRouteStop, resolveOfficeName, resolveRouteOfficeAtStep } from '~~/server/utils/routeCompletion'
 import { emitCompletedEmail, emitVerifiedEmail } from '~~/server/utils/email/emailEvents'
+import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 
 /**
  * POST /api/documents/complete-checkpoint
@@ -97,6 +98,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const officeId = doc.current_office_id ?? doc.office_id ?? null
+
+  // Only the office physically holding the document may review / complete it —
+  // otherwise e.g. the creator's office could "Approve & Complete" a document
+  // sitting at a different (final) office.
+  const actor = await resolveActorContextWithOffices(event, client)
+  if (!officeId || !actor.officeIds.includes(String(officeId))) {
+    throw createError({
+      statusCode: 403,
+      message: 'Only the office currently holding this document can confirm or complete it.',
+      data: { code: 'OFFICE_SCOPE_MISMATCH' },
+    })
+  }
+
   const officeName = await resolveOfficeName(client, officeId ? String(officeId) : null)
   const route = await getRouteContext(client, doc.stage_id)
   const atFinalStop = await isDocumentAtFinalRouteStop(client, doc)

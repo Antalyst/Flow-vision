@@ -27,7 +27,6 @@ const navGroups = computed(() => [
       { to: '/client/dashboard', label: 'Dashboard', icon: 'ph:squares-four-light' },
       { to: '/client/current-working', label: 'Live Tracking', icon: 'ph:truck-light' },
       { to: '/client/documents', label: 'All Documents', icon: 'ph:files-light' },
-      { to: '/client/scan', label: 'Scan & Update', icon: 'ph:scan-light' },
       { to: '/client/activity', label: 'Activity History', icon: 'ph:clock-counter-clockwise-light' },
     ],
   },
