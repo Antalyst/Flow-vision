@@ -5,11 +5,11 @@
       class="relative overflow-hidden rounded-2xl bg-black/95 shadow-xl w-full max-w-[400px] aspect-square mx-auto"
     >
       <!-- html5-qrcode target (Web Viewport) -->
-      <div v-show="!isNativeCapacitor" :id="scannerId" class="absolute inset-0 w-full h-full" />
+      <div v-show="!useNativeCapture" :id="scannerId" class="absolute inset-0 w-full h-full" />
 
-      <!-- Native Capacitor Camera Interface (Bypasses WebView 'getUserMedia' limitations) -->
+      <!-- Fallback only: native camera app, used when this WebView has no getUserMedia -->
       <div
-        v-if="isNativeCapacitor && !result"
+        v-if="useNativeCapture && !result"
         class="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-gradient-to-br from-black/80 to-gray-950/90 backdrop-blur-md px-6 text-center"
       >
         <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 border border-white/10 shadow-lg" :class="primaryShadowClass">
@@ -33,7 +33,7 @@
 
       <!-- Overlay: scanning frame + corner brackets (Only Web) -->
       <div
-        v-if="isScanning && !result && !isNativeCapacitor"
+        v-if="isScanning && !result && !useNativeCapture"
         class="pointer-events-none absolute inset-0 flex items-center justify-center"
       >
         <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
@@ -69,7 +69,7 @@
 
       <!-- Initialising overlay -->
       <div
-        v-if="!isScanning && !permissionDenied && !result && !isNativeCapacitor"
+        v-if="!isScanning && !permissionDenied && !result && !useNativeCapture"
         class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/90 backdrop-blur-sm"
       >
         <Icon name="ph:spinner-gap" class="h-8 w-8 animate-spin" :class="primaryTextClass" />
@@ -80,7 +80,7 @@
     <!-- Controls below viewport -->
     <div class="mt-4 flex items-center justify-center gap-3">
       <button
-        v-if="isScanning && !result && !isNativeCapacitor"
+        v-if="isScanning && !result && !useNativeCapture"
         type="button"
         class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10 active:scale-[0.98]"
         @click="toggleTorch"
@@ -105,7 +105,6 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import { findRearCameraDeviceId, resolveCameraConstraint, useMessengerSettings } from '~/composables/useMessengerSettings'
 
 const props = defineProps<{
@@ -151,6 +150,12 @@ if (import.meta.client) {
   isNativeCapacitor.value = !!window.Capacitor?.isNativePlatform()
 }
 
+// The live in-app camera (getUserMedia inside the WebView) is used everywhere,
+// including the Android app — Capacitor's WebView grants the camera permission
+// itself. Only fall back to launching the OS camera app when running natively
+// on a WebView that has no getUserMedia at all.
+const useNativeCapture = ref(false)
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let scannerInstance: any = null
 
@@ -173,6 +178,7 @@ const onDecodeError = (_err: unknown) => {
 const startNativeCamera = async () => {
   try {
     // Launch the actual OS-level native camera app
+    const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera')
     const image = await Camera.getPhoto({
       quality: 100,
       allowEditing: false,
@@ -208,9 +214,12 @@ const startNativeCamera = async () => {
 const startScanner = async () => {
   if (!import.meta.client) return
 
-  // Prevent web browser getUserMedia trigger if running natively
-  if (isNativeCapacitor.value) {
-    // Native users will tap the button to call startNativeCamera()
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (isNativeCapacitor.value) {
+      useNativeCapture.value = true
+    } else {
+      emit('error', 'This browser does not support camera access.')
+    }
     return
   }
 
@@ -297,7 +306,7 @@ const stopScanner = async () => {
 
 const rescan = () => {
   result.value = null
-  if (isNativeCapacitor.value) {
+  if (useNativeCapture.value) {
     startNativeCamera()
   } else {
     scannerInstance?.resume()
@@ -312,16 +321,12 @@ const toggleTorch = async () => {
   } catch { /* torch not supported */ }
 }
 
-onMounted(() => {
-  if (!isNativeCapacitor.value) {
-    startScanner()
-  }
-})
+onMounted(startScanner)
 
 onBeforeUnmount(stopScanner)
 
 watch(defaultCameraDeviceId, async () => {
-  if (isNativeCapacitor.value || !scannerInstance?.isScanning) return
+  if (useNativeCapture.value || !scannerInstance?.isScanning) return
   await stopScanner()
   result.value = null
   await startScanner()

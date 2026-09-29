@@ -72,7 +72,7 @@
           <div v-else-if="step === 'camera'" class="space-y-4">
             <!-- Live web camera viewport -->
             <div
-              v-if="!isNativeCapacitor"
+              v-if="!useNativeCapture"
               class="relative mx-auto aspect-[3/4] w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-xl"
             >
               <video ref="videoRef" class="h-full w-full object-cover" autoplay playsinline muted />
@@ -119,7 +119,7 @@
               </div>
             </div>
 
-            <!-- Native Capacitor camera trigger -->
+            <!-- Fallback only: native camera app, used when this WebView has no getUserMedia -->
             <div
               v-else
               class="mx-auto flex aspect-[3/4] w-full max-w-sm flex-col items-center justify-center gap-4 rounded-2xl bg-black px-6 text-center shadow-xl"
@@ -136,8 +136,8 @@
               </button>
             </div>
 
-            <!-- Capture controls (web only — native captures directly via the button above) -->
-            <div v-if="!isNativeCapacitor" class="flex items-center justify-center gap-3">
+            <!-- Capture controls (live camera — the native fallback captures via the button above) -->
+            <div v-if="!useNativeCapture" class="flex items-center justify-center gap-3">
               <button
                 type="button"
                 class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-6 py-3 text-sm font-bold text-white shadow-lg shadow-candy-orange/25 disabled:cursor-not-allowed disabled:opacity-50"
@@ -458,6 +458,10 @@ if (import.meta.client) {
   // @ts-ignore
   isNativeCapacitor.value = !!window.Capacitor?.isNativePlatform()
 }
+// The live in-app camera (getUserMedia inside the WebView) is used everywhere,
+// including the Android app. Only fall back to the OS camera app when running
+// natively on a WebView that has no getUserMedia at all.
+const useNativeCapture = ref(false)
 
 interface CapturedPage { blob: Blob; url: string }
 const capturedPages = ref<CapturedPage[]>([])
@@ -468,11 +472,17 @@ const capturedPages = ref<CapturedPage[]>([])
 const canCaptureMore = computed(() => scanMode.value !== 'FIRST_PAGE' || capturedPages.value.length === 0)
 
 async function startCamera() {
-  if (!import.meta.client || isNativeCapacitor.value) return
+  if (!import.meta.client) return
   cameraError.value = ''
   permissionDenied.value = false
   cameraStarting.value = true
   cameraReady.value = false
+  if (!navigator.mediaDevices?.getUserMedia) {
+    if (isNativeCapacitor.value) useNativeCapture.value = true
+    else cameraError.value = 'This browser does not support camera access.'
+    cameraStarting.value = false
+    return
+  }
   try {
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -561,7 +571,7 @@ async function handleCapture() {
   captureError.value = ''
   capturing.value = true
   try {
-    const blob = isNativeCapacitor.value ? await captureNativeFrame() : await captureWebFrame()
+    const blob = useNativeCapture.value ? await captureNativeFrame() : await captureWebFrame()
     if (!blob) {
       captureError.value = 'Capture failed. Please try again.'
       return
