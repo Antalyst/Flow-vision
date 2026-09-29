@@ -216,6 +216,9 @@
                   {{ resultData?.is_final_stop ? 'Arrived at Final Stop' : 'Arrived at Office' }}
                 </p>
                 <p class="mt-1 text-sm font-bold text-white truncate">{{ resultData?.data?.office?.name }}</p>
+                <p v-if="resultData?.data?.document?.title" class="mt-1 text-xs text-white/70">
+                  Delivered: <strong class="text-white/90">{{ resultData.data.document.title }}</strong>
+                </p>
                 <p class="mt-1 text-xs text-white/60">
                   <span v-if="resultData?.is_final_stop">Arrived at final stop. Awaiting employee desk review.</span>
                   <span v-else>Checked in. Awaiting employee desk review before next pickup.</span>
@@ -606,10 +609,17 @@ const handleCheckpointPickup = async (officeId: string) => {
   await loadCustody()
 }
 
+// The document the Liaison says they're delivering — sent with every drop-off so
+// the server checks in THAT document, not whichever one it finds first.
+const focusedInTransitDocId = () => {
+  const doc = focusedDoc.value
+  return doc && doc.tracking_status === 'IN_TRANSIT' ? doc.id : undefined
+}
+
 const handleDocumentDropOff = async (officeId: string) => {
   const res = await $fetch<any>('/api/tracking/dropoff', {
     method: 'POST',
-    body: { office_id: officeId },
+    body: { office_id: officeId, document_id: focusedInTransitDocId() },
   })
   resultData.value = res
   scanState.value = 'success'
@@ -629,7 +639,7 @@ const handleDocumentDropOff = async (officeId: string) => {
 const handleDeskDelivery = async (deskId: string) => {
   const res = await $fetch<any>('/api/tracking/dropoff', {
     method: 'POST',
-    body: { desk_id: deskId },
+    body: { desk_id: deskId, document_id: focusedInTransitDocId() },
   })
   resultData.value = res
   scanState.value = 'success'
@@ -658,6 +668,12 @@ const applyScanError = (err: any) => {
   } else if (code === 'SECURITY_ORG_MISMATCH' || msg.includes('SECURITY_ORG_MISMATCH')) {
     scanState.value = 'security-error'
     errorMessage.value = msg
+  } else if (code === 'MULTIPLE_DOCUMENTS_FOR_OFFICE') {
+    // More than one carried document is due at this office — make the Liaison
+    // pick the one they're handing over instead of the server guessing.
+    scanState.value = 'error'
+    errorMessage.value = msg
+    showPickerModal.value = true
   } else if (code === 'ROUTE_MISMATCH' || msg.includes('ROUTE_MISMATCH')) {
     scanState.value = 'route-error'
     errorMessage.value = msg.replace('ROUTE_MISMATCH: ', '')

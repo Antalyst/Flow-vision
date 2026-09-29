@@ -769,8 +769,11 @@ const formatDate = (value?: string | null) =>
   value ? new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', year: 'numeric' }).format(new Date(value)) : '—'
 
 const displayPriority = computed(() => props.document?.priority?.trim() || 'Not specified')
+// Prefer the status the timeline just read from the DB: `props.document` is the
+// list row loaded when the page opened, so it goes stale after a pickup/drop-off
+// made elsewhere (e.g. on the Liaison's phone) while this page stays open.
 const displayTrackingStatus = computed(
-  () => props.document?.tracking_status || 'CREATED',
+  () => timelineSummary.value?.tracking_status || props.document?.tracking_status || 'CREATED',
 )
 
 // Mirrors AssignLiaisonPanel's own eligibility rule: CREATED, or
@@ -873,6 +876,7 @@ async function fetchTimeline() {
     return
   }
   timelineLoading.value = true
+  timelineSummary.value = null // never show a previous document's status meanwhile
   try {
     const res = await $fetch<{
       success: boolean

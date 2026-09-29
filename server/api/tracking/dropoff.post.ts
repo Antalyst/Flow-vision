@@ -39,6 +39,10 @@ export default defineEventHandler(async (event) => {
   const deskQr = body?.desk_qr ? String(body.desk_qr).trim() : ''
   const deskIdInput = body?.desk_id ? String(body.desk_id).trim() : ''
   let office_id = body?.office_id ? String(body.office_id).trim() : ''
+  // The specific document being delivered. Optional for backward compatibility,
+  // but without it a Liaison carrying several documents to the same office
+  // can't say WHICH one this scan is for (see the ambiguity guard below).
+  const requestedDocumentId = body?.document_id ? String(body.document_id).trim() : ''
 
   // ── Optional desk-level delivery ────────────────────────────────────────
   // If the Liaison scanned a desk QR (or the client resolved one and sent its
@@ -134,11 +138,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Find the document whose current route step targets THIS office
-  let targetDoc: (typeof activeDocs)[0] | null = null
-  let totalSteps = 0
+  let candidateDocs = activeDocs
+  if (requestedDocumentId) {
+    candidateDocs = activeDocs.filter((d) => String(d.id) === requestedDocumentId)
+    if (candidateDocs.length === 0) {
+      throw createError({
+        statusCode: 404,
+        message: 'This document is not on the way with you. Pick it up first, or choose the document you are carrying.',
+        data: { code: 'DOCUMENT_NOT_IN_TRANSIT', document_id: requestedDocumentId },
+      })
+    }
+  }
 
-  for (const doc of activeDocs) {
+  // Every candidate whose current route step targets THIS office
+  const matchingDocs: Array<(typeof activeDocs)[0]> = []
+  for (const doc of candidateDocs) {
     if (!doc.stage_id) continue
 
     const { data: stepRow } = await client
@@ -149,27 +163,40 @@ export default defineEventHandler(async (event) => {
       .eq('office_id', String(office_id))
       .maybeSingle()
 
-    if (stepRow) {
-      // Count total steps for completion check
-      const { count } = await client
-        .from('stage_steps')
-        .select('*', { count: 'exact', head: true })
-        .eq('stage_id', doc.stage_id)
-
-      totalSteps = count ?? 0
-      targetDoc  = doc
-      break
-    }
+    if (stepRow) matchingDocs.push(doc)
   }
 
   // ── ROUTE validation ──────────────────────────────────────────────────
-  if (!targetDoc) {
+  if (matchingDocs.length === 0) {
     throw createError({
       statusCode: 422,
       message: `This document is not scheduled for "${office.name}". Please continue to the correct office.`,
       data: { code: 'ROUTE_MISMATCH', scanned_office: office.name },
     })
   }
+
+  // ── Ambiguity guard ───────────────────────────────────────────────────
+  // Never guess: delivering "the first match" silently checked in the WRONG
+  // document when a Liaison carried two documents to the same office, leaving
+  // the one actually handed over stuck at IN_TRANSIT.
+  if (matchingDocs.length > 1) {
+    throw createError({
+      statusCode: 409,
+      message: `You are carrying ${matchingDocs.length} documents for "${office.name}". Choose which document you are delivering, then scan again.`,
+      data: {
+        code: 'MULTIPLE_DOCUMENTS_FOR_OFFICE',
+        scanned_office: office.name,
+        documents: matchingDocs.map((d) => ({ id: d.id, title: d.title })),
+      },
+    })
+  }
+
+  const targetDoc = matchingDocs[0]!
+  const { count: stepCount } = await client
+    .from('stage_steps')
+    .select('*', { count: 'exact', head: true })
+    .eq('stage_id', targetDoc.stage_id)
+  const totalSteps = stepCount ?? 0
 
   // ── Determine if this is the final route stop (employee still must verify) ─
   const isFinalStop = totalSteps > 0 && targetDoc.current_step >= totalSteps
