@@ -57,7 +57,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const route = await getDocumentRoute(doc)
-  const stop = routeStopAt(route, step)
+  // Step 0 is the origin office (it has no route stop) — reached only when a
+  // flagged document is returned there for correction.
+  let stop = routeStopAt(route, step)
+  if (!stop && step === 0) {
+    const originId = doc.origin_office_id ?? doc.office_id
+    if (originId) {
+      const { data: originOffice } = await db.from('offices').select('name').eq('id', originId).maybeSingle()
+      stop = { step_number: 0, office_id: String(originId), office_name: originOffice?.name ?? 'Origin office' }
+    }
+  }
   if (!stop) {
     throw createError({ statusCode: 422, message: 'This document\'s route has no stop for its current leg.', data: { code: 'ROUTE_NOT_CONFIGURED' } })
   }
@@ -69,15 +78,27 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // A flagged document being RETURNED for correction (open issue sent to this
+  // office): it arrives still flagged, and the receiving office now holds it
+  // to fix it and resolve the issue. It never completes a cycle or the route.
+  const { data: openIssue } = await db
+    .from('document_issues')
+    .select('id, title, target_office_id')
+    .eq('document_id', doc.id)
+    .eq('status', 'OPEN')
+    .limit(1)
+    .maybeSingle()
+  const returnedForCorrection = !!openIssue && String(openIssue.target_office_id) === stop.office_id
+
   // Recurring documents: receipt back at the creator's office (the return stop)
   // completes the routing cycle — nothing else is required at that stop.
-  const completesCycle = !!stop.is_return
+  const completesCycle = !!stop.is_return && !returnedForCorrection
 
   // Conditional transition: only one receipt can ever win.
   const { data: updated, error: updateErr } = await db
     .from('documents')
     .update({
-      tracking_status: completesCycle ? 'COMPLETED' : 'ARRIVED_AT_OFFICE',
+      tracking_status: returnedForCorrection ? 'DISCREPANCY_REPORTED' : completesCycle ? 'COMPLETED' : 'ARRIVED_AT_OFFICE',
       current_office_id: stop.office_id,
       current_handler_id: actor.userId,
       current_desk_id: null,
@@ -103,7 +124,7 @@ export default defineEventHandler(async (event) => {
   if (legErr) console.error('[receive] could not close liaison assignment:', legErr.message)
 
   const liaisonName = await userFullName(liaisonId)
-  const finalStop = isFinalStep(route, step)
+  const finalStop = !returnedForCorrection && isFinalStep(route, step)
 
   // The document's COMPLETED state (committed above, conditionally) is the
   // authoritative completion. The cycle record follows it; if writing it fails
@@ -124,9 +145,14 @@ export default defineEventHandler(async (event) => {
     actor_role: actor.userRole,
     actor_name: actor.fullName,
     event_type: 'RECEIVED_BY_OFFICE',
-    notes: `Received at ${stop.office_name} by ${actor.fullName ?? 'office staff'}` +
+    notes: (returnedForCorrection
+      ? `Returned to ${stop.office_name} for correction — received by ${actor.fullName ?? 'office staff'}`
+      : `Received at ${stop.office_name} by ${actor.fullName ?? 'office staff'}`) +
       (liaisonName ? ` from ${liaisonName}.` : '.'),
-    metadata: { office_id: stop.office_id, receiver_id: actor.userId, liaison_id: liaisonId, final_stop: finalStop, cycle_number: stop.cycle_number ?? 1 },
+    metadata: {
+      office_id: stop.office_id, receiver_id: actor.userId, liaison_id: liaisonId, final_stop: finalStop, cycle_number: stop.cycle_number ?? 1,
+      ...(returnedForCorrection ? { returned_for_issue_id: openIssue!.id } : {}),
+    },
   }))
 
   if (completesCycle) {
@@ -171,12 +197,16 @@ export default defineEventHandler(async (event) => {
     userId: doc.user_id,
     creatorRole: doc.creator_role,
     officeId: doc.origin_office_id ?? doc.office_id ?? null,
-    title: completesCycle
-      ? `Routing Cycle ${stop.cycle_number ?? 1} Completed`
-      : `Document Received by ${stop.office_name}`,
-    message: completesCycle
-      ? `Your document "${doc.title}" was returned to ${stop.office_name}. Cycle ${stop.cycle_number ?? 1} is complete — you can reactivate it for another cycle from its details.`
-      : `Your document "${doc.title}" has arrived at ${stop.office_name} and is now held by ${actor.fullName ?? 'office staff'}.`,
+    title: returnedForCorrection
+      ? `Flagged Document Returned to ${stop.office_name}`
+      : completesCycle
+        ? `Routing Cycle ${stop.cycle_number ?? 1} Completed`
+        : `Document Received by ${stop.office_name}`,
+    message: returnedForCorrection
+      ? `Your document "${doc.title}" was returned to ${stop.office_name} for correction and is held by ${actor.fullName ?? 'office staff'} until the issue is resolved.`
+      : completesCycle
+        ? `Your document "${doc.title}" was returned to ${stop.office_name}. Cycle ${stop.cycle_number ?? 1} is complete — you can reactivate it for another cycle from its details.`
+        : `Your document "${doc.title}" has arrived at ${stop.office_name} and is now held by ${actor.fullName ?? 'office staff'}.`,
   })
   await notifyUser({
     orgId: actor.orgId,
@@ -189,13 +219,16 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    message: completesCycle
+    message: returnedForCorrection
+      ? `Received at ${stop.office_name} for correction. You now hold it — fix the issue, then mark it resolved to send it on again.`
+      : completesCycle
       ? `Received back at ${stop.office_name}. Routing cycle ${stop.cycle_number ?? 1} is complete.`
       : finalStop
         ? `Received at ${stop.office_name}. This is the final stop — ask the office head to approve completion when done.`
         : `Received at ${stop.office_name}. You are now holding this document.`,
     data: {
-      document: { id: doc.id, title: doc.title, tracking_status: completesCycle ? 'COMPLETED' : 'ARRIVED_AT_OFFICE', current_step: step },
+      document: { id: doc.id, title: doc.title, tracking_status: returnedForCorrection ? 'DISCREPANCY_REPORTED' : completesCycle ? 'COMPLETED' : 'ARRIVED_AT_OFFICE', current_step: step },
+      returned_for_correction: returnedForCorrection,
       cycle_completed: completesCycle ? (stop.cycle_number ?? 1) : null,
       office: { id: stop.office_id, name: stop.office_name },
       holder: { id: actor.userId, name: actor.fullName },

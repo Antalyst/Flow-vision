@@ -367,7 +367,7 @@ export async function broadcastComplianceIssueNotification(
   const deskLabel = input.targetOfficeName || 'your office'
   const message =
     `${input.reporterName || 'An employee'} flagged "${input.documentTitle}" ` +
-    `(${input.issueTitle}) and sent it back to ${deskLabel} for correction. Open Compliance Logs to review and respond.`
+    `(${input.issueTitle}). It is to be returned to ${deskLabel} for correction — the office holding it will send it back with a liaison. Open Compliance Logs to discuss it with them.`
 
   const row = {
     org_id: input.orgId,

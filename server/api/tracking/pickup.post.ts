@@ -9,6 +9,7 @@ import {
 import { emitInTransitEmails } from '~~/server/utils/email/emailEvents'
 import { getDocumentRoute, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
 import { recordTrackingEvent, assertHistorySaved, type TrackingEventResult } from '~~/server/utils/documentAccess'
+import { resolveOpenIssueReturn } from '~~/server/utils/documentIssues'
 
 /**
  * POST /api/tracking/pickup
@@ -504,20 +505,39 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // A flagged document only moves on its RETURN leg: back to the office the
+  // open issue sends it to, carried by the liaison the holder assigned for it
+  // (recorded in document_liaison_assignments with that office and its step).
+  let returnLeg: { officeId: string; step: number } | null = null
   if (doc.tracking_status === 'DISCREPANCY_REPORTED') {
-    throw createError({
-      statusCode: 422,
-      statusMessage: 'Unprocessable Entity',
-      message: `"${doc.title || doc.id}" has an open issue and cannot be picked up until it is resolved.`,
-      data: { code: 'DISCREPANCY_REPORTED', document_id: doc.id, tracking_status: doc.tracking_status },
-    })
+    const [{ data: leg }, open] = await Promise.all([
+      lifecycleDb()
+        .from('document_liaison_assignments')
+        .select('to_office_id, step_number')
+        .eq('document_id', doc.id)
+        .eq('status', 'ACTIVE')
+        .eq('liaison_id', actorId)
+        .is('picked_up_at', null)
+        .maybeSingle(),
+      resolveOpenIssueReturn(client, doc.id),
+    ])
+    if (leg && open?.target && String(leg.to_office_id) === open.target.officeId && Number(leg.step_number) === open.target.newStep) {
+      returnLeg = { officeId: open.target.officeId, step: open.target.newStep }
+    } else {
+      throw createError({
+        statusCode: 422,
+        statusMessage: 'Unprocessable Entity',
+        message: `"${doc.title || doc.id}" has an open issue. It can only be picked up to be returned to the office the issue was sent to.`,
+        data: { code: 'DISCREPANCY_REPORTED', document_id: doc.id, tracking_status: doc.tracking_status },
+      })
+    }
   }
 
   const isPostClaim = doc.tracking_status === 'PICKED_UP'
   // History entries this request writes; success is only reported once they're saved.
   const tracked: TrackingEventResult[] = []
 
-  if (!allowedFromStates.includes(doc.tracking_status)) {
+  if (!returnLeg && !allowedFromStates.includes(doc.tracking_status)) {
     throw createError({
       statusCode: 422,
       statusMessage: 'Unprocessable Entity',
@@ -538,13 +558,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const nextStep = (doc.current_step ?? 0) + 1
-  let officeId:   string | null = null
+  const nextStep = returnLeg ? returnLeg.step : (doc.current_step ?? 0) + 1
+  let officeId:   string | null = returnLeg?.officeId ?? null
   let officeName: string | null = null
 
   // The document's own route (snapshot), falling back to its stage for older documents.
   const route = await getDocumentRoute(doc)
-  if (route.length > 0) {
+  if (returnLeg) {
+    const { data: offRow } = await client.from('offices').select('name').eq('id', returnLeg.officeId).maybeSingle()
+    officeName = offRow?.name ?? null
+  } else if (route.length > 0) {
     const nextStop = routeStopAt(route, nextStep)
     if (!nextStop) {
       throw createError({

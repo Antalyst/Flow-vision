@@ -8,6 +8,7 @@ import {
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { assertHistorySaved, recordTrackingEvent } from '~~/server/utils/documentAccess'
+import { lifecycleDb } from '~~/server/utils/documentRoute'
 
 /**
  * POST /api/documents/issues/resolve
@@ -47,6 +48,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Parent document not found.' })
   }
 
+  // While a liaison is carrying it back to the office it was sent to, nobody
+  // holds it — resolve once it has been received there.
+  if (document.tracking_status === 'IN_TRANSIT' || document.tracking_status === 'PICKED_UP') {
+    throw createError({
+      statusCode: 409,
+      message: 'This document is on its way back for correction. Resolve the issue after the office receives it.',
+      data: { code: 'RETURN_IN_TRANSIT' },
+    })
+  }
+
   const { data: resolvedIssue, error: issueErr } = await client
     .from('document_issues')
     .update({ status: 'RESOLVED' })
@@ -64,17 +75,30 @@ export default defineEventHandler(async (event) => {
 
   // Mark the current step reviewed/cleared too — this is what
   // AssignLiaisonPanel checks to offer pickup again immediately, the same
-  // as a normal (non-flagged) office desk review would.
+  // as a normal (non-flagged) office desk review would. The document continues
+  // from wherever it physically is now (with whoever holds it); a return
+  // liaison who hasn't picked it up yet is no longer needed.
   const { data: updatedDoc, error: trackUpdateErr } = await client
     .from('documents')
     .update({
       tracking_status: 'ARRIVED_AT_OFFICE',
       checkpoint_cleared_step: document.current_step ?? 0,
+      assigned_messenger_id: null,
     })
     .eq('id', issue.document_id)
     .eq('org_id', actor.orgId)
     .select('id, title, tracking_status, current_office_id, current_step, checkpoint_cleared_step')
     .single()
+
+  if (!trackUpdateErr) {
+    const { error: legErr } = await lifecycleDb()
+      .from('document_liaison_assignments')
+      .update({ status: 'CANCELLED' })
+      .eq('document_id', issue.document_id)
+      .eq('status', 'ACTIVE')
+      .is('picked_up_at', null)
+    if (legErr) console.error('[issues/resolve] could not cancel the pending return assignment:', legErr.message)
+  }
 
   if (trackUpdateErr) {
     throw createError({

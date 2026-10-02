@@ -9,18 +9,18 @@ import {
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { assertHistorySaved, recordTrackingEvent } from '~~/server/utils/documentAccess'
+import { lifecycleDb } from '~~/server/utils/documentRoute'
 import { broadcastComplianceIssueNotification } from '~~/server/utils/notifications'
 import { emitDiscrepancyEmail } from '~~/server/utils/email/emailEvents'
 
 /**
  * POST /api/documents/issues/create
  *
- * Flags a quality / completeness problem on a physical document AND routes
- * it back one step to whoever handed it off — the office that reports the
- * issue is, by definition, the one that just received it, so "send it back
- * to be fixed" always means the previous stop on its route. That office is
- * resolved automatically (same computation used to power the compliance
- * chat's target picker) rather than requiring a manual choice.
+ * Flags a quality / completeness problem on a physical document and names the
+ * office it must go back to (by default whoever handed it here). The document
+ * does NOT move: the holder who flagged it keeps custody, can discuss it with
+ * that office in the issue thread, and assigns a liaison to physically return
+ * it (assign-liaison → pickup → receive at that office).
  *
  * Body:
  *   document_id            UUID   required
@@ -31,9 +31,10 @@ import { emitDiscrepancyEmail } from '~~/server/utils/email/emailEvents'
  *                                 (see chat-targets); default: whoever handed it here
  *
  * Side effects:
- *   1. Inserts row into document_issues (status OPEN), target = previous office
- *   2. Rewinds documents.current_step/current_office_id back one stop, sets
- *      tracking_status → DISCREPANCY_REPORTED
+ *   1. Inserts row into document_issues (status OPEN), target = chosen office
+ *   2. tracking_status → DISCREPANCY_REPORTED; office, step and holder are
+ *      unchanged. A not-yet-picked-up forward assignment and release approval
+ *      are withdrawn — a flagged document doesn't continue forward.
  *   3. Appends critical alert to document_tracking_events, attached to that step
  *      so it shows up on the roadmap
  *   4. Notifies the previous office that the document was sent back
@@ -132,20 +133,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // ── 2. Flip tracking status AND rewind one stop back to the previous office ──
-  const docUpdatePayload: Record<string, unknown> = { tracking_status: 'DISCREPANCY_REPORTED' }
-  if (previousOffice) {
-    docUpdatePayload.current_step = previousOffice.newStep
-    docUpdatePayload.current_office_id = previousOffice.officeId
-  }
-
+  // ── 2. Flag it — the document stays where it is, with its current holder ──
+  // Custody (current_office_id / current_step / current_handler_id) is kept.
+  // Any forward leg that hasn't been picked up yet is withdrawn: the liaison
+  // and release approval were for moving it on, which a flagged document must not do.
   const { data: updatedDoc, error: docUpdateErr } = await client
     .from('documents')
-    .update(docUpdatePayload)
+    .update({ tracking_status: 'DISCREPANCY_REPORTED', assigned_messenger_id: null, checkpoint_cleared_step: null })
     .eq('id', documentId)
     .eq('org_id', actor.orgId)
-    .select('id, title, tracking_status, current_step, current_office_id')
+    .select('id, title, tracking_status, current_step, current_office_id, current_handler_id')
     .single()
+
+  if (!docUpdateErr) {
+    // The withdrawn forward assignment stays in the history as CANCELLED.
+    const { error: legErr } = await lifecycleDb()
+      .from('document_liaison_assignments')
+      .update({ status: 'CANCELLED' })
+      .eq('document_id', documentId)
+      .eq('status', 'ACTIVE')
+      .is('picked_up_at', null)
+    if (legErr) console.error('[issues/create] could not withdraw the pending forward assignment:', legErr.message)
+  }
 
   if (docUpdateErr) {
     console.error('[issues/create] document status update failed:', docUpdateErr.message)
@@ -159,7 +168,7 @@ export default defineEventHandler(async (event) => {
   const alertNotes = previousOffice
     ? `⚠️ DISCREPANCY REPORTED — "${title}" flagged by ${reportingOffice.name}` +
       `${reportingOffice.code ? ` (${reportingOffice.code})` : ''}. ` +
-      `Document "${document.title}" sent back to ${previousOffice.officeName} for correction. ` +
+      `It stays with the current holder until a liaison returns it to ${previousOffice.officeName} for correction. ` +
       `Issue ID: ${issue.id}.`
     : `⚠️ DISCREPANCY REPORTED — "${title}" flagged by ${reportingOffice.name}` +
       `${reportingOffice.code ? ` (${reportingOffice.code})` : ''}. ` +
@@ -173,8 +182,8 @@ export default defineEventHandler(async (event) => {
     document_id: documentId,
     org_id:      actor.orgId,
     status:      'DISCREPANCY_REPORTED',
-    step_index:  previousOffice?.newStep ?? null,
-    office_name: previousOffice?.officeName ?? reportingOffice.name,
+    step_index:  (document as any).current_step ?? null,
+    office_name: reportingOffice.name,
     actor_id:    actor.userId,
     actor_role:  actor.userRole,
     actor_name:  actor.fullName,
@@ -288,8 +297,8 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     message: previousOffice
-      ? `Issue flagged. Document sent back to ${previousOffice.officeName} for correction.`
-      : `Issue flagged. Document tracking status set to DISCREPANCY_REPORTED.`,
+      ? `Issue flagged. You keep the document — assign a liaison to return it to ${previousOffice.officeName} for correction.`
+      : `Issue flagged. The document stays with you until the issue is resolved.`,
     data: {
       issue,
       document:      updatedDoc,

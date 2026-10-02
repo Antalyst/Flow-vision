@@ -1,6 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveOfficeName } from '~~/server/utils/routeCompletion'
-import { getDocumentRoute, routeStopAt, type RouteStop } from '~~/server/utils/documentRoute'
+import { getDocumentRoute, lifecycleDb, routeStopAt, type RouteStop } from '~~/server/utils/documentRoute'
 
 /** Route-stop lookup in the { officeId, officeName } shape these endpoints already use. */
 function stopInfo(stops: RouteStop[], step: number) {
@@ -68,13 +68,26 @@ export default defineEventHandler(async (event) => {
       )
       .eq('org_id', orgId)
       .eq('assigned_messenger_id', actorId)
-      .in('tracking_status', ['CREATED', 'ARRIVED_AT_OFFICE', 'PICKED_UP', 'IN_TRANSIT'])
+      // DISCREPANCY_REPORTED: a flagged document this liaison is to return for correction.
+      .in('tracking_status', ['CREATED', 'ARRIVED_AT_OFFICE', 'PICKED_UP', 'IN_TRANSIT', 'DISCREPANCY_REPORTED'])
       .order('created_at', { ascending: false })
 
     if (docsErr) {
       console.error('[GET /api/tracking/custody] Postgres error querying documents:', docsErr.message || docsErr)
       throw createError({ statusCode: 500, message: docsErr.message })
     }
+
+    // The liaison's active assignment says exactly where each leg goes —
+    // including a return trip for correction (back to an earlier office).
+    const { data: activeLegs } = (docs ?? []).length
+      ? await lifecycleDb()
+          .from('document_liaison_assignments')
+          .select('document_id, to_office_id, step_number')
+          .eq('liaison_id', actorId)
+          .eq('status', 'ACTIVE')
+          .in('document_id', (docs ?? []).map((d) => d.id))
+      : { data: [] as any[] }
+    const legFor = new Map((activeLegs ?? []).map((l: any) => [String(l.document_id), l]))
 
     // 4. Enrich documents with route and checkpoint metadata safely
     const enriched = await Promise.all((docs ?? []).map(async (doc) => {
@@ -86,12 +99,17 @@ export default defineEventHandler(async (event) => {
         // (CREATED / cleared ARRIVED_AT_OFFICE), the next leg is current_step + 1.
         const isActiveLeg = doc.tracking_status === 'PICKED_UP' || doc.tracking_status === 'IN_TRANSIT'
         const destinationStep = isActiveLeg ? (doc.current_step ?? 0) : (doc.current_step ?? 0) + 1
-        const destination = stopInfo(stops, destinationStep)
+        const leg = legFor.get(String(doc.id))
+        const returning = doc.tracking_status === 'DISCREPANCY_REPORTED' && !!leg
+        const destination = leg?.to_office_id
+          ? { officeId: String(leg.to_office_id), officeName: await resolveOfficeName(client, leg.to_office_id) }
+          : stopInfo(stops, destinationStep)
         const originName = await resolveOfficeName(
           client,
           doc.origin_office_id ?? doc.current_office_id ?? doc.office_id,
         )
         const readyForPickup =
+          returning ||
           doc.tracking_status === 'CREATED' ||
           (doc.tracking_status === 'ARRIVED_AT_OFFICE' && (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0))
 
@@ -115,6 +133,7 @@ export default defineEventHandler(async (event) => {
           target_date: targetDate,
           target_completion_date: targetDate,
           ready_for_pickup: readyForPickup,
+          returning_for_correction: returning,
         }
       } catch (err: any) {
         console.error(`[GET /api/tracking/custody] Error enriching document ${doc.id}:`, err?.message || err)
@@ -143,7 +162,7 @@ export default defineEventHandler(async (event) => {
     const awaitingScan = enriched.filter((d) => d.tracking_status === 'PICKED_UP')
     // New: assigned by an office but not yet physically picked up by this Liaison.
     const assignedPendingPickup = enriched.filter(
-      (d) => d.tracking_status === 'CREATED' || d.tracking_status === 'ARRIVED_AT_OFFICE',
+      (d) => d.tracking_status === 'CREATED' || d.tracking_status === 'ARRIVED_AT_OFFICE' || d.tracking_status === 'DISCREPANCY_REPORTED',
     )
 
     return {

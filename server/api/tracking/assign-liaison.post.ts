@@ -42,6 +42,7 @@ import { recordLiaisonAssignment, resolveAndAssociateLiaison } from '~~/server/u
 import { getDocumentRoute, routeStopAt } from '~~/server/utils/documentRoute'
 import { broadcastInboundOfficeNotification } from '~~/server/utils/notifications'
 import { notifyUser } from '~~/server/utils/documentAccess'
+import { resolveOpenIssueReturn, type SendBackTarget } from '~~/server/utils/documentIssues'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -90,12 +91,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // A flagged document stays with the office that flagged it. Its only
+  // allowed movement is the RETURN to the office the issue sends it back to —
+  // assigned by the holder's office, without a release approval (the flag is
+  // the decision). A flag with no return office keeps it where it is.
+  let returnLeg: SendBackTarget | null = null
   if (doc.tracking_status === 'DISCREPANCY_REPORTED') {
-    throw createError({
-      statusCode: 422,
-      message: 'This document has an open issue. Please resolve it before assigning a messenger.',
-      data: { code: 'DISCREPANCY_REPORTED' },
-    })
+    const open = await resolveOpenIssueReturn(client, doc.id)
+    if (!open?.target) {
+      throw createError({
+        statusCode: 422,
+        message: 'This document has an open issue and is not being returned to another office. Resolve the issue before assigning a messenger.',
+        data: { code: 'DISCREPANCY_REPORTED' },
+      })
+    }
+    returnLeg = open.target
   }
 
   if (doc.tracking_status === 'IN_TRANSIT' || doc.tracking_status === 'PICKED_UP') {
@@ -106,7 +116,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (doc.tracking_status === 'ARRIVED_AT_OFFICE' && (doc.checkpoint_cleared_step ?? null) !== (doc.current_step ?? 0)) {
+  if (!returnLeg && doc.tracking_status === 'ARRIVED_AT_OFFICE' && (doc.checkpoint_cleared_step ?? null) !== (doc.current_step ?? 0)) {
     throw createError({
       statusCode: 422,
       message: "The office head must approve this document's release before a liaison can be assigned.",
@@ -114,7 +124,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (doc.tracking_status !== 'CREATED' && doc.tracking_status !== 'ARRIVED_AT_OFFICE') {
+  if (!returnLeg && doc.tracking_status !== 'CREATED' && doc.tracking_status !== 'ARRIVED_AT_OFFICE') {
     throw createError({
       statusCode: 422,
       message: 'This document cannot be assigned a messenger right now. Please check its current status.',
@@ -146,8 +156,12 @@ export default defineEventHandler(async (event) => {
   // client admins may assign anywhere within their own organisation — no further check.
 
   // ── The next leg must exist: at the final stop the head completes the document instead ──
+  // (A return leg goes BACK to the flagged-to office, at that office's step.)
   const route = await getDocumentRoute(doc)
-  const nextStop = routeStopAt(route, (doc.current_step ?? 0) + 1)
+  const nextStop = returnLeg
+    ? { office_id: returnLeg.officeId, office_name: returnLeg.officeName, step_number: returnLeg.newStep }
+    : routeStopAt(route, (doc.current_step ?? 0) + 1)
+  const legStep = returnLeg ? returnLeg.newStep : (doc.current_step ?? 0) + 1
   if (route.length > 0 && !nextStop) {
     throw createError({
       statusCode: 422,
@@ -217,7 +231,7 @@ export default defineEventHandler(async (event) => {
     orgId: actor.orgId,
     fromOfficeId: effectiveOfficeId,
     toOfficeId: nextStop?.office_id ?? null,
-    stepNumber: (doc.current_step ?? 0) + 1,
+    stepNumber: legStep,
     liaisonId: liaison.user_id,
     assignedBy: actor.userId,
   })
@@ -234,7 +248,9 @@ export default defineEventHandler(async (event) => {
         officeName: nextStop.office_name,
         type: 'INCOMING_DOCUMENT',
         title: 'Document Coming to Your Office',
-        message: `"${doc.title}" was released by ${officeName ?? 'the previous office'} and is assigned to ${liaison.full_name ?? 'a liaison'} for delivery to ${nextStop.office_name}. Scan its QR code when it arrives.`,
+        message: returnLeg
+          ? `"${doc.title}" is being returned to ${nextStop.office_name} for correction by ${liaison.full_name ?? 'a liaison'} (flagged by ${officeName ?? 'the office holding it'}). Scan its QR code when it arrives.`
+          : `"${doc.title}" was released by ${officeName ?? 'the previous office'} and is assigned to ${liaison.full_name ?? 'a liaison'} for delivery to ${nextStop.office_name}. Scan its QR code when it arrives.`,
       })
     } catch (notifyErr) {
       console.warn('[assign-liaison] Non-fatal: incoming notice failed:', notifyErr)
@@ -272,7 +288,7 @@ export default defineEventHandler(async (event) => {
     liaisonUserId: liaison.user_id,
     assignedByOfficeName: officeName,
     destinationOfficeName,
-    stepNumber: (doc.current_step ?? 0) + 1,
+    stepNumber: legStep,
     assignedAt,
   })
 

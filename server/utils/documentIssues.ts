@@ -292,6 +292,32 @@ export async function resolveSendBackTargets(
     .map((c) => ({ officeId: String(c.officeId), officeName: nameOf.get(String(c.officeId))!, newStep: c.newStep, role: c.role }))
 }
 
+export interface OpenIssueReturn {
+  issue: { id: string; title: string; target_office_id: string | null; reported_by_office_id: string }
+  /** Where the flagged document is to be physically returned (null = it stays where it is). */
+  target: SendBackTarget | null
+}
+
+/**
+ * The document's open discrepancy and its return destination. Flagging no
+ * longer moves the document — it stays with the holder who flagged it until a
+ * liaison physically returns it — so the destination is the send-back target
+ * the reporter chose, recomputed from the document's (unchanged) position.
+ */
+export async function resolveOpenIssueReturn(client: SupabaseClient, documentId: string): Promise<OpenIssueReturn | null> {
+  const { data: issue } = await client
+    .from('document_issues')
+    .select('id, title, target_office_id, reported_by_office_id')
+    .eq('document_id', documentId)
+    .eq('status', 'OPEN')
+    .limit(1)
+    .maybeSingle()
+  if (!issue) return null
+  const targets = await resolveSendBackTargets(client, documentId)
+  const target = targets.find((t) => t.officeId === String((issue as any).target_office_id)) ?? null
+  return { issue: issue as OpenIssueReturn['issue'], target }
+}
+
 /**
  * The default send-back office: whoever handed the document here.
  * Kept for callers that don't offer a choice.

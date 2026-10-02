@@ -11,7 +11,8 @@
  *   saved_route_id  the saved route they were loaded from, if any (recorded only)
  *
  * Who may do this: the document's creator, the organization admin (client), or
- * the head of the document's originating office (where every cycle returns).
+ * anyone from the document's originating office (its head or staff) — every
+ * cycle returns there, so that office starts the next one.
  * The partial unique index on document_routing_cycles (one ACTIVE per document)
  * makes a duplicate or concurrent reactivation fail cleanly with 409.
  */
@@ -54,12 +55,16 @@ export default defineEventHandler(async (event) => {
   }
   const isCreator = doc.user_id && String(doc.user_id) === actor.userId
   const originForAuth = doc.origin_office_id ?? doc.office_id
-  const isOriginHead = !isCreator && actor.userRole === 'employee' && !!originForAuth
-    && (await getOfficeHeadId(String(originForAuth))) === actor.userId
-  if (!isCreator && !isOriginHead && actor.userRole !== 'client') {
+  // Every cycle returns to the originating office, so anyone there (head or
+  // staff) may start the next one.
+  const isOriginOffice = !!originForAuth && (
+    actor.officeIds.map(String).includes(String(originForAuth))
+    || (actor.userRole === 'employee' && (await getOfficeHeadId(String(originForAuth))) === actor.userId)
+  )
+  if (!isCreator && !isOriginOffice && actor.userRole !== 'client') {
     throw createError({
       statusCode: 403,
-      message: 'Only the document\'s creator, its originating office head, or the organization admin can reactivate it.',
+      message: 'Only the document\'s originating office, its creator, or the organization admin can reactivate it.',
       data: { code: 'NOT_DOCUMENT_OWNER' },
     })
   }

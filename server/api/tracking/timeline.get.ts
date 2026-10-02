@@ -4,6 +4,7 @@ import { resolveOfficeDisplayLabel } from '~~/server/utils/officeLabel'
 import { getDocumentRoute, getOfficeHeadId, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
 import { assertFullDocumentAccess, documentAccessLevel } from '~~/server/utils/documentAccess'
 import { planStaleCycleRepair } from '~~/server/utils/recurringRouting'
+import { resolveOpenIssueReturn } from '~~/server/utils/documentIssues'
 
 /**
  * GET /api/tracking/timeline
@@ -295,8 +296,13 @@ export default defineEventHandler(async (event) => {
   const releaseApproved = atOffice && (doc.checkpoint_cleared_step ?? null) === currentStep
   const nextStop = routeStopAt(documentRoute, currentStep + 1)
 
+  // A flagged document stays with its holder; it moves only when a liaison
+  // returns it to the office the open issue names.
+  const openReturn = doc.tracking_status === 'DISCREPANCY_REPORTED' ? await resolveOpenIssueReturn(client, documentId) : null
+
   let handlingState: string
   if (doc.tracking_status === 'COMPLETED') handlingState = 'COMPLETED'
+  else if (doc.tracking_status === 'DISCREPANCY_REPORTED') handlingState = 'FLAGGED'
   else if (doc.tracking_status === 'IN_TRANSIT' || doc.tracking_status === 'PICKED_UP') handlingState = 'DISPATCHED'
   else if (doc.tracking_status === 'CREATED') handlingState = doc.assigned_messenger_id ? 'AWAITING_PICKUP' : 'REGISTERED'
   else if (releaseApproved) handlingState = doc.assigned_messenger_id ? 'AWAITING_PICKUP' : 'RELEASE_APPROVED'
@@ -318,13 +324,14 @@ export default defineEventHandler(async (event) => {
   })
   const { data: routingRow } = await db.from('documents').select('routing_type').eq('id', documentId).maybeSingle()
   const routingType = (routingRow as any)?.routing_type === 'RECURRING' ? 'RECURRING' : 'STANDARD'
-  // Same rule as reactivate.post.ts: creator, org admin, or the origin office's head.
-  const originHeadId = routingType === 'RECURRING' && doc.tracking_status === 'COMPLETED' && actor.userRole === 'employee' && originOfficeId
-    ? await getOfficeHeadId(String(originOfficeId))
-    : null
-  const canReactivate = routingType === 'RECURRING'
-    && doc.tracking_status === 'COMPLETED'
-    && (actor.userRole === 'client' || (!!doc.user_id && String(doc.user_id) === actor.userId) || originHeadId === actor.userId)
+  // Same rule as reactivate.post.ts: creator, org admin, or anyone from the originating office.
+  const recurringDone = routingType === 'RECURRING' && doc.tracking_status === 'COMPLETED'
+  const inOriginOffice = recurringDone && !!originOfficeId && (
+    actor.officeIds.map(String).includes(String(originOfficeId))
+    || (actor.userRole === 'employee' && (await getOfficeHeadId(String(originOfficeId))) === actor.userId)
+  )
+  const canReactivate = recurringDone
+    && (actor.userRole === 'client' || (!!doc.user_id && String(doc.user_id) === actor.userId) || inOriginOffice)
 
   const custody = {
     handling_state: handlingState,
@@ -338,6 +345,10 @@ export default defineEventHandler(async (event) => {
     is_final_stop: atOffice && !nextStop && documentRoute.length > 0,
     next_stop: nextStop,
     active_liaison: liaisonAssignments.find((l: any) => l.status === 'ACTIVE') ?? null,
+    // Where a flagged document is to be returned (null = it stays where it is).
+    discrepancy_return: openReturn?.target
+      ? { issue_id: openReturn.issue.id, office_id: openReturn.target.officeId, office_name: openReturn.target.officeName, step: openReturn.target.newStep }
+      : null,
   }
 
   return {

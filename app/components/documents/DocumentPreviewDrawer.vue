@@ -294,7 +294,7 @@
               @changed="handleCustodyChanged"
             />
 
-            <!-- Recurring document: start the next routing cycle (creator, origin office head, or org admin) -->
+            <!-- Recurring document: start the next routing cycle (originating office, creator, or org admin) -->
             <DocumentReactivatePanel
               v-if="routingInfo?.can_reactivate"
               :document-id="document.id"
@@ -400,6 +400,7 @@
               v-if="!hasAssignedMessenger || (isPickupEligible && showReassignPanel)"
               :document="document"
               :next-destination-label="nextDestinationLabel"
+              :return-for-correction="!!discrepancyReturn"
               :force-show="showReassignPanel"
               @assigned="handleLiaisonAssigned"
             />
@@ -777,10 +778,15 @@ const displayTrackingStatus = computed(
 
 // Mirrors AssignLiaisonPanel's own eligibility rule: CREATED, or
 // ARRIVED_AT_OFFICE with the checkpoint already cleared for the current step.
+/** A flagged document's return destination (from the timeline), if it is to be sent back. */
+const discrepancyReturn = computed(() => custodyState.value?.discrepancy_return ?? null)
+
 const isPickupEligible = computed(() => {
   const doc = props.document
   if (!doc) return false
   if (doc.tracking_status === 'CREATED') return true
+  // Flagged: the holder's office may send it back to the office the issue names.
+  if (doc.tracking_status === 'DISCREPANCY_REPORTED') return !!discrepancyReturn.value
   if (doc.tracking_status === 'ARRIVED_AT_OFFICE') {
     return (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0)
   }
@@ -973,6 +979,9 @@ const isFinalCheckpoint = computed(() => {
 const nextDestinationLabel = computed(() => {
   const doc = props.document
   if (!doc) return null
+  if (doc.tracking_status === 'DISCREPANCY_REPORTED' && discrepancyReturn.value) {
+    return `${discrepancyReturn.value.office_name} (returning for correction)`
+  }
   const nextStepNumber = (doc.current_step ?? 0) + 1
   return steps.value.find((s) => s.step_number === nextStepNumber)?.office_name ?? null
 })

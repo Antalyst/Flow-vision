@@ -13,6 +13,9 @@
           <template v-if="document?.assigned_messenger_id">
             They haven't scanned pickup yet, so you can still switch to someone else. The new messenger is notified right away.
           </template>
+          <template v-else-if="returnForCorrection">
+            This document was flagged. Choose who will return it for correction. They're notified right away — no accept step.
+          </template>
           <template v-else>
             Choose who will carry this document to its next stop. They're notified right away — no accept step.
           </template>
@@ -21,7 +24,7 @@
     </div>
 
     <div v-if="nextDestinationLabel" class="mt-4 rounded-lg border border-candy-orange/20 bg-candy-orange/5 px-4 py-3">
-      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Next Destination</p>
+      <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">{{ returnForCorrection ? 'Return For Correction To' : 'Next Destination' }}</p>
       <p class="mt-0.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ nextDestinationLabel }}</p>
     </div>
 
@@ -105,6 +108,8 @@ const props = defineProps<{
   nextDestinationLabel?: string | null
   /** Explicit reassignment request — bypasses the "already assigned" block below. */
   forceShow?: boolean
+  /** Flagged document being sent back for correction (the only move a flagged document may make). */
+  returnForCorrection?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -131,6 +136,8 @@ const isEligibleForAssignment = computed(() => {
   if (doc.tracking_status === 'ARRIVED_AT_OFFICE') {
     return (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0)
   }
+  // Flagged: only the return trip to the office the issue names (server checks it too).
+  if (doc.tracking_status === 'DISCREPANCY_REPORTED') return !!props.returnForCorrection
   return false
 })
 

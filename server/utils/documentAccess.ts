@@ -46,7 +46,8 @@ const IN_MOTION = new Set(['IN_TRANSIT', 'PICKED_UP'])
 export function holdingOfficeId(doc: AccessDoc, route: RouteStop[]): string | null {
   const step = doc.current_step ?? 0
   if (IN_MOTION.has(String(doc.tracking_status))) {
-    return routeStopAt(route, step)?.office_id ?? null
+    // Step 0 = on its way back to the origin (a flagged document being returned).
+    return routeStopAt(route, step)?.office_id ?? (step === 0 ? doc.origin_office_id ?? doc.office_id ?? null : null)
   }
   if (step === 0) return doc.current_office_id ?? doc.origin_office_id ?? doc.office_id ?? null
   return doc.current_office_id ?? null

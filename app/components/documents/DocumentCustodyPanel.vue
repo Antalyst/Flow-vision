@@ -142,6 +142,7 @@ export interface CustodyState {
   is_final_stop: boolean
   next_stop: { office_id: string; office_name: string; step_number: number } | null
   active_liaison: any | null
+  discrepancy_return?: { issue_id: string; office_id: string; office_name: string; step: number } | null
 }
 
 const props = defineProps<{
@@ -227,8 +228,15 @@ const STATE: Record<string, [string, string, string]> = {
   AWAITING_RELEASE_APPROVAL: ['Waiting for the office head to approve release', 'Awaiting approval', 'bg-warning/10 text-warning'],
   RELEASE_APPROVED: ['Release approved — a liaison needs to be assigned', 'Approved', 'bg-success/10 text-success'],
   COMPLETED: ['Completed its route', 'Completed', 'bg-success/10 text-success'],
+  FLAGGED: ['Flagged — held here until it is returned for correction', 'Flagged', 'bg-danger/10 text-danger'],
 }
-const stateLabel = computed(() => STATE[props.custody.handling_state]?.[0] ?? 'In progress')
+const stateLabel = computed(() => {
+  const ret = props.custody.discrepancy_return
+  if (props.custody.handling_state === 'FLAGGED' && ret) {
+    return `Flagged — held here until a liaison returns it to ${ret.office_name} for correction`
+  }
+  return STATE[props.custody.handling_state]?.[0] ?? 'In progress'
+})
 const stateShort = computed(() => STATE[props.custody.handling_state]?.[1] ?? 'In progress')
 const stateBadgeClass = computed(() => STATE[props.custody.handling_state]?.[2] ?? 'bg-gray-500/10 text-gray-500')
 
