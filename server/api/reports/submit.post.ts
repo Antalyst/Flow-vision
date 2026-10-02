@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { report_type, title, body: reportBody, scope, metadata } = body
 
-  const actorRole = (getCookie(event, 'user_role') ?? '').toLowerCase()
+  const actorRole = (sessionRole(event) ?? '').toLowerCase()
 
   let enrichedMetadata = { ...(metadata ?? {}) }
   if (actorRole === 'employee') {

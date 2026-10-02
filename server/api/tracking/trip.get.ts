@@ -1,9 +1,13 @@
 import { serverSupabaseClient } from '#supabase/server'
-import {
-  getRouteContext,
-  resolveOfficeName,
-  resolveRouteOfficeAtStep,
-} from '~~/server/utils/routeCompletion'
+import { resolveOfficeName } from '~~/server/utils/routeCompletion'
+import { getDocumentRoute, routeStopAt, type RouteStop } from '~~/server/utils/documentRoute'
+
+/** Route-stop lookup in the { officeId, officeName } shape these endpoints already use. */
+function stopInfo(stops: RouteStop[], step: number) {
+  const stop = routeStopAt(stops, step)
+  return { officeId: stop?.office_id ?? null, officeName: stop?.office_name ?? null }
+}
+
 
 const TERMINAL_STATUSES = new Set(['COMPLETED', 'DISCREPANCY_REPORTED'])
 
@@ -21,8 +25,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'document_id is required' })
   }
 
-  const actorId = getCookie(event, 'user_session')
-  const actorRole = getCookie(event, 'user_role')
+  const actorId = sessionUserId(event)
+  const actorRole = sessionRole(event)
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required' })
   if (actorRole !== 'messenger') {
@@ -58,36 +62,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Forbidden: document belongs to a different organisation' })
   }
 
-  const route = await getRouteContext(client, doc.stage_id)
+  const stops = await getDocumentRoute(doc)
+  const route = { totalSteps: stops.length }
   const currentStep = doc.current_step ?? 0
   const trackingStatus = doc.tracking_status ?? 'CREATED'
 
-  const routeSteps: Array<{ step_number: number; office_id: string; office_name: string }> = []
-  if (doc.stage_id) {
-    const { data: steps } = await client
-      .from('stage_steps')
-      .select('step_number, office_id, offices(name)')
-      .eq('stage_id', doc.stage_id)
-      .order('step_number', { ascending: true })
-
-    for (const step of steps ?? []) {
-      routeSteps.push({
-        step_number: step.step_number,
-        office_id: String(step.office_id),
-        office_name: (step as { offices?: { name?: string } }).offices?.name ?? 'Office',
-      })
-    }
-  }
+  const routeSteps: Array<{ step_number: number; office_id: string; office_name: string }> = stops
 
   const destinationStep =
     trackingStatus === 'IN_TRANSIT' ? currentStep : Math.max(1, currentStep + 1)
-  const destination = await resolveRouteOfficeAtStep(client, doc.stage_id, destinationStep)
+  const destination = stopInfo(stops, destinationStep)
 
   let sourceOfficeId = doc.origin_office_id ?? doc.office_id ?? null
   let sourceOfficeName = await resolveOfficeName(client, sourceOfficeId ? String(sourceOfficeId) : null)
 
   if (destinationStep > 1) {
-    const prior = await resolveRouteOfficeAtStep(client, doc.stage_id, destinationStep - 1)
+    const prior = stopInfo(stops, destinationStep - 1)
     if (prior.officeId) {
       sourceOfficeId = prior.officeId
       sourceOfficeName = prior.officeName

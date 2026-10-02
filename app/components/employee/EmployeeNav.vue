@@ -27,9 +27,9 @@ const navGroups = computed(() => [
   {
     title: 'My Work',
     items: [
-      { to: '/employee/my-tracking', label: 'My Tracking', icon: 'ph:map-pin-light' },
-      { to: '/employee/working',   label: 'Under Process', icon: 'ph:briefcase-light' },
       { to: '/employee/documents', label: 'Documents',       icon: 'ph:files-light' },
+      { to: '/employee/working',   label: 'Under Process', icon: 'ph:briefcase-light' },
+      { to: '/employee/stages',  label: 'Document Routes',  icon: 'ph:steps-light' },
       { to: '/employee/scan',      label: 'Scan & Update',   icon: 'ph:scan-light' },
     ],
   },
@@ -37,13 +37,6 @@ const navGroups = computed(() => [
     title: 'Messenger',
     items: [
       { to: '/employee/deliveries', label: 'My Deliveries', icon: 'ph:package-light' },
-    ],
-  },
-  {
-    title: 'Delivery Setup',
-    items: [
-      { to: '/employee/stages',  label: 'Document Routes',  icon: 'ph:steps-light' },
-      { to: '/employee/offices', label: 'Office QR Codes', icon: 'ph:qr-code-light' },
     ],
   },
   {

@@ -1,5 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { ISSUE_ALLOWED_ROLES, assertDocumentOrgAccess, resolvePreviousRouteOffice } from '~~/server/utils/documentIssues'
+import { assertCanReportOnDocument, resolveSendBackTargets } from '~~/server/utils/documentIssues'
 
 interface OfficeTarget {
   id: string
@@ -11,7 +11,11 @@ interface OfficeTarget {
 /**
  * GET /api/documents/issues/chat-targets?document_id=
  *
- * Resolves compliance chat targets from the document routing pipeline.
+ * The offices a discrepancy on this document can be sent back to (from its
+ * actual route — see resolveSendBackTargets): the office that handed it here
+ * (default) and the office the current routing cycle started from. Empty
+ * while the document is still at its origin. Only for users who may report on
+ * the document.
  */
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -21,55 +25,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'document_id is required.' })
   }
 
-  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId)
+  // Same rule as reporting itself: only someone who may report on this document.
+  await assertCanReportOnDocument(event, client, documentId)
 
-  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may view compliance chat targets.',
-    })
-  }
+  const sendBack = await resolveSendBackTargets(client, documentId)
+  const { data: codes } = sendBack.length
+    ? await client.from('offices').select('id, code').in('id', sendBack.map((t) => t.officeId))
+    : { data: [] as any[] }
+  const codeOf = new Map((codes ?? []).map((o: any) => [String(o.id), o.code ?? null]))
 
-  const targets: OfficeTarget[] = []
-
-  if (document.origin_office_id) {
-    const { data: originOffice } = await client
-      .from('offices')
-      .select('id, name, code')
-      .eq('id', document.origin_office_id)
-      .maybeSingle()
-
-    if (originOffice) {
-      targets.push({
-        id: String(originOffice.id),
-        name: originOffice.name,
-        code: originOffice.code ?? null,
-        role: 'origin',
-      })
-    }
-  }
-
-  const previousOffice = await resolvePreviousRouteOffice(client, documentId)
-
-  if (previousOffice) {
-    const isDuplicateOrigin = targets.some((t) => t.role === 'origin' && t.id === previousOffice.officeId)
-    if (!isDuplicateOrigin) {
-      const { data: prevOffice } = await client
-        .from('offices')
-        .select('id, name, code')
-        .eq('id', previousOffice.officeId)
-        .maybeSingle()
-
-      if (prevOffice) {
-        targets.push({
-          id: String(prevOffice.id),
-          name: prevOffice.name,
-          code: prevOffice.code ?? null,
-          role: 'previous_handoff',
-        })
-      }
-    }
-  }
+  const targets: OfficeTarget[] = sendBack.map((t) => ({
+    id: t.officeId,
+    name: t.officeName,
+    code: codeOf.get(t.officeId) ?? null,
+    role: t.role,
+  }))
 
   return {
     success: true,

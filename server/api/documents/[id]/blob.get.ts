@@ -7,33 +7,14 @@
 
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
+import { getDocumentRoute } from '~~/server/utils/documentRoute'
+import { assertFullDocumentAccess, documentAccessLevel } from '~~/server/utils/documentAccess'
 
 interface StorageRow {
   file_blob: Buffer
   file_name: string
   mime_type: string | null
   document_uuid: string | null
-}
-
-function employeeCanAccessDocument(
-  doc: {
-    user_id?: string | null
-    origin_office_id?: string | null
-    current_office_id?: string | null
-    office_id?: string | null
-  },
-  actor: { userId: string; userRole: string; officeIds: string[] },
-): boolean {
-  if (actor.userRole !== 'employee') return true
-  if (String(doc.user_id) === String(actor.userId)) return true
-  if (actor.officeIds.length === 0) return String(doc.user_id) === String(actor.userId)
-
-  const officeList = new Set(actor.officeIds.map(String))
-  const candidates = [doc.origin_office_id, doc.current_office_id, doc.office_id]
-    .filter(Boolean)
-    .map(String)
-
-  return candidates.some((id) => officeList.has(id))
 }
 
 export default defineEventHandler(async (event) => {
@@ -62,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, mysql_storage_id, user_id, origin_office_id, current_office_id, office_id')
+    .select('id, org_id, mysql_storage_id, user_id, origin_office_id, current_office_id, office_id, tracking_status, current_step, assigned_messenger_id, stage_id')
     .eq('id', documentId)
     .eq('org_id', actor.orgId)
     .maybeSingle()
@@ -74,12 +55,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Document not found.' })
   }
 
-  if (!employeeCanAccessDocument(doc, actor)) {
-    throw createError({
-      statusCode: 403,
-      message: 'You do not have access to this document file.',
-    })
-  }
+  // Same visibility rule as the document details: an office the document has
+  // already left can't download it (the creator, org admin and active liaison can).
+  assertFullDocumentAccess(documentAccessLevel(actor, doc, await getDocumentRoute(doc)))
 
   const storageId = (doc as { mysql_storage_id?: number | null }).mysql_storage_id
   if (storageId == null) {

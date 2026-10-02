@@ -93,20 +93,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const hashedPassword = await hash(password, 10)
-    const userToInsert = {
-      email,
-      full_name,
-      role,
-      accType_id,
-      birth_date,
-      age,
-      password: hashedPassword,
-      created_at: new Date(),
-      status: 1
-    };
 
     // 3. Insert User into Supabase
-    console.log("Inserting user into Supabase...");
     const { data: profileData, error: profileError } = await client
       .from('users')
       .insert({
@@ -129,11 +117,15 @@ export default defineEventHandler(async (event) => {
       throw profileError;
     }
 
+    // Signed in straight away with a real server-side session.
+    const { password: _password, ...safeUser } = profileData
+    await revokeCurrentSession(event)
+    await createSession(event, String(safeUser.user_id))
+
     return {
       success: true,
       message: 'Registration successful',
-      user: profileData,
-      token: 'session_token_placeholder'
+      user: safeUser,
     };
 
   } catch (error: any) {

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sessionRole as readSessionRole, sessionUserId as readSessionUserId } from '~~/server/utils/session'
 
 /**
  * POST /api/users/toggle-status
@@ -18,8 +19,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'userId and status are required' })
   }
 
-  const sessionUserId = getCookie(event, 'user_session')
-  const sessionRole   = getCookie(event, 'user_role')
+  const sessionUserId = readSessionUserId(event)
+  const sessionRole   = readSessionRole(event)
 
   if (!sessionUserId || sessionRole !== 'client') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })
@@ -63,6 +64,9 @@ export default defineEventHandler(async (event) => {
   if (error) {
     throw createError({ statusCode: 500, message: error.message || 'Failed to update status' })
   }
+
+  // A deactivated user is signed out everywhere immediately.
+  if (Number(status) === 0) await revokeUserSessions(String(userId))
 
   return {
     success: true,

@@ -35,15 +35,18 @@ interface LoginCredentials {
 
 interface AuthState {
   user: User | null
-  token: string | null
+  /** True once /api/auth/me has been asked who is signed in (see plugins/auth.ts). */
+  loaded: boolean
   loading: boolean,
   currentOrg: OrgDetails | null
 }
 
 export const useAuthStore = defineStore('auth', {
+  // The signed-in user comes only from the server (/api/auth/me), backed by the
+  // HttpOnly session cookie — nothing about identity is stored in readable cookies.
   state: (): AuthState => ({
-    user: useCookie<User | null>('auth_user').value || null,
-    token: useCookie<string | null>('auth_token').value || null,
+    user: null,
+    loaded: false,
     loading: false,
     currentOrg: null,
   }),
@@ -53,7 +56,7 @@ export const useAuthStore = defineStore('auth', {
     userRole: (state) => state.user?.role || null,
     currentOfficeId: (state) => state.user?.current_office_id || state.user?.office_id || null,
 
-    isLoggedIn: (state) => !!state.token && state.token !== 'null',
+    isLoggedIn: (state) => !!state.user,
     isLoading: (state) => state.loading,
     needsOrgSetup: (state) => {
       return state.user?.role === 'client' && !state.user?.org_id
@@ -61,6 +64,20 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    /** Loads the signed-in user from the server session. Uses the request's cookies during SSR. */
+    async fetchMe() {
+      try {
+        const fetcher = import.meta.server ? useRequestFetch() : $fetch
+        const res = await fetcher<{ user: User | null }>('/api/auth/me')
+        this.user = res.user ?? null
+      } catch {
+        this.user = null
+      } finally {
+        this.loaded = true
+      }
+      return this.user
+    },
+
     async fetchMyOrg() {
       const uId = this.user?.user_id || this.user?.id;
       const orgId = this.user?.org_id;
@@ -95,8 +112,6 @@ export const useAuthStore = defineStore('auth', {
         if (res.success) {
           if (this.user) {
             this.user.org_id = res.org_id;
-            const userCookie: any = useCookie('auth_user');
-            userCookie.value = this.user;
           }
         }
         await this.fetchMyOrg();
@@ -114,11 +129,11 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         if (delay) await delay(300);
-        const res = await $fetch<{ user: User; token: string }>('/api/auth/login', {
+        const res = await $fetch<{ user: User }>('/api/auth/login', {
           method: 'POST',
           body: credentials
         })
-        this.setAuth(res.user, res.token)
+        this.setAuth(res.user)
         
         return { success: true, user: res.user }
       } catch (error: any) {
@@ -134,13 +149,13 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         if (delay) await delay(3000);
-        const res = await $fetch<{ user: User; token: string }>('/api/auth/register', {
+        const res = await $fetch<{ user: User }>('/api/auth/register', {
           method: 'POST',
           body: credentials
         })
 
-        this.setAuth(res.user, res.token)
-        return { success: true, autoLogin: true }
+        this.setAuth(res.user)
+        return { success: true, autoLogin: true, user: res.user }
       } catch (error) {
         throw error
       } finally {
@@ -148,15 +163,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    setAuth(user: User, token: string) {
-      const tokenCookie = useCookie<string | null>('auth_token', { maxAge: 60 * 60 * 24 * 7 })
-      const userCookie = useCookie<User | null>('auth_user', { maxAge: 60 * 60 * 24 * 7 })
-
-      tokenCookie.value = token
-      userCookie.value = user
-      
-      this.token = token
+    /** The session cookie itself is set by the server; this only updates in-memory state. */
+    setAuth(user: User) {
       this.user = user
+      this.loaded = true
     },
 
     async logout() {
@@ -168,7 +178,6 @@ export const useAuthStore = defineStore('auth', {
       }
 
       this.user = null
-      this.token = null
       this.currentOrg = null
 
       return navigateTo('/', { replace: true })

@@ -280,7 +280,7 @@
     <DocumentPreviewDrawer
       :is-open="!!activeDocument"
       :document="activeDocument"
-      width-class="lg:w-[60%] lg:max-w-4xl"
+      width-class="lg:w-[min(92vw,1200px)] lg:max-w-none"
       :office-resolver="resolveOfficeName"
       @close="closeDocument"
     />

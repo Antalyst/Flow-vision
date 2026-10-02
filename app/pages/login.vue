@@ -140,8 +140,6 @@ const getPostLoginRoute = (role = '') => {
 }
 
 const handleLogin = async () => {
-  console.log("Attempting login with:", login.value);
-
   if (!login.value.email || !login.value.password) {
       alert("Please fill in all fields");
       return;
@@ -150,32 +148,13 @@ const handleLogin = async () => {
   try {
     startLoading();
     const result = await auth.login(login.value);
-    console.log("Login result:", result);
 
     if (result.success) {
-      console.log("Login successful, navigating to /client...");
+      // The server already set the HttpOnly session cookie.
       loginModal.value = false;
-
-      const userSession = useCookie('user_session', {
-        maxAge: 60 * 60 * 24 * 30,
-        path: '/',
-        sameSite: 'lax'
-      });
-      const userRole = useCookie('user_role', {
-        maxAge: 60 * 60 * 24 * 30,
-        path: '/',
-        sameSite: 'lax'
-      });
-      const sessionUserId = result.user?.user_id || result.user?.id || '';
-      userSession.value = sessionUserId;
-      userRole.value = result.user.role || '';
-
       await navigateTo(getPostLoginRoute(result.user.role || ''));
-    } else {
-      console.warn("Login failed: result.success is false");
     }
   } catch (e) {
-    console.error("Login catch error:", e);
     alert(e.data?.statusMessage || 'Login failed');
   } finally {
     stopLoading();

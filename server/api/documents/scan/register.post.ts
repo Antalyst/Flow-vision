@@ -68,8 +68,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Step 1 — RBAC ──────────────────────────────────────────────────────
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role') as AllowedRole | undefined
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event) as AllowedRole | undefined
 
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({
@@ -166,6 +166,30 @@ export default defineEventHandler(async (event) => {
   if (String(session.user_id) !== String(userId) || String(session.organization_id) !== orgId) {
     throw createError({ statusCode: 403, message: 'This scanning session does not belong to you.' })
   }
+
+  // One scan session registers at most one document. A retried request (lost
+  // response, double click) gets the document that was already created back —
+  // never a second document with a second QR code.
+  const findRegistered = async () => {
+    const { data } = await client
+      .from('documents')
+      .select('id, title, qr_code_data, tracking_status, origin_office_id, assigned_messenger_id')
+      .eq('scan_session_id', sessionId)
+      .eq('org_id', orgId)
+      .limit(1)
+      .maybeSingle()
+    return data
+  }
+  const alreadyRegistered = (doc: any) => ({
+    success: true,
+    already_registered: true,
+    message: `This scan was already registered as "${doc.title}". No duplicate was created.`,
+    assigned_messenger: null,
+    messenger_assignment_error: null,
+    metadata: doc,
+  })
+  const existingDoc = await findRegistered()
+  if (existingDoc) return alreadyRegistered(existingDoc)
 
   // ── Step 4 — Role-specific office validation (identical to /upload) ─────
   let resolvedOriginOfficeId: string | null = null
@@ -371,7 +395,14 @@ export default defineEventHandler(async (event) => {
       .select()
       .single()
 
-    if (supabaseError) throw supabaseError
+    if (supabaseError) {
+      // Unique scan_session_id (optional index): a concurrent request won.
+      if ((supabaseError as any).code === '23505') {
+        const winner = await findRegistered()
+        if (winner) return alreadyRegistered(winner)
+      }
+      throw supabaseError
+    }
     supabaseDocId = supabaseDoc.id
 
     // MySQL blob insert (same document_storage table as /upload)
@@ -387,33 +418,19 @@ export default defineEventHandler(async (event) => {
       .eq('id', supabaseDoc.id)
     if (linkError) throw linkError
 
-    // AI analysis persistence — only when the user actually had AI metadata to review
-    if (!aiSkipped) {
+    // AI record — the AI's only contribution is a suggested title, so that is
+    // all that is stored as AI output (the document itself uses the title the
+    // user confirmed). No other column is filled from the client as "AI".
+    if (!aiSkipped && get('model')) {
       const confidenceRaw = Number(get('confidence'))
-      const rawResponseStr = get('raw_response')
-      let rawResponse: Record<string, unknown> = {}
-      if (rawResponseStr) {
-        try { rawResponse = JSON.parse(rawResponseStr) } catch { /* keep empty */ }
-      }
-
+      const aiTitle = get('ai_title')
       const { error: aiErr } = await client.from('document_ai_analysis').insert({
         document_id: supabaseDoc.id,
         scan_session_id: sessionId,
         model: get('model') || 'unknown',
-        document_type: get('document_type'),
-        title: get('title'),
-        sender: get('sender'),
-        recipient: get('recipient'),
-        subject: get('subject'),
-        document_date: get('document_date') || null,
-        summary: get('summary'),
-        priority,
-        contains_signature: getBool('contains_signature'),
-        contains_letterhead: getBool('contains_letterhead'),
-        contains_stamp: getBool('contains_stamp'),
-        contains_seal: getBool('contains_seal'),
+        title: aiTitle,
         confidence: Number.isFinite(confidenceRaw) ? confidenceRaw : null,
-        raw_response: rawResponse,
+        raw_response: { suggested_title: aiTitle, confirmed_title: title, edited_by_user: !!aiTitle && aiTitle !== title },
       })
       if (aiErr) console.warn('[Scan Register] Non-fatal: failed to persist document_ai_analysis:', aiErr)
     }

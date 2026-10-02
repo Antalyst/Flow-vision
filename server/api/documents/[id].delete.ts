@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const client = await serverSupabaseClient(event)
 
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
   }

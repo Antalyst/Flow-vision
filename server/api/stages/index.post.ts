@@ -1,5 +1,7 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { logActivityForEvent } from '~~/server/utils/activityLog'
+import { validateRouteOffices } from '~~/server/utils/documentRoute'
+import { assertRecurringRoutingAvailable } from '~~/server/utils/recurringRouting'
 
 interface WorkflowItemInput {
   office_id: string | number
@@ -12,7 +14,10 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     // office_id: null → Global route (org-wide, admin-created)
     //            number → Local route (scoped to this sub-office branch)
-    const { stage_name, org_id, workflow_items, office_id = null } = body
+    const { stage_name, workflow_items, office_id = null } = body
+    if (body?.routing_type === 'RECURRING') await assertRecurringRoutingAvailable()
+    // The route always belongs to the caller's own organization.
+    const org_id = requireOrgAuth(event, ['client', 'employee', 'employee_sub_user'], body?.org_id).orgId
 
     if (!stage_name?.trim()) {
       throw createError({
@@ -67,6 +72,16 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // Every stop must be an office of this organization (no duplicates).
+    await validateRouteOffices(
+      String(org_id),
+      workflow_items
+        .slice()
+        .sort((a: WorkflowItemInput, b: WorkflowItemInput) => a.step_number - b.step_number)
+        .map((item: WorkflowItemInput) => String(item.office_id)),
+      null,
+    )
+
     const { data: existingStages, error: existingError } = await client
       .from('stages')
       .select('step_number')
@@ -94,6 +109,8 @@ export default defineEventHandler(async (event) => {
         step_number: nextStageStep,
         // null = global route template; UUID string = local mini-office route
         office_id:  office_id != null ? String(office_id) : null,
+        // Only written when recurring, so saving standard routes works before the migration.
+        ...(body?.routing_type === 'RECURRING' ? { routing_type: 'RECURRING' } : {}),
       })
       .select('*')
       .single()

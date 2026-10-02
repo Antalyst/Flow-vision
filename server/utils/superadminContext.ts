@@ -20,8 +20,8 @@ export interface SuperadminActor {
 }
 
 export async function requireSuperadmin(event: H3Event): Promise<SuperadminActor> {
-  const userId = getCookie(event, 'user_session')
-  const role = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const role = sessionRole(event)
 
   if (!userId || role !== 'superadmin') {
     throw createError({ statusCode: 403, message: 'Forbidden: super administrator access required' })

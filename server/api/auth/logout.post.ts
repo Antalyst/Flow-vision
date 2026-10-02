@@ -1,6 +1,9 @@
+/**
+ * POST /api/auth/logout
+ * Revokes the server-side session (the token stops working immediately) and clears the cookie.
+ */
 export default defineEventHandler(async (event) => {
-  deleteCookie(event, 'user_session')
-  deleteCookie(event, 'user_role')
+  await revokeCurrentSession(event)
 
   return {
     success: true,

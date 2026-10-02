@@ -646,25 +646,45 @@ export async function notifyLiaisonAssigned(input: {
   liaisonUserId: string
   assignedByOfficeName?: string | null
   destinationOfficeName?: string | null
+  /** Route step this leg delivers to (for the delivery task link / dedupe). */
+  stepNumber?: number | null
+  assignedAt?: string | null
 }): Promise<string | null> {
   const originLabel = input.assignedByOfficeName || 'The current office'
   const destinationLabel = input.destinationOfficeName || 'the next office'
+  const assignedAt = input.assignedAt ?? new Date().toISOString()
+  const db = getServiceSupabase()
+
+  // Address it by the liaison's REAL role, so it lands in the feed they use:
+  // messengers → messenger feed, staff → employee feed (direct rows), client → client feed.
+  const { data: liaison } = await db.from('users').select('role').eq('user_id', input.liaisonUserId).maybeSingle()
+  const role = String(liaison?.role ?? 'messenger').toLowerCase()
+  const targetRole = role === 'employee_sub_user' || role === 'employee' ? 'employee' : role === 'client' ? 'client' : 'messenger'
 
   const row = {
     org_id: input.orgId,
     document_id: input.documentId,
     user_id: input.liaisonUserId,
-    target_role: 'messenger',
+    target_role: targetRole,
+    // No office_id: this is personal, never part of an office-wide feed.
+    office_id: null,
     title: 'Document Assigned to You',
     message:
       `"${input.documentTitle}" has been assigned to you for delivery. ` +
-      `Assigned by: ${originLabel}. Destination: ${destinationLabel}. Ready for pickup.`,
+      `From: ${originLabel}. Destination: ${destinationLabel}. Ready for pickup.`,
     is_read: false,
     is_claimed: false,
     claimed_by_user_id: null,
+    metadata: {
+      type: 'LIAISON_ASSIGNED',
+      category: 'tracking',
+      step_number: input.stepNumber ?? null,
+      pickup_source_name: input.assignedByOfficeName ?? null,
+      destination_office_name: input.destinationOfficeName ?? null,
+      assigned_at: assignedAt,
+    },
   }
 
-  const db = getServiceSupabase()
   const { data, error } = await db
     .from('notifications')
     .insert(row)
@@ -811,8 +831,8 @@ export async function fetchNotificationsForRole(
   options: { unclaimedOnly?: boolean } = {},
 ) {
   const client = await serverSupabaseClient(event)
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
@@ -877,13 +897,27 @@ export async function countUnclaimedMessengerNotifications(event: H3Event): Prom
   return rows.length
 }
 
+/**
+ * Which notifications an office employee / staff member sees:
+ *   - the office feed: target_role 'employee' for one of their offices (unchanged), and
+ *   - anything addressed to them personally (user_id) — e.g. "Document Assigned
+ *     to You" when a staff member is made a document's liaison, which has no
+ *     office_id and was therefore never shown before.
+ * PostgREST or-filter; ids are uuids from the session/DB, never user input.
+ */
+export function employeeNotificationScope(userId: string, officeIds: string[]): string {
+  const direct = `user_id.eq.${userId}`
+  if (officeIds.length === 0) return direct
+  return `${direct},and(target_role.ilike.employee,office_id.in.(${officeIds.join(',')}))`
+}
+
 export async function fetchEmployeeNotifications(
   event: H3Event,
   options: { unreadOnly?: boolean } = {},
 ) {
   const client = await serverSupabaseClient(event)
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
@@ -904,15 +938,13 @@ export async function fetchEmployeeNotifications(
       orgId: actor.orgId,
       userId: actor.userId,
     })
-    return []
   }
 
   let query = db
     .from('notifications')
     .select(NOTIFICATION_COLUMNS)
     .eq('org_id', actor.orgId)
-    .ilike('target_role', 'employee')
-    .in('office_id', officeIds)
+    .or(employeeNotificationScope(actor.userId, officeIds))
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -950,8 +982,8 @@ export async function fetchClientNotifications(
   options: { unreadOnly?: boolean } = {},
 ) {
   const client = await serverSupabaseClient(event)
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
@@ -1002,8 +1034,8 @@ export async function fetchMessengerNotifications(
   options: { unreadOnly?: boolean } = {},
 ) {
   const client = await serverSupabaseClient(event)
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
@@ -1070,17 +1102,26 @@ export async function markEmployeeNotificationRead(
   notificationId: string,
   employeeOrgId: string,
   employeeOfficeIds: string[],
+  employeeUserId?: string,
 ): Promise<boolean> {
   const db = getServiceSupabase()
 
   const { data: notif, error: notifErr } = await db
     .from('notifications')
-    .select('id, org_id, office_id, target_role')
+    .select('id, org_id, office_id, target_role, user_id')
     .eq('id', notificationId)
     .single()
 
   if (notifErr || !notif) return false
   if (String(notif.org_id) !== String(employeeOrgId)) return false
+
+  // Addressed to this person directly (same scope as employeeNotificationScope).
+  const addressedToMe = !!employeeUserId && notif.user_id != null && String(notif.user_id) === String(employeeUserId)
+  if (addressedToMe) {
+    const { error } = await db.from('notifications').update({ is_read: true }).eq('id', notificationId)
+    return !error
+  }
+
   if (String(notif.target_role).toLowerCase() !== 'employee') return false
 
   if (notif.office_id && employeeOfficeIds.length > 0) {
@@ -1124,18 +1165,21 @@ export async function markAllClientNotificationsRead(
 export async function markAllEmployeeNotificationsRead(
   orgId: string,
   officeIds: string[],
+  userId?: string,
 ): Promise<boolean> {
-  if (officeIds.length === 0) return true
+  if (officeIds.length === 0 && !userId) return true
 
   const db = getServiceSupabase()
 
-  const { error } = await db
+  let query = db
     .from('notifications')
     .update({ is_read: true })
     .eq('org_id', orgId)
-    .ilike('target_role', 'employee')
-    .in('office_id', officeIds)
     .eq('is_read', false)
+  query = userId
+    ? query.or(employeeNotificationScope(userId, officeIds))
+    : query.ilike('target_role', 'employee').in('office_id', officeIds)
+  const { error } = await query
 
   return !error
 }

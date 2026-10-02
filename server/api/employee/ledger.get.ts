@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
+import { applyListVisibility } from '~~/server/utils/documentAccess'
 
 /**
  * GET /api/employee/ledger
@@ -45,7 +46,7 @@ export default defineEventHandler(async (event) => {
     const { data: allDocs, error: allDocsErr } = await client
       .from('documents')
       .select(
-        'id, title, description, status, tracking_status, current_step, ' +
+        'id, org_id, title, description, status, tracking_status, current_step, ' +
         'qr_code_data, office_id, origin_office_id, current_office_id, ' +
         'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
         'assigned_messenger_id, checkpoint_cleared_step',
@@ -115,12 +116,15 @@ export default defineEventHandler(async (event) => {
         actor.officeIds.some((id: string) => String(id) === String(doc.current_office_id)),
     }))
 
+    // Office visibility rule: full rows only where the employee has access,
+    // "Released" stubs for offices the document already left.
+    const visible = await applyListVisibility(actor, enriched as any[])
     return {
       success: true,
       scope: 'GLOBAL',
       org_id: actor.orgId,
-      total:  enriched.length,
-      data:   enriched,
+      total:  visible.length,
+      data:   visible,
     }
   }
 
@@ -132,7 +136,7 @@ export default defineEventHandler(async (event) => {
   let docQuery = client
     .from('documents')
     .select(
-      'id, title, description, status, tracking_status, current_step, ' +
+      'id, org_id, title, description, status, tracking_status, current_step, ' +
       'qr_code_data, office_id, origin_office_id, current_office_id, ' +
       'stage_id, created_at, user_id, creator_role, priority, target_completion_date, ' +
       'assigned_messenger_id, checkpoint_cleared_step',
@@ -208,11 +212,12 @@ export default defineEventHandler(async (event) => {
       actor.officeIds.some((id) => String(id) === String(doc.current_office_id)),
   }))
 
+  const visible = await applyListVisibility(actor, enriched as any[])
   return {
     success: true,
     scope:   'LOCAL',
     org_id:  actor.orgId,
-    total:   enriched.length,
-    data:    enriched,
+    total:   visible.length,
+    data:    visible,
   }
 })

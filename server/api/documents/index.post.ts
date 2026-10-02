@@ -12,8 +12,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  // Legacy prototype endpoint: signed-in users only, and the author is always
+  // the session user — never a user_id sent in the body.
+  const user_id = requireOrgAuth(event).userId
   const {
-    user_id,
     office_id,
     document_name,
     document_description,

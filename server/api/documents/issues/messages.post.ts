@@ -1,6 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import {
-  ISSUE_ALLOWED_ROLES,
+  assertIssueParticipant,
   assertIssueOrgAccess,
   broadcastIssueRealtime,
   issueRealtimeChannel,
@@ -29,12 +29,8 @@ export default defineEventHandler(async (event) => {
 
   const { actor, issue } = await assertIssueOrgAccess(event, client, issueId)
 
-  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may post issue messages.',
-    })
-  }
+  // Role + one of the offices on this issue (or the org admin).
+  await assertIssueParticipant(event, client, issue)
 
   if (issue.status === 'RESOLVED') {
     throw createError({

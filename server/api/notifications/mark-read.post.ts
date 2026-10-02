@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const notificationId = body?.notification_id ?? body?.notificationId
 
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const role = (userRole ?? '').toLowerCase()
-  if (role !== 'employee' && role !== 'client' && role !== 'messenger') {
+  if (role !== 'employee' && role !== 'employee_sub_user' && role !== 'client' && role !== 'messenger') {
     throw createError({ statusCode: 403, message: 'Only clients, employees, or liaisons can mark notifications as read.' })
   }
 
@@ -54,6 +54,7 @@ export default defineEventHandler(async (event) => {
       String(notificationId),
       actor.orgId,
       officeIds,
+      actor.userId,
     )
   }
 

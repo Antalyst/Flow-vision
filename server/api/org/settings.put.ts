@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { org_id, enable_employee_validation } = body
+  const { enable_employee_validation } = body
+  const org_id = requireOrgAuth(event, ['client'], body?.org_id).orgId
 
   const client = createClient(
     config.public.supabaseUrl, 

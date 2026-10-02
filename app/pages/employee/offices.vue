@@ -120,27 +120,6 @@
         </div>
       </div>
 
-      <!-- Staff QR Codes Section -->
-      <div>
-        <h2 class="mb-4 text-sm font-bold uppercase tracking-wide" :class="isDark ? 'text-white' : 'text-gray-900'">Staff QR Codes</h2>
-        <div v-if="!staffMembers.length" class="py-16 text-center rounded-2xl transition-all" :class="isDark ? 'bg-[#18181B] shadow-md shadow-black/20' : 'bg-white shadow-sm'">
-          <div class="flex flex-col items-center gap-3">
-            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-candy-orange/10 border-transparent">
-              <Icon name="ph:identification-badge-light" class="h-7 w-7 text-candy-orange/60" />
-            </div>
-            <p class="font-semibold text-sm" :class="isDark ? 'text-gray-300' : 'text-gray-700'">No staff accounts yet</p>
-            <p class="text-xs max-w-[220px]" :class="mutedText">Add a staff account in Staff Accounts to see their QR code here.</p>
-          </div>
-        </div>
-        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <StaffQrCard
-            v-for="staff in staffMembers"
-            :key="'staff-' + staff.user_id"
-            :staff="staff"
-          />
-        </div>
-      </div>
-
     </div>
 
     <!-- ── Registration Modal ─────────────────────────────────────────── -->
@@ -253,7 +232,6 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useTheme } from '~/composables/useTheme'
 import { gsap } from 'gsap'
 import OfficeQrCard from '~/components/employee/OfficeQrCard.vue'
-import StaffQrCard from '~/components/employee/StaffQrCard.vue'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'employee' })

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sessionRole as readSessionRole, sessionUserId as readSessionUserId } from '~~/server/utils/session'
 
 /**
  * DELETE /api/users/remove
@@ -17,8 +18,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'userId query parameter is required' })
   }
 
-  const sessionUserId = getCookie(event, 'user_session')
-  const sessionRole   = getCookie(event, 'user_role')
+  const sessionUserId = readSessionUserId(event)
+  const sessionRole   = readSessionRole(event)
 
   if (!sessionUserId || sessionRole !== 'client') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })

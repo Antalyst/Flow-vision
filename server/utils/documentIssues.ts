@@ -6,9 +6,77 @@
 
 import type { H3Event } from 'h3'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { resolveActorContext, type ActorContext } from '~~/server/utils/actorContext'
+import { resolveActorContext, resolveActorContextWithOffices, type ActorContext } from '~~/server/utils/actorContext'
+import { getDocumentRoute, routeStopAt } from '~~/server/utils/documentRoute'
+import { ACCESS_DOC_COLUMNS, documentAccessLevel } from '~~/server/utils/documentAccess'
 
-export const ISSUE_ALLOWED_ROLES = ['client', 'employee'] as const
+// employee_sub_user (office staff) included: staff are the ones who receive a
+// document and find what's wrong with it. What they may act on is limited by
+// office — see assertCanReportOnDocument / assertIssueParticipant below.
+export const ISSUE_ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
+
+/** Clear, non-revealing message for roles that can't use discrepancy reporting at all. */
+export function issueRoleForbidden() {
+  return createError({
+    statusCode: 403,
+    message: 'Your account type cannot report or manage document discrepancies.',
+    data: { code: 'ISSUE_ROLE_NOT_ALLOWED' },
+  })
+}
+
+/**
+ * Reporting a discrepancy (and loading where it would be sent back to)
+ * requires full access to the document: the org admin, its creator, or the
+ * office that holds it right now. An office the document already left, or an
+ * unrelated office, gets a clear 403 — the same visibility rule as the rest
+ * of the document details (documentAccess.ts).
+ */
+export async function assertCanReportOnDocument(event: H3Event, client: SupabaseClient, documentId: string) {
+  const actor = await resolveActorContextWithOffices(event, client)
+  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) throw issueRoleForbidden()
+
+  const { data: doc, error } = await client
+    .from('documents')
+    .select(`${ACCESS_DOC_COLUMNS}, title, current_desk_id`)
+    .eq('id', documentId)
+    .maybeSingle()
+  if (error) throw createError({ statusCode: 500, message: 'We could not load this document. Please try again.' })
+  if (!doc || String((doc as any).org_id) !== actor.orgId) {
+    throw createError({ statusCode: 404, message: 'Document not found.' })
+  }
+
+  const level = documentAccessLevel(actor, doc as any, await getDocumentRoute(doc as any))
+  if (level !== 'full') {
+    throw createError({
+      statusCode: 403,
+      message: level === 'released'
+        ? 'Your office has already released this document, so it can no longer report a discrepancy on it.'
+        : 'You can only report a discrepancy on a document your office is currently handling.',
+      data: { code: 'ISSUE_NO_DOCUMENT_ACCESS' },
+    })
+  }
+  return { actor, document: doc as unknown as DocumentRow }
+}
+
+/**
+ * Posting in or resolving an issue thread: org admins, or someone from one of
+ * the two offices on the issue (the reporter or the office it was sent back to).
+ */
+export async function assertIssueParticipant(event: H3Event, client: SupabaseClient, issue: DocumentIssueRow) {
+  const actor = await resolveActorContextWithOffices(event, client)
+  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) throw issueRoleForbidden()
+  if (actor.userRole === 'client') return actor
+  const mine = new Set(actor.officeIds.map(String))
+  const involved = [issue.reported_by_office_id, issue.target_office_id].filter(Boolean).map(String)
+  if (!involved.some((id) => mine.has(id))) {
+    throw createError({
+      statusCode: 403,
+      message: 'Only the offices involved in this discrepancy can reply to or resolve it.',
+      data: { code: 'ISSUE_NOT_PARTICIPANT' },
+    })
+  }
+  return actor
+}
 
 export interface DocumentIssueRow {
   id: string
@@ -119,7 +187,7 @@ export async function assertIssueOrgAccess(
  */
 export async function assertReportingOfficeAccess(
   client: SupabaseClient,
-  actor: ActorContext,
+  actor: ActorContext & { officeIds?: string[] },
   officeId: string,
 ): Promise<{ id: string; name: string; code: string | null }> {
   const { data: office, error } = await client
@@ -144,12 +212,16 @@ export async function assertReportingOfficeAccess(
     })
   }
 
-  if (actor.userRole === 'employee' && String(office.assigned_user) !== actor.userId) {
-    throw createError({
-      statusCode: 403,
-      message:
-        'UNAUTHORIZED_OFFICE: Employees may only flag issues from their assigned sub-offices.',
-    })
+  // Employees (office heads) and staff report only from their own offices.
+  if (actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
+    const own = String(office.assigned_user) === actor.userId || (actor.officeIds ?? []).map(String).includes(String(office.id))
+    if (!own) {
+      throw createError({
+        statusCode: 403,
+        message: 'You can only report a discrepancy from your own office.',
+        data: { code: 'UNAUTHORIZED_OFFICE' },
+      })
+    }
   }
 
   return { id: String(office.id), name: office.name, code: office.code ?? null }
@@ -162,51 +234,75 @@ export interface PreviousRouteOffice {
   newStep: number
 }
 
+export interface SendBackTarget extends PreviousRouteOffice {
+  /** previous_handoff = whoever handed it here (the default); origin = where this routing cycle started. */
+  role: 'previous_handoff' | 'origin'
+}
+
 /**
- * Resolves the office one step BACK from a document's current position —
- * i.e. whoever handed it off most recently. Used to auto-route a flagged
- * document back to whoever sent it, rather than requiring a manual pick.
- * Mirrors the computation already used to populate the compliance chat's
- * target-office picker (see /api/documents/issues/chat-targets.get.ts).
+ * The offices a flagged document may be sent back to, from its actual route
+ * (per-document route copy, falling back to its saved stage):
+ *   1. previous_handoff — the stop before the current one (or the origin when
+ *      it is at stop 1). This is the default.
+ *   2. origin — the office the CURRENT routing cycle started from (the origin
+ *      for standard routes; for a later recurring cycle, the return stop the
+ *      cycle began at — never an earlier cycle's step).
+ * Empty while the document is still at its origin (nothing to send back to).
+ */
+export async function resolveSendBackTargets(
+  client: SupabaseClient,
+  documentId: string,
+): Promise<SendBackTarget[]> {
+  const { data: doc } = await client
+    .from('documents')
+    .select('id, org_id, current_step, stage_id, origin_office_id, office_id')
+    .eq('id', documentId)
+    .maybeSingle()
+  if (!doc) return []
+
+  const currentStep = Number((doc as any).current_step ?? 0)
+  if (currentStep < 1) return []
+  const originOfficeId = (doc as any).origin_office_id ?? (doc as any).office_id ?? null
+  const route = await getDocumentRoute(doc as any)
+
+  const officeAtStep = (step: number) => (step <= 0 ? originOfficeId : routeStopAt(route, step)?.office_id ?? null)
+  const current = routeStopAt(route, currentStep)
+  const cycle = current?.cycle_number ?? 1
+  const cycleStops = route.filter((s) => (s.cycle_number ?? 1) === cycle)
+  const cycleStartStep = cycleStops.length ? Math.min(...cycleStops.map((s) => s.step_number)) - 1 : 0
+
+  const candidates: Array<{ officeId: string | null; newStep: number; role: SendBackTarget['role'] }> = [
+    { officeId: officeAtStep(currentStep - 1), newStep: currentStep - 1, role: 'previous_handoff' },
+    { officeId: officeAtStep(cycleStartStep), newStep: cycleStartStep, role: 'origin' },
+  ]
+  const seen = new Set<string>()
+  const picked = candidates.filter((c) => {
+    if (!c.officeId || c.newStep < 0 || c.newStep >= currentStep) return false
+    const key = `${c.officeId}:${c.newStep}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+  if (!picked.length) return []
+
+  const { data: offices } = await client.from('offices').select('id, name').in('id', picked.map((c) => String(c.officeId)))
+  const nameOf = new Map((offices ?? []).map((o: any) => [String(o.id), o.name as string]))
+  return picked
+    .filter((c) => nameOf.has(String(c.officeId)))
+    .map((c) => ({ officeId: String(c.officeId), officeName: nameOf.get(String(c.officeId))!, newStep: c.newStep, role: c.role }))
+}
+
+/**
+ * The default send-back office: whoever handed the document here.
+ * Kept for callers that don't offer a choice.
  */
 export async function resolvePreviousRouteOffice(
   client: SupabaseClient,
   documentId: string,
 ): Promise<PreviousRouteOffice | null> {
-  const { data: docRow } = await client
-    .from('documents')
-    .select('current_step, stage_id, origin_office_id')
-    .eq('id', documentId)
-    .maybeSingle()
-
-  if (!docRow) return null
-
-  const currentStep = Number((docRow as { current_step?: number }).current_step ?? 0)
-  const stageId = (docRow as { stage_id?: string | null }).stage_id ?? null
-  const originOfficeId = (docRow as { origin_office_id?: string | null }).origin_office_id ?? null
-  const newStep = Math.max(currentStep - 1, 0)
-
-  let previousOfficeId: string | null = null
-
-  if (stageId && currentStep > 1) {
-    const { data: prevStep } = await client
-      .from('stage_steps')
-      .select('office_id')
-      .eq('stage_id', stageId)
-      .eq('step_number', currentStep - 1)
-      .maybeSingle()
-
-    if (prevStep?.office_id) previousOfficeId = String(prevStep.office_id)
-  } else if (originOfficeId && currentStep <= 1) {
-    previousOfficeId = String(originOfficeId)
-  }
-
-  if (!previousOfficeId) return null
-
-  const { data: office } = await client.from('offices').select('name').eq('id', previousOfficeId).maybeSingle()
-  if (!office) return null
-
-  return { officeId: previousOfficeId, officeName: office.name, newStep }
+  const targets = await resolveSendBackTargets(client, documentId)
+  const target = targets.find((t) => t.role === 'previous_handoff') ?? targets[0]
+  return target ? { officeId: target.officeId, officeName: target.officeName, newStep: target.newStep } : null
 }
 
 /**

@@ -6,7 +6,7 @@ import {
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const userRole = (getCookie(event, 'user_role') ?? '').toLowerCase()
+  const userRole = (sessionRole(event) ?? '').toLowerCase()
 
   if (userRole === 'client') {
     const unreadOnly = query.unread !== 'false'

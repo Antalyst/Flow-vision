@@ -7,6 +7,8 @@ import {
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
 import { emitInTransitEmails } from '~~/server/utils/email/emailEvents'
+import { getDocumentRoute, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
+import { recordTrackingEvent, assertHistorySaved, type TrackingEventResult } from '~~/server/utils/documentAccess'
 
 /**
  * POST /api/tracking/pickup
@@ -25,8 +27,8 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const body   = await readBody(event)
 
-  const actorId   = getCookie(event, 'user_session')
-  const actorRole = getCookie(event, 'user_role')
+  const actorId   = sessionUserId(event)
+  const actorRole = sessionRole(event)
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required.' })
   // employee_sub_user included: assign-liaison.post.ts allows this role as an eligible
@@ -167,22 +169,15 @@ export default defineEventHandler(async (event) => {
       let officeId:   string | null = null
       let officeName: string | null = null
 
-      if (doc.stage_id) {
-        const { data: stepRow } = await client
-          .from('stage_steps')
-          .select('office_id, offices(name)')
-          .eq('stage_id', doc.stage_id)
-          .eq('step_number', nextStep)
-          .maybeSingle()
-
-        if (stepRow?.office_id) {
-          officeId   = String(stepRow.office_id)
-          officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
+      const route = await getDocumentRoute(doc)
+      if (route.length > 0) {
+        const nextStop = routeStopAt(route, nextStep)
+        if (nextStop) {
+          officeId   = nextStop.office_id
+          officeName = nextStop.office_name
         } else {
-          // Bound to a route, but that route has no configured stop for the next
-          // step (empty/incomplete route, or already past its last real stop).
-          // Falling back to doc.office_id here is what causes dropoff to reject a
-          // genuinely-correct scan later — fail loudly now instead.
+          // The route has no stop for the next step — fail loudly instead of
+          // guessing an office.
           throw createError({
             statusCode: 422,
             message: `"${doc.title}" has no next checkpoint configured on its route. Ask an office admin to fix this document's route before it can be picked up.`,
@@ -519,6 +514,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const isPostClaim = doc.tracking_status === 'PICKED_UP'
+  // History entries this request writes; success is only reported once they're saved.
+  const tracked: TrackingEventResult[] = []
 
   if (!allowedFromStates.includes(doc.tracking_status)) {
     throw createError({
@@ -545,28 +542,19 @@ export default defineEventHandler(async (event) => {
   let officeId:   string | null = null
   let officeName: string | null = null
 
-  if (doc.stage_id) {
-    const { data: stepRow } = await client
-      .from('stage_steps')
-      .select('office_id, offices(name)')
-      .eq('stage_id', doc.stage_id)
-      .eq('step_number', nextStep)
-      .maybeSingle()
-
-    if (stepRow?.office_id) {
-      officeId   = String(stepRow.office_id)
-      officeName = (stepRow as { offices?: { name?: string } }).offices?.name ?? null
-    } else {
-      // Bound to a route, but that route has no configured stop for the next
-      // step (empty/incomplete route, or already past its last real stop).
-      // Falling back to doc.office_id here is what causes dropoff to reject a
-      // genuinely-correct scan later — fail loudly now instead.
+  // The document's own route (snapshot), falling back to its stage for older documents.
+  const route = await getDocumentRoute(doc)
+  if (route.length > 0) {
+    const nextStop = routeStopAt(route, nextStep)
+    if (!nextStop) {
       throw createError({
         statusCode: 422,
-        message: `"${doc.title}" has no next checkpoint configured on its route. Ask an office admin to fix this document's route before it can be picked up.`,
+        message: `"${doc.title}" has no next office on its route, so it can't be picked up.`,
         data: { code: 'ROUTE_NOT_CONFIGURED' },
       })
     }
+    officeId = nextStop.office_id
+    officeName = nextStop.office_name
   }
 
   if (!officeId && (doc.office_id || doc.origin_office_id)) {
@@ -593,49 +581,73 @@ export default defineEventHandler(async (event) => {
     if (origOffRow?.name) originOfficeName = origOffRow.name
   }
 
-  if (!isPostClaim) {
-    await client.from('document_tracking_events').insert({
-      document_id:  doc.id,
-      org_id:       messengerOrgId,
-      status:       'PICKED_UP',
-      step_index:   doc.current_step ?? 0,
-      actor_id:     actorId,
-      actor_role:   'messenger',
-      actor_name:   actorRow.full_name,
-      notes:        `Document physically acquired by ${actorRow.full_name}.`,
-      created_at:   now,
-    })
-  }
-
-  await client.from('document_tracking_events').insert({
-    document_id:  doc.id,
-    org_id:       messengerOrgId,
-    status:       'IN_TRANSIT',
-    step_index:   nextStep,
-    office_id:    officeId,
-    office_name:  officeName,
-    actor_id:     actorId,
-    actor_role:   'messenger',
-    actor_name:   actorRow.full_name,
-    notes:        officeName
-      ? `In transit to ${officeName} (Step ${nextStep}).`
-      : `In transit toward Step ${nextStep}.`,
-    created_at:   now,
-  })
-
-  const { data: updatedDoc, error: updateErr } = await client
+  // Conditional transition first: only one pickup can win, and history is
+  // written only after it does (a failed or duplicate pickup leaves no trace).
+  const { data: updatedRows, error: updateErr } = await client
     .from('documents')
     .update({
       tracking_status:       'IN_TRANSIT',
       current_step:          nextStep,
       assigned_messenger_id: actorId,
       current_office_id:     null,
+      current_handler_id:    null,
     })
     .eq('id', doc.id)
+    .eq('tracking_status', doc.tracking_status)
+    .eq('current_step', doc.current_step ?? 0)
+    .eq('assigned_messenger_id', actorId)
     .select('id, title, tracking_status, current_step, assigned_messenger_id, current_office_id')
-    .single()
 
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+  const updatedDoc = updatedRows?.[0]
+  if (!updatedDoc) {
+    throw createError({
+      statusCode: 409,
+      message: `"${doc.title}" was already picked up.`,
+      data: { code: 'ALREADY_PICKED_UP', document_id: doc.id },
+    })
+  }
+
+  const { error: legErr } = await lifecycleDb()
+    .from('document_liaison_assignments')
+    .update({ picked_up_at: now })
+    .eq('document_id', doc.id)
+    .eq('status', 'ACTIVE')
+    .is('picked_up_at', null)
+  if (legErr) console.error('[Pickup] could not stamp liaison pickup:', legErr.message)
+
+  if (!isPostClaim) {
+    tracked.push(await recordTrackingEvent({
+      document_id: doc.id,
+      org_id: messengerOrgId,
+      status: 'PICKED_UP',
+      step_index: doc.current_step ?? 0,
+      office_name: originOfficeName,
+      actor_id: actorId,
+      actor_role: actorRole ?? 'messenger',
+      actor_name: actorRow.full_name,
+      event_type: 'LIAISON_PICKUP',
+      notes: `Document physically acquired by ${actorRow.full_name}${originOfficeName ? ` at ${originOfficeName}` : ''}.`,
+      metadata: { from_office_id: originOfficeId, liaison_id: actorId },
+    }))
+  }
+
+  tracked.push(await recordTrackingEvent({
+    document_id: doc.id,
+    org_id: messengerOrgId,
+    status: 'IN_TRANSIT',
+    step_index: nextStep,
+    office_name: officeName,
+    actor_id: actorId,
+    actor_role: actorRole ?? 'messenger',
+    actor_name: actorRow.full_name,
+    event_type: 'IN_TRANSIT',
+    notes: officeName
+      ? `In transit to ${officeName} (Step ${nextStep}).`
+      : `In transit toward Step ${nextStep}.`,
+    metadata: { to_office_id: officeId, liaison_id: actorId },
+  }))
+  assertHistorySaved(tracked, 'The pickup')
 
   const scanMessage = `${actorRow.full_name} scanned QR for "${doc.title}" and moved it to IN_TRANSIT (Step ${nextStep})`
 

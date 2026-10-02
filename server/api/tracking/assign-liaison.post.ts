@@ -38,7 +38,10 @@ import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { logActivitySafe } from '~~/server/utils/activityLog'
 import { notifyDocumentCreator, notifyLiaisonAssigned } from '~~/server/utils/notifications'
 import { emitLiaisonAssignedEmail } from '~~/server/utils/email/emailEvents'
-import { resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { recordLiaisonAssignment, resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { getDocumentRoute, routeStopAt } from '~~/server/utils/documentRoute'
+import { broadcastInboundOfficeNotification } from '~~/server/utils/notifications'
+import { notifyUser } from '~~/server/utils/documentAccess'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -106,8 +109,8 @@ export default defineEventHandler(async (event) => {
   if (doc.tracking_status === 'ARRIVED_AT_OFFICE' && (doc.checkpoint_cleared_step ?? null) !== (doc.current_step ?? 0)) {
     throw createError({
       statusCode: 422,
-      message: 'Please confirm receipt of this document before assigning the next messenger.',
-      data: { code: 'DESK_REVIEW_REQUIRED' },
+      message: "The office head must approve this document's release before a liaison can be assigned.",
+      data: { code: 'RELEASE_APPROVAL_REQUIRED' },
     })
   }
 
@@ -142,6 +145,17 @@ export default defineEventHandler(async (event) => {
   }
   // client admins may assign anywhere within their own organisation — no further check.
 
+  // ── The next leg must exist: at the final stop the head completes the document instead ──
+  const route = await getDocumentRoute(doc)
+  const nextStop = routeStopAt(route, (doc.current_step ?? 0) + 1)
+  if (route.length > 0 && !nextStop) {
+    throw createError({
+      statusCode: 422,
+      message: "This is the document's final stop — there is no next office to deliver it to. The office head completes it instead.",
+      data: { code: 'NO_NEXT_STOP' },
+    })
+  }
+
   // ── Load & validate the candidate Liaison (shared with creation-time assignment) ──
   const liaison = await resolveAndAssociateLiaison(client, {
     orgId: actor.orgId,
@@ -149,15 +163,46 @@ export default defineEventHandler(async (event) => {
     effectiveOfficeId,
   })
 
+  const DOC_RESULT_COLUMNS = 'id, title, tracking_status, current_step, assigned_messenger_id, current_office_id, origin_office_id'
+  const previousLiaisonId = doc.assigned_messenger_id ? String(doc.assigned_messenger_id) : null
+  const alreadyAssigned = () => ({
+    success: true,
+    already_assigned: true,
+    message: `${liaison.full_name ?? 'This messenger'} is already assigned to this delivery.`,
+    data: {
+      document: { ...doc, assigned_messenger_id: liaison.user_id },
+      liaison: { user_id: liaison.user_id, full_name: liaison.full_name, role: liaison.role },
+    },
+  })
+
+  // A retried request for the same liaison changes nothing: no second
+  // assignment record, no duplicate notifications.
+  if (previousLiaisonId === liaison.user_id) return alreadyAssigned()
+
   // ── Assign — this write is already authoritative, no accept/claim step ─
-  const { data: updatedDoc, error: updateErr } = await client
+  // Compare-and-set on the previous assignee, so two concurrent requests
+  // can't both "win" (and both notify).
+  let assignQuery = client
     .from('documents')
     .update({ assigned_messenger_id: liaison.user_id })
     .eq('id', doc.id)
-    .select('id, title, tracking_status, current_step, assigned_messenger_id, current_office_id, origin_office_id')
-    .single()
+  assignQuery = previousLiaisonId
+    ? assignQuery.eq('assigned_messenger_id', previousLiaisonId)
+    : assignQuery.is('assigned_messenger_id', null)
+  const { data: updatedRows, error: updateErr } = await assignQuery.select(DOC_RESULT_COLUMNS)
 
-  if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+  if (updateErr) throw createError({ statusCode: 500, message: 'We could not assign this messenger. Please try again.' })
+  if (!updatedRows || updatedRows.length === 0) {
+    const { data: latest } = await client.from('documents').select('assigned_messenger_id').eq('id', doc.id).maybeSingle()
+    if (latest?.assigned_messenger_id && String(latest.assigned_messenger_id) === liaison.user_id) return alreadyAssigned()
+    throw createError({
+      statusCode: 409,
+      message: 'The liaison for this document was just changed by someone else. Refresh and try again.',
+      data: { code: 'ASSIGNMENT_CHANGED' },
+    })
+  }
+  const updatedDoc = updatedRows[0]
+  const assignedAt = new Date().toISOString()
 
   let officeName: string | null = null
   if (effectiveOfficeId) {
@@ -165,16 +210,35 @@ export default defineEventHandler(async (event) => {
     officeName = officeRow?.name ?? null
   }
 
-  let destinationOfficeName: string | null = null
-  if (doc.stage_id) {
-    const nextStep = (doc.current_step ?? 0) + 1
-    const { data: stepRow } = await client
-      .from('stage_steps')
-      .select('office_id, offices(name)')
-      .eq('stage_id', doc.stage_id)
-      .eq('step_number', nextStep)
-      .maybeSingle()
-    destinationOfficeName = (stepRow as { offices?: { name?: string } } | null)?.offices?.name ?? null
+  const destinationOfficeName: string | null = nextStop?.office_name ?? null
+
+  await recordLiaisonAssignment({
+    documentId: doc.id,
+    orgId: actor.orgId,
+    fromOfficeId: effectiveOfficeId,
+    toOfficeId: nextStop?.office_id ?? null,
+    stepNumber: (doc.current_step ?? 0) + 1,
+    liaisonId: liaison.user_id,
+    assignedBy: actor.userId,
+  })
+
+  // Advance notice to the next office — only now, after release approval and assignment.
+  if (nextStop) {
+    try {
+      await broadcastInboundOfficeNotification({
+        orgId: actor.orgId,
+        documentId: doc.id,
+        documentTitle: doc.title,
+        messengerName: liaison.full_name,
+        officeId: nextStop.office_id,
+        officeName: nextStop.office_name,
+        type: 'INCOMING_DOCUMENT',
+        title: 'Document Coming to Your Office',
+        message: `"${doc.title}" was released by ${officeName ?? 'the previous office'} and is assigned to ${liaison.full_name ?? 'a liaison'} for delivery to ${nextStop.office_name}. Scan its QR code when it arrives.`,
+      })
+    } catch (notifyErr) {
+      console.warn('[assign-liaison] Non-fatal: incoming notice failed:', notifyErr)
+    }
   }
 
   const assignMessage =
@@ -200,6 +264,7 @@ export default defineEventHandler(async (event) => {
     },
   }, client)
 
+  // Sent only now — the assignment is persisted above.
   const liaisonNotificationId = await notifyLiaisonAssigned({
     orgId: actor.orgId,
     documentId: doc.id,
@@ -207,7 +272,22 @@ export default defineEventHandler(async (event) => {
     liaisonUserId: liaison.user_id,
     assignedByOfficeName: officeName,
     destinationOfficeName,
+    stepNumber: (doc.current_step ?? 0) + 1,
+    assignedAt,
   })
+
+  // Reassignment: tell the previous liaison they no longer carry this
+  // document, so their earlier "assigned to you" isn't left misleading.
+  if (previousLiaisonId) {
+    await notifyUser({
+      orgId: actor.orgId,
+      documentId: doc.id,
+      documentTitle: doc.title,
+      userId: previousLiaisonId,
+      title: 'Delivery Reassigned',
+      message: `"${doc.title}" was reassigned to ${liaison.full_name ?? 'another liaison'}. You no longer need to pick it up.`,
+    })
+  }
 
   const creatorNotificationId = await notifyDocumentCreator({
     orgId: actor.orgId,

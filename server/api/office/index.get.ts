@@ -4,14 +4,8 @@ export default defineEventHandler(async (event) => {
   try {
     const client = await serverSupabaseClient(event)
     const query = getQuery(event)
-    const org_id = query.orgId
-
-    if (!org_id) {
-      throw createError({
-        statusCode: 400,
-        message: 'orgId query parameter is required',
-      })
-    }
+    // Only the caller's own organization's offices.
+    const org_id = requireOrgAuth(event, undefined, query.orgId).orgId
 
     const { data, error } = await client
       .from('offices')

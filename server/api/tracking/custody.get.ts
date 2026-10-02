@@ -1,5 +1,13 @@
-import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
-import { getRouteContext, resolveRouteOfficeAtStep, resolveOfficeName } from '~~/server/utils/routeCompletion'
+import { serverSupabaseClient } from '#supabase/server'
+import { resolveOfficeName } from '~~/server/utils/routeCompletion'
+import { getDocumentRoute, routeStopAt, type RouteStop } from '~~/server/utils/documentRoute'
+
+/** Route-stop lookup in the { officeId, officeName } shape these endpoints already use. */
+function stopInfo(stops: RouteStop[], step: number) {
+  const stop = routeStopAt(stops, step)
+  return { officeId: stop?.office_id ?? null, officeName: stop?.office_name ?? null }
+}
+
 
 /**
  * GET /api/tracking/custody
@@ -12,16 +20,9 @@ export default defineEventHandler(async (event) => {
   try {
     const client = await serverSupabaseClient(event)
 
-    // 1. Validate User Authentication
-    let user: any = null
-    try {
-      user = await serverSupabaseUser(event)
-    } catch {
-      // Fall back to session cookies
-    }
-
-    const actorId = user?.id || getCookie(event, 'user_session')
-    const actorRole = user?.user_metadata?.role || getCookie(event, 'user_role')
+    // 1. Verified session identity (server/middleware/auth.ts)
+    const actorId = sessionUserId(event)
+    const actorRole = sessionRole(event)
 
     if (!actorId || String(actorId).trim() === '') {
       throw createError({ statusCode: 401, message: 'Authentication required' })
@@ -78,13 +79,14 @@ export default defineEventHandler(async (event) => {
     // 4. Enrich documents with route and checkpoint metadata safely
     const enriched = await Promise.all((docs ?? []).map(async (doc) => {
       try {
-        const route = await getRouteContext(client, doc.stage_id)
+        const stops = await getDocumentRoute(doc)
+        const route = { totalSteps: stops.length }
         // For an active leg (PICKED_UP/IN_TRANSIT), current_step IS the step being
         // travelled to. For a document merely assigned but not yet picked up
         // (CREATED / cleared ARRIVED_AT_OFFICE), the next leg is current_step + 1.
         const isActiveLeg = doc.tracking_status === 'PICKED_UP' || doc.tracking_status === 'IN_TRANSIT'
         const destinationStep = isActiveLeg ? (doc.current_step ?? 0) : (doc.current_step ?? 0) + 1
-        const destination = await resolveRouteOfficeAtStep(client, doc.stage_id, destinationStep)
+        const destination = stopInfo(stops, destinationStep)
         const originName = await resolveOfficeName(
           client,
           doc.origin_office_id ?? doc.current_office_id ?? doc.office_id,
@@ -93,29 +95,7 @@ export default defineEventHandler(async (event) => {
           doc.tracking_status === 'CREATED' ||
           (doc.tracking_status === 'ARRIVED_AT_OFFICE' && (doc.checkpoint_cleared_step ?? null) === (doc.current_step ?? 0))
 
-        const routeSteps: Array<{ step_number: number; office_id: string; office_name: string }> = []
-        if (doc.stage_id) {
-          const { data: steps, error: stepErr } = await client
-            .from('stage_steps')
-            .select('step_number, office_id, offices(name)')
-            .eq('stage_id', doc.stage_id)
-            .order('step_number', { ascending: true })
-
-          if (stepErr) {
-            console.error(
-              `[GET /api/tracking/custody] Postgres error resolving stage_steps for stage ${doc.stage_id}:`,
-              stepErr.message || stepErr,
-            )
-          } else {
-            for (const step of steps ?? []) {
-              routeSteps.push({
-                step_number: step.step_number,
-                office_id: String(step.office_id),
-                office_name: (step as { offices?: { name?: string } }).offices?.name ?? 'Office',
-              })
-            }
-          }
-        }
+        const routeSteps: Array<{ step_number: number; office_id: string; office_name: string }> = stops
 
         const targetDate = (doc as any).target_completion_date || (doc as any).target_date || null
 

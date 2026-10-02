@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const query = getQuery(event)
-  const org_id = query.org_id as string
+  const org_id = requireOrgAuth(event, ['client'], query.org_id).orgId
 
   const client = createClient(
     config.public.supabaseUrl, 

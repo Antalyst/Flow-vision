@@ -1,6 +1,9 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { resolveOfficeDisplayLabel } from '~~/server/utils/officeLabel'
+import { getDocumentRoute, getOfficeHeadId, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
+import { assertFullDocumentAccess, documentAccessLevel } from '~~/server/utils/documentAccess'
+import { planStaleCycleRepair } from '~~/server/utils/recurringRouting'
 
 /**
  * GET /api/tracking/timeline
@@ -28,7 +31,7 @@ export default defineEventHandler(async (event) => {
   // ── Fetch the document with stage info ────────────────────────────────
   const { data: doc, error: docErr } = await client
     .from('documents')
-    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at, origin_office_id, office_id, current_office_id, user_id')
+    .select('id, org_id, title, description, tracking_status, current_step, stage_id, qr_code_data, assigned_messenger_id, created_at, origin_office_id, office_id, current_office_id, user_id, current_handler_id, checkpoint_cleared_step')
     .eq('id', documentId)
     .single()
 
@@ -36,10 +39,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'Document not found' })
   }
 
-  // Org isolation check
-  if (String(actor.orgId) !== String(doc.org_id)) {
-    throw createError({ statusCode: 403, message: 'Forbidden' })
-  }
+  // Org isolation + office visibility: an office the document already left
+  // gets only its "Released" status (see documentAccess.ts), never details.
+  const documentRoute = await getDocumentRoute(doc)
+  assertFullDocumentAccess(documentAccessLevel(actor, doc, documentRoute))
 
   // ── Fetch tracking events (audit log) ─────────────────────────────────
   const { data: events, error: eventsErr } = await client
@@ -86,20 +89,44 @@ export default defineEventHandler(async (event) => {
     currentAssignmentAt = assignLog?.created_at ?? null
   }
 
+  // ── Custody, liaison and release state ───────────────────────────────
+  const db = lifecycleDb()
+  const [{ data: legs }, { data: releaseRows }, { data: cycleRows }] = await Promise.all([
+    db.from('document_liaison_assignments')
+      .select('id, from_office_id, to_office_id, step_number, liaison_id, assigned_by, assigned_at, picked_up_at, delivered_at, received_by, status')
+      .eq('document_id', documentId)
+      .order('assigned_at', { ascending: true }),
+    db.from('document_release_requests')
+      .select('id, office_id, step_number, requested_by, requested_at, remarks, status, decided_by, decided_at, decision_remarks')
+      .eq('document_id', documentId)
+      .order('requested_at', { ascending: true }),
+    // Recurring routing (table from a separate migration — an error just means no cycles).
+    db.from('document_routing_cycles')
+      .select('cycle_number, start_step, end_step, status, started_by, started_at, completed_at, completed_by')
+      .eq('document_id', documentId)
+      .order('cycle_number', { ascending: true }),
+  ])
+  const peopleIds = [...new Set([
+    doc.current_handler_id,
+    ...(legs ?? []).flatMap((l: any) => [l.liaison_id, l.assigned_by, l.received_by]),
+    ...(releaseRows ?? []).flatMap((r: any) => [r.requested_by, r.decided_by]),
+    ...(cycleRows ?? []).flatMap((c: any) => [c.started_by, c.completed_by]),
+  ].filter(Boolean).map(String))]
+  const { data: people } = peopleIds.length
+    ? await db.from('users').select('user_id, full_name').in('user_id', peopleIds)
+    : { data: [] as any[] }
+  const nameOf = (id: unknown) => (id ? (people ?? []).find((p: any) => String(p.user_id) === String(id))?.full_name ?? null : null)
+
   // ── Fetch stage route (the planned path) ──────────────────────────────
   let routeSteps: any[] = []
-  if (doc.stage_id) {
-    const { data: steps } = await client
-      .from('stage_steps')
-      .select('step_number, office_id, offices(id, name, code)')
-      .eq('stage_id', doc.stage_id)
-      .order('step_number', { ascending: true })
-
-    const rawSteps = (steps ?? []).map((s: any) => ({
+  if (documentRoute.length > 0) {
+    const rawSteps = documentRoute.map((s) => ({
       step_number: s.step_number,
       office_id:   s.office_id,
-      office_name: s.offices?.name ?? `Office #${s.office_id}`,
-      office_code: s.offices?.code ?? null,
+      office_name: s.office_name,
+      office_code: null as string | null,
+      cycle_number: s.cycle_number ?? 1,
+      is_return:   !!s.is_return,
     }))
 
     // ── Fill in who handled each stop, and when it arrived / moved on ──────
@@ -115,7 +142,7 @@ export default defineEventHandler(async (event) => {
     // as if they'd dropped it off. A stop's "release" is whichever
     // PICKED_UP or COMPLETED event for that same step happens next in the
     // log after its arrival.
-    const matchesStep = (e: any, step: { step_number: number, office_id: number, office_name: string }) => {
+    const matchesStep = (e: any, step: { step_number: number, office_id: string, office_name: string }) => {
       if (e.step_index !== null && e.step_index !== undefined) return Number(e.step_index) === step.step_number
       if (e.office_id !== null && e.office_id !== undefined) return String(e.office_id) === String(step.office_id)
       return e.office_name === step.office_name
@@ -123,9 +150,20 @@ export default defineEventHandler(async (event) => {
 
     routeSteps = rawSteps.map((step) => {
       const arrivalEvent = eventsAsc.find((e: any) => e.status === 'ARRIVED_AT_OFFICE' && matchesStep(e, step))
+      // Fallback: the liaison leg the receiving office's scan closed. Covers
+      // receipts whose history entry could not be written (see
+      // recordTrackingEvent) so a received stop never reads "On the Way".
+      const receivedLeg = arrivalEvent
+        ? null
+        : (legs ?? []).find((l: any) => l.delivered_at && Number(l.step_number) === step.step_number)
 
-      const arrivedAt = arrivalEvent?.created_at ?? null
-      const deliveredBy = arrivalEvent?.actor_name ?? null
+      const arrivedAt = arrivalEvent?.created_at ?? receivedLeg?.delivered_at ?? null
+      const deliveredBy = arrivalEvent?.actor_name ?? (receivedLeg ? nameOf(receivedLeg.received_by) : null)
+      // Who recorded the arrival: an office receipt (receive scan) or a
+      // liaison drop-off (older documents, before drop-off was retired).
+      const arrivalKind = arrivalEvent
+        ? (arrivalEvent.actor_role === 'messenger' ? 'DROPOFF' : 'RECEIPT')
+        : receivedLeg ? 'RECEIPT' : null
 
       let releasedAt: string | null = null
       let releasedBy: string | null = null
@@ -171,6 +209,10 @@ export default defineEventHandler(async (event) => {
         ...step,
         delivered_by: deliveredBy,
         arrived_at: arrivedAt,
+        arrival_kind: arrivalKind,
+        // Authoritative "received" state: a recorded arrival, or the document
+        // is sitting at this stop right now (tracking_status is the source of truth).
+        received: !!arrivedAt || (step.step_number === doc.current_step && doc.tracking_status === 'ARRIVED_AT_OFFICE'),
         released_at: releasedAt,
         released_by: releasedBy,
         released_status: releasedStatus,
@@ -226,9 +268,90 @@ export default defineEventHandler(async (event) => {
     departed_at: originDepartureEvent?.created_at ?? null,
   }
 
+  const officeNameOf = (id: unknown) => {
+    if (!id) return null
+    const stop = documentRoute.find((s) => s.office_id === String(id))
+    if (stop) return stop.office_name
+    return String(id) === String(originOfficeId) ? originOfficeName : null
+  }
+
+  const liaisonAssignments = (legs ?? []).map((l: any) => ({
+    ...l,
+    liaison_name: nameOf(l.liaison_id),
+    assigned_by_name: nameOf(l.assigned_by),
+    received_by_name: nameOf(l.received_by),
+    from_office_name: officeNameOf(l.from_office_id),
+    to_office_name: officeNameOf(l.to_office_id),
+  }))
+  const releaseRequests = (releaseRows ?? []).map((r: any) => ({
+    ...r,
+    requested_by_name: nameOf(r.requested_by),
+    decided_by_name: nameOf(r.decided_by),
+  }))
+  const pendingRelease = releaseRequests.find((r) => r.status === 'PENDING') ?? null
+  const currentStep = doc.current_step ?? 0
+  const atOffice = doc.tracking_status === 'ARRIVED_AT_OFFICE'
+  const officeHeadId = atOffice ? await getOfficeHeadId(doc.current_office_id) : null
+  const releaseApproved = atOffice && (doc.checkpoint_cleared_step ?? null) === currentStep
+  const nextStop = routeStopAt(documentRoute, currentStep + 1)
+
+  let handlingState: string
+  if (doc.tracking_status === 'COMPLETED') handlingState = 'COMPLETED'
+  else if (doc.tracking_status === 'IN_TRANSIT' || doc.tracking_status === 'PICKED_UP') handlingState = 'DISPATCHED'
+  else if (doc.tracking_status === 'CREATED') handlingState = doc.assigned_messenger_id ? 'AWAITING_PICKUP' : 'REGISTERED'
+  else if (releaseApproved) handlingState = doc.assigned_messenger_id ? 'AWAITING_PICKUP' : 'RELEASE_APPROVED'
+  else if (pendingRelease) handlingState = 'AWAITING_RELEASE_APPROVAL'
+  else handlingState = 'BEING_HANDLED'
+
+  const cycles = (cycleRows ?? []).map((c: any) => {
+    // A cycle record left ACTIVE after its document completed (its closing
+    // write failed) is shown as completed — the document state is
+    // authoritative; reactivation repairs the stored record.
+    const stale = planStaleCycleRepair(doc, c, null).repair
+    return {
+      ...c,
+      status: stale ? 'COMPLETED' : c.status,
+      record_pending_repair: stale,
+      started_by_name: nameOf(c.started_by),
+      completed_by_name: nameOf(c.completed_by),
+    }
+  })
+  const { data: routingRow } = await db.from('documents').select('routing_type').eq('id', documentId).maybeSingle()
+  const routingType = (routingRow as any)?.routing_type === 'RECURRING' ? 'RECURRING' : 'STANDARD'
+  // Same rule as reactivate.post.ts: creator, org admin, or the origin office's head.
+  const originHeadId = routingType === 'RECURRING' && doc.tracking_status === 'COMPLETED' && actor.userRole === 'employee' && originOfficeId
+    ? await getOfficeHeadId(String(originOfficeId))
+    : null
+  const canReactivate = routingType === 'RECURRING'
+    && doc.tracking_status === 'COMPLETED'
+    && (actor.userRole === 'client' || (!!doc.user_id && String(doc.user_id) === actor.userId) || originHeadId === actor.userId)
+
+  const custody = {
+    handling_state: handlingState,
+    holder_id: doc.current_handler_id ?? null,
+    holder_name: nameOf(doc.current_handler_id),
+    office_head_id: officeHeadId,
+    viewer_is_holder: !!doc.current_handler_id && String(doc.current_handler_id) === actor.userId,
+    viewer_is_head: !!officeHeadId && officeHeadId === actor.userId,
+    release_approved: releaseApproved,
+    pending_release: pendingRelease,
+    is_final_stop: atOffice && !nextStop && documentRoute.length > 0,
+    next_stop: nextStop,
+    active_liaison: liaisonAssignments.find((l: any) => l.status === 'ACTIVE') ?? null,
+  }
+
   return {
     success: true,
     data: {
+      routing: {
+        type: routingType,
+        cycles,
+        current_cycle: (documentRoute.find((s) => s.step_number === currentStep) ?? documentRoute[documentRoute.length - 1])?.cycle_number ?? 1,
+        can_reactivate: canReactivate,
+      },
+      custody,
+      liaison_assignments: liaisonAssignments,
+      release_requests: releaseRequests,
       document: {
         ...doc,
         messenger_name: messengerName,

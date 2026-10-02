@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { hash } from 'bcrypt-ts'
+import { sessionRole as readSessionRole, sessionUserId as readSessionUserId } from '~~/server/utils/session'
 
 /**
  * POST /api/users/provision
@@ -22,8 +23,8 @@ export default defineEventHandler(async (event) => {
   const { full_name, email, password, role: requestedRole } = body
 
   // --- Auth guard --------------------------------------------------------
-  const sessionUserId = getCookie(event, 'user_session')
-  const sessionRole   = getCookie(event, 'user_role')
+  const sessionUserId = readSessionUserId(event)
+  const sessionRole   = readSessionRole(event)
 
   if (!sessionUserId || sessionRole !== 'client') {
     throw createError({ statusCode: 403, message: 'Forbidden: only org administrators can provision accounts' })

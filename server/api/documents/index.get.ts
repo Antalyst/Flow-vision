@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices, parseScope } from '~~/server/utils/actorContext'
+import { applyListVisibility } from '~~/server/utils/documentAccess'
 
 /**
  * GET /api/documents
@@ -134,13 +135,15 @@ export default defineEventHandler(async (event) => {
       is_own_upload:    String(doc.user_id) === String(actor.userId),
     }))
 
+    // Office visibility rule for employees/staff (client admins see everything).
+    const visible = await applyListVisibility(actor, enriched as any[])
     return {
       success: true,
       scope,
       org_id:  actor.orgId,
       role:    actor.userRole,
-      total:   enriched.length,
-      data:    enriched,
+      total:   visible.length,
+      data:    visible,
     }
   } catch (error: any) {
     throw createError({

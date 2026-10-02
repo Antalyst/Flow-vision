@@ -32,17 +32,6 @@
           <Icon name="ph:hand-bold" class="h-3.5 w-3.5" />
           Pickup
         </button>
-        <button
-          type="button"
-          class="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3.5 py-2.5 text-xs font-bold transition-colors"
-          :class="mode === 'dropoff'
-            ? 'bg-candy-orange text-white shadow-sm'
-            : 'text-white/50 hover:text-white/80'"
-          @click="switchMode('dropoff')"
-        >
-          <Icon name="ph:buildings-bold" class="h-3.5 w-3.5" />
-          Drop-off
-        </button>
       </div>
     </header>
 
@@ -243,22 +232,11 @@
                 <p class="text-xs font-bold uppercase tracking-widest text-warning">Already in Transit</p>
                 <p class="mt-1 text-sm font-bold text-white">This document is already on its way</p>
                 <p class="mt-1 text-xs leading-relaxed text-white/80">
-                  Switch to Drop-off mode to check it in.
+                  When you arrive, hand it to the receiving office's staff — they scan this QR code to confirm receipt.
                 </p>
               </div>
             </div>
 
-            <!-- Instant Switch Button -->
-            <div class="mt-4 pt-3 border-t border-white/10">
-              <button
-                type="button"
-                class="w-full flex items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-3.5 text-xs font-bold text-white transition hover:bg-candy-hover active:scale-[0.98]"
-                @click="switchMode('dropoff')"
-              >
-                <Icon name="ph:buildings-light" class="h-4 w-4" />
-                Switch to Drop-off Mode
-              </button>
-            </div>
           </div>
 
           <!-- SECURITY ERROR -->
@@ -495,7 +473,8 @@ const queryDocId = computed(() => String(route.query.docId || route.query.docume
 const queryMode = computed(() => (route.query.mode === 'dropoff' || route.query.mode === 'pickup' ? (route.query.mode as ScanMode) : null))
 
 // Auto-configure initial scan mode from query or messenger store
-const initialMode: ScanMode = queryMode.value || messengerStore.focusedScanMode || 'pickup'
+// Messengers only pick up now: the receiving office scans the document QR to receive it.
+const initialMode: ScanMode = 'pickup'
 const mode = ref<ScanMode>(initialMode)
 
 const scanState = ref<ScanState>('idle')
@@ -529,8 +508,6 @@ function getPriorityBadgeClass(priority?: string | null) {
 
 function selectFocus(doc: CustodyDocument) {
   messengerStore.setFocus(doc.id, doc)
-  const autoMode = resolveDocumentScanMode(doc)
-  mode.value = autoMode
   showPickerModal.value = false
 }
 
@@ -550,17 +527,11 @@ async function loadCustody() {
       const match = custodyDocs.value.find((d) => d.id === queryDocId.value)
       if (match) {
         messengerStore.setFocus(match.id, match)
-        if (!queryMode.value) {
-          mode.value = resolveDocumentScanMode(match)
-        }
       }
     } else if (messengerStore.focusedDocumentId) {
       const match = custodyDocs.value.find((d) => d.id === messengerStore.focusedDocumentId)
       if (match) {
         messengerStore.setFocus(match.id, match)
-        if (!queryMode.value) {
-          mode.value = resolveDocumentScanMode(match)
-        }
       }
     }
   } catch {
@@ -707,6 +678,12 @@ const handleScan = async (raw: string) => {
       } else {
         await handleCheckpointPickup(targetOfficeId)
       }
+      return
+    }
+
+    if (/^flowvision:\/\/(desk|office|track\/staff)\b/i.test(scannedText)) {
+      errorMessage.value = 'Office and desk QR drop-offs were retired. Hand the document to the receiving office staff — they scan the document QR to receive it.'
+      scanState.value = 'error'
       return
     }
 

@@ -11,7 +11,7 @@
     <Transition name="drawer-slide">
       <form
         v-if="isOpen"
-        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl lg:w-1/2"
+        class="fixed bottom-0 right-0 top-0 z-[90] flex w-full flex-col border-l shadow-2xl lg:w-[min(94vw,1400px)]"
         :class="surfaceClass"
         @submit.prevent="handlePrintAndSubmit"
       >
@@ -44,7 +44,7 @@
         <div class="flex flex-1 flex-col gap-5 overflow-hidden px-6 py-5 lg:flex-row">
 
           <!-- ── LEFT: live document preview ──────────────────────────── -->
-          <div class="w-full overflow-y-auto lg:w-7/12">
+          <div class="w-full overflow-y-auto lg:w-5/12">
             <DocumentLivePreview
               :file="selectedFile"
               tracking-id=""
@@ -53,7 +53,7 @@
           </div>
 
           <!-- ── RIGHT: form fields ────────────────────────────────────── -->
-          <div class="w-full space-y-5 overflow-y-auto lg:w-5/12">
+          <div class="w-full space-y-5 overflow-y-auto lg:w-7/12">
 
             <!-- 1. Auto-detected Origin Office (hidden from user, handled by system) -->
 
@@ -149,272 +149,49 @@
             </div>
 
             <!-- ══════════════════════════════════════════════════════════ -->
-            <!-- 3. ROUTING PATHWAY PICKER                                 -->
+            <!-- 3. CATEGORY → DELIVERY ROUTE (user-built)                  -->
             <!-- ══════════════════════════════════════════════════════════ -->
             <div>
-              <!-- Section label + scope tab toggle -->
-              <div class="flex flex-col gap-2">
+              <div>
+              <div class="flex items-center justify-between gap-3 mb-3">
                 <div>
                   <span class="text-sm font-semibold" :class="headingClass">
-                    Delivery Route <span class="text-danger">*</span>
+                    Document Category <span class="text-danger">*</span>
                   </span>
                   <p class="mt-0.5 text-sm" :class="mutedClass">
-                    Where the messenger must physically carry this document.
+                    Select a category to help organize documents.
                   </p>
                 </div>
-
-                <!-- Dual-scope tab toggle -->
-                <div
-                  class="flex flex-none items-center self-start rounded-xl border p-0.5 text-xs"
-                  :class="isDark ? 'border-white/10 bg-white/[0.04]' : 'border-gray-200 bg-gray-100'"
-                >
-                  <button
-                    v-for="tab in routeTabs"
-                    :key="tab.value"
-                    type="button"
-                    class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition-all duration-200 select-none"
-                    :class="routeTab === tab.value
-                      ? 'bg-candy-orange text-white shadow'
-                      : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'"
-                    @click="routeTab = tab.value"
-                  >
-                    <Icon :name="tab.icon" class="h-3 w-3" />
-                    {{ tab.label }}
-                  </button>
-                </div>
               </div>
-
-              <!-- Route description line -->
-              <p class="mt-2 text-sm" :class="mutedClass">
-                <span v-if="routeTab === 'global'">
-                  <Icon name="ph:globe-hemisphere-west-fill" class="inline h-3 w-3 text-candy-orange" />
-                  Routes set up by your admin — available to every office.
-                </span>
-                <span v-else>
-                  <Icon name="ph:buildings-fill" class="inline h-3 w-3 text-candy-orange" />
-                  Custom routes built specifically for
-                  <span class="font-semibold text-candy-orange">{{ selectedOriginOfficeName || 'your office' }}</span>.
-                </span>
-              </p>
-
-              <!-- Route cards list -->
-              <div
-                class="mt-3 max-h-52 space-y-2 overflow-y-auto pr-0.5"
-                :class="{ 'opacity-50 pointer-events-none': !selectedOriginOfficeId && routeTab === 'local' }"
+              <select
+                v-model="selectedCategoryId"
+                class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
+                :class="inputClass"
               >
-                <!-- No origin warning for local tab -->
-                <div
-                  v-if="routeTab === 'local' && !selectedOriginOfficeId"
-                  class="flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-xs"
-                  :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
-                >
-                  <Icon name="ph:warning" class="h-4 w-4 text-warning" />
-                  Select your origin office first to see local routes.
-                </div>
+                <option value="" disabled>-- Select Category --</option>
+                <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id">
+                  {{ cat.name }}
+                </option>
+              </select>
+            </div>
 
-                <!-- Empty state -->
-                <div
-                  v-else-if="!visibleRoutes.length"
-                  class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-5 text-center text-xs"
-                  :class="isDark ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'"
-                >
-                  <Icon name="ph:path" class="h-6 w-6" :class="mutedClass" />
-                  <span>
-                    No {{ routeTab === 'global' ? 'global' : 'local' }} routes found.
-                    <template v-if="routeTab === 'local'">
-                      <NuxtLink to="/client/stages" class="text-candy-orange hover:underline">Create one</NuxtLink> in Document Routes.
-                    </template>
-                  </span>
-                </div>
 
-                <!-- Route card -->
-                <button
-                  v-for="stage in visibleRoutes"
-                  :key="stage.stage_id"
-                  type="button"
-                  class="group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 hover:border-candy-orange/40"
-                  :class="selectedStageId === String(stage.stage_id)
-                    ? isDark
-                      ? 'border-candy-orange bg-candy-orange/10'
-                      : 'border-candy-orange bg-candy-orange/10'
-                    : isDark ? 'border-white/10 hover:bg-white/[0.03]' : 'border-gray-200 hover:bg-gray-50'"
-                  @click="selectRoute(stage)"
-                >
-                  <div class="flex items-start justify-between gap-2">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2">
-                        <!-- Selected checkmark -->
-                        <div
-                          class="flex h-4 w-4 flex-none items-center justify-center rounded-full transition-all"
-                          :class="selectedStageId === String(stage.stage_id)
-                            ? 'bg-candy-orange'
-                            : isDark ? 'border border-white/20' : 'border border-gray-300'"
-                        >
-                          <Icon
-                            v-if="selectedStageId === String(stage.stage_id)"
-                            name="ph:check-bold"
-                            class="h-2.5 w-2.5 text-white"
-                          />
-                        </div>
-                        <span class="text-sm font-semibold" :class="headingClass">{{ stage.name }}</span>
-                      </div>
-
-                      <!-- Mini stop-name pills — only for the selected route, to keep the list scannable -->
-                      <div v-if="selectedStageId === String(stage.stage_id) && getRouteSteps(stage.stage_id).length" class="mt-3">
-                        <p class="mb-1.5 text-sm font-bold uppercase tracking-widest" :class="mutedClass">Stops</p>
-                        <div class="flex flex-wrap gap-1">
-                          <span
-                            v-for="(stop, idx) in getRouteStops(stage.stage_id)"
-                            :key="idx"
-                            class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm font-medium"
-                            :class="isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-gray-200 bg-gray-100 text-gray-600'"
-                          >
-                            <span class="h-1 w-1 rounded-full bg-candy-orange/60" />
-                            {{ stop }}
-                          </span>
-                          <span
-                            v-if="getRouteSteps(stage.stage_id).length > 3"
-                            class="inline-flex items-center rounded-full px-2 py-0.5 text-sm font-medium text-candy-orange"
-                          >
-                            +{{ getRouteSteps(stage.stage_id).length - 3 }} more
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Right: stop count badge + scope tag -->
-                    <div class="flex flex-none flex-col items-end gap-1.5">
-                      <span
-                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm font-bold"
-                        :class="routeTab === 'global'
-                          ? 'border-candy-orange/30 bg-candy-orange/10 text-candy-orange'
-                          : 'border-gray-300/40 bg-gray-500/10 text-gray-500 dark:border-gray-500/30 dark:text-gray-400'"
-                      >
-                        <Icon :name="routeTab === 'global' ? 'ph:globe-hemisphere-west-fill' : 'ph:buildings-fill'" class="h-2.5 w-2.5" />
-                        {{ routeTab === 'global' ? 'Global' : 'Local' }}
-                      </span>
-                      <span class="text-sm" :class="mutedClass">
-                        {{ getRouteSteps(stage.stage_id).length }} stop{{ getRouteSteps(stage.stage_id).length !== 1 ? 's' : '' }}
-                      </span>
-                    </div>
-                  </div>
-                </button>
+              <div v-if="selectedCategoryId" class="mt-5">
+                <span class="text-sm font-semibold" :class="headingClass">
+                  Delivery Route <span class="text-danger">*</span>
+                </span>
+                <p class="mb-3 mt-0.5 text-sm" :class="mutedClass">
+                  Pick the offices this document must visit, in order. Drag to reorder. The route is saved with the document.
+                </p>
+                <RouteBuilder
+                  v-model="routeOfficeIds"
+                  v-model:saved-route-id="savedRouteId"
+                v-model:routing-type="routingType"
+                  :origin-office-id="selectedOriginOfficeId || null"
+                  :origin-name="selectedOriginOfficeName || null"
+                />
               </div>
-
-              <!-- ── VISUAL TIMELINE PREVIEW ─────────────────────────── -->
-              <Transition name="route-expand">
-                <div
-                  v-if="selectedStageId && selectedTimelineSteps.length"
-                  class="mt-4 overflow-hidden rounded-2xl border"
-                  :class="isDark
-                    ? 'border-candy-orange/20 bg-candy-orange/[0.03]'
-                    : 'border-candy-orange/20 bg-candy-orange/5'"
-                >
-                  <!-- Preview header -->
-                  <div class="flex items-center justify-between border-b px-4 py-2.5" :class="isDark ? 'border-candy-orange/15' : 'border-candy-orange/15'">
-                    <div class="flex items-center gap-2">
-                      <Icon name="ph:path-fill" class="h-3.5 w-3.5 text-candy-orange" />
-                      <span class="text-sm font-bold uppercase tracking-wider text-candy-orange">Route Preview</span>
-                    </div>
-                    <span class="text-sm" :class="mutedClass">
-                      {{ selectedTimelineSteps.length + 1 }} stops
-                    </span>
-                  </div>
-
-                  <!-- Horizontal scroll timeline -->
-                  <div class="overflow-x-auto px-4 py-4">
-                    <div class="flex min-w-max items-start gap-0">
-
-                      <!-- ── Origin node (always first) ─────────────── -->
-                      <div class="flex flex-col items-center" style="min-width: 80px">
-                        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-candy-orange">
-                          <Icon name="ph:map-pin-fill" class="h-5 w-5 text-white" />
-                          <!-- Pulse ring -->
-                          <span class="absolute inset-0 animate-ping rounded-full bg-candy-orange opacity-20" />
-                        </div>
-                        <p
-                          class="mt-2 max-w-[76px] text-center text-sm font-bold leading-tight text-candy-orange"
-                          style="word-break: break-word"
-                        >
-                          {{ selectedOriginOfficeName || 'Origin' }}
-                        </p>
-                        <span class="mt-0.5 rounded-full bg-candy-orange/15 px-1.5 py-0.5 text-sm font-bold uppercase tracking-wide text-candy-orange">
-                          Origin
-                        </span>
-                      </div>
-
-                      <!-- ── Route steps ─────────────────────────────── -->
-                      <template
-                        v-for="(step, idx) in selectedTimelineSteps"
-                        :key="`step-${idx}`"
-                      >
-                        <!-- Connector arrow -->
-                        <div class="flex items-center" style="padding-top: 14px; min-width: 40px">
-                          <div
-                            class="h-px flex-1"
-                            :class="isDark ? 'bg-candy-orange/30' : 'bg-candy-orange/40'"
-                          />
-                          <Icon name="ph:caret-right-fill" class="h-3 w-3 flex-none text-candy-orange/50" />
-                        </div>
-
-                        <!-- Step node -->
-                        <div class="flex flex-col items-center" style="min-width: 80px">
-                          <!-- Circle: final stop gets filled, others get ring -->
-                          <div
-                            class="flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all"
-                            :class="idx === selectedTimelineSteps.length - 1
-                              ? 'border-candy-orange bg-candy-orange text-white'
-                              : isDark
-                                ? 'border-candy-orange/60 bg-candy-orange/10 text-candy-orange'
-                                : 'border-candy-orange bg-candy-orange/10 text-candy-orange'"
-                          >
-                            <Icon
-                              v-if="idx === selectedTimelineSteps.length - 1"
-                              name="ph:flag-checkered-fill"
-                              class="h-4 w-4"
-                            />
-                            <span v-else class="text-xs font-bold">{{ idx + 1 }}</span>
-                          </div>
-
-                          <!-- Office name -->
-                          <p
-                            class="mt-2 max-w-[76px] text-center text-sm font-semibold leading-tight"
-                            :class="headingClass"
-                            style="word-break: break-word"
-                          >
-                            {{ resolveOfficeName(step.office_id) }}
-                          </p>
-
-                          <!-- Step label -->
-                          <span
-                            class="mt-0.5 text-sm"
-                            :class="idx === selectedTimelineSteps.length - 1 ? 'font-bold text-candy-orange' : mutedClass"
-                          >
-                            {{ idx === selectedTimelineSteps.length - 1 ? 'Final Stop' : `Stop ${idx + 1}` }}
-                          </span>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-
-                  <!-- Route summary footer -->
-                  <div class="border-t px-4 py-2.5 text-sm" :class="isDark ? 'border-candy-orange/15' : 'border-candy-orange/15'">
-                    <div class="flex items-center gap-3 flex-wrap" :class="mutedClass">
-                      <span class="flex items-center gap-1">
-                        <Icon name="ph:buildings-fill" class="h-3 w-3 text-candy-orange" />
-                        <strong class="text-candy-orange">{{ selectedOriginOfficeName || '—' }}</strong>
-                      </span>
-                      <Icon name="ph:arrow-right" class="h-3 w-3" />
-                      <span>{{ selectedTimelineSteps.length }} office{{ selectedTimelineSteps.length !== 1 ? 's' : '' }} in route</span>
-                      <Icon name="ph:arrow-right" class="h-3 w-3" />
-                      <span class="flex items-center gap-1">
-                        <Icon name="ph:flag-checkered-fill" class="h-3 w-3 text-candy-orange" />
-                        <strong class="text-candy-orange">{{ finalDestinationName }}</strong>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Transition>
+              <p v-else class="mt-3 text-sm" :class="mutedClass">Choose a category to build the delivery route.</p>
 
               <!-- Optional: how long this document should take, end to end -->
               <div class="mt-4">
@@ -441,30 +218,6 @@
                   </select>
                 </div>
               </div>
-            </div>
-
-            <!-- 4. Document Category -->
-            <div>
-              <div class="flex items-center justify-between gap-3 mb-3">
-                <div>
-                  <span class="text-sm font-semibold" :class="headingClass">
-                    Document Category <span class="text-danger">*</span>
-                  </span>
-                  <p class="mt-0.5 text-sm" :class="mutedClass">
-                    Select a category to help organize documents.
-                  </p>
-                </div>
-              </div>
-              <select
-                v-model="selectedCategoryId"
-                class="w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-candy-orange focus:ring-1 focus:ring-candy-orange"
-                :class="inputClass"
-              >
-                <option value="" disabled>-- Select Category --</option>
-                <option v-for="cat in categoriesStore.categories" :key="cat.id" :value="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
             </div>
 
             <!-- 4b. Messenger for First Delivery (optional, at creation time) -->
@@ -567,13 +320,12 @@
           <div class="flex min-w-0 items-center gap-2">
             <Transition name="fade-in">
               <div
-                v-if="selectedStageId"
+                v-if="routeOfficeIds.length"
                 class="flex min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold text-candy-orange"
                 :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'"
               >
                 <Icon name="ph:path-fill" class="h-3 w-3 flex-none" />
-                <span class="truncate">{{ selectedRouteName }}</span>
-                <Icon name="ph:x-bold" class="h-2.5 w-2.5 flex-none cursor-pointer hover:text-red-400" @click.stop="selectedStageId = ''" />
+                <span class="truncate">{{ routeOfficeIds.length }} stop{{ routeOfficeIds.length === 1 ? '' : 's' }}</span>
               </div>
             </Transition>
           </div>
@@ -607,6 +359,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import DocumentLivePreview from '~/components/client/documents/documentLivePreview.vue'
+import RouteBuilder from '~/components/documents/RouteBuilder.vue'
 import { printDocumentWithQrLabel, type QrLabelSize } from '~/utils/printDocumentWithQrLabel'
 import { useStageStore } from '~/stores/stage'
 import { useOfficeStore } from '~/stores/office'
@@ -669,6 +422,10 @@ const selectedOriginOfficeId = computed(() => {
   return props.officeId ? String(props.officeId) : ''
 })
 const selectedStageId        = ref<string>('')
+// User-built route: ordered destination office ids, plus the saved route it came from (if any).
+const routeOfficeIds         = ref<string[]>([])
+const savedRouteId           = ref<string | null>(null)
+const routingType            = ref<'STANDARD' | 'RECURRING'>('STANDARD')
 const selectedCategoryId     = ref<string>('')
 const selectedQrSize         = ref<QrLabelSize>(120)
 const isDragging             = ref(false)
@@ -787,7 +544,7 @@ const onOriginOfficeChange = () => {
 const canSubmit = computed(
   () =>
     !!selectedFile.value &&
-    !!selectedStageId.value &&
+    routeOfficeIds.value.length > 0 &&
     !!selectedCategoryId.value &&
     !uploading.value
 )
@@ -881,6 +638,9 @@ const handleClose = () => {
   clearFile()
   // selectedOriginOfficeId is now computed, do not reset it manually
   selectedStageId.value = ''
+  routeOfficeIds.value = []
+  savedRouteId.value = null
+  routingType.value = 'STANDARD'
   selectedCategoryId.value = ''
   selectedQrSize.value = 120
   errorMessage.value = ''
@@ -894,7 +654,7 @@ const handleClose = () => {
 const handlePrintAndSubmit = async () => {
   errorMessage.value = ''
   if (!selectedFile.value)           { errorMessage.value = 'Please select a file.';              return }
-  if (!selectedStageId.value)        { errorMessage.value = 'Please select a routing pathway.';    return }
+  if (!routeOfficeIds.value.length)  { errorMessage.value = 'Add at least one destination office to the route.'; return }
   if (!selectedCategoryId.value)     { errorMessage.value = 'Please select a document category.'; return }
 
   // Printing happens AFTER the upload: the server assigns the document's real QR
@@ -910,7 +670,9 @@ const handlePrintAndSubmit = async () => {
       fd.append('origin_office_id', selectedOriginOfficeId.value)
       fd.append('office_id',        selectedOriginOfficeId.value)
     }
-    fd.append('stage_id',         selectedStageId.value)
+    fd.append('route_office_ids', JSON.stringify(routeOfficeIds.value))
+    if (savedRouteId.value) fd.append('saved_route_id', savedRouteId.value)
+    fd.append('routing_type', routingType.value)
     fd.append('category_id',      selectedCategoryId.value)
     fd.append('user_id',         String(auth.user?.user_id ?? ''))
     fd.append('org_id',           String(auth.user?.org_id ?? ''))
@@ -961,6 +723,9 @@ const handlePrintAndSubmit = async () => {
       clearFile()
       // selectedOriginOfficeId is computed, no need to reset
       selectedStageId.value = ''
+      routeOfficeIds.value = []
+      savedRouteId.value = null
+      routingType.value = 'STANDARD'
       selectedCategoryId.value = ''
       selectedMessengerId.value = ''
       expectedCompletionAmount.value = null

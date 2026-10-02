@@ -187,8 +187,6 @@ async function saveProfile() {
     if (auth.user) {
       auth.user.full_name = profileForm.full_name
       auth.user.email = profileForm.email
-      const userCookie = useCookie('auth_user')
-      userCookie.value = auth.user
     }
     showToast('Profile updated successfully', 'success')
   } catch (err) {

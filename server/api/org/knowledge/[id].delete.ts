@@ -6,8 +6,9 @@
  * numeric id can never delete another organization's file.
  */
 import { resolveTenant } from '~~/server/utils/aiSession'
+import { defineKnowledgeHandler } from '~~/server/utils/orgKnowledge'
 
-export default defineEventHandler(async (event) => {
+export default defineKnowledgeHandler('delete knowledge file', async (event) => {
   const db = event.context.db
   if (!db) {
     throw createError({ statusCode: 500, statusMessage: 'Database connection is not available.' })
@@ -26,6 +27,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid file id.' })
   }
 
+  // Chunks (chunked PDFs) are removed by the ON DELETE CASCADE foreign key.
   const [result] = await db.execute(
     'DELETE FROM org_knowledge_files WHERE id = ? AND org_id = ?',
     [id, orgId]

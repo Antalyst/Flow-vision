@@ -129,7 +129,17 @@
                 {{ stageName || 'Unassigned route' }}<span v-if="targetOfficeLabel"> · to {{ targetOfficeLabel }}</span>
               </p>
 
-              <div v-if="timelineLoading" class="mt-6 space-y-4">
+              <div
+                v-if="releasedNotice"
+                class="mt-6 rounded-xl border border-dashed px-5 py-6 text-center text-sm"
+                :class="isDark ? 'border-white/15 text-gray-300' : 'border-gray-300 text-gray-600'"
+              >
+                <Icon name="ph:lock-simple-fill" class="mx-auto mb-2 h-6 w-6 opacity-60" />
+                <p class="font-semibold">Released</p>
+                <p class="mt-1">{{ releasedNotice }}</p>
+              </div>
+
+              <div v-else-if="timelineLoading" class="mt-6 space-y-4">
                 <div
                   v-for="n in 3" :key="n"
                   class="h-16 animate-pulse rounded-xl"
@@ -170,12 +180,32 @@
                     <p v-if="originDisplay.timeLine" class="mt-0.5 text-xs" :class="mutedClass">
                       {{ originDisplay.timeLine }}
                     </p>
+                    <p v-if="originData?.registered_by || originData?.registered_at" class="mt-1 text-xs" :class="mutedClass">
+                      Created{{ originData?.registered_by ? ` by ${originData.registered_by}` : '' }}{{ originData?.registered_at ? ` · ${formatStopTime(originData.registered_at)}` : '' }}
+                    </p>
                   </div>
                 </div>
 
+                <template v-for="(step, index) in stepsDisplay" :key="`${step.office_id}-${index}`">
+                <!-- Recurring documents: a header wherever a new routing cycle begins -->
+                <div
+                  v-if="isRecurring && (index === 0 || stepsDisplay[index - 1]?.cycle_number !== step.cycle_number)"
+                  class="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-4 py-2.5 text-xs"
+                  :class="cycleFor(step.cycle_number)?.status === 'COMPLETED'
+                    ? (isDark ? 'border-success/30 bg-success/5' : 'border-success/30 bg-success/5')
+                    : (isDark ? 'border-candy-orange/30 bg-candy-orange/5' : 'border-candy-orange/30 bg-candy-orange/5')"
+                >
+                  <span class="font-bold uppercase tracking-wide" :class="cycleFor(step.cycle_number)?.status === 'COMPLETED' ? 'text-success' : 'text-candy-orange'">
+                    Cycle {{ step.cycle_number ?? 1 }} · {{ cycleFor(step.cycle_number)?.status === 'COMPLETED' ? 'Completed' : 'In progress' }}
+                  </span>
+                  <span v-if="cycleFor(step.cycle_number)?.started_at" :class="mutedClass">
+                    · {{ (step.cycle_number ?? 1) > 1 ? 'Reactivated' : 'Started' }} {{ formatStopTime(cycleFor(step.cycle_number)!.started_at) }}{{ cycleFor(step.cycle_number)?.started_by_name ? ` by ${cycleFor(step.cycle_number)!.started_by_name}` : '' }}
+                  </span>
+                  <span v-if="cycleFor(step.cycle_number)?.completed_at" :class="mutedClass">
+                    · completed {{ formatStopTime(cycleFor(step.cycle_number)!.completed_at) }}
+                  </span>
+                </div>
                 <button
-                  v-for="(step, index) in stepsDisplay"
-                  :key="`${step.office_id}-${index}`"
                   type="button"
                   class="group relative flex w-full gap-4 pb-7 text-left last:pb-0"
                   :disabled="!pipelineMessagingEnabled"
@@ -206,7 +236,7 @@
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
                       <p class="truncate text-[15px] font-bold" :class="step.upcoming ? mutedClass : (isDark ? 'text-white' : 'text-gray-900')">
-                        {{ step.office_name }}
+                        <template v-if="step.is_return">Return to </template>{{ step.office_name }}
                       </p>
                       <Icon
                         v-if="pipelineMessagingEnabled"
@@ -230,6 +260,7 @@
                     </div>
                   </div>
                 </button>
+                </template>
               </div>
 
               <DocumentPipelineOfficeChat
@@ -242,7 +273,7 @@
               />
 
               <div
-                v-if="!timelineLoading && !stepsDisplay.length"
+                v-if="!timelineLoading && !releasedNotice && !stepsDisplay.length"
                 class="mt-6 rounded-xl border border-dashed p-8 text-center text-sm"
                 :class="isDark ? 'border-onyx-border text-gray-400' : 'border-gray-200 text-gray-500'"
               >
@@ -251,42 +282,27 @@
               </div>
             </section>
 
-            <!-- Office checkpoint review (intermediate + final) -->
-            <section
-              v-if="showCompletionActions && canMarkCheckpointDone"
-              class="stagger-block rounded-xl border p-5"
-              :class="cellClass"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p
-                    class="text-[13px] font-bold uppercase tracking-widest"
-                    :class="isFinalCheckpoint ? 'text-success' : 'text-candy-orange'"
-                  >
-                    {{ isFinalCheckpoint ? 'Final Checkpoint' : 'Office Desk Review' }}
-                  </p>
-                  <p class="mt-1 text-sm" :class="mutedClass">
-                    <template v-if="isFinalCheckpoint">
-                      Verify the hard copy at this final stop, then mark done to complete delivery and notify the document owner.
-                    </template>
-                    <template v-else>
-                      After checking the folder, mark done to notify the document owner and release a new messenger pickup for the next route leg.
-                    </template>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors disabled:opacity-50"
-                  :class="isFinalCheckpoint ? 'bg-success hover:opacity-90' : 'bg-candy-orange hover:bg-candy-hover'"
-                  :disabled="completingCheckpoint"
-                  @click="handleApproveCheckpoint"
-                >
-                  <Icon v-if="completingCheckpoint" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-                  <Icon v-else name="ph:check-circle-fill" class="h-4 w-4" />
-                  {{ isFinalCheckpoint ? 'Approve & Complete' : 'Mark Reviewed & Release Pickup' }}
-                </button>
-              </div>
-            </section>
+            <!-- Custody, liaison and office-head release (replaces the old "Mark Reviewed") -->
+            <DocumentCustodyPanel
+              v-if="custodyState"
+              :document-id="document.id"
+              :tracking-status="displayTrackingStatus"
+              :custody="custodyState"
+              :liaison-assignments="liaisonAssignments"
+              :release-requests="releaseRequests"
+              :cycles="routingInfo?.cycles ?? []"
+              @changed="handleCustodyChanged"
+            />
+
+            <!-- Recurring document: start the next routing cycle (creator, origin office head, or org admin) -->
+            <DocumentReactivatePanel
+              v-if="routingInfo?.can_reactivate"
+              :document-id="document.id"
+              :origin-office-id="originData?.office_id ? String(originData.office_id) : null"
+              :origin-name="originData?.office_name ?? null"
+              :next-cycle="nextCycleNumber"
+              @reactivated="handleCustodyChanged"
+            />
 
             <!-- Delete pending document (uploaded by mistake, not yet picked up) -->
             <section
@@ -388,33 +404,6 @@
               @assigned="handleLiaisonAssigned"
             />
 
-            <!-- Desk-to-desk transfer: only the staff member currently handling -->
-            <!-- this document at their desk may hand it off to another desk. -->
-            <section
-              v-if="isCurrentDeskHandler"
-              class="stagger-block rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-5"
-            >
-              <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p class="text-[13px] font-bold uppercase tracking-widest text-candy-orange">Transfer Document</p>
-                  <p class="mt-1 text-sm" :class="mutedClass">
-                    Scan the QR code of the desk you're handing this document to.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-xl bg-candy-orange px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-candy-hover"
-                  @click="openTransferScanner"
-                >
-                  <Icon name="ph:arrows-left-right-fill" class="h-4 w-4" />
-                  Transfer to Another Desk
-                </button>
-              </div>
-              <p v-if="transferSuccessMessage" class="mt-3 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
-                {{ transferSuccessMessage }}
-              </p>
-            </section>
-
             <slot name="extra" />
 
             <!-- §3 Official routing slip view (bottom) -->
@@ -514,26 +503,6 @@
       @close="showPickupQr = false"
     />
 
-    <!-- Desk transfer scanner overlay -->
-    <div
-      v-if="isTransferScannerOpen"
-      class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-black/90 backdrop-blur-sm px-6"
-    >
-      <button
-        type="button"
-        class="absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-lg text-white/70 transition hover:bg-white/10 hover:text-white"
-        aria-label="Close"
-        @click="closeTransferScanner"
-      >
-        <Icon name="ph:x-bold" class="h-5 w-5" />
-      </button>
-      <p class="text-sm font-semibold text-white">Scan the destination desk's QR code</p>
-      <QrScanner theme-color="orange" @scan="handleTransferScan" />
-      <p v-if="transferring" class="text-xs font-semibold text-white/70">Transferring…</p>
-      <p v-if="transferError" class="max-w-sm rounded-lg border border-danger/40 bg-danger/10 px-4 py-3 text-center text-sm text-danger">
-        {{ transferError }}
-      </p>
-    </div>
   </Teleport>
 </template>
 
@@ -548,6 +517,8 @@ import { generateRoutingSheetPdf } from '~/utils/generateRoutingSheetPdf'
 import { buildDocumentTrackQrPayload } from '~/utils/parseFlowVisionQr'
 import DocumentPipelineOfficeChat from './DocumentPipelineOfficeChat.vue'
 import AssignLiaisonPanel from './AssignLiaisonPanel.vue'
+import DocumentCustodyPanel, { type CustodyState } from './DocumentCustodyPanel.vue'
+import DocumentReactivatePanel from './DocumentReactivatePanel.vue'
 import DocumentQrStickerModal from './DocumentQrStickerModal.vue'
 import QrScanner from '~/components/messenger/QrScanner.vue'
 
@@ -584,8 +555,14 @@ interface StageStep {
   office_id: string | number
   step_number: number
   office_name: string
+  cycle_number?: number
+  is_return?: boolean
   delivered_by?: string | null
   arrived_at?: string | null
+  /** RECEIPT = the office scanned it in; DROPOFF = older liaison drop-off. */
+  arrival_kind?: 'RECEIPT' | 'DROPOFF' | null
+  /** Server-derived: a recorded arrival, or the document is at this stop now. */
+  received?: boolean
   released_at?: string | null
   released_by?: string | null
   released_status?: string | null
@@ -632,7 +609,7 @@ const props = withDefaults(defineProps<{
   pipelineMessagingEnabled?: boolean
   messagingOffices?: MessagingOffice[]
 }>(), {
-  widthClass: 'lg:w-1/2',
+  widthClass: 'lg:w-[min(92vw,1200px)]',
   showComplianceActions: false,
   showCompletionActions: false,
   pipelineMessagingEnabled: false,
@@ -765,6 +742,25 @@ const timelineRouteSteps = ref<StageStep[]>([])
 const timelineSummary = ref<TimelineSummary | null>(null)
 const timelineLoading = ref(false)
 const originData = ref<OriginInfo | null>(null)
+const custodyState = ref<CustodyState | null>(null)
+const liaisonAssignments = ref<any[]>([])
+const releaseRequests = ref<any[]>([])
+interface RoutingCycle {
+  cycle_number: number
+  start_step: number | null
+  end_step: number | null
+  status: string
+  started_at: string | null
+  started_by_name: string | null
+  completed_at: string | null
+}
+const routingInfo = ref<{ type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean } | null>(null)
+const isRecurring = computed(() => routingInfo.value?.type === 'RECURRING')
+const cycleFor = (n?: number) => routingInfo.value?.cycles.find((c) => c.cycle_number === (n ?? 1)) ?? null
+const nextCycleNumber = computed(() =>
+  Math.max(0, ...(routingInfo.value?.cycles ?? []).map((c) => c.cycle_number), ...steps.value.map((s) => s.cycle_number ?? 1)) + 1)
+/** Set when this viewer's office already released the document — only its status is shown. */
+const releasedNotice = ref('')
 
 const mutedClass = computed(() => (isDark.value ? 'text-white-muted' : 'text-gray-500'))
 
@@ -876,27 +872,54 @@ async function fetchTimeline() {
     timelineRouteSteps.value = []
     timelineSummary.value = null
     originData.value = null
+    custodyState.value = null
     return
   }
   timelineLoading.value = true
   timelineSummary.value = null // never show a previous document's status meanwhile
+  custodyState.value = null
+  releasedNotice.value = ''
   try {
     const res = await $fetch<{
       success: boolean
-      data: { routeSteps: StageStep[]; summary: TimelineSummary; origin: OriginInfo | null }
+      data: {
+        routeSteps: StageStep[]
+        summary: TimelineSummary
+        origin: OriginInfo | null
+        custody?: CustodyState
+        routing?: { type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean }
+        liaison_assignments?: any[]
+        release_requests?: any[]
+      }
     }>('/api/tracking/timeline', { params: { documentId } })
+    custodyState.value = res.data.custody ?? null
+    routingInfo.value = res.data.routing ?? null
+    liaisonAssignments.value = res.data.liaison_assignments ?? []
+    releaseRequests.value = res.data.release_requests ?? []
     timelineRouteSteps.value = (res.data.routeSteps ?? [])
       .map((step) => ({ ...step, office_name: step.office_name || resolveOffice(step.office_id) }))
       .sort((a, b) => a.step_number - b.step_number)
     timelineSummary.value = res.data.summary
     originData.value = res.data.origin ?? null
-  } catch (err) {
-    console.error('[DocumentPreviewDrawer] timeline fetch error:', err)
+  } catch (err: any) {
+    if (err?.data?.data?.code === 'DOCUMENT_RELEASED') {
+      releasedNotice.value = err?.data?.message || 'This document has been released by your office.'
+    } else {
+      console.error('[DocumentPreviewDrawer] timeline fetch error:', err)
+    }
     timelineRouteSteps.value = []
     timelineSummary.value = null
     originData.value = null
   } finally {
     timelineLoading.value = false
+  }
+}
+
+/** Custody/release changed in the panel: reload, and let the list update its row. */
+async function handleCustodyChanged() {
+  await fetchTimeline()
+  if (timelineSummary.value) {
+    emit('compliance-updated', { tracking_status: timelineSummary.value.tracking_status })
   }
 }
 
@@ -1059,6 +1082,9 @@ const stepsDisplay = computed(() => {
     // who delivered it HERE. Conflating the two previously showed a courier
     // still in transit as if they'd already dropped the document off.
     const hasReallyArrived = !!step.delivered_by
+    // The backend's lifecycle state decides "received" — not a frontend guess.
+    const isReceived = !!step.received || hasReallyArrived
+    const inMotion = displayTrackingStatus.value === 'IN_TRANSIT' || displayTrackingStatus.value === 'PICKED_UP'
 
     const isFinalStop = index === steps.value.length - 1
 
@@ -1070,11 +1096,14 @@ const stepsDisplay = computed(() => {
     } else if (done) {
       statusLabel = 'Delivered'
       statusClass = 'text-success'
-    } else if (current && hasReallyArrived) {
-      statusLabel = 'Current Checkpoint'
+    } else if (current && isReceived) {
+      statusLabel = 'Received'
+      statusClass = 'text-candy-orange'
+    } else if (current && inMotion) {
+      statusLabel = 'On the Way'
       statusClass = 'text-candy-orange'
     } else if (current) {
-      statusLabel = 'On the Way'
+      statusLabel = 'Current Checkpoint'
       statusClass = 'text-candy-orange'
     }
 
@@ -1086,8 +1115,9 @@ const stepsDisplay = computed(() => {
       const pickupAt = prior?.released_at || null
       const bits: string[] = []
       if (pickupAt) bits.push(`Picked up: ${formatStopTime(pickupAt)}`)
-      bits.push(`Arrived: ${formatStopTime(step.arrived_at)}`)
-      facts.push({ actorLine: `Dropped off by ${step.delivered_by}`, timeLine: bits.join(' · ') })
+      bits.push(`${step.arrival_kind === 'DROPOFF' ? 'Arrived' : 'Received'}: ${formatStopTime(step.arrived_at)}`)
+      const arrivalLabel = step.arrival_kind === 'DROPOFF' ? 'Dropped off by' : 'Received by'
+      facts.push({ actorLine: `${arrivalLabel} ${step.delivered_by}`, timeLine: bits.join(' · ') })
     } else if (current && step.in_transit_courier_name) {
       // Picked up and heading here, but hasn't scanned drop-off yet — same
       // courier stays shown until a real arrival event replaces this.
@@ -1206,6 +1236,15 @@ watch(
     showReassignPanel.value = false
     if (open) fetchTimeline()
     else selectedPipelineOffice.value = null
+  },
+)
+
+// Status changed from outside the drawer (e.g. a discrepancy was just
+// reported or resolved in the footer panel): reload roadmap and history.
+watch(
+  () => props.document?.tracking_status,
+  (status, previous) => {
+    if (props.isOpen && status && previous && status !== previous) fetchTimeline()
   },
 )
 

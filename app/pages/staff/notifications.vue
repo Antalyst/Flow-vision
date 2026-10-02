@@ -164,6 +164,15 @@
             >
               View Document
             </NuxtLink>
+            <!-- Assigned as this document's liaison: go straight to the pickup scan. -->
+            <NuxtLink
+              v-if="notif.metadata?.type === 'LIAISON_ASSIGNED'"
+              to="/staff/scan?mode=pickup"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-candy-orange/40 px-4 py-2 text-xs font-semibold text-candy-orange transition-colors hover:bg-candy-orange/10"
+            >
+              <Icon name="ph:hand-bold" class="h-3.5 w-3.5" />
+              Scan pickup
+            </NuxtLink>
             <button
               v-if="isUnreadNotification(notif.is_read)"
               type="button"

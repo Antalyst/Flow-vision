@@ -13,6 +13,18 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Only a route of the caller's own organization can be deleted.
+    const auth = requireOrgAuth(event, ['client', 'employee', 'employee_sub_user'])
+    const { data: ownStage } = await client
+      .from('stages')
+      .select('stage_id')
+      .eq('stage_id', stage_id)
+      .eq('org_id', auth.orgId)
+      .maybeSingle()
+    if (!ownStage) {
+      throw createError({ statusCode: 404, message: 'Route not found.' })
+    }
+
     const { error: stepsError } = await client
       .from('stage_steps')
       .delete()

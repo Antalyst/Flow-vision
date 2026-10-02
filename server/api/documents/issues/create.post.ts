@@ -1,14 +1,14 @@
 import { serverSupabaseClient } from '#supabase/server'
 import {
-  ISSUE_ALLOWED_ROLES,
-  assertDocumentOrgAccess,
+  assertCanReportOnDocument,
   assertReportingOfficeAccess,
-  resolvePreviousRouteOffice,
+  resolveSendBackTargets,
   broadcastIssueRealtime,
   issueRealtimeChannel,
   orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
+import { assertHistorySaved, recordTrackingEvent } from '~~/server/utils/documentAccess'
 import { broadcastComplianceIssueNotification } from '~~/server/utils/notifications'
 import { emitDiscrepancyEmail } from '~~/server/utils/email/emailEvents'
 
@@ -27,6 +27,8 @@ import { emitDiscrepancyEmail } from '~~/server/utils/email/emailEvents'
  *   reported_by_office_id  UUID   required — office detecting the issue (current office)
  *   title                  string required — short summary (e.g. "Missing signature page")
  *   message_text?          string optional — opening message in the issue thread
+ *   send_back_office_id?   UUID   optional — which eligible office to send it back to
+ *                                 (see chat-targets); default: whoever handed it here
  *
  * Side effects:
  *   1. Inserts row into document_issues (status OPEN), target = previous office
@@ -47,25 +49,60 @@ export default defineEventHandler(async (event) => {
   const details           = String(body?.details ?? '').trim()
   const title             = String(body?.title ?? '').trim()
   const initialMessage    = String(body?.message_text ?? '').trim()
+  const sendBackOfficeId  = String(body?.send_back_office_id ?? '').trim()
 
   if (!documentId)       throw createError({ statusCode: 400, message: 'document_id is required.' })
   if (!reportedOfficeId) throw createError({ statusCode: 400, message: 'reported_by_office_id is required.' })
   if (!issueType)        throw createError({ statusCode: 400, message: 'issue_type is required.' })
   if (!title)            throw createError({ statusCode: 400, message: 'title is required.' })
 
-  const { actor, document } = await assertDocumentOrgAccess(event, client, documentId)
-
-  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may flag document issues.',
-    })
+  // One open discrepancy per document: a double-submitted report must not
+  // create a second issue or rewind the route twice.
+  const openIssueFor = async (reporterId?: string | null) => {
+    let q = client.from('document_issues').select('id').eq('document_id', documentId).eq('status', 'OPEN')
+    if (reporterId) q = q.eq('reported_by_user_id', reporterId)
+    const { data } = await q.limit(1).maybeSingle()
+    return data
   }
+  const alreadyOpen = (issueId: string) => createError({
+    statusCode: 409,
+    message: 'This document already has an open discrepancy report. Continue in its thread instead.',
+    data: { code: 'ISSUE_ALREADY_OPEN', issue_id: issueId },
+  })
+
+  // Role + full document access (the office handling it, its creator, or the admin).
+  let access: Awaited<ReturnType<typeof assertCanReportOnDocument>>
+  try {
+    access = await assertCanReportOnDocument(event, client, documentId)
+  } catch (err: any) {
+    // The first submit already sent the document back, so the reporter's own
+    // repeat submit no longer has access — tell them it's already reported.
+    const mine = err?.statusCode === 403 ? await openIssueFor(sessionUserId(event)) : null
+    if (mine) throw alreadyOpen(mine.id)
+    throw err
+  }
+  const { actor, document } = access
+
+  const openIssue = await openIssueFor()
+  if (openIssue) throw alreadyOpen(openIssue.id)
 
   const reportingOffice = await assertReportingOfficeAccess(client, actor, reportedOfficeId)
 
-  // Auto-resolve where this document goes back to — whoever sent it here.
-  const previousOffice = await resolvePreviousRouteOffice(client, documentId)
+  // Where it goes back to: the reporter's choice among the eligible offices,
+  // or by default whoever handed it here.
+  const sendBackTargets = await resolveSendBackTargets(client, documentId)
+  let chosen = sendBackTargets.find((t) => t.role === 'previous_handoff') ?? sendBackTargets[0] ?? null
+  if (sendBackOfficeId) {
+    chosen = sendBackTargets.find((t) => t.officeId === sendBackOfficeId) ?? null
+    if (!chosen) {
+      throw createError({
+        statusCode: 400,
+        message: 'That office is not one this document can be sent back to. Choose one of the listed offices.',
+        data: { code: 'INVALID_SEND_BACK_OFFICE' },
+      })
+    }
+  }
+  const previousOffice = chosen
   const targetOfficeId = previousOffice?.officeId ?? reportedOfficeId
   const targetOfficeName = previousOffice?.officeName ?? reportingOffice.name
 
@@ -88,9 +125,10 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (issueErr || !issue) {
+    console.error('[issues/create] insert failed:', issueErr?.code, issueErr?.message)
     throw createError({
       statusCode: 500,
-      message: issueErr?.message ?? 'Failed to create document issue.',
+      message: 'We could not save the discrepancy report. Please try again.',
     })
   }
 
@@ -110,9 +148,10 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (docUpdateErr) {
+    console.error('[issues/create] document status update failed:', docUpdateErr.message)
     throw createError({
       statusCode: 500,
-      message: `Issue created but failed to update document status: ${docUpdateErr.message}`,
+      message: 'The discrepancy was recorded, but the document status could not be updated. Please refresh and check the document.',
     })
   }
 
@@ -127,26 +166,24 @@ export default defineEventHandler(async (event) => {
       `Document "${document.title}" requires attention before routing continues. ` +
       `Issue ID: ${issue.id}.`
 
-  const { data: trackingEvent, error: trackErr } = await client
-    .from('document_tracking_events')
-    .insert({
-      document_id: documentId,
-      org_id:      actor.orgId,
-      status:      'DISCREPANCY_REPORTED',
-      step_index:  previousOffice?.newStep ?? null,
-      office_id:   previousOffice?.officeId ?? null,
-      office_name: previousOffice?.officeName ?? reportingOffice.name,
-      actor_id:    actor.userId,
-      actor_role:  actor.userRole,
-      actor_name:  actor.fullName,
-      notes:       alertNotes,
-    })
-    .select('*')
-    .single()
-
-  if (trackErr) {
-    console.warn('[issues/create] Tracking event write failed:', trackErr.message)
-  }
+  // Same history writer as the rest of the workflow: office ids go in
+  // metadata (office_id is not a uuid column), failures are logged with the
+  // database error, and the report is not confirmed without its history entry.
+  const history = await recordTrackingEvent({
+    document_id: documentId,
+    org_id:      actor.orgId,
+    status:      'DISCREPANCY_REPORTED',
+    step_index:  previousOffice?.newStep ?? null,
+    office_name: previousOffice?.officeName ?? reportingOffice.name,
+    actor_id:    actor.userId,
+    actor_role:  actor.userRole,
+    actor_name:  actor.fullName,
+    event_type:  'DISCREPANCY_REPORTED',
+    notes:       alertNotes,
+    metadata:    { issue_id: issue.id, reported_by_office_id: reportedOfficeId, sent_back_to_office_id: previousOffice?.officeId ?? null },
+  })
+  assertHistorySaved([history], 'The discrepancy report')
+  const trackingEvent = history.ok ? history.row : null
 
   await logActivitySafe({
     orgId: actor.orgId,

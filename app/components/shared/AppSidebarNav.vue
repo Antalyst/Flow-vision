@@ -8,7 +8,7 @@
       >
         {{ group.title }}
       </p>
-      <div v-else class="h-3 border-t mb-1 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'" />
+      <div v-else class="h-3 border-t mb-1 mx-4" :class="isDark ? 'border-onyx-border' : 'border-gray-200'" y/>
 
       <div class="space-y-0">
         <NuxtLink

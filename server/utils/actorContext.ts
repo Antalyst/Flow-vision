@@ -64,8 +64,8 @@ export async function resolveActorContext(
   event: H3Event,
   client: ReturnType<typeof import('#supabase/server').serverSupabaseClient extends (...args: any) => infer R ? () => R : never>,
 ): Promise<ActorContext> {
-  const userId   = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId   = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })

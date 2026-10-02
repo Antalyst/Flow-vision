@@ -1,3 +1,5 @@
+import { useAuthStore } from '~/stores/auth'
+
 // Role → canonical home dashboard
 const ROLE_HOME: Record<string, string> = {
   client: '/client/dashboard',
@@ -18,12 +20,15 @@ const ROLE_ZONE: Record<string, string> = {
 
 const ALL_ZONES = Object.values(ROLE_ZONE)
 
-export default defineNuxtRouteMiddleware((to) => {
-  const userSession = useCookie<string | null>('user_session', { path: '/' })
-  const userRole = useCookie<string | null>('user_role', { path: '/' })
+// Navigation only — every API route enforces access on the server regardless.
+// Identity comes from the server session via the auth store (plugins/auth.ts),
+// never from a cookie the page can read or edit.
+export default defineNuxtRouteMiddleware(async (to) => {
+  const auth = useAuthStore()
+  if (!auth.loaded) await auth.fetchMe()
 
-  const hasSession = Boolean(userSession.value)
-  const role = (userRole.value ?? '').toLowerCase().trim()
+  const hasSession = Boolean(auth.user)
+  const role = String(auth.user?.role ?? '').toLowerCase().trim()
 
   const homeRoute = ROLE_HOME[role] ?? '/'
   const ownZone = ROLE_ZONE[role] ?? null

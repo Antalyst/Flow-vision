@@ -1,12 +1,13 @@
 import { serverSupabaseClient } from '#supabase/server'
 import {
-  ISSUE_ALLOWED_ROLES,
+  assertIssueParticipant,
   assertIssueOrgAccess,
   broadcastIssueRealtime,
   issueRealtimeChannel,
   orgLogisticsChannel,
 } from '~~/server/utils/documentIssues'
 import { logActivitySafe } from '~~/server/utils/activityLog'
+import { assertHistorySaved, recordTrackingEvent } from '~~/server/utils/documentAccess'
 
 /**
  * POST /api/documents/issues/resolve
@@ -28,12 +29,8 @@ export default defineEventHandler(async (event) => {
 
   const { actor, issue } = await assertIssueOrgAccess(event, client, issueId)
 
-  if (!(ISSUE_ALLOWED_ROLES as readonly string[]).includes(actor.userRole)) {
-    throw createError({
-      statusCode: 403,
-      message: 'Forbidden: only client or employee accounts may resolve issues.',
-    })
-  }
+  // Role + one of the offices on this issue (or the org admin).
+  await assertIssueParticipant(event, client, issue)
 
   if (issue.status === 'RESOLVED') {
     throw createError({ statusCode: 422, message: 'Issue is already resolved.' })
@@ -90,22 +87,21 @@ export default defineEventHandler(async (event) => {
     `Issue "${issue.title}" marked RESOLVED by ${actor.fullName ?? 'an operator'}. ` +
     `Document is ready for pickup again — clean delivery workflow resumed.`
 
-  const { data: trackingEvent } = await client
-    .from('document_tracking_events')
-    .insert({
-      document_id: issue.document_id,
-      org_id:      actor.orgId,
-      status:      'ARRIVED_AT_OFFICE',
-      step_index:  document.current_step ?? null,
-      office_id:   document.current_office_id ?? null,
-      office_name: null,
-      actor_id:    actor.userId,
-      actor_role:  actor.userRole,
-      actor_name:  actor.fullName,
-      notes:       resolveNotes,
-    })
-    .select('*')
-    .single()
+  const history = await recordTrackingEvent({
+    document_id: issue.document_id,
+    org_id:      actor.orgId,
+    status:      'ARRIVED_AT_OFFICE',
+    step_index:  document.current_step ?? null,
+    office_name: null,
+    actor_id:    actor.userId,
+    actor_role:  actor.userRole,
+    actor_name:  actor.fullName,
+    event_type:  'DISCREPANCY_RESOLVED',
+    notes:       resolveNotes,
+    metadata:    { issue_id: issueId, office_id: document.current_office_id ?? null },
+  })
+  assertHistorySaved([history], 'Resolving the discrepancy')
+  const trackingEvent = history.ok ? history.row : null
 
   await logActivitySafe({
     orgId: actor.orgId,

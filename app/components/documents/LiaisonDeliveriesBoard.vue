@@ -17,12 +17,14 @@
           <Icon name="ph:scan-bold" class="h-4 w-4 text-candy-orange" />
           Pickup Scan
         </NuxtLink>
+        <!-- Drop-off was retired: the receiving office scans the document QR. -->
         <NuxtLink
-          :to="`${scanBasePath}?mode=dropoff`"
+          v-if="allowReceive"
+          :to="`${scanBasePath}?mode=receive`"
           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-candy-orange px-4 py-2 font-medium text-white shadow-sm shadow-candy-orange/20 transition duration-200 hover:bg-candy-hover"
         >
-          <Icon name="ph:map-pin-bold" class="h-4 w-4" />
-          Drop-off Scan
+          <Icon name="ph:tray-arrow-down-bold" class="h-4 w-4" />
+          Receive Scan
         </NuxtLink>
       </div>
     </div>
@@ -92,8 +94,11 @@ interface CustodyDoc {
 withDefaults(defineProps<{
   /** Route to this portal's own scanner page — the only portal-specific piece. */
   scanBasePath: string
+  /** Office staff can receive delivered documents; clients only pick up. */
+  allowReceive?: boolean
 }>(), {
   scanBasePath: '/client/scan',
+  allowReceive: false,
 })
 
 const { isDark } = useTheme()

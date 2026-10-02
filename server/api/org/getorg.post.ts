@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const body = await readBody(event);
-  const { user_id, org_id } = body;
+  // Always the caller's own organization — ids in the request body are ignored.
+  const auth = requireAuth(event)
+  const org_id = auth.orgId
+  const user_id = auth.userId
 
   const client = createClient(
     config.public.supabaseUrl,

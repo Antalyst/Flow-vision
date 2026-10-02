@@ -39,8 +39,6 @@ const navGroups = computed(() => [
     title: 'Account',
     items: [
       { to: '/staff/ai', label: 'Ask AI', icon: 'ph:sparkle-light' },
-      { to: '/staff/qr', label: 'My QR Code', icon: 'ph:qr-code-light' },
-      { to: '/staff/desk-qr', label: 'My Desk QR', icon: 'ph:desktop-light' },
       { to: '/staff/settings', label: 'Settings', icon: 'ph:gear-six-light' },
     ],
   },

@@ -1,8 +1,10 @@
 /**
  * POST /api/documents/scan/analyze
  *
- * Runs Groq Vision analysis over the captured page photo(s) for an existing
- * document_scan_sessions row and returns the structured, editable result.
+ * Asks the AI for a suggested TITLE for the captured page photo(s) of an
+ * existing document_scan_sessions row. That is the AI's only role in the
+ * scanner: it returns { model, title, confidence } and nothing else — every
+ * other field is filled in by the user, who then confirms registration.
  *
  * IMPORTANT: document_ai_analysis.document_id is NOT NULL in the schema, and no
  * `documents` row exists yet at this point in the flow (registration happens
@@ -18,7 +20,7 @@
 
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContext } from '~~/server/utils/actorContext'
-import { analyzeScannedDocument, type ScanMode } from '~~/server/utils/documentScanAi'
+import { suggestScannedDocumentTitle, type ScanMode } from '~~/server/utils/documentScanAi'
 
 const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user']
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024 // 12MB per page photo
@@ -92,7 +94,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const images = imageItems.map((f) => ({ data: Buffer.from(f.data), mimeType: f.type || 'image/jpeg' }))
-    const analysis = await analyzeScannedDocument(images, scanMode)
+    const analysis = await suggestScannedDocumentTitle(images, scanMode)
 
     await client
       .from('document_scan_sessions')
@@ -108,7 +110,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: error.statusCode || 500,
-      message: "We couldn't automatically read this document. Your scan has been kept — you can try again or continue manually.",
+      message: "We couldn't suggest a title for this document. Your scan has been kept — retry, or type the title yourself.",
       data: { code: 'SCAN_AI_FAILED', session_id: sessionId },
     })
   }

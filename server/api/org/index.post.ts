@@ -3,7 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event);
-  const { name, user_id } = body;
+  const { name } = body;
+  // Only a signed-in org admin without an organization yet may create one, for themselves.
+  const auth = requireAuth(event, ['client'])
+  if (auth.orgId) {
+    throw createError({ statusCode: 409, statusMessage: 'Your account already belongs to an organization.' })
+  }
+  const user_id = auth.userId
 
   const client = createClient(
     config.public.supabaseUrl,

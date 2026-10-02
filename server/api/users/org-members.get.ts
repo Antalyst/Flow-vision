@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
+import { sessionRole as readSessionRole, sessionUserId as readSessionUserId } from '~~/server/utils/session'
 
 /**
  * GET /api/users/org-members
  * Returns all non-client members of an organization (employees + messengers).
- * Requires the requesting admin's user_session cookie for org validation.
+ * Requires the requesting admin's verified session for org validation.
  *
  * Query params:
  *   orgId – the admin's org_id (validated server-side against the session)
@@ -21,8 +22,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // Validate the requesting session belongs to a client admin of this org
-  const sessionUserId = getCookie(event, 'user_session')
-  const sessionRole   = getCookie(event, 'user_role')
+  const sessionUserId = readSessionUserId(event)
+  const sessionRole   = readSessionRole(event)
 
   if (!sessionUserId || sessionRole !== 'client') {
     throw createError({ statusCode: 403, message: 'Forbidden: administrator access required' })

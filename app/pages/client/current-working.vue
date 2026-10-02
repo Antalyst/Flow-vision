@@ -229,32 +229,10 @@
             :summary="timelineData.summary"
           />
 
-          <!-- Advance status controls -->
-          <div
-            v-if="allowedTransitions.length"
-            class="space-y-2 border-t pt-4"
-            :class="isDark ? 'border-onyx-border' : 'border-gray-100'"
-          >
-            <p class="text-sm font-bold uppercase tracking-widest" :class="isDark ? 'text-gray-400' : 'text-white-muted'">
-              Update Status
-            </p>
-            <button
-              v-for="nextStatus in allowedTransitions"
-              :key="nextStatus"
-              type="button"
-              :disabled="advancing"
-              class="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wide transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-              :class="advanceButtonClass(nextStatus)"
-              @click="advanceStatus(nextStatus)"
-            >
-              <Icon v-if="advancing" name="ph:spinner-gap" class="h-4 w-4 animate-spin" />
-              <Icon v-else :name="STATUS_ICONS[nextStatus] ?? 'ph:arrow-right'" class="h-4 w-4" />
-              Mark as {{ STATUS_LABELS[nextStatus] }}
-            </button>
-          </div>
-
+          <!-- Manual status changes were retired: documents move only through
+               pickup, office receipt and office-head release approval. -->
           <p
-            v-else-if="timelineData.summary.is_complete"
+            v-if="timelineData.summary.is_complete"
             class="flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-success"
           >
             <Icon name="ph:check-circle-fill" class="h-4 w-4" />

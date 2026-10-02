@@ -80,9 +80,8 @@ function playAlertTone(frequency = 660) {
 
 export function useEmployeeSettings() {
   const auth = useAuthStore()
-  const sessionCookie = useCookie<string | null>('user_session')
 
-  const userId = computed(() => String(auth.user?.user_id ?? sessionCookie.value ?? ''))
+  const userId = computed(() => String(auth.user?.user_id ?? ''))
 
   function hydrate() {
     const id = userId.value

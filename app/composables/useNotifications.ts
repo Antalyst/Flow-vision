@@ -12,6 +12,10 @@ export interface NotificationRow {
   claimed_by_user_id: string | null
   created_at: string
   metadata?: {
+    /** e.g. 'LIAISON_ASSIGNED' */
+    type?: string | null
+    step_number?: number | null
+    assigned_at?: string | null
     pickup_source_name?: string | null
     pickup_source_office_id?: string | null
     destination_office_name?: string | null
@@ -29,19 +33,30 @@ export function isUnreadNotification(value: unknown): boolean {
 
 export type NotificationSeverity = 'urgent' | 'action' | 'info'
 
+/** Discrepancy / compliance notifications — reported issues, their threads, their resolution. */
+const DISCREPANCY_TITLE = /\b(issue|discrepanc|compliance|flagged|sent back)/i
+/** A discrepancy that is closed needs no response. */
+const DISCREPANCY_CLOSED = /\b(resolved|closed)\b/i
+
 /**
- * Heuristic severity from the notification title — no schema change needed.
- * Urgent (compliance issues, overdue SLAs) always outranks routine progress updates.
+ * Severity from the notification title — no schema change needed.
+ *
+ * "Needs Action" ('action') is reserved for discrepancy reports that still
+ * need a response. Ordinary tracking updates (liaison assigned, picked up,
+ * received, released, review/approval requests…) are 'info', whether read or
+ * not — unread state is separate and never changes the category.
+ * 'urgent' stays for overdue documents.
  */
 export function classifyNotificationSeverity(title: string | null | undefined): NotificationSeverity {
-  const t = (title || '').toLowerCase()
-  if (t.includes('issue') || t.includes('discrepancy') || t.includes('overdue') || t.includes('compliance')) {
-    return 'urgent'
-  }
-  if (t.includes('required') || t.includes('review') || t.includes('assign') || t.includes('ready')) {
-    return 'action'
-  }
+  const t = title || ''
+  if (DISCREPANCY_TITLE.test(t)) return DISCREPANCY_CLOSED.test(t) ? 'info' : 'action'
+  if (/\boverdue\b/i.test(t)) return 'urgent'
   return 'info'
+}
+
+/** Discrepancy notifications (open or closed), for grouping separately from tracking updates. */
+export function isDiscrepancyNotification(title: string | null | undefined): boolean {
+  return DISCREPANCY_TITLE.test(title || '')
 }
 
 const SEVERITY_RANK: Record<NotificationSeverity, number> = { urgent: 0, action: 1, info: 2 }
@@ -78,9 +93,8 @@ function notifyOnFreshEmployeeAlerts(previous: NotificationRow[], next: Notifica
 
 async function resolveMessengerScope(): Promise<{ userId: string, orgId: string }> {
   const auth = useAuthStore()
-  const sessionCookie = useCookie<string | null>('user_session')
 
-  const userId = String(auth.user?.user_id ?? sessionCookie.value ?? '')
+  const userId = String(auth.user?.user_id ?? '')
   let orgId = auth.user?.org_id != null ? String(auth.user.org_id) : ''
 
   if (!orgId && userId) {

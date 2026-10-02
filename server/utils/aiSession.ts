@@ -61,8 +61,8 @@ export function getAdminClient(): SupabaseClient {
  * no valid organization scope can be bound to the user.
  */
 export async function resolveTenant(event: H3Event): Promise<TenantContext> {
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId || !userRole || !ALLOWED_ROLES.includes(userRole)) {
     throw createError({

@@ -16,15 +16,15 @@ function getServiceSupabase() {
 }
 
 export default defineEventHandler(async (event) => {
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role')
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event)
 
   if (!userId) {
     throw createError({ statusCode: 401, message: 'Authentication required.' })
   }
 
   const role = (userRole ?? '').toLowerCase()
-  if (role !== 'employee' && role !== 'client' && role !== 'messenger') {
+  if (role !== 'employee' && role !== 'employee_sub_user' && role !== 'client' && role !== 'messenger') {
     throw createError({ statusCode: 403, message: 'Only clients, employees, or liaisons can mark notifications as read.' })
   }
 
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   } else {
     const db = getServiceSupabase()
     const officeIds = await resolveEmployeeAssignedOfficeIds(db, actor.orgId, actor.userId)
-    ok = await markAllEmployeeNotificationsRead(actor.orgId, officeIds)
+    ok = await markAllEmployeeNotificationsRead(actor.orgId, officeIds, actor.userId)
   }
 
   if (!ok) {

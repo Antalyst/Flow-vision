@@ -273,22 +273,8 @@ const processResult = async (result) => {
   if (result && (result.autoLogin || result.success)) {
     registerModal.value = false;
 
+    // The server already started the session (HttpOnly cookie).
     const currentUser = result.user || auth.user;
-    const userSession = useCookie('user_session', {
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-      sameSite: 'lax'
-    });
-    const userRole = useCookie('user_role', {
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-      sameSite: 'lax'
-    });
-
-    const sessionUserId = currentUser?.user_id || currentUser?.id || '';
-    userSession.value = sessionUserId;
-    userRole.value = currentUser?.role || '';
-
     await navigateTo(getPostLoginRoute(currentUser?.role || ''));
   } else {
     alert('Registration successful! Please sign in.');

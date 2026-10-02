@@ -141,7 +141,6 @@ function labelPageHtml(qrDataUrl: string, opts: QrLabelOptions, { newPage = true
     <p class="fv-kicker">QR Tracking Label</p>
     <p class="fv-title">${escapeHtml(opts.title || 'Document')}</p>
     <img src="${qrDataUrl}" alt="Tracking QR" style="width:${inches}in;height:${inches}in" />
-    <p class="fv-payload">${escapeHtml(opts.qrPayload)}</p>
     <p class="fv-hint">${SCAN_HINT}</p>
   </div>
 </section>`

@@ -7,6 +7,7 @@ import {
   notifyDocumentOwner,
 } from '~~/server/utils/notifications'
 import { emitInTransitEmails } from '~~/server/utils/email/emailEvents'
+import { getDocumentRoute, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
 
 /**
  * POST /api/tracking/checkpoint-pickup
@@ -23,8 +24,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Please scan an office QR code to continue.' })
   }
 
-  const actorId = getCookie(event, 'user_session')
-  const actorRole = getCookie(event, 'user_role')
+  const actorId = sessionUserId(event)
+  const actorRole = sessionRole(event)
 
   if (!actorId) throw createError({ statusCode: 401, message: 'Authentication required.' })
   // employee_sub_user included: assign-liaison.post.ts allows this role as an eligible
@@ -131,17 +132,12 @@ export default defineEventHandler(async (event) => {
   let destOfficeId: string | null = null
   let destOfficeName: string | null = null
 
-  if (doc.stage_id) {
-    const { data: stepRow } = await client
-      .from('stage_steps')
-      .select('office_id, offices(name)')
-      .eq('stage_id', doc.stage_id)
-      .eq('step_number', nextStep)
-      .maybeSingle()
-
-    if (stepRow?.office_id) {
-      destOfficeId = String(stepRow.office_id)
-      destOfficeName = (stepRow as { offices?: { name?: string } } | null)?.offices?.name ?? null
+  const route = await getDocumentRoute(doc)
+  if (route.length > 0) {
+    const nextStop = routeStopAt(route, nextStep)
+    if (nextStop) {
+      destOfficeId = nextStop.office_id
+      destOfficeName = nextStop.office_name
     } else {
       // Bound to a route, but that route has no configured stop for the next
       // step — fail loudly here instead of silently falling back, which is
@@ -206,6 +202,14 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (updateErr) throw createError({ statusCode: 500, message: updateErr.message })
+
+  const { error: legErr } = await lifecycleDb()
+    .from('document_liaison_assignments')
+    .update({ picked_up_at: new Date().toISOString() })
+    .eq('document_id', doc.id)
+    .eq('status', 'ACTIVE')
+    .is('picked_up_at', null)
+  if (legErr) console.error('[CheckpointPickup] could not stamp liaison pickup:', legErr.message)
 
   const activityMessage =
     `${actorRow.full_name} picked up "${doc.title}" from origin checkpoint "${office.name}".`

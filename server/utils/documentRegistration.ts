@@ -31,8 +31,8 @@ interface ResolvedRouteStep {
 export async function registerMetadataDocument(event: H3Event, body: RegisterDocumentBody) {
   const client = await serverSupabaseClient(event)
 
-  const userId = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role') as AllowedRole | undefined
+  const userId = sessionUserId(event)
+  const userRole = sessionRole(event) as AllowedRole | undefined
 
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({

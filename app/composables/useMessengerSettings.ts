@@ -81,9 +81,8 @@ export async function findRearCameraDeviceId(): Promise<string | null> {
 
 export function useMessengerSettings() {
   const auth = useAuthStore()
-  const sessionCookie = useCookie<string | null>('user_session')
 
-  const userId = computed(() => String(auth.user?.user_id ?? sessionCookie.value ?? ''))
+  const userId = computed(() => String(auth.user?.user_id ?? ''))
 
   function hydrate() {
     const id = userId.value

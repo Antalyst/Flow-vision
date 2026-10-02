@@ -200,6 +200,7 @@
       <section class="rounded-2xl border p-6" :class="panelClass">
         <h2 class="text-sm font-bold" :class="headingClass">AI Knowledge Base</h2>
         <p class="mt-1 text-xs" :class="mutedClass">Upload PDF, Word (.docx), or Excel (.xlsx) files that describe how your organization works. The AI assistant reads these to answer employees' and clients' questions about your org.</p>
+        <p class="mt-1 text-xs" :class="mutedClass">Maximum size: PDF up to 150 MB · Word and Excel up to 4 MB. PDFs must contain selectable text (scanned image-only PDFs aren't supported).</p>
 
         <div class="mt-4 flex gap-2 items-center mb-4">
           <input
@@ -209,6 +210,7 @@
             class="text-xs"
             :class="mutedClass"
             ref="knowledgeFileInput"
+            :disabled="uploadingKnowledge"
           />
           <button
             @click="uploadKnowledgeFile"
@@ -219,18 +221,75 @@
           </button>
         </div>
 
+        <!-- Chunked upload progress (large PDFs) -->
+        <div v-if="knowledgeProgress" class="mb-4 rounded-xl border p-3" :class="innerPanelClass">
+          <div class="flex items-center justify-between gap-3">
+            <p class="min-w-0 truncate text-xs font-medium" :class="knowledgeProgress.stage === 'failed' ? 'text-danger' : headingClass">
+              {{ knowledgeStageLabel }}
+            </p>
+            <button
+              v-if="uploadingKnowledge"
+              type="button"
+              class="flex-shrink-0 text-xs font-semibold text-gray-400 transition hover:text-danger"
+              @click="cancelKnowledgeUpload"
+            >
+              Cancel
+            </button>
+          </div>
+          <div class="mt-2 h-1.5 overflow-hidden rounded-full" :class="isDark ? 'bg-white/10' : 'bg-gray-100'">
+            <div
+              class="h-full rounded-full transition-all duration-300"
+              :class="knowledgeProgress.stage === 'failed' ? 'bg-danger' : 'bg-candy-orange'"
+              :style="{ width: `${knowledgePercent}%` }"
+            />
+          </div>
+          <p v-if="uploadingKnowledge" class="mt-2 text-xs" :class="mutedClass">
+            Keep this page open until the upload finishes.
+          </p>
+        </div>
+
+        <div v-if="knowledgeError" class="mb-4 flex items-start justify-between gap-3 rounded-xl border border-danger/30 bg-danger/10 px-3 py-2.5">
+          <p class="text-xs text-danger">{{ knowledgeError.message }}</p>
+          <div class="flex flex-shrink-0 gap-3">
+            <button
+              v-if="knowledgeError.retryable"
+              type="button"
+              class="text-xs font-semibold text-candy-orange hover:underline disabled:opacity-50"
+              :disabled="uploadingKnowledge"
+              @click="runChunkedKnowledgeUpload"
+            >
+              Retry
+            </button>
+            <button type="button" class="text-xs font-semibold text-gray-400 hover:underline" @click="dismissKnowledgeError">
+              Dismiss
+            </button>
+          </div>
+        </div>
+
         <div class="rounded-xl border" :class="innerPanelClass">
           <div v-if="loadingKnowledge" class="p-4 text-center text-xs" :class="mutedClass">Loading files...</div>
+          <div v-else-if="knowledgeListError" class="flex flex-col items-center gap-2 p-4 text-center text-xs text-danger">
+            <span>{{ knowledgeListError }}</span>
+            <button type="button" class="font-semibold text-candy-orange hover:underline" @click="fetchKnowledgeFiles">Try again</button>
+          </div>
           <div v-else-if="knowledgeFiles.length === 0" class="p-4 text-center text-xs" :class="mutedClass">No knowledge base files uploaded yet.</div>
           <div v-else class="divide-y" :class="isDark ? 'divide-white/5' : 'divide-gray-100'">
             <div v-for="f in knowledgeFiles" :key="f.id" class="flex items-center justify-between gap-3 px-4 py-3">
               <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-medium" :class="headingClass">{{ f.file_name }}</p>
                 <p class="mt-0.5 text-xs" :class="mutedClass">
-                  {{ formatFileSize(f.file_size) }} · {{ formatDate(f.created_at) }}
+                  {{ formatFileSize(f.file_size) }}<template v-if="f.page_count"> · {{ f.page_count }} pages</template> · {{ formatDate(f.created_at) }}
                   <span v-if="f.extraction_status !== 'ready'" class="text-danger"> · Text could not be read from this file</span>
                 </p>
               </div>
+              <a
+                :href="`/api/org/knowledge/${f.id}/download`"
+                class="flex-shrink-0 text-gray-400 transition hover:text-candy-orange"
+                :title="`Download ${f.file_name}`"
+                :aria-label="`Download ${f.file_name}`"
+              >
+                <Icon name="ph:download-simple" class="h-4 w-4" />
+              </a>
               <button
                 type="button"
                 class="flex-shrink-0 text-gray-400 transition hover:text-danger disabled:opacity-50"
@@ -284,6 +343,19 @@ import { useClientSettings } from '~/composables/useClientSettings'
 import { useClientToast } from '~/composables/useClientToast'
 import { useAuthStore } from '~/stores/auth'
 import { useCategoriesStore } from '~/stores/categories'
+import {
+  KnowledgeUploadError,
+  createKnowledgePdfUploadJob,
+  discardKnowledgePdfUpload,
+  runKnowledgePdfUpload,
+  type KnowledgePdfUploadJob,
+  type KnowledgeUploadProgress,
+} from '~/utils/knowledgePdfUpload'
+import {
+  KNOWLEDGE_MAX_FILE_BYTES,
+  KNOWLEDGE_SINGLE_REQUEST_MAX_BYTES,
+  KNOWLEDGE_TOO_LARGE_MESSAGE,
+} from '#shared/knowledgeUpload'
 
 const auth = useAuthStore()
 const categoriesStore = useCategoriesStore()
@@ -467,6 +539,7 @@ async function clearWhitelist() {
 }
 
 const knowledgeFiles = ref<any[]>([])
+const knowledgeListError = ref('')
 const loadingKnowledge = ref(false)
 const uploadingKnowledge = ref(false)
 const selectedKnowledgeFile = ref<File | null>(null)
@@ -476,6 +549,8 @@ const deletingKnowledgeId = ref<number | null>(null)
 function onKnowledgeFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   selectedKnowledgeFile.value = target.files?.[0] ?? null
+  // A new file replaces any previous failed attempt (and its server-side session).
+  if (knowledgeError.value) void dismissKnowledgeError()
 }
 
 async function fetchKnowledgeFiles() {
@@ -483,40 +558,155 @@ async function fetchKnowledgeFiles() {
   try {
     const res = await $fetch<{ success: boolean; data: any[] }>('/api/org/knowledge')
     knowledgeFiles.value = res.data ?? []
-  } catch (err) {
-    // ignore — matches whitelist fetch convention (non-fatal on load)
+    knowledgeListError.value = ''
+  } catch (err: any) {
+    // Loaded once (on mount / after an upload) — never polled. Show why it
+    // failed instead of a misleading "no files uploaded yet".
+    knowledgeListError.value = err?.data?.statusMessage || err?.data?.message || 'The AI Knowledge Base files could not be loaded.'
   } finally {
     loadingKnowledge.value = false
   }
 }
 
-const MAX_KNOWLEDGE_FILE_MB = 150
+// ── Upload: ≤ 4 MB goes in one request; larger PDFs (≤ 150 MB) are read in
+// the browser and sent in 3.5 MB chunks (Vercel rejects bodies over ~4.5 MB).
+const knowledgeProgress = ref<KnowledgeUploadProgress | null>(null)
+const knowledgeError = ref<{ message: string; retryable: boolean } | null>(null)
+let knowledgeJob: KnowledgePdfUploadJob | null = null
+let knowledgeAbort: AbortController | null = null
+
+const knowledgeStageLabel = computed(() => {
+  const p = knowledgeProgress.value
+  if (!p) return ''
+  switch (p.stage) {
+    case 'reading': return p.pageCount ? `Reading PDF text — page ${p.pagesRead} of ${p.pageCount}` : 'Opening PDF…'
+    case 'uploading': return `Uploading — ${formatFileSize(p.bytesSent)} of ${formatFileSize(p.totalBytes)}`
+    case 'saving': return 'Saving extracted text…'
+    case 'finalizing': return 'Verifying and finishing…'
+    case 'completed': return 'Completed'
+    case 'cancelled': return 'Cancelled'
+    default: return 'Failed'
+  }
+})
+
+const knowledgePercent = computed(() => {
+  const p = knowledgeProgress.value
+  if (!p) return 0
+  if (p.stage === 'reading') return p.pageCount ? Math.round((p.pagesRead / p.pageCount) * 100) : 0
+  if (p.stage === 'uploading') return p.totalBytes ? Math.round((p.bytesSent / p.totalBytes) * 100) : 0
+  return 100
+})
+
+function warnBeforeLeaving(e: BeforeUnloadEvent) {
+  e.preventDefault()
+  e.returnValue = ''
+}
+
+function resetKnowledgeInput() {
+  selectedKnowledgeFile.value = null
+  if (knowledgeFileInput.value) knowledgeFileInput.value.value = ''
+}
 
 async function uploadKnowledgeFile() {
-  if (!selectedKnowledgeFile.value) return
-  if (selectedKnowledgeFile.value.size > MAX_KNOWLEDGE_FILE_MB * 1024 * 1024) {
-    showToast(`File is too large. The limit is ${MAX_KNOWLEDGE_FILE_MB}MB.`, 'error')
+  const file = selectedKnowledgeFile.value
+  if (!file || uploadingKnowledge.value) return
+  knowledgeError.value = null
+
+  if (file.size > KNOWLEDGE_MAX_FILE_BYTES) {
+    knowledgeError.value = { message: KNOWLEDGE_TOO_LARGE_MESSAGE, retryable: false }
+    showToast(KNOWLEDGE_TOO_LARGE_MESSAGE, 'error')
     return
   }
+
+  const isPdf = file.name.toLowerCase().endsWith('.pdf')
+  if (file.size > KNOWLEDGE_SINGLE_REQUEST_MAX_BYTES) {
+    if (!isPdf) {
+      const message = 'Word and Excel files must be 4 MB or smaller. PDFs can be up to 150 MB.'
+      knowledgeError.value = { message, retryable: false }
+      showToast(message, 'error')
+      return
+    }
+    knowledgeJob = createKnowledgePdfUploadJob(file)
+    await runChunkedKnowledgeUpload()
+    return
+  }
+
   uploadingKnowledge.value = true
   const formData = new FormData()
-  formData.append('file', selectedKnowledgeFile.value)
-
+  formData.append('file', file)
   try {
     const res = await $fetch<{ success: boolean; message: string }>('/api/org/knowledge/upload', {
       method: 'POST',
       body: formData,
     })
     showToast(res.message || 'File uploaded.')
-    selectedKnowledgeFile.value = null
-    if (knowledgeFileInput.value) knowledgeFileInput.value.value = ''
+    resetKnowledgeInput()
     await fetchKnowledgeFiles()
   } catch (err: any) {
-    showToast(err.data?.statusMessage || err.message || 'Failed to upload file.', 'error')
+    const message = err.data?.statusMessage || err.data?.message || err.message || 'Failed to upload file.'
+    knowledgeError.value = { message, retryable: false }
+    showToast(message, 'error')
   } finally {
     uploadingKnowledge.value = false
   }
 }
+
+/** Runs (or, after a recoverable failure, resumes) the chunked PDF upload. */
+async function runChunkedKnowledgeUpload() {
+  if (!knowledgeJob || uploadingKnowledge.value) return
+  uploadingKnowledge.value = true
+  knowledgeError.value = null
+  knowledgeAbort = new AbortController()
+  window.addEventListener('beforeunload', warnBeforeLeaving)
+  try {
+    const message = await runKnowledgePdfUpload(knowledgeJob, {
+      signal: knowledgeAbort.signal,
+      onProgress: (p) => { knowledgeProgress.value = p },
+    })
+    knowledgeJob = null
+    knowledgeProgress.value = null
+    resetKnowledgeInput()
+    showToast(message)
+    await fetchKnowledgeFiles()
+  } catch (err: any) {
+    const error = err instanceof KnowledgeUploadError
+      ? err
+      : new KnowledgeUploadError(err?.message || 'Failed to upload file.', false)
+    if (error.code === 'CANCELLED') {
+      knowledgeProgress.value = null
+      knowledgeJob = null
+      showToast('Upload cancelled.')
+    } else {
+      knowledgeProgress.value = knowledgeProgress.value ? { ...knowledgeProgress.value, stage: 'failed' } : null
+      knowledgeError.value = { message: error.message, retryable: error.retryable }
+      if (!error.retryable) knowledgeJob = null
+      showToast(error.message, 'error')
+    }
+  } finally {
+    uploadingKnowledge.value = false
+    knowledgeAbort = null
+    window.removeEventListener('beforeunload', warnBeforeLeaving)
+  }
+}
+
+function cancelKnowledgeUpload() {
+  knowledgeAbort?.abort()
+}
+
+/** Dismisses a failed upload, deleting whatever the server kept for it. */
+async function dismissKnowledgeError() {
+  const job = knowledgeJob
+  knowledgeJob = null
+  knowledgeError.value = null
+  knowledgeProgress.value = null
+  if (job) await discardKnowledgePdfUpload(job)
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', warnBeforeLeaving)
+  knowledgeAbort?.abort()
+  if (knowledgeJob) void discardKnowledgePdfUpload(knowledgeJob)
+})
 
 async function deleteKnowledgeFile(id: number) {
   deletingKnowledgeId.value = id

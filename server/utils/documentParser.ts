@@ -8,6 +8,9 @@ import mammoth from 'mammoth'
 // crashing the whole server. This path skips that wrapper entirely.
 import pdfParse from 'pdf-parse/lib/pdf-parse.js'
 import ExcelJS from 'exceljs'
+// ~5MB of text per knowledge file — shared with the browser-side PDF
+// extraction used by chunked uploads.
+import { KNOWLEDGE_TEXT_CAP } from '#shared/knowledgeUpload'
 
 export const extractTextFromFile = async (file: { filename: string, data: Buffer }) => {
   const filename = file.filename.toLowerCase()
@@ -72,7 +75,6 @@ export interface KnowledgeExtractionResult {
   error?: string
 }
 
-const KNOWLEDGE_TEXT_CAP = 5_000_000 // ~5MB of text — generous bound against pathological files
 
 /**
  * Full-fidelity text extraction for the org knowledge base (Settings → AI

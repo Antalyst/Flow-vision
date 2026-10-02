@@ -4,6 +4,10 @@
     :class="isDark ? 'border-white/10 bg-white/[0.02]' : 'border-gray-200 bg-gray-50/80'"
   >
 
+    <p v-if="reportSuccess" class="mx-5 mt-3 rounded-xl border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success">
+      {{ reportSuccess }}
+    </p>
+
     <!-- ── Active issue chat terminal ─────────────────────────────────── -->
     <div
       v-if="activeIssue"
@@ -126,29 +130,44 @@
       </form>
     </div>
 
-    <!-- ── Report issue form overlay ──────────────────────────────────── -->
+    <!-- ── Report issue form: a modal on <body>, above the document drawer ──
+         (it used to be an overlay inside this footer panel, which is ~0px tall
+         when no issue is open and is clipped by the drawer, so it opened
+         invisibly). -->
+    <Teleport to="body">
     <Transition name="overlay-fade">
       <div
         v-if="showReportForm"
-        class="absolute inset-0 z-20 flex flex-col backdrop-blur-md"
-        :class="isDark ? 'bg-black/80' : 'bg-white/90'"
+        class="fixed inset-0 z-[110] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-issue-title"
+        data-testid="report-issue-modal"
+        @click.self="closeReportForm"
       >
+        <div
+          class="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border shadow-2xl sm:rounded-2xl"
+          :class="isDark ? 'border-white/10 bg-onyx-card' : 'border-gray-200 bg-white'"
+        >
         <div class="flex items-center justify-between border-b px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
           <div>
             <p class="text-xs font-bold uppercase tracking-widest text-candy-orange">Flag Discrepancy</p>
-            <h3 class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Report Document Issue</h3>
+            <h3 id="report-issue-title" class="text-base font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Report Document Issue</h3>
           </div>
           <button
             type="button"
             class="inline-flex h-9 w-9 items-center justify-center rounded-lg transition"
             :class="isDark ? 'hover:bg-white/5' : 'hover:bg-gray-100'"
-            @click="showReportForm = false"
+            aria-label="Close"
+            @click="closeReportForm"
           >
             <Icon name="ph:x-bold" class="h-4 w-4" />
           </button>
         </div>
 
-        <form class="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-5" @submit.prevent="submitReport">
+        <form class="flex min-h-0 flex-1 flex-col" @submit.prevent="submitReport">
+          <!-- Fields scroll; the error and the actions below stay in view. -->
+          <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <label class="block">
             <span class="text-sm font-semibold text-candy-orange">Issue Type <span class="text-danger">*</span></span>
             <select
@@ -190,30 +209,50 @@
           <div class="block rounded-xl border p-4" :class="isDark ? 'border-candy-orange/20 bg-candy-orange/5' : 'border-candy-orange/20 bg-candy-orange/5'">
             <span class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
               <Icon name="ph:arrow-u-up-left-bold" class="h-4 w-4" />
-              Sends back to
+              Send back to
             </span>
-            <p v-if="loadingTargets" class="mt-1.5 text-sm" :class="mutedText">Finding the previous office…</p>
-            <p v-else-if="returnTarget" class="mt-1.5 text-sm font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">
-              {{ returnTarget.name }}
-            </p>
+            <p v-if="loadingTargets" class="mt-1.5 text-sm" :class="mutedText">Finding the offices it can go back to…</p>
+            <p v-else-if="targetsError" class="mt-1.5 text-sm text-danger" data-testid="report-targets-error">{{ targetsError }}</p>
+            <div v-else-if="chatTargets.length" class="mt-2 space-y-2">
+              <label
+                v-for="t in chatTargets"
+                :key="t.id + t.role"
+                class="flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 text-sm transition"
+                :class="reportForm.send_back_office_id === t.id
+                  ? 'border-candy-orange bg-candy-orange/10'
+                  : (isDark ? 'border-white/10 hover:border-white/20' : 'border-gray-200 hover:border-gray-300')"
+              >
+                <input v-model="reportForm.send_back_office_id" type="radio" name="send-back-office" :value="t.id" class="mt-0.5 accent-candy-orange">
+                <span>
+                  <span class="block font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">{{ t.name }}</span>
+                  <span class="block text-xs" :class="mutedText">
+                    {{ t.role === 'previous_handoff' ? 'The office that handed it to you' : 'Where this routing started' }}
+                  </span>
+                </span>
+              </label>
+            </div>
             <p v-else class="mt-1.5 text-sm text-warning">
               No previous office found on this document's route — it will stay flagged here instead.
             </p>
             <p class="mt-1 text-sm" :class="mutedText">
-              Whoever handed this document off will be notified and can fix it before sending it forward again.
+              That office is notified and can fix the document before sending it forward again.
             </p>
           </div>
 
-          <p v-if="reportError" class="rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+          </div>
+
+          <div class="shrink-0 space-y-3 border-t px-6 py-4" :class="isDark ? 'border-white/10' : 'border-gray-200'">
+          <p v-if="reportError" class="rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger" role="alert">
             {{ reportError }}
           </p>
 
-          <div class="mt-auto flex justify-end gap-3 pt-2">
+          <div class="flex justify-end gap-3">
             <button
               type="button"
               class="rounded-xl border px-4 py-2.5 text-sm font-semibold transition"
               :class="isDark ? 'border-white/10 text-gray-300' : 'border-gray-200 text-gray-700'"
-              @click="showReportForm = false"
+              :disabled="reporting"
+              @click="closeReportForm"
             >
               Cancel
             </button>
@@ -227,9 +266,12 @@
               Submit Flag
             </button>
           </div>
+          </div>
         </form>
+        </div>
       </div>
     </Transition>
+    </Teleport>
 
   </section>
 </template>
@@ -310,12 +352,16 @@ const sending        = ref(false)
 const reporting      = ref(false)
 const resolving      = ref(false)
 const reportError    = ref('')
+const targetsError   = ref('')
+const reportSuccess  = ref('')
 const messagesEl     = ref<HTMLElement | null>(null)
 
 const reportForm = reactive({
   issue_type: '',
   details: '',
   reported_by_office_id: '',
+  /** Office it is sent back to; defaults to whoever handed it here. */
+  send_back_office_id: '',
 })
 
 const orgId   = computed(() => String(auth.user?.org_id ?? ''))
@@ -330,6 +376,7 @@ const inputClass = computed(() =>
 
 const canSubmitReport = computed(() =>
   Boolean(
+    !targetsError.value &&
     reportForm.issue_type &&
     reportForm.details.trim() &&
     reportForm.reported_by_office_id,
@@ -360,19 +407,36 @@ const canResolveIssue = computed(() => {
   return props.offices.some((o) => issueOfficeIds.includes(String(o.id)))
 })
 
+/**
+ * Called by the drawer's "Flag Issue / Incomplete" button. Opens the modal
+ * immediately (visible feedback even if loading the offices fails), then
+ * loads where the document can be sent back to.
+ */
 const openReportForm = async () => {
+  reportError.value = ''
+  reportSuccess.value = ''
   showReportForm.value = true
-  await fetchChatTargets()
   if (props.offices.length === 1) {
-    reportForm.reported_by_office_id = String(props.offices[0].id)
+    reportForm.reported_by_office_id = String(props.offices[0]!.id)
+  }
+  await fetchChatTargets()
+  const preferred = chatTargets.value.find((t) => t.role === 'previous_handoff') ?? chatTargets.value[0]
+  if (!chatTargets.value.some((t) => t.id === reportForm.send_back_office_id)) {
+    reportForm.send_back_office_id = preferred?.id ?? ''
   }
 }
 
-defineExpose({ openReportForm })
+const closeReportForm = () => {
+  if (reporting.value) return // never close mid-submit
+  showReportForm.value = false
+}
+
+defineExpose({ openReportForm, closeReportForm })
 
 const fetchChatTargets = async () => {
   if (!props.document?.id) return
   loadingTargets.value = true
+  targetsError.value = ''
   try {
     const res = await $fetch<{
       success: boolean
@@ -381,9 +445,12 @@ const fetchChatTargets = async () => {
       params: { document_id: props.document.id },
     })
     chatTargets.value = res.data?.targets ?? []
-  } catch (err) {
+  } catch (err: any) {
     console.error('[IssueChat] fetchChatTargets:', err)
     chatTargets.value = []
+    // e.g. 403 when this account can't report on the document — say so
+    // instead of leaving the form looking usable.
+    targetsError.value = err?.data?.message || 'Could not check where this document would be sent back to. Please try again.'
   } finally {
     loadingTargets.value = false
   }
@@ -436,13 +503,16 @@ const fetchMessages = async (id: string) => {
 }
 
 const submitReport = async () => {
+  if (reporting.value) return // no duplicate submissions
   reportError.value = ''
+  reportSuccess.value = ''
   reporting.value = true
   const title = `${reportForm.issue_type}: ${reportForm.details.trim().slice(0, 180)}`
 
   try {
     const res = await $fetch<{
       success: boolean
+      message?: string
       data: { issue: IssueRow; document: { tracking_status: string } }
     }>('/api/documents/issues/create', {
       method: 'POST',
@@ -453,6 +523,7 @@ const submitReport = async () => {
         details:               reportForm.details.trim(),
         title,
         message_text:          reportForm.details.trim(),
+        send_back_office_id:   reportForm.send_back_office_id || undefined,
       },
     })
 
@@ -461,10 +532,17 @@ const submitReport = async () => {
     reportForm.issue_type = ''
     reportForm.details = ''
     reportForm.reported_by_office_id = ''
+    reportForm.send_back_office_id = ''
 
+    reportSuccess.value = res.message || 'Discrepancy reported.'
     emit('updated', { tracking_status: res.data.document.tracking_status })
     await fetchMessages(res.data.issue.id)
   } catch (err: any) {
+    if (err?.data?.data?.code === 'ISSUE_ALREADY_OPEN') {
+      // Reported meanwhile (e.g. a double submit): show the existing thread.
+      showReportForm.value = false
+      await fetchIssueState()
+    }
     reportError.value = err?.data?.message || 'Failed to submit issue report.'
   } finally {
     reporting.value = false
@@ -549,6 +627,8 @@ watch(
   () => props.document?.id,
   () => {
     showReportForm.value = false
+    reportSuccess.value = ''
+    reportError.value = ''
     fetchIssueState()
   },
   { immediate: true },

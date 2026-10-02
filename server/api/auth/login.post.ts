@@ -1,114 +1,66 @@
+/**
+ * POST /api/auth/login
+ *
+ * Verifies email + password (bcrypt) against public.users, then starts a
+ * server-side session (HttpOnly fv_session cookie — see server/utils/session.ts).
+ * No readable identity cookies are set any more.
+ *
+ * Failed attempts are rate limited per email and per IP. Errors never reveal
+ * whether an email is registered.
+ */
 import { createClient } from '@supabase/supabase-js'
 import { compare } from 'bcrypt-ts'
+
+const INVALID_CREDENTIALS = 'Invalid email or password.'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody(event)
-  const { email, password } = body
+  const email = typeof body?.email === 'string' ? body.email.trim() : ''
+  const password = typeof body?.password === 'string' ? body.password : ''
 
-  const client = createClient(
-    config.public.supabaseUrl,
-    config.supabaseServiceKey
-  )
+  if (!email || !password) {
+    throw createError({ statusCode: 400, statusMessage: 'Please enter your email and password.' })
+  }
 
-  // 1. Find user by email in public.users
-  console.log("Login attempt for email:", email);
-  const { data: user, error: userError } = await client
-    .from('users') 
+  const emailHash = hashLoginEmail(email)
+  const ip = getRequestIP(event, { xForwardedFor: true }) ?? null
+
+  if (await isLoginRateLimited(emailHash, ip)) {
+    throw createError({
+      statusCode: 429,
+      statusMessage: 'Too many failed sign-in attempts. Please wait 15 minutes and try again.',
+    })
+  }
+
+  const client = createClient(config.public.supabaseUrl, config.supabaseServiceKey)
+  const { data: user } = await client
+    .from('users')
     .select('*')
     .eq('email', email)
-    .single()
+    .maybeSingle()
 
-  if (userError || !user) {
-    console.error("User not found or lookup error:", userError);
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid email or password',
-    })
+  const passwordOk = !!user?.password && await compare(password, user.password).catch(() => false)
+  if (!user || !passwordOk) {
+    await recordLoginAttempt(emailHash, ip, false)
+    throw createError({ statusCode: 401, statusMessage: INVALID_CREDENTIALS })
   }
 
-  const db = event.context.db;
-
-  try {
-    if (!db) {
-      throw new Error('Database connection not available');
-    }
-    const [rows]: any = await db.query(
-      'SELECT * FROM users WHERE email = ? LIMIT 1',
-      [email]
-    )
-    const user = rows[0]
-    if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Invalid credentials.',
-      })
-    }
-    const isPasswordValid = await compare(password, user.password)
-
-    if (!isPasswordValid) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Invalid credentials.',
-      })
-    }
-
-    const { password: _, ...safeUser } = user
-    const token = 'generated-session-token'
-
-    setCookie(event, 'auth_user', JSON.stringify(safeUser), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'BoyLupotJv',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    })
-
-    setCookie(event, 'auth_token', token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'BoyLupotJv',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-    })
-
-    return {
-      message: 'Login successful',
-      user: safeUser,
-      token: token
-    }
-
-  } catch (error: any) {
-  console.log("User found, verifying password...");
-  // 2. Verify hashed password
-  const isPasswordCorrect = await compare(password, user.password)
-  console.log("Password verification result:", isPasswordCorrect);
-  if (!isPasswordCorrect) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid email or password',
-    })
+  if (!isActiveUserStatus(user.status)) {
+    await recordLoginAttempt(emailHash, ip, false)
+    throw createError({ statusCode: 403, statusMessage: 'This account has been deactivated. Please contact your administrator.' })
   }
 
-  // Remove password from user object before returning
-  const { password: _, ...userWithoutPassword } = user
+  await recordLoginAttempt(emailHash, ip, true)
 
-  const sessionUserId = user.user_id || user.id || ''
+  // Rotation: any session this browser already had is revoked; a fresh one is issued.
+  await revokeCurrentSession(event)
+  await createSession(event, String(user.user_id))
 
-  setCookie(event, 'user_session', sessionUserId, {
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-    sameSite: 'lax'
-  })
-  setCookie(event, 'user_role', user.role || '', {
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-    sameSite: 'lax'
-  })
-
+  const { password: _password, ...safeUser } = user
   return {
     success: true,
     message: 'Login successful',
-    user: userWithoutPassword,
-    token: 'session_token_placeholder'
+    user: safeUser,
   }
-}
 })

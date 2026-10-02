@@ -197,89 +197,41 @@
           <!-- ══════════ STEP 3: ANALYZING ══════════ -->
           <div v-else-if="step === 'analyzing'" class="flex flex-col items-center justify-center gap-4 py-20">
             <Icon name="ph:sparkle-fill" class="h-10 w-10 animate-pulse text-candy-orange" />
-            <p class="text-sm font-semibold" :class="headingClass">Reading your document…</p>
-            <p class="text-xs" :class="mutedClass">Groq Vision is extracting visible details. This won't take long.</p>
+            <p class="text-sm font-semibold" :class="headingClass">Suggesting a title…</p>
+            <p class="text-xs" :class="mutedClass">The AI reads the scan only to propose a title. You fill in everything else.</p>
           </div>
 
           <!-- ══════════ STEP 4: REVIEW ══════════ -->
           <div v-else-if="step === 'review'" class="space-y-5">
             <!-- AI failure banner -->
             <div v-if="aiError && !aiSkipped" class="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
-              <p class="font-semibold">AI analysis failed.</p>
+              <p class="font-semibold">Title suggestion unavailable.</p>
               <p class="mt-1 text-xs opacity-90">{{ aiError }} Your scan has been preserved.</p>
               <div class="mt-3 flex gap-2">
-                <button type="button" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white" @click="retryAnalysis">
-                  Retry AI Analysis
+                <button type="button" class="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white" :disabled="analyzing" @click="retryAnalysis">
+                  Retry Title Suggestion
                 </button>
                 <button type="button" class="rounded-lg border border-amber-500/40 px-3 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400" @click="continueManually">
-                  Continue Manually
+                  Type the Title Myself
                 </button>
               </div>
             </div>
 
             <template v-else>
-              <div v-if="!aiSkipped" class="rounded-2xl border p-4" :class="isDark ? 'border-white/10 bg-white/[0.03]' : 'border-gray-200 bg-gray-50'">
-                <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-2 text-sm font-semibold text-candy-orange">
-                    <Icon name="ph:sparkle-fill" class="h-4 w-4" />
-                    AI Document Analysis
-                  </div>
-                  <span class="text-xs font-bold" :class="mutedClass">Confidence: {{ Math.round(analysis?.confidence ?? 0) }}%</span>
-                </div>
-                <div class="mt-3 flex flex-wrap gap-2 text-xs">
-                  <span class="inline-flex items-center gap-1 rounded-full border px-2 py-1" :class="detectionPillClass(containsSignature)">
-                    <Icon :name="containsSignature ? 'ph:check-circle-fill' : 'ph:circle'" class="h-3 w-3" /> Signature
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full border px-2 py-1" :class="detectionPillClass(containsLetterhead)">
-                    <Icon :name="containsLetterhead ? 'ph:check-circle-fill' : 'ph:circle'" class="h-3 w-3" /> Letterhead
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full border px-2 py-1" :class="detectionPillClass(containsStamp)">
-                    <Icon :name="containsStamp ? 'ph:check-circle-fill' : 'ph:circle'" class="h-3 w-3" /> Stamp
-                  </span>
-                  <span class="inline-flex items-center gap-1 rounded-full border px-2 py-1" :class="detectionPillClass(containsSeal)">
-                    <Icon :name="containsSeal ? 'ph:check-circle-fill' : 'ph:circle'" class="h-3 w-3" /> Seal
-                  </span>
-                </div>
-              </div>
-              <p v-else class="text-xs" :class="mutedClass">
-                Continuing without AI — fill in the details manually below.
-              </p>
-
-              <label class="block">
-                <span class="text-sm font-semibold" :class="headingClass">Document Type</span>
-                <input v-model="documentType" type="text" placeholder="e.g. Memorandum" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
-                <p v-if="!aiSkipped && !documentType" class="mt-1 text-[11px]" :class="mutedClass">Not detected / Unknown</p>
-              </label>
-
+              <!-- The AI only suggests the title. Everything below it is the user's. -->
               <label class="block">
                 <span class="text-sm font-semibold" :class="headingClass">Title <span class="text-red-500">*</span></span>
-                <input v-model="title" type="text" required maxlength="200" placeholder="Document title" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
-              </label>
-
-              <div class="grid grid-cols-2 gap-3">
-                <label class="block">
-                  <span class="text-sm font-semibold" :class="headingClass">Sender</span>
-                  <input v-model="sender" type="text" placeholder="Not detected" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
-                </label>
-                <label class="block">
-                  <span class="text-sm font-semibold" :class="headingClass">Recipient</span>
-                  <input v-model="recipient" type="text" placeholder="Not detected" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
-                </label>
-              </div>
-
-              <label class="block">
-                <span class="text-sm font-semibold" :class="headingClass">Subject</span>
-                <input v-model="subject" type="text" placeholder="Not detected" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
+                <input v-model="title" type="text" required maxlength="200" placeholder="Document title" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" data-testid="scan-title" />
+                <p v-if="!aiSkipped && suggestedTitle" class="mt-1 flex items-center gap-1 text-[11px] text-candy-orange">
+                  <Icon name="ph:sparkle-fill" class="h-3 w-3" /> Suggested by AI from the scan — edit it if needed.
+                </p>
+                <p v-else-if="!aiSkipped" class="mt-1 text-[11px]" :class="mutedClass">No title could be read from the scan — please type one.</p>
+                <p v-else class="mt-1 text-[11px]" :class="mutedClass">Type a title for this document.</p>
               </label>
 
               <label class="block">
-                <span class="text-sm font-semibold" :class="headingClass">Document Date</span>
-                <input v-model="documentDate" type="date" class="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
-              </label>
-
-              <label class="block">
-                <span class="text-sm font-semibold" :class="headingClass">Summary</span>
-                <textarea v-model="summary" rows="3" placeholder="Not detected" class="mt-2 w-full resize-none rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
+                <span class="text-sm font-semibold" :class="headingClass">Description <span class="font-normal" :class="mutedClass">(optional)</span></span>
+                <textarea v-model="summary" rows="3" placeholder="Short description of the document" class="mt-2 w-full resize-none rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-candy-orange" :class="inputClass" />
               </label>
 
               <fieldset>
@@ -297,13 +249,6 @@
                   </label>
                 </div>
               </fieldset>
-
-              <div v-if="!aiSkipped" class="grid grid-cols-2 gap-2 text-xs">
-                <label class="flex items-center gap-2"><input v-model="containsSignature" type="checkbox" class="accent-candy-orange" /> Signature visible</label>
-                <label class="flex items-center gap-2"><input v-model="containsLetterhead" type="checkbox" class="accent-candy-orange" /> Letterhead visible</label>
-                <label class="flex items-center gap-2"><input v-model="containsStamp" type="checkbox" class="accent-candy-orange" /> Stamp visible</label>
-                <label class="flex items-center gap-2"><input v-model="containsSeal" type="checkbox" class="accent-candy-orange" /> Seal visible</label>
-              </div>
 
               <hr :class="borderClass" />
 
@@ -395,20 +340,10 @@ interface EnrichedStage {
   office_id?: string | null
 }
 
+/** What /api/documents/scan/analyze returns: the AI's title suggestion only. */
 interface ScanAnalysisResult {
   model: string
-  document_type: string | null
   title: string | null
-  sender: string | null
-  recipient: string | null
-  subject: string | null
-  document_date: string | null
-  summary: string | null
-  priority: Priority | null
-  contains_signature: boolean
-  contains_letterhead: boolean
-  contains_stamp: boolean
-  contains_seal: boolean
   confidence: number
   raw_response: Record<string, unknown>
 }
@@ -678,34 +613,22 @@ function continueManually() {
   step.value = 'review'
 }
 
+/**
+ * The AI's only output is a suggested title. It fills the title field —
+ * unless the user already typed one — and nothing else: category, office,
+ * route, priority, liaison and description stay entirely the user's.
+ */
 function applyAnalysisToFields(a: ScanAnalysisResult) {
-  documentType.value = a.document_type ?? ''
-  title.value = a.title ?? ''
-  sender.value = a.sender ?? ''
-  recipient.value = a.recipient ?? ''
-  subject.value = a.subject ?? ''
-  documentDate.value = a.document_date ?? ''
-  summary.value = a.summary ?? ''
-  priority.value = a.priority ?? 'Medium'
-  containsSignature.value = a.contains_signature
-  containsLetterhead.value = a.contains_letterhead
-  containsStamp.value = a.contains_stamp
-  containsSeal.value = a.contains_seal
+  suggestedTitle.value = a.title ?? ''
+  if (!title.value.trim() && a.title) title.value = a.title
 }
 
-// ── Review / editable fields ─────────────────────────────────────────────
-const documentType = ref('')
+// ── Review / editable fields (all set by the user; the AI only suggests the title) ──
 const title = ref('')
-const sender = ref('')
-const recipient = ref('')
-const subject = ref('')
-const documentDate = ref('')
+/** What the AI proposed, kept separately so it is recorded as the AI's suggestion. */
+const suggestedTitle = ref('')
 const summary = ref('')
 const priority = ref<Priority>('Medium')
-const containsSignature = ref(false)
-const containsLetterhead = ref(false)
-const containsStamp = ref(false)
-const containsSeal = ref(false)
 
 const stageId = ref('')
 const categoryId = ref('')
@@ -774,14 +697,6 @@ const visibleStages = computed<EnrichedStage[]>(() => {
   return allStages.value.filter((s) => !s.office_id || String(s.office_id) === originOfficeId.value)
 })
 
-function detectionPillClass(active: boolean) {
-  return active
-    ? 'border-candy-orange/40 bg-candy-orange/10 text-candy-orange'
-    : isDark.value
-      ? 'border-onyx-border text-white-muted'
-      : 'border-gray-200 text-gray-400'
-}
-
 const canSubmit = computed(() =>
   !registering.value &&
   !!title.value.trim() &&
@@ -799,7 +714,7 @@ const registeredTitle = ref('')
 const registeredQr = ref('')
 
 async function handleRegister() {
-  if (!canSubmit.value) return
+  if (!canSubmit.value || registering.value) return
   registering.value = true
   registerError.value = ''
   try {
@@ -814,26 +729,19 @@ async function handleRegister() {
 
     fd.append('ai_skipped', String(aiSkipped.value))
     fd.append('title', title.value.trim())
-    fd.append('document_type', documentType.value)
-    fd.append('sender', sender.value)
-    fd.append('recipient', recipient.value)
-    fd.append('subject', subject.value)
-    fd.append('document_date', documentDate.value)
     fd.append('summary', summary.value)
     fd.append('priority', priority.value)
-    fd.append('contains_signature', String(containsSignature.value))
-    fd.append('contains_letterhead', String(containsLetterhead.value))
-    fd.append('contains_stamp', String(containsStamp.value))
-    fd.append('contains_seal', String(containsSeal.value))
     if (assignedMessengerId.value) fd.append('assigned_messenger_id', assignedMessengerId.value)
     if (analysis.value) {
+      // Recorded as the AI's suggestion; the document uses the (possibly edited) title above.
       fd.append('model', analysis.value.model)
+      fd.append('ai_title', suggestedTitle.value)
       fd.append('confidence', String(analysis.value.confidence))
-      fd.append('raw_response', JSON.stringify(analysis.value.raw_response ?? {}))
     }
 
     const res = await $fetch<{
       success: boolean
+      already_registered?: boolean
       metadata: { title: string; qr_code_data: string }
       messenger_assignment_error?: string | null
     }>('/api/documents/scan/register', {
@@ -882,18 +790,10 @@ function resetAll() {
   analysis.value = null
   aiError.value = ''
   aiSkipped.value = false
-  documentType.value = ''
   title.value = ''
-  sender.value = ''
-  recipient.value = ''
-  subject.value = ''
-  documentDate.value = ''
+  suggestedTitle.value = ''
   summary.value = ''
   priority.value = 'Medium'
-  containsSignature.value = false
-  containsLetterhead.value = false
-  containsStamp.value = false
-  containsSeal.value = false
   stageId.value = ''
   categoryId.value = ''
   originOfficeId.value = ''

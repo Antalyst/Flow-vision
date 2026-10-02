@@ -4,7 +4,7 @@ import {
 } from '~~/server/utils/operationalReports'
 
 export default defineEventHandler(async (event) => {
-  const role = (getCookie(event, 'user_role') ?? '').toLowerCase()
+  const role = (sessionRole(event) ?? '').toLowerCase()
 
   if (role === 'employee') {
     const context = await buildEmployeeReportContext(event)

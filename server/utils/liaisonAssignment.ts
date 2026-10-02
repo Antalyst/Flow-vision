@@ -13,10 +13,56 @@
  */
 
 import { resolveBranchOfficeId } from './officeHierarchy'
+import { lifecycleDb } from './documentRoute'
+
+/**
+ * Permanent record of who was made responsible for carrying a document on a
+ * leg (document_liaison_assignments). A new assignment CANCELS the previous
+ * active one for the document but never deletes or overwrites it, so every
+ * liaison's history survives. Pickup stamps picked_up_at; the receiving
+ * office's scan stamps delivered_at and closes it.
+ */
+export async function recordLiaisonAssignment(input: {
+  documentId: string
+  orgId: string
+  fromOfficeId: string | null
+  toOfficeId: string | null
+  stepNumber: number
+  liaisonId: string
+  assignedBy: string
+}) {
+  const db = lifecycleDb()
+  const row = {
+    document_id: input.documentId,
+    org_id: input.orgId,
+    from_office_id: input.fromOfficeId,
+    to_office_id: input.toOfficeId,
+    step_number: input.stepNumber,
+    liaison_id: input.liaisonId,
+    assigned_by: input.assignedBy,
+    status: 'ACTIVE',
+  }
+  // Two attempts: a concurrent assignment may slip in between cancel and insert.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await db.from('document_liaison_assignments')
+      .update({ status: 'CANCELLED' })
+      .eq('document_id', input.documentId)
+      .eq('status', 'ACTIVE')
+    const { error } = await db.from('document_liaison_assignments').insert(row)
+    if (!error) return
+    if (error.code !== '23505') {
+      console.error('[liaisonAssignment] could not record assignment:', error.message)
+      return
+    }
+  }
+  console.error('[liaisonAssignment] assignment record kept colliding; latest assignment not recorded', input.documentId)
+}
 
 // 'client' included: an org-wide client admin can be a document's creator, and the
 // business rule explicitly allows a creator to become their own document's Liaison.
-export const ELIGIBLE_LIAISON_ROLES = ['employee', 'employee_sub_user', 'messenger', 'client']
+// 'employee' is NOT eligible: that role is the office head / office-level approver,
+// who approves releases rather than physically carrying documents.
+export const ELIGIBLE_LIAISON_ROLES = ['employee_sub_user', 'messenger', 'client']
 
 export interface LiaisonRow {
   user_id: string
@@ -69,7 +115,9 @@ export async function resolveAndAssociateLiaison(
   if (!ELIGIBLE_LIAISON_ROLES.includes(String(liaison.role))) {
     throw createError({
       statusCode: 422,
-      message: 'This user cannot be assigned as a messenger.',
+      message: String(liaison.role) === 'employee'
+        ? 'Office heads approve releases and cannot be assigned as the liaison. Choose a messenger or staff member.'
+        : 'This user cannot be assigned as a messenger.',
       data: { code: 'INELIGIBLE_USER' },
     })
   }

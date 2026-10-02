@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { createChatCompletion } from '~~/server/utils/groq'
 
 export default defineEventHandler(async (event) => {
+  requireOrgAuth(event)
   const body = await readBody(event)
   const { query, documents } = body
 

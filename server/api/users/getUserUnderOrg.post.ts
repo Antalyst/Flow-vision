@@ -4,7 +4,8 @@ export default defineEventHandler(async(event) => {
   try {
     const config = useRuntimeConfig()
     const body = await readBody(event);
-    const org_id = body?.org_id ?? body?.orgId;
+    // Only the caller's own organization; a different org_id in the body is refused.
+    const org_id = requireOrgAuth(event, undefined, body?.org_id ?? body?.orgId).orgId;
 
     if (org_id == null || org_id === '') {
       throw createError({
@@ -31,8 +32,6 @@ export default defineEventHandler(async(event) => {
         message: error.message || 'Failed to fetch employees',
       });
     }
-
-    console.log('[Backend Data Check]:', data)
 
     return {
       success: true,

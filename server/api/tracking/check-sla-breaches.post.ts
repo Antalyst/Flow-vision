@@ -21,7 +21,7 @@ function getServiceSupabase() {
  */
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
-  const userRole = (getCookie(event, 'user_role') ?? '').toLowerCase()
+  const userRole = (sessionRole(event) ?? '').toLowerCase()
 
   if (!['client', 'employee', 'employee_sub_user'].includes(userRole)) {
     throw createError({ statusCode: 403, message: 'Not authorized.' })

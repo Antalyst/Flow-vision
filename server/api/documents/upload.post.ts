@@ -37,7 +37,9 @@ import { logActivitySafe } from '~~/server/utils/activityLog'
 import { emitDocumentRegisteredEmail, emitLiaisonAssignedEmail } from '~~/server/utils/email/emailEvents'
 import { buildDocumentTrackQrPayload } from '~~/server/utils/documentQr'
 import { requiresQrStamp, stampDocumentWithQr } from '~~/server/utils/stampDocumentQr'
-import { resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { recordLiaisonAssignment, resolveAndAssociateLiaison } from '~~/server/utils/liaisonAssignment'
+import { buildCycleStops, lifecycleDb, saveDocumentRoute, validateRouteOffices } from '~~/server/utils/documentRoute'
+import { assertRecurringRoutingAvailable } from '~~/server/utils/recurringRouting'
 import { notifyLiaisonAssigned } from '~~/server/utils/notifications'
 
 const ALLOWED_ROLES = ['client', 'employee', 'employee_sub_user'] as const
@@ -50,6 +52,8 @@ interface ResolvedRouteStep {
   office_name: string
   office_code: string | null
   org_id:      string
+  cycle_number?: number
+  is_return?: boolean
 }
 
 export default defineEventHandler(async (event) => {
@@ -67,8 +71,8 @@ export default defineEventHandler(async (event) => {
   // Step 1 — RBAC Auth Guard
   // ─────────────────────────────────────────────────────────────────────
 
-  const userId   = getCookie(event, 'user_session')
-  const userRole = getCookie(event, 'user_role') as AllowedRole | undefined
+  const userId   = sessionUserId(event)
+  const userRole = sessionRole(event) as AllowedRole | undefined
 
   if (!userId || !userRole || !(ALLOWED_ROLES as readonly string[]).includes(userRole)) {
     throw createError({
@@ -120,7 +124,16 @@ export default defineEventHandler(async (event) => {
   const get = (name: string) => formData.find((f) => f.name === name)?.data.toString().trim() || null
 
   const fileItem       = formData.find((f) => f.name === 'file')
-  const stageIdRaw     = get('stage_id')
+  // User-built route: ordered destination office ids (JSON array). When present
+  // it replaces stage_id; saved_route_id only records which saved route it came from.
+  const routeOfficeIdsRaw = get('route_office_ids')
+  const savedRouteIdRaw   = get('saved_route_id')
+  // Recurring: each cycle ends with a return to the creator's office, after which
+  // the creator can reactivate the same document for another cycle.
+  const routingType = get('routing_type') === 'RECURRING' ? 'RECURRING' : 'STANDARD'
+  // Controlled rejection (not a raw database error) before the recurring migration.
+  if (routingType === 'RECURRING') await assertRecurringRoutingAvailable()
+  const stageIdRaw     = routeOfficeIdsRaw ? savedRouteIdRaw : get('stage_id')
   const originOfficeId = get('origin_office_id')   // UUID string | null
   const officeIdLegacy = get('office_id')           // legacy field — kept for compatibility
   const manualTitle       = get('manual_title')
@@ -290,7 +303,36 @@ export default defineEventHandler(async (event) => {
 
   let resolvedRouteSteps: ResolvedRouteStep[] = []
 
-  if (resolvedStageId) {
+  if (routeOfficeIdsRaw) {
+    let officeIds: unknown
+    try {
+      officeIds = JSON.parse(routeOfficeIdsRaw)
+    } catch {
+      throw createError({ statusCode: 400, message: 'The document route is not valid. Please rebuild it.' })
+    }
+    if (!Array.isArray(officeIds)) {
+      throw createError({ statusCode: 400, message: 'The document route is not valid. Please rebuild it.' })
+    }
+    let stops = await validateRouteOffices(orgId, officeIds.map(String), resolvedOriginOfficeId)
+    if (routingType === 'RECURRING') {
+      if (!resolvedOriginOfficeId) {
+        throw createError({
+          statusCode: 400,
+          message: "A recurring route returns the document to its creator's office, so it must be registered at an office.",
+        })
+      }
+      stops = buildCycleStops(stops, resolvedOriginOfficeId, resolvedOfficeName ?? 'Origin office', 1, 0)
+    }
+    resolvedRouteSteps = stops.map((stop) => ({
+      step_number: stop.step_number,
+      office_id: stop.office_id,
+      office_name: stop.office_name,
+      office_code: null,
+      org_id: orgId,
+      cycle_number: stop.cycle_number ?? 1,
+      is_return: !!stop.is_return,
+    }))
+  } else if (resolvedStageId) {
     // 5b-i: Fetch the ordered checkpoint sequence for this stage
     const { data: rawSteps, error: stepsErr } = await client
       .from('stage_steps')
@@ -422,6 +464,9 @@ export default defineEventHandler(async (event) => {
         org_id:            orgId,               // server-resolved, never from form
         office_id:         effectiveOfficeId,
         stage_id:          resolvedStageId,
+        // Only written for recurring documents, so standard uploads keep working
+        // even before the recurring-routing migration has been run.
+        ...(routingType === 'RECURRING' ? { routing_type: 'RECURRING' } : {}),
         user_id:           userId,
         category_id:       categoryId || null,
         title:             aiAnalysis.title,
@@ -444,6 +489,31 @@ export default defineEventHandler(async (event) => {
 
     if (supabaseError) throw supabaseError
     supabaseDocId = supabaseDoc.id
+
+    // The document's own copy of its route — later edits to a saved route never change it.
+    await saveDocumentRoute(supabaseDoc.id, orgId, resolvedRouteSteps.map((s) => ({
+      step_number: s.step_number,
+      office_id: s.office_id,
+      office_name: s.office_name,
+      cycle_number: s.cycle_number ?? 1,
+      is_return: !!s.is_return,
+    })))
+
+    if (routingType === 'RECURRING' && resolvedRouteSteps.length > 0) {
+      const { error: cycleErr } = await lifecycleDb().from('document_routing_cycles').insert({
+        document_id: supabaseDoc.id,
+        org_id: orgId,
+        cycle_number: 1,
+        start_step: resolvedRouteSteps[0]!.step_number,
+        end_step: resolvedRouteSteps[resolvedRouteSteps.length - 1]!.step_number,
+        status: 'ACTIVE',
+        started_by: userId,
+      })
+      if (cycleErr) {
+        console.error('[Upload] could not record routing cycle 1:', cycleErr.message)
+        throw createError({ statusCode: 500, message: 'We could not set up the recurring route. Please try again.' })
+      }
+    }
 
     // ───────────────────────────────────────────────────────────────────
     // Step 8 — MySQL Blob Insert + Back-link
@@ -603,6 +673,16 @@ export default defineEventHandler(async (event) => {
         if (assignUpdateErr) throw new Error(assignUpdateErr.message)
 
         assignedMessenger = { user_id: liaison.user_id, full_name: liaison.full_name }
+
+        await recordLiaisonAssignment({
+          documentId: supabaseDoc.id,
+          orgId: String(orgId),
+          fromOfficeId: resolvedOriginOfficeId,
+          toOfficeId: resolvedRouteSteps[0]?.office_id ?? null,
+          stepNumber: 1,
+          liaisonId: liaison.user_id,
+          assignedBy: userId,
+        })
 
         const assignMessage = `${actorName ?? 'The creator'} assigned ${liaison.full_name ?? 'a messenger'} to deliver "${docTitle}" for its first leg.`
         await logActivitySafe({

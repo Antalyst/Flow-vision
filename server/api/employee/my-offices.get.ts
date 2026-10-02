@@ -11,16 +11,10 @@ import { serverSupabaseClient } from '#supabase/server'
  *   userId  – the employee's user_id
  */
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const orgId  = query.orgId  as string | undefined
-  const userId = query.userId as string | undefined
-
-  if (!orgId || !userId) {
-    throw createError({
-      statusCode: 400,
-      message: 'orgId and userId query parameters are required',
-    })
-  }
+  // Always the signed-in user's own offices — orgId/userId query params are ignored.
+  const auth = requireOrgAuth(event)
+  const orgId = auth.orgId
+  const userId = auth.userId
 
   const client = await serverSupabaseClient(event)
 

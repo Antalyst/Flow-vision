@@ -25,6 +25,7 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { resolveBranchOfficeId } from '~~/server/utils/officeHierarchy'
+import { ELIGIBLE_LIAISON_ROLES } from '~~/server/utils/liaisonAssignment'
 
 export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
@@ -133,7 +134,9 @@ export default defineEventHandler(async (event) => {
   // Let the creator/handler hand-carry it themselves instead of assigning a
   // messenger — already permitted server-side by assign-liaison.post.ts, this
   // just surfaces it as a pickable option instead of requiring a separate flow.
-  if (actor.userRole === 'client' || actor.userRole === 'employee' || actor.userRole === 'employee_sub_user') {
+  // Not for office heads ('employee'): they approve releases and are never the
+  // liaison — assign-liaison.post.ts rejects them (ELIGIBLE_LIAISON_ROLES).
+  if (ELIGIBLE_LIAISON_ROLES.includes(actor.userRole)) {
     mapped.unshift({
       user_id: actor.userId,
       full_name: `${actor.fullName ?? 'Myself'} (Myself)`,

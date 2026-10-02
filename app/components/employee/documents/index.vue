@@ -156,6 +156,37 @@
       </button>
     </div>
 
+    <!-- Office head: pending release / completion approvals -->
+    <div
+      v-if="releaseQueue.length"
+      class="rounded-2xl border border-candy-orange/30 bg-candy-orange/5 p-4"
+    >
+      <div class="flex items-center gap-2">
+        <Icon name="ph:seal-check-fill" class="h-5 w-5 text-candy-orange" />
+        <h2 class="text-base font-bold">Pending release approvals</h2>
+        <span class="rounded-full bg-candy-orange px-2 py-0.5 text-xs font-bold text-white">{{ releaseQueue.length }}</span>
+      </div>
+      <ul class="mt-3 space-y-2">
+        <li v-for="r in releaseQueue" :key="r.id">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition hover:border-candy-orange"
+            :class="isDark ? 'border-onyx-border bg-onyx-card' : 'border-gray-200 bg-white-pure'"
+            @click="openReleaseRequest(r)"
+          >
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-semibold">{{ r.document_title }}</span>
+              <span class="block text-xs" :class="mutedText">
+                Requested by {{ r.requested_by_name || 'staff' }} · {{ r.office_name }}
+                <template v-if="r.remarks"> · “{{ r.remarks }}”</template>
+              </span>
+            </span>
+            <span class="flex-none text-xs font-semibold text-candy-orange">Review</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- E. Documents List                                                 -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
@@ -284,6 +315,26 @@
     </div>
 
     <!-- Document preview drawer -->
+    <!-- Released by this office: status only, details are no longer available -->
+    <div v-if="releasedDocs.length" class="mt-2">
+      <h2 class="px-1 text-base font-bold">Released by your office</h2>
+      <p class="px-1 text-xs" :class="mutedText">These documents have moved on. Only their release status is shown.</p>
+      <ul class="mt-3 space-y-2">
+        <li
+          v-for="doc in releasedDocs"
+          :key="doc.id"
+          class="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+          :class="isDark ? 'border-onyx-border bg-onyx-card/60' : 'border-gray-200 bg-gray-50'"
+        >
+          <span class="flex min-w-0 items-center gap-2">
+            <Icon name="ph:lock-simple-light" class="h-4 w-4 flex-none text-gray-400" />
+            <span class="truncate text-sm font-medium">{{ doc.title }}</span>
+          </span>
+          <span class="flex-none text-xs" :class="mutedText">Released · {{ formatReleasedAt(doc.released_at) }}</span>
+        </li>
+      </ul>
+    </div>
+
     <DocumentPreviewDrawer
       :is-open="!!activeDocument"
       :document="activeDocument"
@@ -291,7 +342,7 @@
       show-completion-actions
       pipeline-messaging-enabled
       :messaging-offices="myOffices"
-      width-class="lg:w-[60%] lg:max-w-4xl"
+      width-class="lg:w-[min(92vw,1200px)] lg:max-w-none"
       :office-resolver="resolveOfficeName"
       @close="closeDocumentPreview"
       @flag-issue="issueChatRef?.openReportForm()"
@@ -416,6 +467,23 @@ const scannerRole = computed<'employee' | 'employee_sub_user'>(() =>
   auth.user?.role === 'employee_sub_user' ? 'employee_sub_user' : 'employee',
 )
 const activeDocument = ref<LedgerDoc | null>(null)
+const releasedDocs = ref<Array<{ id: string; title: string; released_at: string | null }>>([])
+// Release requests waiting for the signed-in user as office head.
+const releaseQueue = ref<any[]>([])
+async function fetchReleaseQueue() {
+  try {
+    const res: any = await $fetch('/api/tracking/release-requests')
+    releaseQueue.value = res?.data ?? []
+  } catch {
+    releaseQueue.value = []
+  }
+}
+function openReleaseRequest(r: { document_id: string }) {
+  const doc = docs.value.find((d) => String(d.id) === String(r.document_id))
+  if (doc) openDocumentPreview(doc)
+}
+const formatReleasedAt = (value: string | null) =>
+  value ? new Intl.DateTimeFormat('en', { month: 'short', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(value)) : 'Released'
 const issueChatRef   = ref<InstanceType<typeof DocumentIssueChatPanel> | null>(null)
 // Pre-filter from a deep link (e.g. the dashboard's KPI cards): ?office=own, ?tracking=IN_TRANSIT
 const officeFilter  = ref<string>(String(route.query.office ?? 'all'))
@@ -631,9 +699,14 @@ const fetchDocs = async () => {
     // Own uploads, plus anything that has actually arrived at their own
     // desk/office and needs action — not the full "touches my office at any
     // point" breadth of LOCAL scope, which would leak other staff's traffic.
+    const rows: any[] = res.data ?? []
+    // Documents this office already released come back as minimal "Released"
+    // stubs (server-enforced) — listed separately and never opened.
+    releasedDocs.value = rows.filter((d) => d.access === 'released')
+    const fullRows = rows.filter((d) => d.access !== 'released')
     docs.value = props.ownUploadsOnly
-      ? (res.data ?? []).filter((d: any) => d.is_own_upload || d.is_at_my_office)
-      : (res.data ?? [])
+      ? fullRows.filter((d: any) => d.is_own_upload || d.is_at_my_office)
+      : fullRows
   } catch (err) {
     console.error('[EmployeeDocs] fetchDocs:', err)
   } finally {
@@ -704,11 +777,19 @@ const handleIssueUpdated = (data: { tracking_status: string; issueClosed?: boole
       ...(data.checkpoint_cleared_step != null ? { checkpoint_cleared_step: data.checkpoint_cleared_step } : {}),
     }
   }
+  // Custody/release changes affect fields the drawer's panels read (e.g. release
+  // approval unlocks liaison assignment) — refresh from the server.
+  const openId = activeDocument.value?.id
+  void fetchDocs().then(() => {
+    const fresh = docs.value.find((d) => d.id === openId)
+    if (fresh && activeDocument.value?.id === openId) activeDocument.value = fresh
+  })
+  void fetchReleaseQueue()
 }
 
 onMounted(async () => {
   if (auth.isLoggedIn && !auth.currentOrg) await auth.fetchMyOrg()
-  await Promise.all([fetchMyOffices(), fetchDocs(), stageStore.fetchStages()])
+  await Promise.all([fetchMyOffices(), fetchDocs(), stageStore.fetchStages(), fetchReleaseQueue()])
   await openDocumentFromQuery()
 })
 

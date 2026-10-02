@@ -1,5 +1,5 @@
 <template>
-  <LiaisonDeliveriesBoard scan-base-path="/employee/scan" />
+  <LiaisonDeliveriesBoard scan-base-path="/employee/scan" allow-receive />
 </template>
 
 <script setup lang="ts">

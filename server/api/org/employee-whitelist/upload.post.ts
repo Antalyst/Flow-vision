@@ -17,10 +17,7 @@ export default defineEventHandler(async (event) => {
   const orgIdField = formData.find(f => f.name === 'org_id')
   const fileField = formData.find(f => f.name === 'file' && f.filename)
 
-  if (!orgIdField) {
-    throw createError({ statusCode: 400, statusMessage: 'Organization ID is required' })
-  }
-  const org_id = orgIdField.data.toString()
+  const org_id = requireOrgAuth(event, ['client'], orgIdField?.data.toString()).orgId
 
   if (!fileField) {
     throw createError({ statusCode: 400, statusMessage: 'CSV file is required' })

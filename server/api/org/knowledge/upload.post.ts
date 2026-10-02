@@ -5,24 +5,39 @@
  * Knowledge Base. The file is stored as a blob (MySQL `org_knowledge_files`)
  * alongside its extracted text, which the AI chat assistant later reads to
  * ground answers about how the org works (see server/utils/orgKnowledge.ts).
+ *
+ * Single-request path for files up to 4 MB (Vercel rejects bodies over
+ * ~4.5 MB). Larger PDFs, up to 150 MB, use the chunked upload under
+ * /api/org/knowledge/uploads instead.
  */
-import { resolveTenant } from '~~/server/utils/aiSession'
 import { extractFullTextFromFile } from '~~/server/utils/documentParser'
-import { KNOWLEDGE_ALLOWED_EXTENSIONS, MAX_KNOWLEDGE_FILE_BYTES } from '~~/server/utils/orgKnowledge'
+import {
+  KNOWLEDGE_ALLOWED_EXTENSIONS,
+  defineKnowledgeHandler,
+  requireKnowledgeAdmin,
+  toKnowledgeHttpError,
+} from '~~/server/utils/orgKnowledge'
+import {
+  KNOWLEDGE_ENCRYPTED_PDF_MESSAGE,
+  KNOWLEDGE_INVALID_PDF_MESSAGE,
+  KNOWLEDGE_SCANNED_PDF_MESSAGE,
+  KNOWLEDGE_SINGLE_REQUEST_MAX_BYTES,
+} from '#shared/knowledgeUpload'
 
-export default defineEventHandler(async (event) => {
-  const db = event.context.db
-  if (!db) {
-    throw createError({ statusCode: 500, statusMessage: 'Database connection is not available.' })
-  }
+/** Allowance for multipart boundaries/headers on top of the file itself. */
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024
 
+const SINGLE_REQUEST_TOO_LARGE =
+  'Files uploaded in a single request must be 4 MB or smaller. PDFs up to 150 MB are uploaded in parts automatically; Word and Excel files must be 4 MB or smaller.'
+
+export default defineKnowledgeHandler('single-request upload', async (event) => {
   // Knowledge base management is an org-admin (client) action only.
-  const { orgId, userId, role } = await resolveTenant(event)
-  if (role !== 'client') {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'Only an organization admin can manage the AI Knowledge Base.',
-    })
+  const { db, orgId, userId } = await requireKnowledgeAdmin(event)
+
+  // Refuse oversize bodies before buffering them.
+  const declaredLength = Number(getRequestHeader(event, 'content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > KNOWLEDGE_SINGLE_REQUEST_MAX_BYTES + MULTIPART_OVERHEAD_BYTES) {
+    throw createError({ statusCode: 413, statusMessage: SINGLE_REQUEST_TOO_LARGE, data: { code: 'FILE_TOO_LARGE' } })
   }
 
   const formData = await readMultipartFormData(event)
@@ -42,17 +57,50 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  if (fileItem.data.length > MAX_KNOWLEDGE_FILE_BYTES) {
-    const maxMb = Math.round(MAX_KNOWLEDGE_FILE_BYTES / (1024 * 1024))
-    throw createError({ statusCode: 400, statusMessage: `File is too large. The limit is ${maxMb}MB.` })
+  if (fileItem.data.length > KNOWLEDGE_SINGLE_REQUEST_MAX_BYTES) {
+    throw createError({ statusCode: 413, statusMessage: SINGLE_REQUEST_TOO_LARGE, data: { code: 'FILE_TOO_LARGE' } })
   }
 
   const mimeType = fileItem.type || 'application/octet-stream'
   const buffer = Buffer.from(fileItem.data)
 
-  // Extraction failures never block the upload — the file is still stored,
-  // just flagged so it's excluded from AI grounding until re-uploaded.
+  // Don't trust the extension or browser MIME type — check the real header.
+  if (fileExt === 'pdf' && !buffer.subarray(0, 5).equals(Buffer.from('%PDF-'))) {
+    throw createError({ statusCode: 422, statusMessage: KNOWLEDGE_INVALID_PDF_MESSAGE, data: { code: 'INVALID_PDF' } })
+  }
+
+  // A file whose text can't be read is useless to the AI, so it's rejected
+  // outright — nothing is stored, and no half-working entry appears in the list.
   const extraction = await extractFullTextFromFile({ filename: fileName, data: buffer })
+  if (extraction.status !== 'ready') {
+    const reason = String(extraction.error ?? '')
+    let message = `The text in "${fileName}" could not be read, so it was not added to the AI Knowledge Base.`
+    if (fileExt === 'pdf') {
+      if (/password|encrypt/i.test(reason)) message = KNOWLEDGE_ENCRYPTED_PDF_MESSAGE
+      else if (/no readable text/i.test(reason)) message = KNOWLEDGE_SCANNED_PDF_MESSAGE
+      else message = KNOWLEDGE_INVALID_PDF_MESSAGE
+    }
+    console.warn('[Knowledge Upload] rejected unreadable file', { org_id: orgId, file_ext: fileExt, file_size: buffer.length, reason })
+    throw createError({ statusCode: 422, statusMessage: message, data: { code: 'UNREADABLE_FILE' } })
+  }
+
+  // A retried upload (e.g. the response was lost) must not add a second copy.
+  // Single-request files are always stored as one blob, and a blob row is
+  // always a finished upload — this check works before and after the
+  // chunked-upload migration.
+  const [existing] = await db.execute(
+    `SELECT id FROM org_knowledge_files
+     WHERE org_id = ? AND file_name = ? AND file_size = ? AND file_blob IS NOT NULL
+     LIMIT 1`,
+    [orgId, fileName, buffer.length],
+  )
+  if ((existing as any[]).length > 0) {
+    throw createError({
+      statusCode: 409,
+      statusMessage: `"${fileName}" is already in your AI Knowledge Base. Delete the existing copy first if you want to replace it.`,
+      data: { code: 'DUPLICATE_FILE' },
+    })
+  }
 
   try {
     const [result] = await db.execute(
@@ -66,9 +114,9 @@ export default defineEventHandler(async (event) => {
         mimeType,
         buffer.length,
         buffer,
-        extraction.status === 'ready' ? extraction.text : null,
+        extraction.text,
         extraction.status,
-        extraction.error ?? null,
+        null,
         userId,
         null,
       ]
@@ -78,9 +126,7 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
-      message: extraction.status === 'ready'
-        ? `"${fileName}" was uploaded and is ready for the AI to use.`
-        : `"${fileName}" was uploaded, but its text could not be read (${extraction.error ?? 'unknown error'}). It won't be used by the AI yet.`,
+      message: `"${fileName}" was uploaded and is ready for the AI to use.`,
       file: {
         id: insertId,
         file_name: fileName,
@@ -88,15 +134,12 @@ export default defineEventHandler(async (event) => {
         mime_type: mimeType,
         file_size: buffer.length,
         extraction_status: extraction.status,
-        extraction_error: extraction.error ?? null,
+        extraction_error: null,
         created_at: new Date().toISOString(),
       },
     }
   } catch (error: any) {
-    console.error('[Knowledge Upload] Insert failed:', error)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'We could not save this file. Please try again.',
-    })
+    // The text was read fine — this is a storage failure, reported as such.
+    throw toKnowledgeHttpError(error, 'save uploaded file')
   }
 })
