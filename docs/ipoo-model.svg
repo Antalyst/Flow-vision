@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1890" height="1250" viewBox="0 0 1890 1250" font-family="Segoe UI, Arial, sans-serif">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#000"/></marker></defs>
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="945.0" y="50" font-size="28" font-weight="bold" fill="#000" text-anchor="middle">FlowVision – Input-Process-Output-Outcome (IPOO) Model</text>
+<rect x="40" y="90" width="400" height="1075" fill="#fff" stroke="#000" stroke-width="2.5"/>
+<line x1="40" y1="146" x2="440" y2="146" stroke="#000" stroke-width="2.5"/>
+<text x="240.0" y="118.0" font-size="22" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="middle">INPUT</text>
+<text x="62" y="186" font-size="16" font-weight="bold" fill="#000">Admin</text>
+<text x="68" y="213" font-size="15" fill="#000">•</text>
+<text x="84" y="213" font-size="15" fill="#000">Organization profile and settings</text>
+<text x="68" y="239" font-size="15" fill="#000">•</text>
+<text x="84" y="239" font-size="15" fill="#000">Branch offices and office heads</text>
+<text x="68" y="265" font-size="15" fill="#000">•</text>
+<text x="84" y="265" font-size="15" fill="#000">Document routes / workflow stages</text>
+<text x="68" y="291" font-size="15" fill="#000">•</text>
+<text x="84" y="291" font-size="15" fill="#000">Staff accounts and employee whitelist (CSV)</text>
+<text x="68" y="317" font-size="15" fill="#000">•</text>
+<text x="84" y="317" font-size="15" fill="#000">AI knowledge-base files (PDF, DOCX, XLSX)</text>
+<text x="62" y="360" font-size="16" font-weight="bold" fill="#000">Department Head &amp; Staff</text>
+<text x="68" y="387" font-size="15" fill="#000">•</text>
+<text x="84" y="387" font-size="15" fill="#000">Document details (title, category, priority,</text>
+<text x="84" y="408" font-size="15" fill="#000">origin office, route)</text>
+<text x="68" y="434" font-size="15" fill="#000">•</text>
+<text x="84" y="434" font-size="15" fill="#000">Document files (DOCX, XLSX, PDF)</text>
+<text x="68" y="460" font-size="15" fill="#000">•</text>
+<text x="84" y="460" font-size="15" fill="#000">Camera-scanned document pages</text>
+<text x="68" y="486" font-size="15" fill="#000">•</text>
+<text x="84" y="486" font-size="15" fill="#000">Release requests, release decisions and</text>
+<text x="84" y="507" font-size="15" fill="#000">remarks</text>
+<text x="62" y="550" font-size="16" font-weight="bold" fill="#000">Liaison</text>
+<text x="68" y="577" font-size="15" fill="#000">•</text>
+<text x="84" y="577" font-size="15" fill="#000">QR scans of station, office and desk codes at</text>
+<text x="84" y="598" font-size="15" fill="#000">pickup, drop-off and custody transfer</text>
+<text x="62" y="641" font-size="16" font-weight="bold" fill="#000">All Users</text>
+<text x="68" y="668" font-size="15" fill="#000">•</text>
+<text x="84" y="668" font-size="15" fill="#000">Login credentials</text>
+<text x="68" y="694" font-size="15" fill="#000">•</text>
+<text x="84" y="694" font-size="15" fill="#000">Natural-language questions to the AI assistant</text>
+<text x="68" y="720" font-size="15" fill="#000">•</text>
+<text x="84" y="720" font-size="15" fill="#000">Messages, issue / discrepancy reports,</text>
+<text x="84" y="741" font-size="15" fill="#000">operational reports and feedback</text>
+<line x1="446" y1="627.5" x2="504" y2="627.5" stroke="#000" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="510" y="90" width="400" height="1075" fill="#fff" stroke="#000" stroke-width="2.5"/>
+<line x1="510" y1="146" x2="910" y2="146" stroke="#000" stroke-width="2.5"/>
+<text x="710.0" y="118.0" font-size="22" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="middle">PROCESS</text>
+<text x="532" y="186" font-size="16" font-weight="bold" fill="#000">1. Authentication &amp; Access Control</text>
+<text x="538" y="213" font-size="15" fill="#000">•</text>
+<text x="554" y="213" font-size="15" fill="#000">Login and session validation</text>
+<text x="538" y="239" font-size="15" fill="#000">•</text>
+<text x="554" y="239" font-size="15" fill="#000">Role-based access (Admin, Department Head,</text>
+<text x="554" y="260" font-size="15" fill="#000">Staff, Liaison) scoped to the organization and</text>
+<text x="554" y="281" font-size="15" fill="#000">office</text>
+<text x="532" y="324" font-size="16" font-weight="bold" fill="#000">2. Organization Setup</text>
+<text x="538" y="351" font-size="15" fill="#000">•</text>
+<text x="554" y="351" font-size="15" fill="#000">Office network and route builder</text>
+<text x="538" y="377" font-size="15" fill="#000">•</text>
+<text x="554" y="377" font-size="15" fill="#000">User provisioning and whitelist import</text>
+<text x="532" y="420" font-size="16" font-weight="bold" fill="#000">3. Document Registration</text>
+<text x="538" y="447" font-size="15" fill="#000">•</text>
+<text x="554" y="447" font-size="15" fill="#000">Generate unique tracking code (FLOW-xxxx)</text>
+<text x="538" y="473" font-size="15" fill="#000">•</text>
+<text x="554" y="473" font-size="15" fill="#000">Generate QR code and embed it in the DOCX /</text>
+<text x="554" y="494" font-size="15" fill="#000">XLSX file</text>
+<text x="538" y="520" font-size="15" fill="#000">•</text>
+<text x="554" y="520" font-size="15" fill="#000">Store file; AI suggests title and summary</text>
+<text x="532" y="563" font-size="16" font-weight="bold" fill="#000">4. QR-Based Routing &amp; Chain of Custody</text>
+<text x="538" y="590" font-size="15" fill="#000">•</text>
+<text x="554" y="590" font-size="15" fill="#000">Assign liaison; validate each drop-off against</text>
+<text x="554" y="611" font-size="15" fill="#000">the route</text>
+<text x="538" y="637" font-size="15" fill="#000">•</text>
+<text x="554" y="637" font-size="15" fill="#000">Status flow: Created → Picked Up → In Transit</text>
+<text x="554" y="658" font-size="15" fill="#000">→ Arrived → Completed / Discrepancy</text>
+<text x="538" y="684" font-size="15" fill="#000">•</text>
+<text x="554" y="684" font-size="15" fill="#000">Desk transfer, release request and approval</text>
+<text x="538" y="710" font-size="15" fill="#000">•</text>
+<text x="554" y="710" font-size="15" fill="#000">Record every handoff as a tracking event</text>
+<text x="532" y="753" font-size="16" font-weight="bold" fill="#000">5. Monitoring &amp; Analytics</text>
+<text x="538" y="780" font-size="15" fill="#000">•</text>
+<text x="554" y="780" font-size="15" fill="#000">SLA compliance and breach detection</text>
+<text x="538" y="806" font-size="15" fill="#000">•</text>
+<text x="554" y="806" font-size="15" fill="#000">Workload and bottleneck analysis</text>
+<text x="538" y="832" font-size="15" fill="#000">•</text>
+<text x="554" y="832" font-size="15" fill="#000">7-day traffic forecast and workload prediction</text>
+<text x="532" y="875" font-size="16" font-weight="bold" fill="#000">6. AI Assistant (Groq LLM)</text>
+<text x="538" y="902" font-size="15" fill="#000">•</text>
+<text x="554" y="902" font-size="15" fill="#000">Intent classification and natural-language</text>
+<text x="554" y="923" font-size="15" fill="#000">data queries</text>
+<text x="538" y="949" font-size="15" fill="#000">•</text>
+<text x="554" y="949" font-size="15" fill="#000">Semantic search, summarization, office/route</text>
+<text x="554" y="970" font-size="15" fill="#000">Q&amp;A</text>
+<text x="538" y="996" font-size="15" fill="#000">•</text>
+<text x="554" y="996" font-size="15" fill="#000">Answers grounded in the org knowledge base</text>
+<text x="532" y="1039" font-size="16" font-weight="bold" fill="#000">7. Communication &amp; Audit</text>
+<text x="538" y="1066" font-size="15" fill="#000">•</text>
+<text x="554" y="1066" font-size="15" fill="#000">In-app notifications and email alerts</text>
+<text x="538" y="1092" font-size="15" fill="#000">•</text>
+<text x="554" y="1092" font-size="15" fill="#000">Messaging, issue threads, report escalation</text>
+<text x="538" y="1118" font-size="15" fill="#000">•</text>
+<text x="554" y="1118" font-size="15" fill="#000">Activity logging (audit trail)</text>
+<line x1="916" y1="627.5" x2="974" y2="627.5" stroke="#000" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="980" y="90" width="400" height="1075" fill="#fff" stroke="#000" stroke-width="2.5"/>
+<line x1="980" y1="146" x2="1380" y2="146" stroke="#000" stroke-width="2.5"/>
+<text x="1180.0" y="118.0" font-size="22" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="middle">OUTPUT</text>
+<text x="1002" y="186" font-size="16" font-weight="bold" fill="#000">Document Outputs</text>
+<text x="1008" y="213" font-size="15" fill="#000">•</text>
+<text x="1024" y="213" font-size="15" fill="#000">Registered document with unique tracking code</text>
+<text x="1008" y="239" font-size="15" fill="#000">•</text>
+<text x="1024" y="239" font-size="15" fill="#000">QR sticker / QR-embedded file and routing</text>
+<text x="1024" y="260" font-size="15" fill="#000">sheet (PDF)</text>
+<text x="1002" y="303" font-size="16" font-weight="bold" fill="#000">Tracking Outputs</text>
+<text x="1008" y="330" font-size="15" fill="#000">•</text>
+<text x="1024" y="330" font-size="15" fill="#000">Real-time document status and location</text>
+<text x="1008" y="356" font-size="15" fill="#000">•</text>
+<text x="1024" y="356" font-size="15" fill="#000">Chain-of-custody timeline per document</text>
+<text x="1008" y="382" font-size="15" fill="#000">•</text>
+<text x="1024" y="382" font-size="15" fill="#000">Liaison delivery task list and delivery</text>
+<text x="1024" y="403" font-size="15" fill="#000">history</text>
+<text x="1002" y="446" font-size="16" font-weight="bold" fill="#000">Alerts</text>
+<text x="1008" y="473" font-size="15" fill="#000">•</text>
+<text x="1024" y="473" font-size="15" fill="#000">Notifications and emails on registration,</text>
+<text x="1024" y="494" font-size="15" fill="#000">liaison assignment, in transit, arrival,</text>
+<text x="1024" y="515" font-size="15" fill="#000">completion, discrepancy and SLA breach</text>
+<text x="1002" y="558" font-size="16" font-weight="bold" fill="#000">Reports &amp; Analytics</text>
+<text x="1008" y="585" font-size="15" fill="#000">•</text>
+<text x="1024" y="585" font-size="15" fill="#000">Dashboard KPIs and trend charts</text>
+<text x="1008" y="611" font-size="15" fill="#000">•</text>
+<text x="1024" y="611" font-size="15" fill="#000">SLA compliance and workload analytics reports</text>
+<text x="1008" y="637" font-size="15" fill="#000">•</text>
+<text x="1024" y="637" font-size="15" fill="#000">Office performance and traffic forecasts</text>
+<text x="1002" y="680" font-size="16" font-weight="bold" fill="#000">AI Outputs</text>
+<text x="1008" y="707" font-size="15" fill="#000">•</text>
+<text x="1024" y="707" font-size="15" fill="#000">Answers, generated data tables and reports</text>
+<text x="1008" y="733" font-size="15" fill="#000">•</text>
+<text x="1024" y="733" font-size="15" fill="#000">Document summaries and search results</text>
+<text x="1008" y="759" font-size="15" fill="#000">•</text>
+<text x="1024" y="759" font-size="15" fill="#000">AI executive digest</text>
+<text x="1002" y="802" font-size="16" font-weight="bold" fill="#000">Records</text>
+<text x="1008" y="829" font-size="15" fill="#000">•</text>
+<text x="1024" y="829" font-size="15" fill="#000">Activity logs / audit trail</text>
+<text x="1008" y="855" font-size="15" fill="#000">•</text>
+<text x="1024" y="855" font-size="15" fill="#000">Operational and issue reports</text>
+<line x1="1386" y1="627.5" x2="1444" y2="627.5" stroke="#000" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="1450" y="90" width="400" height="1075" fill="#fff" stroke="#000" stroke-width="2.5"/>
+<line x1="1450" y1="146" x2="1850" y2="146" stroke="#000" stroke-width="2.5"/>
+<text x="1650.0" y="118.0" font-size="22" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="middle">OUTCOME</text>
+<text x="1478" y="183" font-size="15" fill="#000">•</text>
+<text x="1494" y="183" font-size="15" fill="#000">Faster, more transparent document routing</text>
+<text x="1478" y="209" font-size="15" fill="#000">•</text>
+<text x="1494" y="209" font-size="15" fill="#000">Accountability through a complete chain of</text>
+<text x="1494" y="230" font-size="15" fill="#000">custody</text>
+<text x="1478" y="256" font-size="15" fill="#000">•</text>
+<text x="1494" y="256" font-size="15" fill="#000">Fewer lost, misrouted or delayed documents</text>
+<text x="1478" y="282" font-size="15" fill="#000">•</text>
+<text x="1494" y="282" font-size="15" fill="#000">Improved SLA compliance across offices</text>
+<text x="1478" y="308" font-size="15" fill="#000">•</text>
+<text x="1494" y="308" font-size="15" fill="#000">Data-driven decisions for administrators</text>
+<text x="1478" y="334" font-size="15" fill="#000">•</text>
+<text x="1494" y="334" font-size="15" fill="#000">Less paper-based logging and follow-up</text>
+<path d="M1180.0,1165 L1180.0,1210 L240.0,1210 L240.0,1169" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="8 5" marker-end="url(#arr)"/>
+<rect x="520.0" y="1196" width="380" height="28" fill="#fff"/>
+<text x="710.0" y="1210" font-size="15" font-style="italic" fill="#000" text-anchor="middle" dominant-baseline="middle">Feedback (status updates, reports, evaluation)</text>
+</svg>

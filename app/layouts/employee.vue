@@ -78,7 +78,7 @@
             <div class="flex flex-col items- gap-2">
               <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-candy-orange/10 text-candy-orange border border-candy-orange/20">
                 <span class="w-1.5 h-1.5 rounded-full bg-candy-orange"></span>
-                Employee
+                Department Head
               </span>
               <span
                 v-if="auth.currentOrg?.name"
