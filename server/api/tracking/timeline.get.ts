@@ -3,7 +3,7 @@ import { resolveActorContextWithOffices } from '~~/server/utils/actorContext'
 import { resolveOfficeDisplayLabel } from '~~/server/utils/officeLabel'
 import { getDocumentRoute, getOfficeHeadId, lifecycleDb, routeStopAt } from '~~/server/utils/documentRoute'
 import { assertFullDocumentAccess, documentAccessLevel } from '~~/server/utils/documentAccess'
-import { planStaleCycleRepair } from '~~/server/utils/recurringRouting'
+import { planStaleCycleRepair, recurringRoutingAvailable } from '~~/server/utils/recurringRouting'
 import { resolveOpenIssueReturn } from '~~/server/utils/documentIssues'
 
 /**
@@ -324,8 +324,10 @@ export default defineEventHandler(async (event) => {
   })
   const { data: routingRow } = await db.from('documents').select('routing_type').eq('id', documentId).maybeSingle()
   const routingType = (routingRow as any)?.routing_type === 'RECURRING' ? 'RECURRING' : 'STANDARD'
-  // Same rule as reactivate.post.ts: creator, org admin, or anyone from the originating office.
-  const recurringDone = routingType === 'RECURRING' && doc.tracking_status === 'COMPLETED'
+  // Same rule as reactivate.post.ts: creator, org admin, or anyone from the
+  // originating office — for any completed document (a standard one becomes
+  // recurring when restarted), once recurring routing is installed.
+  const recurringDone = doc.tracking_status === 'COMPLETED' && await recurringRoutingAvailable()
   const inOriginOffice = recurringDone && !!originOfficeId && (
     actor.officeIds.map(String).includes(String(originOfficeId))
     || (actor.userRole === 'employee' && (await getOfficeHeadId(String(originOfficeId))) === actor.userId)
@@ -359,6 +361,10 @@ export default defineEventHandler(async (event) => {
         cycles,
         current_cycle: (documentRoute.find((s) => s.step_number === currentStep) ?? documentRoute[documentRoute.length - 1])?.cycle_number ?? 1,
         can_reactivate: canReactivate,
+        // Where the next cycle would start: where the document physically is now.
+        restart_from: canReactivate
+          ? { office_id: doc.current_office_id ?? originOfficeId, office_name: officeNameOf(doc.current_office_id ?? originOfficeId) ?? originOfficeName }
+          : null,
       },
       custody,
       liaison_assignments: liaisonAssignments,

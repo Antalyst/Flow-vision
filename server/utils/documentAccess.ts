@@ -63,6 +63,9 @@ export function documentAccessLevel(actor: AccessActor, doc: AccessDoc, route: R
   const mine = new Set(actor.officeIds.map(String))
   const holding = holdingOfficeId(doc, route)
   if (holding && mine.has(holding)) return 'full'
+  // A completed document is back in its originating office's hands to restart.
+  const originOffice = doc.origin_office_id ?? doc.office_id
+  if (doc.tracking_status === 'COMPLETED' && originOffice && mine.has(String(originOffice))) return 'full'
 
   // Offices the document has already left: its origin (once it departed) and
   // every stop before the current one.

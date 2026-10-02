@@ -1,10 +1,15 @@
 /**
  * POST /api/tracking/reactivate
  *
- * Starts the next routing cycle of a COMPLETED recurring document — same
- * document id, same QR code, same file. The previous cycles' stops and events
- * are never modified; the new cycle's stops simply continue the step
- * numbering, and end with an automatic return to the creator's office.
+ * Starts the next routing cycle of a COMPLETED document — same document id,
+ * same QR code, same file. The previous cycles' stops and events are never
+ * modified; the new cycle's stops simply continue the step numbering, and end
+ * with an automatic return to the originating office.
+ *
+ * A completed STANDARD document can be restarted too: it becomes a recurring
+ * document, its finished route is recorded as cycle 1, and cycle 2 starts from
+ * wherever the document physically is now (its last office), whose staff
+ * assign the liaison for the first leg.
  *
  * Body: { document_id: string, office_ids: string[], saved_route_id?: string }
  *   office_ids      ordered destinations of the new cycle
@@ -46,7 +51,7 @@ export default defineEventHandler(async (event) => {
   const db = lifecycleDb()
   const { data: doc } = await db
     .from('documents')
-    .select('id, org_id, user_id, title, creator_role, tracking_status, current_step, stage_id, origin_office_id, office_id, routing_type')
+    .select('id, org_id, user_id, title, creator_role, tracking_status, current_step, stage_id, origin_office_id, office_id, current_office_id, routing_type, created_at')
     .eq('id', documentId)
     .maybeSingle()
 
@@ -68,16 +73,15 @@ export default defineEventHandler(async (event) => {
       data: { code: 'NOT_DOCUMENT_OWNER' },
     })
   }
-  if (doc.routing_type !== 'RECURRING') {
-    throw createError({ statusCode: 422, message: 'Only documents with a recurring route can be reactivated.', data: { code: 'NOT_RECURRING' } })
-  }
   if (doc.tracking_status !== 'COMPLETED') {
     throw createError({
       statusCode: 409,
-      message: 'The current routing cycle is still in progress. A document can be reactivated only after it has been returned and its cycle completed.',
+      message: 'This document is still on its route. It can be restarted only after it has completed.',
       data: { code: 'CYCLE_STILL_ACTIVE' },
     })
   }
+  // A completed standard document becomes recurring with this restart.
+  const convertsToRecurring = doc.routing_type !== 'RECURRING'
 
   const originOfficeId = doc.origin_office_id ?? doc.office_id
   if (!originOfficeId) {
@@ -85,6 +89,13 @@ export default defineEventHandler(async (event) => {
   }
   const { data: origin } = await db.from('offices').select('name').eq('id', originOfficeId).maybeSingle()
   const originName = origin?.name ?? 'Origin office'
+  // The new cycle starts where the document physically is: the originating
+  // office for a recurring document (every cycle returns there), the last
+  // office for a standard document that ended elsewhere.
+  const startOfficeId = String(doc.current_office_id ?? originOfficeId)
+  const startName = startOfficeId === String(originOfficeId)
+    ? originName
+    : ((await db.from('offices').select('name').eq('id', startOfficeId).maybeSingle()).data?.name ?? 'its current office')
 
   // D2 recovery: a cycle left ACTIVE on this COMPLETED document (its closing
   // write failed at return receipt) is closed from the recorded receipt first,
@@ -92,6 +103,13 @@ export default defineEventHandler(async (event) => {
   await repairStaleActiveCycle(doc, actor)
 
   const destinations = await validateRouteOffices(actor.orgId, body.office_ids.map(String), String(originOfficeId))
+  if (destinations[0]!.office_id === startOfficeId) {
+    throw createError({
+      statusCode: 400,
+      message: `The document is already at ${startName}. Choose a different first destination.`,
+      data: { code: 'FIRST_STOP_IS_CURRENT_OFFICE' },
+    })
+  }
 
   // Optional: which of the organization's saved routes this cycle was built from.
   let savedRouteId: string | null = null
@@ -117,6 +135,43 @@ export default defineEventHandler(async (event) => {
   const cycleNumber = Math.max(lastCycle, Number(cycleRows?.[0]?.cycle_number ?? 0)) + 1
   const stops = buildCycleStops(destinations, String(originOfficeId), originName, cycleNumber, lastStep)
 
+  // Converting a standard document: record its finished route as cycle 1, so
+  // the roadmap shows "Cycle 1 · Completed" above the new cycle.
+  let createdFirstCycleId: string | null = null
+  if (convertsToRecurring && !cycleRows?.length) {
+    const { data: completion } = await db
+      .from('document_tracking_events')
+      .select('actor_id, created_at')
+      .eq('document_id', doc.id)
+      .eq('status', 'COMPLETED')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const { data: first, error: firstErr } = await db
+      .from('document_routing_cycles')
+      .insert({
+        document_id: doc.id,
+        org_id: actor.orgId,
+        cycle_number: 1,
+        start_step: 1,
+        end_step: Math.max(1, lastStep),
+        status: 'COMPLETED',
+        started_by: doc.user_id ?? null,
+        started_at: doc.created_at ?? null,
+        completed_at: completion?.created_at ?? new Date().toISOString(),
+        completed_by: completion?.actor_id ?? null,
+      })
+      .select('id')
+      .single()
+    if (firstErr) {
+      if (firstErr.code === '23505') {
+        throw createError({ statusCode: 409, message: 'This document was just restarted. Refresh to see the new cycle.', data: { code: 'ALREADY_REACTIVATED' } })
+      }
+      throw createError({ statusCode: 500, message: 'We could not start a new cycle. Please try again.' })
+    }
+    createdFirstCycleId = first.id
+  }
+
   // 1. Claim the new cycle first — the unique indexes make this the lock.
   const { data: cycle, error: cycleErr } = await db
     .from('document_routing_cycles')
@@ -132,6 +187,7 @@ export default defineEventHandler(async (event) => {
     .select('id, started_at')
     .single()
   if (cycleErr) {
+    if (createdFirstCycleId) await db.from('document_routing_cycles').delete().eq('id', createdFirstCycleId)
     if (cycleErr.code === '23505') {
       throw createError({ statusCode: 409, message: 'This document was just reactivated. Refresh to see the new cycle.', data: { code: 'ALREADY_REACTIVATED' } })
     }
@@ -149,6 +205,10 @@ export default defineEventHandler(async (event) => {
     }
     const { error } = await db.from('document_routing_cycles').delete().eq('id', cycle.id)
     if (error) console.error('[reactivate] rollback of new cycle failed:', error.message)
+    if (createdFirstCycleId) {
+      const { error: firstErr } = await db.from('document_routing_cycles').delete().eq('id', createdFirstCycleId)
+      if (firstErr) console.error('[reactivate] rollback of the cycle-1 record failed:', firstErr.message)
+    }
   }
 
   // 2. The new cycle's route — strict: a colliding step number is an error,
@@ -160,14 +220,15 @@ export default defineEventHandler(async (event) => {
     throw err
   }
 
-  // 3. Back at the creator's office, cleared for liaison assignment (the origin
+  // 3. At the office that holds it, cleared for liaison assignment (the first
   //    leg needs no release approval — same rule as a newly registered document).
   const { data: updated, error: docErr } = await db
     .from('documents')
     .update({
       tracking_status: 'ARRIVED_AT_OFFICE',
       status: 'Pending',
-      current_office_id: String(originOfficeId),
+      current_office_id: startOfficeId,
+      ...(convertsToRecurring ? { routing_type: 'RECURRING' } : {}),
       // Moves a stale counter up to the last used step, so pickup heads to
       // the new cycle's first stop (lastStep + 1).
       current_step: lastStep,
@@ -189,13 +250,13 @@ export default defineEventHandler(async (event) => {
     org_id: actor.orgId,
     status: 'ARRIVED_AT_OFFICE',
     step_index: lastStep,
-    office_name: originName,
+    office_name: startName,
     actor_id: actor.userId,
     actor_role: actor.userRole,
     actor_name: actor.fullName,
     event_type: 'CYCLE_STARTED',
-    notes: `${actor.fullName ?? 'The creator'} reactivated "${doc.title}" — cycle ${cycleNumber}: ${routeLabel} → back to ${originName}.`,
-    metadata: { cycle_number: cycleNumber, office_ids: destinations.map((d) => d.office_id), origin_office_id: originOfficeId, saved_route_id: savedRouteId },
+    notes: `${actor.fullName ?? 'The creator'} ${convertsToRecurring ? 'restarted' : 'reactivated'} "${doc.title}" — cycle ${cycleNumber} from ${startName}: ${routeLabel} → back to ${originName}.`,
+    metadata: { cycle_number: cycleNumber, office_ids: destinations.map((d) => d.office_id), origin_office_id: originOfficeId, start_office_id: startOfficeId, saved_route_id: savedRouteId, converted_to_recurring: convertsToRecurring },
   }))
   assertHistorySaved(tracked, 'The new cycle')
 
@@ -212,15 +273,15 @@ export default defineEventHandler(async (event) => {
     metadata: { cycle_number: cycleNumber, saved_route_id: savedRouteId },
   }, client)
 
-  // The creator's office must now assign a liaison for the first leg.
+  // The office holding it must now assign a liaison for the first leg.
   try {
     await broadcastInboundOfficeNotification({
       orgId: actor.orgId,
       documentId: doc.id,
       documentTitle: doc.title,
       messengerName: null,
-      officeId: String(originOfficeId),
-      officeName: originName,
+      officeId: startOfficeId,
+      officeName: startName,
       type: 'CYCLE_STARTED',
       title: `Document Reactivated — Cycle ${cycleNumber}`,
       message: `"${doc.title}" was reactivated for cycle ${cycleNumber} (${routeLabel}). Assign a liaison to deliver it to ${destinations[0]!.office_name}.`,
@@ -243,7 +304,9 @@ export default defineEventHandler(async (event) => {
 
   return {
     success: true,
-    message: `Cycle ${cycleNumber} started. Assign a liaison to deliver it to ${destinations[0]!.office_name}.`,
-    data: { cycle_number: cycleNumber, started_at: cycle.started_at, stops },
+    message: startOfficeId === String(originOfficeId)
+      ? `Cycle ${cycleNumber} started. Assign a liaison to deliver it to ${destinations[0]!.office_name}.`
+      : `Cycle ${cycleNumber} started from ${startName}, where the document is now. ${startName} has been asked to assign a liaison to deliver it to ${destinations[0]!.office_name}.`,
+    data: { cycle_number: cycleNumber, started_at: cycle.started_at, stops, start_office: { id: startOfficeId, name: startName }, converted_to_recurring: convertsToRecurring },
   }
 })

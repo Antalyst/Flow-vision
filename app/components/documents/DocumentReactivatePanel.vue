@@ -2,9 +2,13 @@
   <section class="stagger-block rounded-2xl border border-success/30 bg-success/5 p-5">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p class="text-[13px] font-bold uppercase tracking-widest text-success">Recurring document</p>
-        <p class="mt-1 text-sm" :class="mutedClass">
+        <p class="text-[13px] font-bold uppercase tracking-widest text-success">{{ isRecurring ? 'Recurring document' : 'Route completed' }}</p>
+        <p v-if="isRecurring" class="mt-1 text-sm" :class="mutedClass">
           Cycle {{ nextCycle - 1 }} is complete. Reactivate it to send the same document — same QR code, no re-upload — on cycle {{ nextCycle }}.
+        </p>
+        <p v-else class="mt-1 text-sm" :class="mutedClass">
+          This document finished its route. Restart it with a new route — same document, same QR code, no re-upload.
+          It becomes a recurring document: each new cycle ends back at {{ originName || 'the originating office' }}.
         </p>
       </div>
       <button
@@ -14,7 +18,7 @@
         @click="open = true"
       >
         <Icon name="ph:arrows-clockwise-bold" class="h-4 w-4" />
-        Reactivate Document
+        {{ isRecurring ? 'Reactivate Document' : 'Restart with a New Route' }}
       </button>
     </div>
 
@@ -22,7 +26,13 @@
       <div class="rounded-xl border border-success/30 px-4 py-3 text-sm" :class="isDark ? 'bg-white/[0.02]' : 'bg-white'">
         <p class="font-bold text-success">Configuring cycle {{ nextCycle }}</p>
         <p class="mt-0.5" :class="mutedClass">
-          Starts from and returns to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ originName || 'the originating office' }}</strong>.
+          <template v-if="startsElsewhere">
+            Starts from <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ startOfficeName }}</strong>, where the document is now
+            (that office assigns the first liaison), and returns to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ originName || 'the originating office' }}</strong>.
+          </template>
+          <template v-else>
+            Starts from and returns to <strong :class="isDark ? 'text-white' : 'text-gray-900'">{{ originName || 'the originating office' }}</strong>.
+          </template>
           Add one or more destination offices, or pick a saved route. Earlier cycles stay unchanged.
         </p>
       </div>
@@ -38,7 +48,7 @@
 
       <div v-if="officeIds.length" class="rounded-xl border px-4 py-3 text-sm" :class="isDark ? 'border-white/10' : 'border-gray-200 bg-white'">
         <p class="font-semibold" :class="isDark ? 'text-white' : 'text-gray-900'">Cycle {{ nextCycle }} route</p>
-        <p class="mt-1" :class="mutedClass">{{ originName }} → {{ officeNames.join(' → ') }} → back to {{ originName }}</p>
+        <p class="mt-1" :class="mutedClass">{{ startsElsewhere ? startOfficeName : originName }} → {{ officeNames.join(' → ') }} → back to {{ originName }}</p>
       </div>
 
       <p v-if="error" class="rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">{{ error }}</p>
@@ -71,6 +81,10 @@ const props = defineProps<{
   originName: string | null
   /** Number the new cycle will get. */
   nextCycle: number
+  /** False for a completed standard document — restarting makes it recurring. */
+  isRecurring?: boolean
+  /** Where the document physically is now (the new cycle starts there). */
+  startOfficeName?: string | null
 }>()
 
 const emit = defineEmits<{ (e: 'reactivated', message: string): void }>()
@@ -86,6 +100,8 @@ const officeIds = ref<string[]>([])
 const savedRouteId = ref<string | null>(null)
 const nameById = ref<Record<string, string>>({})
 const officeNames = computed(() => officeIds.value.map((id) => nameById.value[id] ?? 'Office'))
+/** Set by the drawer only when the document is NOT at its originating office. */
+const startsElsewhere = computed(() => !!props.startOfficeName)
 
 onMounted(async () => {
   try {

@@ -301,6 +301,8 @@
               :origin-office-id="originData?.office_id ? String(originData.office_id) : null"
               :origin-name="originData?.office_name ?? null"
               :next-cycle="nextCycleNumber"
+              :is-recurring="isRecurring"
+              :start-office-name="routingInfo?.restart_from && String(routingInfo.restart_from.office_id) !== String(originData?.office_id ?? '') ? routingInfo.restart_from.office_name : null"
               @reactivated="handleCustodyChanged"
             />
 
@@ -755,7 +757,7 @@ interface RoutingCycle {
   started_by_name: string | null
   completed_at: string | null
 }
-const routingInfo = ref<{ type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean } | null>(null)
+const routingInfo = ref<{ type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean; restart_from?: { office_id: string; office_name: string } | null } | null>(null)
 const isRecurring = computed(() => routingInfo.value?.type === 'RECURRING')
 const cycleFor = (n?: number) => routingInfo.value?.cycles.find((c) => c.cycle_number === (n ?? 1)) ?? null
 const nextCycleNumber = computed(() =>
@@ -893,7 +895,7 @@ async function fetchTimeline() {
         summary: TimelineSummary
         origin: OriginInfo | null
         custody?: CustodyState
-        routing?: { type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean }
+        routing?: { type: string; cycles: RoutingCycle[]; current_cycle: number; can_reactivate: boolean; restart_from?: { office_id: string; office_name: string } | null }
         liaison_assignments?: any[]
         release_requests?: any[]
       }
